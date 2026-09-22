@@ -1,0 +1,71 @@
+name: Backend tests
+
+on:
+  push:
+    paths:
+      - 'backend/**.py'
+      - 'backend/pyproject.toml'
+      - 'backend/uv.lock'
+  pull_request:
+    paths:
+      - 'backend/**.py'
+      - 'backend/pyproject.toml'
+      - 'backend/uv.lock'
+
+permissions: {}
+
+jobs:
+  test:
+    name: pytest
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - run: uv sync --locked --dev
+      - run: uv run -m pytest
+
+  typecheck:
+    name: ty check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - run: uv sync --locked --dev
+      - run: uvx ty check --output-format github
+      # - run: uvx pyright --pythonpath .venv/bin/python
+
+  ruff-check:
+    name: ruff check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/ruff-action@278981a28ce3188b1e39527901f38254bf3aac89 # v4.1.0
+
+  ruff-format:
+    name: ruff format
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/ruff-action@278981a28ce3188b1e39527901f38254bf3aac89 # v4.1.0
+        with:
+          args: format --check --diff
