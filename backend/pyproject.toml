@@ -1,0 +1,20 @@
+[build-system]
+requires = ["uv_build~=0.12.17"]
+build-backend = "uv_build"
+
+[project]
+name = "quickticket"
+version = "0.1.0"
+readme = "README.md"
+authors = [
+    { name = "thegamecracks", email = "61257169+thegamecracks@users.noreply.github.com" },
+    { name = "Ashley Scott", email = "lunarmeadow@protonmail.com" },
+]
+requires-python = ">=3.14"
+dependencies = [
+    "django>=6.1.1",
+    "djangorestframework>=3.18.1",
+]
+
+[project.scripts]
+quickticket = "quickticket.manage:main"
