@@ -1,5 +1,8 @@
 # QuickTicket
 
+[![](https://img.shields.io/github/actions/workflow/status/thegamecracks/quickticket/backend-test.yml?style=flat-square&logo=django&label=backend)](https://github.com/thegamecracks/quickticket/blob/main/backend)
+[![](https://img.shields.io/github/actions/workflow/status/thegamecracks/quickticket/zizmor.yml?style=flat-square&label=zizmor)](https://github.com/thegamecracks/quickticket/actions/workflows/zizmor.yml)
+
 ## Summary
 
 QuickTicket is a web-based ticket sales platform for small and medium-scale events.
