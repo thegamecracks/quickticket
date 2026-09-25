@@ -9,6 +9,9 @@ for project management.
 
 ```sh
 /        $ cd backend
+/backend $ uv run quickticket migrate
+Running migrations:
+...
 /backend $ uv run quickticket runserver
 Watching for file changes with StatReloader
 ...
