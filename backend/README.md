@@ -47,3 +47,9 @@ The `uv run quickticket` [entrypoint](https://packaging.python.org/en/latest/gui
 isolates itself from the current working directory, so we have to run manage.py
 directly with the `-m <path.to.module>` option to ensure the CWD is included
 in `sys.path`, hence `-m quickticket.manage runserver`.
+
+## Running tests
+
+```sh
+/backend $ uv run pytest
+```
