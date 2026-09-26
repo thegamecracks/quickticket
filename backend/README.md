@@ -2,7 +2,7 @@
 
 [![](https://img.shields.io/github/actions/workflow/status/thegamecracks/quickticket/backend-test.yml?style=flat-square&logo=django&label=backend)](https://github.com/thegamecracks/quickticket/blob/main/backend)
 
-# Installation
+## Installation
 
 This project requires Python 3.14+ and [uv](https://docs.astral.sh/uv/)
 for project management.
