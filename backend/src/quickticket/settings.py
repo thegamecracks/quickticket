@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+from email.headerregistry import Address  # noqa: F401
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -77,6 +78,20 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
+        # "ENGINE": "django.db.backends.postgresql",
+        # "HOST": "example.com",
+        # "PORT": 5432,
+        # "USER": "username",
+        # "PASSWORD": "password",
+        # "NAME": "database",
+    }
+}
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+        # "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        # "LOCATION": "rediss://default:password@example.com:6379",
     }
 }
 
@@ -124,8 +139,20 @@ STATIC_URL = "static/"
 MAILERS = {
     "default": {
         "BACKEND": "django.core.mail.backends.console.EmailBackend",
+        # "BACKEND": "django.core.mail.backends.smtp.EmailBackend",
+        # "OPTIONS": {
+        #     "host": "example.com",
+        #     "use_ssl": True,  # 465 implicit TLS, `"use_tls": True` for 587 STARTTLS
+        #     "username": "username",
+        #     "password": "password",
+        # },
     },
 }
+# DEFAULT_FROM_EMAIL = SERVER_EMAIL = "username@example.com"
+# ADMINS = MANAGERS = [
+#     # RFC 5322 addresses: Display Name <username@example.com>
+#     str(Address("Display Name", "username", "example.com")),
+# ]
 
 # Django REST Framework
 # https://www.django-rest-framework.org/api-guide/settings/
