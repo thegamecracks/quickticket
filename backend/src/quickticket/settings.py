@@ -33,7 +33,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     "django.contrib.admin",
-    "django.contrib.auth",
+    "django.contrib.auth",  # "quickticket.admin_config.CustomAdmin",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
@@ -116,6 +116,29 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# https://django-pyoidc.readthedocs.io/latest/tutorial.html
+# SSO_AUTODISCOVERY_URL = "https://example.com/realms/quickticket-dev"
+# SSO_CLIENT_ID = ""
+# SSO_CLIENT_SECRET = ""
+# DJANGO_PYOIDC = {
+#     "sso": {
+#         "provider_class": "django_pyoidc.providers.keycloak_18.Keycloak18Provider",
+#         "client_id": SSO_CLIENT_ID,
+#         "client_secret": SSO_CLIENT_SECRET,
+#         "provider_discovery_uri": SSO_AUTODISCOVERY_URL,
+#         "oidc_cache_provider_metadata": True,
+#         "callback_uri_name": "auth:sso-callback",  # https://github.com/makinacorpus/django_pyoidc/issues/40
+#     },
+#     "drf": {
+#         "provider_class": "django_pyoidc.providers.keycloak_18.Keycloak18Provider",
+#         "client_id": SSO_CLIENT_ID,
+#         "client_secret": SSO_CLIENT_SECRET,
+#         "provider_discovery_uri": SSO_AUTODISCOVERY_URL,
+#         "oidc_cache_provider_metadata": True,
+#         "callback_uri_name": "auth:sso-callback",
+#     },
+# }
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
@@ -159,6 +182,9 @@ MAILERS = {
 # Django REST Framework
 # https://www.django-rest-framework.org/api-guide/settings/
 REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "django_pyoidc.drf.authentication.OIDCBearerAuthentication",
+    ],
     # Use Django's standard `django.contrib.auth` permissions,
     # or allow read-only access for unauthenticated users.
     "DEFAULT_PERMISSION_CLASSES": [
@@ -173,4 +199,9 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Quickticket API",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    # "SWAGGER_UI_OAUTH2_CONFIG": {
+    #     "clientId": SSO_CLIENT_ID,
+    #     "clientSecret": SSO_CLIENT_SECRET,
+    #     "scopes": [],
+    # },
 }

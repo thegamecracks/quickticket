@@ -15,10 +15,13 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
+from django_pyoidc.helper import OIDCHelper
 from drf_spectacular.views import (
     SpectacularAPIView,
+    SpectacularSwaggerOauthRedirectView,
     SpectacularSwaggerView,
 )
 
@@ -32,3 +35,20 @@ urlpatterns = [
     ),
     path("api-auth/", include("rest_framework.urls")),
 ]
+
+if hasattr(settings, "DJANGO_PYOIDC"):
+    oidc_helper = OIDCHelper(op_name="sso")
+    urlpatterns += [
+        path(
+            "api/docs/oauth2-redirect.html",
+            SpectacularSwaggerOauthRedirectView.as_view(),
+            name="swagger-ui-oauth",
+        ),
+        path(
+            "auth/",
+            include(
+                (oidc_helper.get_urlpatterns(), "django_pyoidc"),
+                namespace="auth",
+            ),
+        ),
+    ]
