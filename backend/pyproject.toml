@@ -20,6 +20,7 @@ dependencies = [
     "psycopg[binary]>=3.3.6",
     "pytest-django>=4.14.0",
     "redis[hiredis]>=8.1.0",
+    "whenever>=0.10.5",
 ]
 
 [project.scripts]
