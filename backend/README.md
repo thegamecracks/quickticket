@@ -53,3 +53,22 @@ in `sys.path`, hence `-m quickticket.manage runserver`.
 ```sh
 /backend $ uv run pytest
 ```
+
+## Resources
+
+Python libraries:
+- [django](https://docs.djangoproject.com/en/6.1/)
+- [django-pyoidc](https://django-pyoidc.readthedocs.io/latest/tutorial.html)
+- [djangorestframework](https://www.django-rest-framework.org/)
+- [obstore](https://developmentseed.org/obstore/latest/) (S3 client)
+- [pillow](https://pillow.readthedocs.io/en/stable/) (image library)
+- [psycopg](https://www.psycopg.org/psycopg3/docs/) (PostgreSQL driver used by Django)
+- [pytest](https://docs.pytest.org/en/stable/)
+- [pytest-django](https://pytest-django.readthedocs.io/en/latest/index.html)
+- [redis](https://redis.io/docs/latest/develop/clients/redis-py/)
+- [whenever](https://whenever.readthedocs.io/en/latest/) (type-safe datetimes)
+
+External services:
+- [Garage S3](https://garagehq.deuxfleurs.fr/)
+- [Keycloak](https://www.keycloak.org/guides) (OpenID provider)
+- [PostgreSQL](https://www.postgresql.org/docs/current/index.html)
