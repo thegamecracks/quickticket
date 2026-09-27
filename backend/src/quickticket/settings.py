@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_pyoidc",
     "rest_framework",
 ]
 
@@ -89,7 +90,7 @@ DATABASES = {
 
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         # "BACKEND": "django.core.cache.backends.redis.RedisCache",
         # "LOCATION": "rediss://default:password@example.com:6379",
     }
