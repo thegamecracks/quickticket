@@ -20,6 +20,8 @@ def on_logout(request, logout_request_args):
 
 def get_user(client, tokens):
     user = get_user_by_email(tokens)
+    user.first_name = extract_claim_from_tokens("given_name", tokens)
+    user.last_name = extract_claim_from_tokens("family_name", tokens)
     groups = extract_claim_from_tokens("groups", tokens)
     user.is_staff = "admins" in groups
 
