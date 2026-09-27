@@ -15,6 +15,7 @@ dependencies = [
     "django>=6.1.1",
     "django-pyoidc>=1.0.13",
     "djangorestframework>=3.18.1",
+    "pillow>=12.3.0",
     "psycopg[binary]>=3.3.6",
     "pytest-django>=4.14.0",
     "redis[hiredis]>=8.1.0",
