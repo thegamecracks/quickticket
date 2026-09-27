@@ -1,0 +1,90 @@
+# Redis DEV — Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quickticket-redis-dev
+  namespace: quickticket
+  labels:
+    app: quickticket-redis-dev
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: quickticket-redis-dev
+  template:
+    metadata:
+      labels:
+        app: quickticket-redis-dev
+    spec:
+      containers:
+        - name: redis
+          image: redis:8.2.9-alpine   # extended-support release (5yr fixes)
+          ports:
+            - containerPort: 6379
+              name: redis
+          command:
+            - redis-server
+            - --requirepass
+            - $(REDIS_PASSWORD)
+            - --appendonly
+            - "yes"
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: quickticket-secret-dev
+                  key: REDIS_PASSWORD
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "25m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: quickticket-redis-data-dev
+---
+# Redis DEV - Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: quickticket-redis-dev
+  namespace: quickticket
+spec:
+  selector:
+    app: quickticket-redis-dev
+  ports:
+    - port: 6379
+      targetPort: 6379
+      protocol: TCP
+      name: redis
+---
+# Redis DEV - longhorn pvc
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: quickticket-redis-data-dev
+  namespace: quickticket
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 1Gi
