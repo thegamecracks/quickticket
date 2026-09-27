@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "django_pyoidc",
     "rest_framework",
+    "quickticket",
 ]
 
 MIDDLEWARE = [
@@ -127,6 +128,9 @@ AUTH_PASSWORD_VALIDATORS = [
 #         "client_secret": SSO_CLIENT_SECRET,
 #         "provider_discovery_uri": SSO_AUTODISCOVERY_URL,
 #         "oidc_cache_provider_metadata": True,
+#         "hook_user_login": "quickticket.oidc:on_login",
+#         "hook_user_logout": "quickticket.oidc:on_logout",
+#         "hook_get_user": "quickticket.oidc:get_user",
 #         "callback_uri_name": "auth:sso-callback",  # https://github.com/makinacorpus/django_pyoidc/issues/40
 #     },
 #     "drf": {

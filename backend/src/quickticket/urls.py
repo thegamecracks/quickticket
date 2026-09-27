@@ -25,7 +25,10 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
+from quickticket import views
+
 urlpatterns = [
+    path("", views.index),
     path("admin/", admin.site.urls),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
