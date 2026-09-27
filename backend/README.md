@@ -60,6 +60,7 @@ Python libraries:
 - [django](https://docs.djangoproject.com/en/6.1/)
 - [django-pyoidc](https://django-pyoidc.readthedocs.io/latest/tutorial.html)
 - [djangorestframework](https://www.django-rest-framework.org/)
+- [drf-spectacular](https://drf-spectacular.readthedocs.io/en/latest/readme.html)
 - [obstore](https://developmentseed.org/obstore/latest/) (S3 client)
 - [pillow](https://pillow.readthedocs.io/en/stable/) (image library)
 - [psycopg](https://www.psycopg.org/psycopg3/docs/) (PostgreSQL driver used by Django)
