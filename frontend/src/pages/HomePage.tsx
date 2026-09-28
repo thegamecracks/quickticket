@@ -1,7 +1,7 @@
 export default function HomePage() {
   return (
     <>
-      <section className="hero bg-gradient-to-b from-primary/10 to-base-100 py-20">
+      <section className="hero bg-linear-to-b from-primary/10 to-base-100 py-20">
         <div className="hero-content text-center">
           <div className="max-w-lg">
             <h1 className="text-4xl font-bold md:text-5xl">

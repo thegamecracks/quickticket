@@ -1,6 +1,10 @@
+import { useState } from 'react'
 import { Link, NavLink } from 'react-router'
+import AuthModal from './AuthModal'
 
 export default function Navbar() {
+  const [authOpen, setAuthOpen] = useState(false)
+
   return (
     <header className="navbar bg-base-200 shadow-sm">
       <div className="navbar-start">
@@ -12,10 +16,18 @@ export default function Navbar() {
         <NavLink className="btn btn-ghost btn-sm" to="/events">
           Events
         </NavLink>
-        <a className="btn btn-ghost btn-sm">About</a>
+        <NavLink className="btn btn-ghost btn-sm" to="/about">
+          About
+        </NavLink>
       </nav>
       <div className="navbar-end">
-        <a className="btn btn-primary btn-sm">Sign in</a>
+        <button
+          className="btn btn-primary btn-sm"
+          onClick={() => setAuthOpen(true)}
+        >
+          Sign in
+        </button>
+        <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
       </div>
     </header>
   )
