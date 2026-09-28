@@ -3,14 +3,37 @@ from __future__ import annotations
 
 from typing import Literal, Self
 
-from pydantic import Field, IPvAnyAddress, NameEmail, Secret, model_validator
+from pydantic import AnyUrl, Field, IPvAnyAddress, NameEmail, Secret, model_validator
 from pydantic_extra_types.domain import DomainStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="backend_")
+
+    db: DatabaseSettings
     smtp: SMTPSettings | None
+
+
+class DatabaseSettings(BaseSettings):
+    url: Secret[AnyUrl] = Secret(
+        AnyUrl("sqlite+aiosqlite:///file:quickticket.db?cache=shared&uri=true")
+    )
+    """The SQLAlchemy connection string to use for the database connection.
+
+    https://docs.sqlalchemy.org/en/21/core/engines.html
+
+    Examples:
+    - sqlite+aiosqlite:///file:path/to/quickticket.db?cache=shared&uri=true
+    - postgresql+psycopg://username:password@localhost:5432/mydatabase?sslmode=verify-full
+
+    .. note::
+
+       For PostgreSQL with psycopg, query parameters are passed to the underlying libpq
+       library. See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
+       for more information.
+
+    """
 
 
 class SMTPSettings(BaseSettings):
