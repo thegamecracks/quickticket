@@ -5,10 +5,11 @@ from typing import Literal, Self
 
 from pydantic import Field, IPvAnyAddress, NameEmail, Secret, model_validator
 from pydantic_extra_types.domain import DomainStr
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="backend_")
     smtp: SMTPSettings | None
 
 
