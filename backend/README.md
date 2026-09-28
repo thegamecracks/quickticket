@@ -9,22 +9,14 @@ for project management.
 
 ```sh
 /        $ cd backend
-/backend $ uv run quickticket migrate
-Running migrations:
-...
-/backend $ uv run quickticket runserver
-Watching for file changes with StatReloader
-...
-Django version 6.1.1, using settings 'quickticket.settings'
-Starting WSGI development server at http://127.0.0.1:8000/
-Quit the server with CTRL-BREAK.
+/backend $ uv run fastapi dev
 ```
 
-`uv run quickticket` provides an entrypoint for django-admin / manage.py.
+**Outdated:** `uv run quickticket` provides an entrypoint for django-admin / manage.py.
 See the [documentation](https://docs.djangoproject.com/en/6.1/ref/django-admin/#django-admin-runserver)
 for CLI reference.
 
-## Using a production settings.py file
+## (Outdated) Using a production settings.py file
 
 `settings.py` is considered a confidential file and is expected to store
 hostnames and credentials directly. To avoid accidentally committing these
@@ -57,16 +49,19 @@ in `sys.path`, hence `-m quickticket.manage runserver`.
 ## Resources
 
 Python libraries:
-- [django](https://docs.djangoproject.com/en/6.1/)
-- [django-pyoidc](https://django-pyoidc.readthedocs.io/latest/tutorial.html)
-- [djangorestframework](https://www.django-rest-framework.org/)
-- [drf-spectacular](https://drf-spectacular.readthedocs.io/en/latest/readme.html)
+- [alembic](https://alembic.sqlalchemy.org/en/latest/index.html) (database migrations)
+- [authlib](https://docs.authlib.org/en/latest/index.html)
+- [fastapi](https://fastapi.tiangolo.com/)
+- [httpx2](https://pydantic.dev/docs/httpx2/get-started/)
 - [obstore](https://developmentseed.org/obstore/latest/) (S3 client)
 - [pillow](https://pillow.readthedocs.io/en/stable/) (image library)
 - [psycopg](https://www.psycopg.org/psycopg3/docs/) (PostgreSQL driver used by Django)
+- [pydantic](https://pydantic.dev/docs/validation/latest/get-started/)
+- [pydantic-settings](https://pydantic.dev/docs/validation/latest/concepts/pydantic_settings/)
 - [pytest](https://docs.pytest.org/en/stable/)
-- [pytest-django](https://pytest-django.readthedocs.io/en/latest/index.html)
 - [redis](https://redis.io/docs/latest/develop/clients/redis-py/)
+- [sqlalchemy](https://docs.sqlalchemy.org/en/21/)
+- [uvicorn](https://uvicorn.dev/) (ASGI webserver)
 - [whenever](https://whenever.readthedocs.io/en/latest/) (type-safe datetimes)
 
 External services:
