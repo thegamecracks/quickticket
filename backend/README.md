@@ -46,6 +46,15 @@ in `sys.path`, hence `-m quickticket.manage runserver`.
 /backend $ uv run pytest
 ```
 
+## Creating migrations
+
+When updating SQLAlchemy models, you can auto-generate a new migration with Alembic
+like so:
+
+```sh
+/backend $ uv run alembic revision --autogenerate -m "Add account and address tables"
+```
+
 ## Resources
 
 Python libraries:
