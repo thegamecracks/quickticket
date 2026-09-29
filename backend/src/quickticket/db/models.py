@@ -39,7 +39,7 @@ class User(Base):
     display_name: Mapped[str_128]
     first_name: Mapped[str_128]
     last_name: Mapped[str_128]
-    email: Mapped[str_256]
+    email: Mapped[str_256] = mapped_column(unique=True)
 
     addresses: Mapped[list[Address]] = relationship(back_populates="user")
 
