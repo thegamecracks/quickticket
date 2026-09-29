@@ -144,9 +144,7 @@ async def oauth_logout(
         id_token_hint=id_token_hint,  # token can be expired/invalid
         post_logout_redirect_uri=str(request.url_for("oauth_post_logout")),
     )
-    set_oauth_state_cookie(
-        response, state, max_age=LOGIN_EXPIRY
-    )  # could expire earlier
+    set_oauth_state_cookie(response, state, max_age=LOGIN_EXPIRY)
     return cookie_safe_redirect(response, url, 302)
 
 

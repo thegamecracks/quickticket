@@ -158,7 +158,7 @@ class OAuth2Client:
 
         state = generate_token()
         url = URL(self.discovery.end_session_endpoint.encoded_string())
-        url.include_query_params(
+        url = url.include_query_params(
             id_token_hint=id_token_hint,
             client_id=self.provider.client_id.get_secret_value(),
             post_logout_redirect_uri=post_logout_redirect_uri,
