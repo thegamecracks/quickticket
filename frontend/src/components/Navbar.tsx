@@ -1,4 +1,3 @@
-import axios from 'axios'
 import { Link, NavLink } from 'react-router'
 import { API_URL } from '../lib/api'
 
@@ -22,11 +21,11 @@ export default function Navbar() {
       <div className="navbar-end">
         <button
           className="btn btn-primary btn-sm"
-          onClick={() => axios.post(`${API_URL}/auth/login`)}
+          onClick={() => window.location.href = `${API_URL}auth/login`}
         >
           Sign in
         </button>
       </div>
-    </header>
+    </header >
   )
 }
