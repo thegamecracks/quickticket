@@ -1,7 +1,16 @@
 # https://fastapi.tiangolo.com/advanced/settings/
 from typing import Literal, Self
 
-from pydantic import AnyUrl, Field, IPvAnyAddress, NameEmail, Secret, model_validator
+from fastapi.datastructures import URL
+from pydantic import (
+    AnyUrl,
+    Field,
+    HttpUrl,
+    IPvAnyAddress,
+    NameEmail,
+    Secret,
+    model_validator,
+)
 from pydantic_extra_types.domain import DomainStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -38,6 +47,28 @@ class DatabaseSettings(BaseSettings):
        for more information.
 
     """
+
+
+class FrontendSettings(BaseSettings):
+    redirect_uris: list[HttpUrl] = [
+        HttpUrl("http://127.0.0.1:5173/*"),
+        HttpUrl("http://localhost:5173/*"),
+    ]
+    """A list of URL glob patterns allowed to be used in ``/auth/*?redirect_uri=``
+    query parameters.
+
+    The base URLs are automatically added to CORS headers.
+
+    """
+
+    @property
+    def origins(self) -> list[str]:
+        """A list of allowed frontend origins."""
+        return [
+            str(URL(scheme=uri.scheme, hostname=uri.host, port=uri.port))
+            for uri in self.redirect_uris
+            if uri.host is not None
+        ]
 
 
 class OpenIDSettings(BaseSettings):
@@ -100,6 +131,7 @@ class Settings(BaseSettings):
 
     cache: CacheSettings = Field(default_factory=CacheSettings)
     db: DatabaseSettings = Field(default_factory=DatabaseSettings)
+    frontend: FrontendSettings = Field(default_factory=FrontendSettings)
     openid: OpenIDSettings | None = None
     smtp: SMTPSettings | None = None
 
