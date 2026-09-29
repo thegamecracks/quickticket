@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage'
 import CheckoutPage from './features/checkout/CheckoutPage'
 import EventDetailPage from './features/events/EventDetailPage'
 import EventsPage from './features/events/EventsPage'
+import AccountSettingsPage from './features/account/AccountSettingsPage'
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
         <Route path="events/:slug" element={<EventDetailPage />} />
         <Route path="events/:slug/checkout" element={<CheckoutPage />} />
         <Route path="about" element={<AboutPage />} />
+        <Route path="settings" element={<AccountSettingsPage />} />
       </Route>
     </Routes>
   )
