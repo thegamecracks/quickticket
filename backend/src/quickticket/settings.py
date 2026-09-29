@@ -65,7 +65,11 @@ class SMTPSettings(BaseSettings):
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_prefix="backend_")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_prefix="backend_",
+        extra="allow",
+    )
 
     db: DatabaseSettings = DatabaseSettings()
     smtp: SMTPSettings | None = None
