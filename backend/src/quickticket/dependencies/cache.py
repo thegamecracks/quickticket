@@ -43,6 +43,7 @@ async def get_cache(
     else:
         raise ValueError(f"Unsupported url scheme for cache: {url.scheme}")
 
+    log.info("Initialized %s", type(state.cache).__name__)
     return state.cache
 
 
