@@ -12,8 +12,8 @@ export default function HomePage() {
               from independent organizers.
             </p>
             <div className="flex justify-center gap-2">
-              <button className="btn btn-primary">Browse events</button>
-              <button className="btn btn-outline">Host an event</button>
+              <button className="btn btn-primary" onClick={() => window.location.href = "/events"}>Browse events</button>
+              <button className="btn btn-outline" onClick={() => window.location.href = "/createEvent"}>Host an event</button>
             </div>
           </div>
         </div>
