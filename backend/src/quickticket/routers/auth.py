@@ -16,6 +16,8 @@ router = APIRouter()
 class LoginAttempt:
     expires_at: datetime
     code_verifier: str
+    # FIXME: state should be stored as httpOnly cookie
+    # https://auth0.com/blog/demystifying-oauth-security-state-vs-nonce-vs-pkce/
     state: str
 
 
