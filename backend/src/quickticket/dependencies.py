@@ -1,3 +1,4 @@
+from functools import cache
 from typing import Annotated
 
 from fastapi import Depends
@@ -5,6 +6,7 @@ from fastapi import Depends
 from quickticket.settings import Settings
 
 
+@cache
 def get_settings() -> Settings:
     return Settings()
 
