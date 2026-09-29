@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import RedirectResponse
 
 from quickticket.dependencies import CacheDep, OAuth2ClientDep
+from quickticket.oauth import TokenExchangeResponse
 
 router = APIRouter()
 
@@ -32,7 +33,7 @@ async def oauth_login(cache: CacheDep, client: OAuth2ClientDep) -> RedirectRespo
 
 
 @router.get("/callback")
-async def oauth_callback(request: Request, cache: CacheDep, client: OAuth2ClientDep):
+async def oauth_callback(request: Request, cache: CacheDep, client: OAuth2ClientDep) -> TokenExchangeResponse:
     query = parse_qs(request.url.query)
     state = query["state"][0]
 
