@@ -9,7 +9,7 @@ from redis.asyncio import Redis
 class Cache(Protocol):
     async def __aenter__(self) -> Self: ...
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> object: ...
-    async def get(self, key: str) -> Any: ...
+    async def get(self, key: str) -> Any | None: ...
     async def set(
         self,
         key: str,
@@ -18,6 +18,7 @@ class Cache(Protocol):
         expiry: timedelta | None = None,
     ) -> object: ...
     async def delete(self, key: str) -> bool: ...
+    async def pop(self, key: str) -> Any | None: ...
 
 
 class RedisCache(Cache):
@@ -30,7 +31,7 @@ class RedisCache(Cache):
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         await self.client.aclose()
 
-    async def get(self, key: str) -> Any:
+    async def get(self, key: str) -> Any | None:
         return await self.client.get(key)
 
     async def set(
@@ -45,6 +46,9 @@ class RedisCache(Cache):
     async def delete(self, key: str) -> bool:
         n_deleted = await self.client.delete(key)
         return n_deleted > 0
+
+    async def pop(self, key: str) -> Any | None:
+        return await self.client.getdel(key)
 
 
 class SQLiteCache(Cache):
@@ -74,7 +78,7 @@ class SQLiteCache(Cache):
         await self.client.commit()
         self._created_schema = True
 
-    async def get(self, key: str) -> Any:
+    async def get(self, key: str) -> Any | None:
         await self._create_schema()
 
         c = await self.client.execute(
@@ -109,6 +113,16 @@ class SQLiteCache(Cache):
     async def delete(self, key: str) -> bool:
         await self._create_schema()
 
-        c = await self.client.execute("DELETE FROM kv_value WHERE key = ?1", (key,))
+        c = await self.client.execute("DELETE FROM kv_cache WHERE key = ?1", (key,))
         await self.client.commit()
         return c.rowcount > 0
+
+    async def pop(self, key: str) -> Any | None:
+        await self._create_schema()
+
+        c = await self.client.execute("DELETE FROM kv_cache WHERE key = ?1 RETURNING value", (key,))
+        row = await c.fetchone()
+        await self.client.commit()
+
+        if row is not None:
+            return row[0]
