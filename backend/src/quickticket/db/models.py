@@ -4,12 +4,22 @@ import datetime
 from typing import Annotated
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, String, func
+from sqlalchemy import ForeignKey, MetaData, String, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+convention = {
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}
+
+metadata_obj = MetaData(naming_convention=convention)
 
 
 class Base(DeclarativeBase):
-    pass
+    metadata = metadata_obj
 
 
 # https://docs.sqlalchemy.org/en/21/orm/declarative_tables.html#mapping-whole-column-declarations-to-python-types-with-pep-593-annotated
