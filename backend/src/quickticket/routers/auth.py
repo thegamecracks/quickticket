@@ -6,7 +6,7 @@ from authlib.common.security import generate_token
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import RedirectResponse
 
-from quickticket.dependencies import CacheDep, OAuth2ClientDep
+from quickticket.dependencies import CacheDep, OAuth2ClientDep, TokenDep
 from quickticket.oauth import TokenExchangeResponse
 
 router = APIRouter()
@@ -52,9 +52,9 @@ async def oauth_callback(request: Request, cache: CacheDep, client: OAuth2Client
 
 
 @router.get("/logout")
-async def oauth_logout(cache: CacheDep, client: OAuth2ClientDep):
+async def oauth_logout(token: TokenDep, cache: CacheDep, client: OAuth2ClientDep):
     # client.create_logout_url()
-    pass
+    return token
 
 
 def _store_login_attempt(*, code_verifier: str, state: str) -> None:

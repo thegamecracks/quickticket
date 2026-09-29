@@ -1,10 +1,10 @@
 import authlib.oauth2
 from authlib.integrations.httpx_client import AsyncOAuth2Client
 from fastapi.datastructures import URL
-from pydantic import AnyUrl, BaseModel, Field
+from pydantic import AnyUrl, BaseModel, Field, Secret
 
 
-class OpenIDDiscoveryProvider(BaseModel):
+class OpenIDDiscovery(BaseModel):
     """https://aboutauth.com/docs/learn/oidc/openid-connect-discovery/"""
 
     # Required
@@ -50,6 +50,12 @@ class OpenIDDiscoveryProvider(BaseModel):
     pushed_authorization_request_endpoint: AnyUrl | None = None
 
 
+class OpenIDProvider(BaseModel):
+    client_id: Secret[str]
+    client_secret: Secret[str]
+    discovery: OpenIDDiscovery
+
+
 # https://openid.net/specs/openid-connect-core-1_0.html#rfc.section.3.2.2.5
 # Derived from Keycloak response
 class TokenExchangeResponse(BaseModel):
@@ -66,32 +72,36 @@ class TokenExchangeResponse(BaseModel):
 class OAuth2Client:
     def __init__(
         self,
-        client_id: str,
-        client_secret: str,
+        provider: OpenIDProvider,
+        *,
         redirect_uri: str,
-        provider: OpenIDDiscoveryProvider,
     ) -> None:
-        if "S256" not in provider.code_challenge_methods_supported:
+        self.provider = provider
+
+        if "S256" not in self.discovery.code_challenge_methods_supported:
             raise ValueError("Provider does not support 'S256' code challenge method")
-        if "authorization_code" not in provider.grant_types_supported:
+        if "authorization_code" not in self.discovery.grant_types_supported:
             raise ValueError(
                 "Provider does not support 'authorization_code' grant type"
             )
-        if "code" not in provider.response_types_supported:
+        if "code" not in self.discovery.response_types_supported:
             raise ValueError("Provider does not support 'code' response type")
 
-        self._provider = provider
         self._client = AsyncOAuth2Client(
-            client_id=client_id,
-            client_secret=client_secret,
+            client_id=provider.client_id.get_secret_value(),
+            client_secret=provider.client_secret.get_secret_value(),
             redirect_uri=redirect_uri,
             scope="openid email profile",
             # Passed to underyling OAuth2Client
             code_challenge_method="S256",
             grant_type="authorization_code",
             response_type="code",
-            token_endpoint=str(provider.token_endpoint),
+            token_endpoint=str(self.discovery.token_endpoint),
         )
+
+    @property
+    def discovery(self) -> OpenIDDiscovery:
+        return self.provider.discovery
 
     @property
     def _typed_client(self) -> authlib.oauth2.OAuth2Client:
@@ -101,7 +111,7 @@ class OAuth2Client:
     def create_authorization_url(self, code_verifier: str) -> tuple[str, str]:
         """Create the authorization url and state."""
         return self._typed_client.create_authorization_url(
-            str(self._provider.authorization_endpoint),
+            str(self.discovery.authorization_endpoint),
             code_verifier=code_verifier,
         )
 
@@ -121,14 +131,19 @@ class OAuth2Client:
         id_token: str,
         post_logout_redirect_uri: str,
     ) -> str:
-        """https://openid.net/specs/openid-connect-rpinitiated-1_0.html"""
-        if self._provider.end_session_endpoint is None:
+        """
+
+        https://openid.net/specs/openid-connect-rpinitiated-1_0.html
+        https://docs.authlib.org/en/latest/oauth2/client/web/starlette.html#rp-initiated-logout
+
+        """
+        if self.discovery.end_session_endpoint is None:
             raise ValueError("Front-channel logout not supported by provider")
 
-        url = URL(self._provider.end_session_endpoint.encoded_string())
+        url = URL(self.discovery.end_session_endpoint.encoded_string())
         url.include_query_params(
             id_token=id_token,
-            client_id=self._typed_client.client_id,
+            client_id=self.provider.client_id.get_secret_value(),
             post_logout_redirect_uri=post_logout_redirect_uri,
         )
         return str(url)
