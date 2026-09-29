@@ -1,9 +1,8 @@
-import { useState } from 'react'
+import axios from 'axios'
 import { Link, NavLink } from 'react-router'
-import AuthModal from './AuthModal'
+import { API_URL } from '../lib/api'
 
 export default function Navbar() {
-  const [authOpen, setAuthOpen] = useState(false)
 
   return (
     <header className="navbar bg-base-200 shadow-sm">
@@ -23,11 +22,10 @@ export default function Navbar() {
       <div className="navbar-end">
         <button
           className="btn btn-primary btn-sm"
-          onClick={() => setAuthOpen(true)}
+          onClick={() => axios.post(`${API_URL}/auth/login`)}
         >
           Sign in
         </button>
-        <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
       </div>
     </header>
   )
