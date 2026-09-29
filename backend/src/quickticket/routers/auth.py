@@ -5,6 +5,7 @@ from urllib.parse import parse_qs
 from authlib.common.security import generate_token
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import RedirectResponse
+from joserfc.jwt import Token
 
 from quickticket.dependencies import CacheDep, OAuth2ClientDep, TokenDep
 from quickticket.oauth import TokenExchangeResponse
@@ -51,10 +52,15 @@ async def oauth_callback(request: Request, cache: CacheDep, client: OAuth2Client
     return tokens
 
 
+@router.get("/validate")
+async def oauth_validate(token: TokenDep):
+    return token
+
+
 @router.get("/logout")
 async def oauth_logout(token: TokenDep, cache: CacheDep, client: OAuth2ClientDep):
     # client.create_logout_url()
-    return token
+    pass
 
 
 def _store_login_attempt(*, code_verifier: str, state: str) -> None:
