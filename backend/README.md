@@ -62,6 +62,7 @@ Python libraries:
 - [authlib](https://docs.authlib.org/en/latest/index.html)
 - [fastapi](https://fastapi.tiangolo.com/)
 - [httpx2](https://pydantic.dev/docs/httpx2/get-started/)
+- [joserfc](https://jose.authlib.org/en/guide/jwt/) (JWT parsing and validation)
 - [obstore](https://developmentseed.org/obstore/latest/) (S3 client)
 - [pillow](https://pillow.readthedocs.io/en/stable/) (image library)
 - [psycopg](https://www.psycopg.org/psycopg3/docs/) (PostgreSQL driver used by Django)
