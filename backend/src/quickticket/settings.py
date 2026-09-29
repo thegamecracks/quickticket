@@ -7,9 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class CacheSettings(BaseSettings):
-    url: Secret[AnyUrl] = Secret(
-        AnyUrl("sqlite:///quickticket-cache.db")
-    )
+    url: Secret[AnyUrl] = Secret(AnyUrl("sqlite:///quickticket-cache.db"))
     """The connection string to use for caching.
 
     This supports ``sqlite://`` and ``redis://`` schemes.
@@ -23,9 +21,7 @@ class CacheSettings(BaseSettings):
 
 
 class DatabaseSettings(BaseSettings):
-    url: Secret[AnyUrl] = Secret(
-        AnyUrl("sqlite+aiosqlite:///quickticket.db")
-    )
+    url: Secret[AnyUrl] = Secret(AnyUrl("sqlite+aiosqlite:///quickticket.db"))
     """The SQLAlchemy connection string to use for the database connection.
 
     https://docs.sqlalchemy.org/en/21/core/engines.html
@@ -40,6 +36,19 @@ class DatabaseSettings(BaseSettings):
        For PostgreSQL with psycopg, query parameters are passed to the underlying libpq
        library. See https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
        for more information.
+
+    """
+
+
+class OpenIDSettings(BaseSettings):
+    client_id: Secret[str]
+    """The client ID for the OpenID Connect provider."""
+    client_secret: Secret[str]
+    """The client secret for the OpenID Connect provider."""
+    discovery_url: AnyUrl
+    """The OpenID Connect provider's auto-discovery URL.
+
+    Example: https://example.com/.well-known/openid-configuration
 
     """
 
@@ -84,12 +93,14 @@ class SMTPSettings(BaseSettings):
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
-        env_prefix="backend_",
-        extra="allow",
+        env_nested_delimiter="__",
+        env_prefix="backend__",
+        extra="ignore",
     )
 
     cache: CacheSettings = CacheSettings()
     db: DatabaseSettings = DatabaseSettings()
+    openid: OpenIDSettings | None = None
     smtp: SMTPSettings | None = None
 
 

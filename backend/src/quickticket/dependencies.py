@@ -1,22 +1,39 @@
 from __future__ import annotations
 
+import logging
+from contextlib import AsyncExitStack
 from functools import cache
-from typing import Annotated
+from typing import Annotated, cast
 
 import aiosqlite
-from authlib.integrations.httpx_client import AsyncOAuth2Client
-from fastapi import Depends, HTTPException, Request
+import httpx2
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.datastructures import State
 from redis.asyncio import Redis
 
 from quickticket.cache import Cache, RedisCache, SQLiteCache
+from quickticket.oauth import OAuth2Client, OpenIDDiscoveryProvider
 from quickticket.settings import Settings
 
-# TODO: close cache cleanly / context manager or lifespan?
-_cache_client: Cache | None = None
-async def get_cache(settings: SettingsDep) -> Cache:
-    global _cache_client
-    if _cache_client is not None:
-        return _cache_client
+log = logging.getLogger(__name__)
+
+
+def get_state(request: Request) -> State:
+    return cast(FastAPI, request.app).state
+
+
+def get_async_exit_stack(state: StateDep) -> AsyncExitStack:
+    return cast(AsyncExitStack, state.stack)
+
+
+async def get_cache(
+    state: StateDep,
+    stack: AsyncExitStackDep,
+    settings: SettingsDep,
+) -> Cache:
+    cache = cast(Cache | None, getattr(state, "cache", None))
+    if cache is not None:
+        return cache
 
     url = settings.cache.url.get_secret_value()
     if url.scheme == "sqlite":
@@ -26,7 +43,7 @@ async def get_cache(settings: SettingsDep) -> Cache:
             autocommit=True,
             uri=True,
         )
-        _cache_client = SQLiteCache(conn)
+        state.cache = await stack.enter_async_context(SQLiteCache(conn))
     elif url.scheme == "redis":
         assert url.host is not None
         assert url.port is not None
@@ -37,24 +54,40 @@ async def get_cache(settings: SettingsDep) -> Cache:
             password=url.password,
             # TODO: support ssl
         )
-        _cache_client = RedisCache(client)
+        state.cache = await stack.enter_async_context(RedisCache(client))
     else:
         raise ValueError(f"Unsupported url scheme for cache: {url.scheme}")
 
-    return _cache_client
+    return state.cache
 
 
-@cache
-def get_oauth_client(request: Request, settings: SettingsDep) -> AsyncOAuth2Client:
-    if settings.oauth is None:
-        raise HTTPException(404, "OAuth2 is not configured for this backend")
+async def get_oauth_client(
+    request: Request,
+    state: StateDep,
+    settings: SettingsDep,
+) -> OAuth2Client:
+    client = cast(OAuth2Client | None, getattr(state, "oauth_client", None))
+    if client is not None:
+        return client
 
-    return AsyncOAuth2Client(
-        client_id=settings.oauth.client_id,
-        client_secret=settings.oauth.client_secret,
-        redirect_uri=request.app.url_path_for("/auth/callback"),
-        scope="openid email profile",
+    if settings.openid is None:
+        raise HTTPException(404, "OpenID is not configured for this backend")
+
+    # FIXME: exceptions here can result in spamming the discovery URL
+    print("Fetching OpenID discovery url")
+    async with httpx2.AsyncClient() as http:
+        response = await http.get(str(settings.openid.discovery_url))
+        response = response.json()
+
+    print("Creating OAuth2 client")
+    provider = OpenIDDiscoveryProvider.model_validate(response)
+    state.oauth_client = OAuth2Client(
+        client_id=settings.openid.client_id.get_secret_value(),
+        client_secret=settings.openid.client_secret.get_secret_value(),
+        redirect_uri=str(request.url_for("oauth_callback")),
+        provider=provider,
     )
+    return state.oauth_client
 
 
 @cache
@@ -62,6 +95,8 @@ def get_settings() -> Settings:
     return Settings()
 
 
-AsyncOAuth2ClientDep = Annotated[AsyncOAuth2Client, Depends(get_oauth_client)]
+AsyncExitStackDep = Annotated[AsyncExitStack, Depends(get_async_exit_stack)]
 CacheDep = Annotated[Cache, Depends(get_cache)]
+OAuth2ClientDep = Annotated[OAuth2Client, Depends(get_oauth_client)]
 SettingsDep = Annotated[Settings, Depends(get_settings)]
+StateDep = Annotated[State, Depends(get_state)]
