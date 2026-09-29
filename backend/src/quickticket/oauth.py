@@ -1,4 +1,5 @@
 import authlib.oauth2
+from authlib.common.security import generate_token
 from authlib.integrations.httpx_client import AsyncOAuth2Client
 from fastapi.datastructures import URL
 from pydantic import AnyUrl, BaseModel, Field, Secret
@@ -113,6 +114,7 @@ class OAuth2Client:
         return self._typed_client.create_authorization_url(
             str(self.discovery.authorization_endpoint),
             code_verifier=code_verifier,
+            nonce=generate_token(),
         )
 
     # TODO: parse with pydantic model
