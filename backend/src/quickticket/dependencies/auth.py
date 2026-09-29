@@ -1,7 +1,7 @@
 import logging
 from typing import Annotated, cast
 
-from authlib.oauth2 import OAuth2Error
+from authlib.integrations.base_client import OAuthError
 from fastapi import Depends, HTTPException, Request, Response
 from joserfc import jwt
 from joserfc.errors import ExpiredTokenError, JoseError
@@ -126,11 +126,14 @@ async def get_or_refresh_id_token(
     if refresh_token_cookie is None:
         return
 
-    log.debug("ID token is expired/invalid, refreshing tokens")
+    log.debug("Refreshing ID token")
     try:
         tokens = await client.refresh_token(refresh_token_cookie)
-    except OAuth2Error as e:  # FIXME: is this the correct exception?
-        log.debug("Refreshing ID token failed", exc_info=e)
+    except OAuthError as e:
+        if e.error == "invalid_grant":  # provider refused grant_type=refresh_token
+            log.debug("OpenID session expired, re-authentication required")
+        else:
+            log.debug("Failed to refresh ID token", exc_info=e)
         # TODO: redirect to provider for login, then redirect back to request.url?
         return
 
