@@ -1,13 +1,18 @@
 import logging
 from typing import Annotated, cast
 
-from fastapi import Cookie, Depends, HTTPException, Request
+from authlib.oauth2 import OAuth2Error
+from fastapi import Depends, HTTPException, Request, Response
 from joserfc import jwt
 from joserfc.errors import ExpiredTokenError, JoseError
 from joserfc.jwk import KeySet
 from joserfc.jwt import JWTClaimsRegistry, Token
 
-from quickticket import cookies
+from quickticket.dependencies.cookies import (
+    OAuthIdTokenCookie,
+    OAuthRefreshTokenCookie,
+    set_oauth_token_cookies,
+)
 from quickticket.dependencies.state import HTTPClientDep, SettingsDep, StateDep
 from quickticket.oauth import OAuth2Client, OpenIDProvider
 
@@ -85,8 +90,8 @@ def get_claims_registry(provider: OpenIDProviderDep) -> JWTClaimsRegistry:
     return registry
 
 
-def get_id_token(
-    raw: IdTokenRawDep,
+def parse_id_token(
+    raw: Annotated[str, OAuthIdTokenCookie],
     keys: OpenIDProviderJWKsDep,
     registry: JWTClaimsRegistryDep,
 ) -> Token:
@@ -100,28 +105,59 @@ def get_id_token(
     return token
 
 
-def get_or_refresh_id_token(
-    raw_id_token: IdTokenRawDep,
+async def get_or_refresh_id_token(
     keys: OpenIDProviderJWKsDep,
     registry: JWTClaimsRegistryDep,
-) -> Token:
+    client: OAuth2ClientDep,
+    response: Response,
+    # NOTE: below cookies can expire on browser
+    id_token_cookie: Annotated[str | None, OAuthIdTokenCookie] = None,
+    refresh_token_cookie: Annotated[str | None, OAuthRefreshTokenCookie] = None,
+) -> Token | None:
+    if id_token_cookie is not None:
+        # ID token is present, check validity
+        try:
+            return parse_id_token(id_token_cookie, keys, registry)
+        except ExpiredTokenError:
+            log.debug("Ignoring expired ID token")
+        except JoseError as e:
+            log.debug("Ignoring invalid ID token", exc_info=e)
+
+    if refresh_token_cookie is None:
+        return
+
+    log.debug("ID token is expired/invalid, refreshing tokens")
     try:
-        return get_id_token(raw_id_token, keys, registry)
-    except ExpiredTokenError as e:
-        # TODO: automatically refresh on backend? do ID tokens expire?
-        log.debug("", exc_info=True)
-        raise HTTPException(401, "Not authenticated") from e
+        tokens = await client.refresh_token(refresh_token_cookie)
+    except OAuth2Error as e:  # FIXME: is this the correct exception?
+        log.debug("Refreshing ID token failed", exc_info=e)
+        # TODO: redirect to provider for login, then redirect back to request.url?
+        return
+
+    try:
+        id_token = parse_id_token(tokens.id_token, keys, registry)
     except JoseError as e:
-        # Cannot set "WWW-Authenticate": "Bearer" for cookie-based authentication
-        log.debug("", exc_info=True)
-        raise HTTPException(401, "Not authenticated") from e
+        log.debug("OpenID returned invalid ID token", exc_info=e)
+        return
+
+    # CAUTION: a route that returns a Response directly like RedirectResponse
+    #          will bypass these cookies! Blame FastAPI
+    id_token_expires_in = id_token.claims["exp"] - id_token.claims["iat"]
+    set_oauth_token_cookies(response, tokens, id_token_expires_in=id_token_expires_in)
+    # TODO: update user model with latest userinfo
+
+    return id_token
 
 
-AccessTokenRawDep = Annotated[str, Cookie(alias=cookies.COOKIE_OAUTH_ACCESS_TOKEN)]
-IdTokenDep = Annotated[Token, Depends(get_or_refresh_id_token)]
-IdTokenRawDep = Annotated[str, Cookie(alias=cookies.COOKIE_OAUTH_ID_TOKEN)]
+def get_valid_id_token(token: OptionalIdTokenDep) -> Token:
+    if token is None:
+        raise HTTPException(401, "Not authenticated")
+    return token
+
+
 JWTClaimsRegistryDep = Annotated[JWTClaimsRegistry, Depends(get_claims_registry)]
 OAuth2ClientDep = Annotated[OAuth2Client, Depends(get_oauth_client)]
 OpenIDProviderDep = Annotated[OpenIDProvider, Depends(get_openid_provider)]
 OpenIDProviderJWKsDep = Annotated[KeySet, Depends(get_openid_provider_jwks)]
-RefreshTokenRawDep = Annotated[str, Cookie(alias=cookies.COOKIE_OAUTH_REFRESH_TOKEN)]
+OptionalIdTokenDep = Annotated[Token | None, Depends(get_or_refresh_id_token)]
+RequiredIdTokenDep = Annotated[Token, Depends(get_valid_id_token)]

@@ -104,13 +104,13 @@ class OAuth2Client:
         )
 
     @property
-    def discovery(self) -> OpenIDDiscovery:
-        return self.provider.discovery
-
-    @property
-    def _typed_client(self) -> authlib.oauth2.OAuth2Client:
+    def client(self) -> authlib.oauth2.OAuth2Client:
         # HACK: workaround for poor typehinting support in authlib
         return self._client
+
+    @property
+    def discovery(self) -> OpenIDDiscovery:
+        return self.provider.discovery
 
     def create_authorization_url(
         self,
@@ -120,13 +120,12 @@ class OAuth2Client:
     ) -> tuple[str, str]:
         """Create the authorization url and state."""
         log.debug("Creating authorization URL")
-        return self._typed_client.create_authorization_url(
+        return self.client.create_authorization_url(
             str(self.discovery.authorization_endpoint),
             code_verifier=code_verifier,
             nonce=nonce,
         )
 
-    # TODO: parse with pydantic model
     async def fetch_token(
         self,
         *,
@@ -134,7 +133,7 @@ class OAuth2Client:
         code_verifier: str,
     ) -> TokenExchangeResponse:
         log.debug("Fetching token from provider")
-        response = await self._typed_client.fetch_token(
+        response = await self.client.fetch_token(
             authorization_response=authorization_response,
             code_verifier=code_verifier,
         )
@@ -143,7 +142,7 @@ class OAuth2Client:
     def create_logout_url(
         self,
         *,
-        id_token: str,
+        id_token_hint: str,
         post_logout_redirect_uri: str,
     ) -> str:
         """
@@ -158,8 +157,14 @@ class OAuth2Client:
 
         url = URL(self.discovery.end_session_endpoint.encoded_string())
         url.include_query_params(
-            id_token_hint=id_token,
+            id_token_hint=id_token_hint,
             client_id=self.provider.client_id.get_secret_value(),
             post_logout_redirect_uri=post_logout_redirect_uri,
         )
         return str(url)
+
+    async def refresh_token(self, refresh_token: str) -> TokenExchangeResponse:
+        response = await self.client.refresh_token(
+            refresh_token=refresh_token,
+        )
+        return TokenExchangeResponse.model_validate(response)
