@@ -31,4 +31,5 @@ async def root(request: Request):
         "redoc_url": str(request.url_for("redoc_html")),
         "login_url": str(request.url_for("oauth_login")),
         "validate_url": str(request.url_for("oauth_validate")),
+        "logout_url": str(request.url_for("oauth_logout")),
     }
