@@ -1,8 +1,11 @@
+import logging
+
 import authlib.oauth2
-from authlib.common.security import generate_token
 from authlib.integrations.httpx_client import AsyncOAuth2Client
 from fastapi.datastructures import URL
 from pydantic import AnyUrl, BaseModel, Field, Secret
+
+log = logging.getLogger(__name__)
 
 
 class OpenIDDiscovery(BaseModel):
@@ -109,20 +112,30 @@ class OAuth2Client:
         # HACK: workaround for poor typehinting support in authlib
         return self._client
 
-    def create_authorization_url(self, code_verifier: str) -> tuple[str, str]:
+    def create_authorization_url(
+        self,
+        *,
+        code_verifier: str,
+        nonce: str,
+    ) -> tuple[str, str]:
         """Create the authorization url and state."""
+        log.debug("Creating authorization URL")
         return self._typed_client.create_authorization_url(
             str(self.discovery.authorization_endpoint),
             code_verifier=code_verifier,
-            nonce=generate_token(),
+            nonce=nonce,
         )
 
     # TODO: parse with pydantic model
     async def fetch_token(
-        self, request_uri: str, *, code_verifier: str
+        self,
+        *,
+        authorization_response: str,
+        code_verifier: str,
     ) -> TokenExchangeResponse:
+        log.debug("Fetching token from provider")
         response = await self._typed_client.fetch_token(
-            authorization_response=request_uri,
+            authorization_response=authorization_response,
             code_verifier=code_verifier,
         )
         return TokenExchangeResponse.model_validate(response)
@@ -139,12 +152,13 @@ class OAuth2Client:
         https://docs.authlib.org/en/latest/oauth2/client/web/starlette.html#rp-initiated-logout
 
         """
+        log.debug("Creating logout URL")
         if self.discovery.end_session_endpoint is None:
             raise ValueError("Front-channel logout not supported by provider")
 
         url = URL(self.discovery.end_session_endpoint.encoded_string())
         url.include_query_params(
-            id_token=id_token,
+            id_token_hint=id_token,
             client_id=self.provider.client_id.get_secret_value(),
             post_logout_redirect_uri=post_logout_redirect_uri,
         )

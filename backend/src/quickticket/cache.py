@@ -136,7 +136,10 @@ class SQLiteCache(Cache):
         log.debug("cache.pop(%r)", key)
         await self._create_schema()
 
-        c = await self.client.execute("DELETE FROM kv_cache WHERE key = ?1 RETURNING value", (key,))
+        c = await self.client.execute(
+            "DELETE FROM kv_cache WHERE key = ?1 RETURNING value",
+            (key,),
+        )
         row = await c.fetchone()
         await self.client.commit()
 
