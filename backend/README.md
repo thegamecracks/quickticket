@@ -24,7 +24,23 @@ When updating SQLAlchemy models, you can auto-generate a new migration with Alem
 like so:
 
 ```sh
+/backend $ uv run alembic upgrade head  # ensure database is up to date
 /backend $ uv run alembic revision --autogenerate -m "Add account and address tables"
+```
+
+Make sure to set a suitable message and check the resulting migration file
+before committing. Sometimes Alembic will ask for manual adjustments if it
+cannot unambiguously generate the migration.
+
+If you need to redo a migration, you should delete the database and regenerate
+it with `uv run alembic upgrade head`, since autogeneration relies on comparing
+against a live database.
+
+To apply your migration after creating it:
+
+```sh
+/backend $ uv run alembic upgrade head
+/backend $ uv run fastapi dev
 ```
 
 ## Resources
