@@ -23,7 +23,7 @@ def get_state(request: Request) -> State:
 
 
 def get_async_exit_stack(state: StateDep) -> AsyncExitStack:
-    return cast(AsyncExitStack, state.stack)
+    return cast(AsyncExitStack, state.stack)  # set in lifespan function
 
 
 async def get_http_client() -> AsyncIterator[httpx2.AsyncClient]:
