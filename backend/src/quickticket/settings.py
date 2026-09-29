@@ -8,14 +8,15 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class DatabaseSettings(BaseSettings):
     url: Secret[AnyUrl] = Secret(
-        AnyUrl("sqlite+aiosqlite:///file:quickticket.db?cache=shared&uri=true")
+        AnyUrl("sqlite+aiosqlite:///quickticket.db")
     )
     """The SQLAlchemy connection string to use for the database connection.
 
     https://docs.sqlalchemy.org/en/21/core/engines.html
 
     Examples:
-    - sqlite+aiosqlite:///file:path/to/quickticket.db?cache=shared&uri=true
+    - sqlite+aiosqlite:///path/to/quickticket.db
+    - sqlite+aiosqlite:///file::memory:?cache=shared&uri=true
     - postgresql+psycopg://username:password@localhost:5432/mydatabase?sslmode=verify-full
 
     .. note::
