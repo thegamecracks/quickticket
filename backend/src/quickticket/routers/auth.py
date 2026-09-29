@@ -63,6 +63,11 @@ async def oauth_logout(token: TokenDep, cache: CacheDep, client: OAuth2ClientDep
     pass
 
 
+@router.get("/post-logout")
+async def oauth_post_logout():
+    pass
+
+
 def _store_login_attempt(*, code_verifier: str, state: str) -> None:
     _prune_login_cache()
     _login_cache[state] = LoginAttempt(
