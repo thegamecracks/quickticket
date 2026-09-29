@@ -1,9 +1,8 @@
 from collections.abc import AsyncIterator
 from contextlib import AsyncExitStack, asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 
-from quickticket.dependencies import SettingsDep
 from quickticket.routers import auth
 
 
@@ -23,5 +22,11 @@ app.include_router(auth.router, prefix="/auth")
 
 
 @app.get("/")
-async def root(settings: SettingsDep):
-    return {"message": "Hello World"}
+async def root(request: Request):
+    return {
+        "openapi": str(request.url_for("openapi")),
+        "swagger_url": str(request.url_for("swagger_ui_html")),
+        "redoc_url": str(request.url_for("redoc_html")),
+        "login_url": str(request.url_for("oauth_login")),
+        "validate_url": str(request.url_for("oauth_validate")),
+    }
