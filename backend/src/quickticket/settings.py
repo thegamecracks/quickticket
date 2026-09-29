@@ -1,18 +1,9 @@
 # https://fastapi.tiangolo.com/advanced/settings/
-from __future__ import annotations
-
 from typing import Literal, Self
 
 from pydantic import AnyUrl, Field, IPvAnyAddress, NameEmail, Secret, model_validator
 from pydantic_extra_types.domain import DomainStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-
-class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="backend_")
-
-    db: DatabaseSettings
-    smtp: SMTPSettings | None
 
 
 class DatabaseSettings(BaseSettings):
@@ -73,7 +64,11 @@ class SMTPSettings(BaseSettings):
         return self
 
 
-Settings.model_rebuild()
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_prefix="backend_")
+
+    db: DatabaseSettings = DatabaseSettings()
+    smtp: SMTPSettings | None = None
 
 
 if __name__ == "__main__":
