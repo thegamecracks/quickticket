@@ -71,7 +71,7 @@ async def oauth_login(
 @router.get("/callback")
 async def oauth_callback(
     # User-provided
-    state_query: Annotated[str | None, Query(alias="state")],
+    state_query: Annotated[str, Query(alias="state")],
     state_cookie: Annotated[str, OAuthStateCookie],
     nonce_cookie: Annotated[str, OAuthNonceCookie],
     # Dependencies
@@ -153,7 +153,7 @@ async def oauth_logout(
 @router.get("/post-logout")
 async def oauth_post_logout(
     # User-provided
-    state_query: Annotated[str | None, Query(alias="state")],
+    state_query: Annotated[str, Query(alias="state")],
     state_cookie: Annotated[str, OAuthStateCookie],
     # Dependencies
     request: Request,
