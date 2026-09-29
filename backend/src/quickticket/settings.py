@@ -98,8 +98,8 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    cache: CacheSettings = CacheSettings()
-    db: DatabaseSettings = DatabaseSettings()
+    cache: CacheSettings = Field(default_factory=CacheSettings)
+    db: DatabaseSettings = Field(default_factory=DatabaseSettings)
     openid: OpenIDSettings | None = None
     smtp: SMTPSettings | None = None
 
