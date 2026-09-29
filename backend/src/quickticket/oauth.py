@@ -1,5 +1,6 @@
 import authlib.oauth2
 from authlib.integrations.httpx_client import AsyncOAuth2Client
+from fastapi.datastructures import URL
 from pydantic import AnyUrl, BaseModel, Field
 
 
@@ -113,3 +114,21 @@ class OAuth2Client:
             code_verifier=code_verifier,
         )
         return TokenExchangeResponse.model_validate(response)
+
+    def create_logout_url(
+        self,
+        *,
+        id_token: str,
+        post_logout_redirect_uri: str,
+    ) -> str:
+        """https://openid.net/specs/openid-connect-rpinitiated-1_0.html"""
+        if self._provider.end_session_endpoint is None:
+            raise ValueError("Front-channel logout not supported by provider")
+
+        url = URL(self._provider.end_session_endpoint.encoded_string())
+        url.include_query_params(
+            id_token=id_token,
+            client_id=self._typed_client.client_id,
+            post_logout_redirect_uri=post_logout_redirect_uri,
+        )
+        return str(url)

@@ -53,6 +53,7 @@ async def oauth_callback(request: Request, cache: CacheDep, client: OAuth2Client
 
 @router.get("/logout")
 async def oauth_logout(cache: CacheDep, client: OAuth2ClientDep):
+    # client.create_logout_url()
     pass
 
 
