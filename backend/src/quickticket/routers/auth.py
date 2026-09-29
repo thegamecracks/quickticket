@@ -68,8 +68,8 @@ async def oauth_login(
     return cookie_safe_redirect(response, url, 302)
 
 
-@router.get("/callback")
-async def oauth_callback(
+@router.get("/post-login")
+async def oauth_post_login(
     # User-provided
     state_query: Annotated[str, Query(alias="state")],
     state_cookie: Annotated[str, OAuthStateCookie],
