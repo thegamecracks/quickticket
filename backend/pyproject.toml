@@ -47,3 +47,6 @@ entrypoint = "quickticket.app:app"
 # https://pytest-django.readthedocs.io/en/latest/configuring_django.html
 [tool.pytest]
 DJANGO_SETTINGS_MODULE = "quickticket.settings"
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
