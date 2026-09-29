@@ -43,10 +43,5 @@ dev = [
 [tool.fastapi]
 entrypoint = "quickticket.app:app"
 
-# https://docs.pytest.org/en/stable/reference/reference.html#ini-options-ref
-# https://pytest-django.readthedocs.io/en/latest/configuring_django.html
-[tool.pytest]
-DJANGO_SETTINGS_MODULE = "quickticket.settings"
-
 [tool.ruff.lint.isort]
 combine-as-imports = true
