@@ -20,11 +20,10 @@ OAuthRefreshTokenCookie = Cookie(alias=COOKIE_OAUTH_REFRESH_TOKEN)
 OAuthIdTokenCookie = Cookie(alias=COOKIE_OAUTH_ID_TOKEN)
 
 
-def set_oauth_nonce_state_cookies(
+def set_oauth_nonce_cookie(
     response: Response,
-    *,
     nonce: str,
-    state: str,
+    *,
     max_age: int,
 ) -> None:
     response.set_cookie(
@@ -34,6 +33,14 @@ def set_oauth_nonce_state_cookies(
         max_age=max_age,
         secure=True,
     )
+
+
+def set_oauth_state_cookie(
+    response: Response,
+    state: str,
+    *,
+    max_age: int,
+) -> None:
     response.set_cookie(
         COOKIE_OAUTH_STATE,
         state,
@@ -43,14 +50,18 @@ def set_oauth_nonce_state_cookies(
     )
 
 
+def delete_oauth_nonce_state_cookies(response: Response) -> None:
+    response.delete_cookie(COOKIE_OAUTH_NONCE, httponly=True, secure=True)
+    response.delete_cookie(COOKIE_OAUTH_STATE, httponly=True, secure=True)
+
+
 def set_oauth_token_cookies(
     response: Response,
     tokens: TokenExchangeResponse,
     *,
     id_token_expires_in: int,
 ) -> None:
-    response.delete_cookie(COOKIE_OAUTH_NONCE, httponly=True, secure=True)
-    response.delete_cookie(COOKIE_OAUTH_STATE, httponly=True, secure=True)
+    delete_oauth_nonce_state_cookies(response)
     response.set_cookie(
         COOKIE_OAUTH_ACCESS_TOKEN,
         tokens.access_token,
@@ -75,6 +86,7 @@ def set_oauth_token_cookies(
 
 
 def delete_oauth_token_cookies(response: Response) -> None:
+    delete_oauth_nonce_state_cookies(response)
     response.delete_cookie(COOKIE_OAUTH_ACCESS_TOKEN, httponly=True, secure=True)
     response.delete_cookie(COOKIE_OAUTH_REFRESH_TOKEN, httponly=True, secure=True)
     response.delete_cookie(COOKIE_OAUTH_ID_TOKEN, httponly=True, secure=True)

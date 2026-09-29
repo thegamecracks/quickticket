@@ -21,7 +21,8 @@ from quickticket.dependencies.auth import parse_id_token
 from quickticket.dependencies.cookies import (
     cookie_safe_redirect,
     delete_oauth_token_cookies,
-    set_oauth_nonce_state_cookies,
+    set_oauth_nonce_cookie,
+    set_oauth_state_cookie,
     set_oauth_token_cookies,
 )
 from quickticket.oauth import TokenExchangeResponse
@@ -62,12 +63,8 @@ async def oauth_login(
 
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Cookies
     # https://auth0.com/blog/demystifying-oauth-security-state-vs-nonce-vs-pkce/
-    set_oauth_nonce_state_cookies(
-        response,
-        nonce=nonce,
-        state=state,
-        max_age=LOGIN_EXPIRY,
-    )
+    set_oauth_nonce_cookie(response, nonce, max_age=LOGIN_EXPIRY)
+    set_oauth_state_cookie(response, state, max_age=LOGIN_EXPIRY)
     return cookie_safe_redirect(response, url, 302)
 
 
@@ -139,18 +136,34 @@ async def oauth_logout(
     response: Response,
     id_token_hint: Annotated[str | None, OAuthIdTokenCookie] = None,
 ):
+    # TODO: parametrize to go to any frontend page, perhaps using /path cookie?
     if id_token_hint is None:
-        return await oauth_post_logout(request, response)
+        return cookie_safe_redirect(response, request.url_for("root"), 302)
 
-    url = client.create_logout_url(
+    url, state = client.create_logout_url(
         id_token_hint=id_token_hint,  # token can be expired/invalid
         post_logout_redirect_uri=str(request.url_for("oauth_post_logout")),
     )
+    set_oauth_state_cookie(
+        response, state, max_age=LOGIN_EXPIRY
+    )  # could expire earlier
     return cookie_safe_redirect(response, url, 302)
 
 
 @router.get("/post-logout")
-async def oauth_post_logout(request: Request, response: Response):
+async def oauth_post_logout(
+    # User-provided
+    state_query: Annotated[str | None, Query(alias="state")],
+    state_cookie: Annotated[str, OAuthStateCookie],
+    # Dependencies
+    request: Request,
+    response: Response,
+):
     # TODO: parametrize to go to any frontend page, perhaps using /path cookie?
+    if state_query != state_cookie:
+        # Cross-site request forgery
+        log.debug("?state= query mismatch with state cookie, possible CSRF")
+        raise HTTPException(400, "Invalid or expired state")
+
     delete_oauth_token_cookies(response)
     return cookie_safe_redirect(response, request.url_for("root"), 302)
