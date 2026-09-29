@@ -1,7 +1,14 @@
 import { Link, NavLink } from 'react-router'
-import { API_URL } from '../lib/api'
+import { MockUser } from '../lib/mocks'
+import { useAuth } from '../lib/auth'
 
 export default function Navbar() {
+  const { login, logout, user } = useAuth();
+
+  /* To be used when auth is figured out will replace inside of AuthProvider
+   * const login = () => {
+    window.location.assign(`${API_URL}/auth/login`);
+  }*/
 
   return (
     <header className="navbar bg-base-200 shadow-sm">
@@ -19,12 +26,30 @@ export default function Navbar() {
         </NavLink>
       </nav>
       <div className="navbar-end">
-        <button
-          className="btn btn-primary btn-sm"
-          onClick={() => window.location.href = `${API_URL}auth/login`}
-        >
-          Sign in
-        </button>
+        {user ? (
+          <div className="dropdown dropdown-end">
+            <div tabIndex={0} role="button" className="avatar">
+              <div className="w-10 rounded-full">
+                <img alt='avatar' src={'https://ui-avatars.com/api/?name=' + user?.first_name + "+" + user?.last_name} />
+              </div>
+            </div>
+            <ul tabIndex={-1}
+              className="menu dropdown-content bg-base-200 rounded-box z-1 w-52 shadow-sm">
+              <li><a>My Events</a></li>
+              <li><a>My Tickets</a></li>
+              <li><a href='/settings'>Settings</a></li>
+              <li><a onClick={() => logout()}>Logout</a></li>
+            </ul>
+          </div>
+        ) : (
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={() => login(MockUser)}
+          >
+            Sign in
+          </button>
+        )
+        }
       </div>
     </header >
   )

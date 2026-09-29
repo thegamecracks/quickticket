@@ -1,27 +1,21 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import type { User } from "../features/account/types";
 
 interface AuthContextType {
   user: User | null;
   login: (userData: User) => void;
   logout: () => void;
-  loading: boolean;
 }
 
 // https://react.dev/reference/react/createContext
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
-  }, []);
+  const [user, setUser] = useState<User | null>(() => {
+    const stored = localStorage.getItem("user");
+    return stored ? JSON.parse(stored) : null;
+  });
 
   const login = (userData: User) => {
     setUser(userData);
@@ -35,7 +29,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // react 19, do not need .Provider anymore. Removed!
   return (
-    <AuthContext value={{ user, login, logout, loading }
+    <AuthContext value={{ user, login, logout }
     }>
       {children}
     </AuthContext>
