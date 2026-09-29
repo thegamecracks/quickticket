@@ -6,6 +6,22 @@ from pydantic_extra_types.domain import DomainStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+class CacheSettings(BaseSettings):
+    url: Secret[AnyUrl] = Secret(
+        AnyUrl("sqlite:///quickticket-cache.db")
+    )
+    """The connection string to use for caching.
+
+    This supports ``sqlite://`` and ``redis://`` schemes.
+
+    .. note::
+
+       For sqlite, the supported URL syntax is simplified and does **not**
+       follow the same URL syntax supported by :attr:`DatabaseSettings.url`.
+
+    """
+
+
 class DatabaseSettings(BaseSettings):
     url: Secret[AnyUrl] = Secret(
         AnyUrl("sqlite+aiosqlite:///quickticket.db")
@@ -72,6 +88,7 @@ class Settings(BaseSettings):
         extra="allow",
     )
 
+    cache: CacheSettings = CacheSettings()
     db: DatabaseSettings = DatabaseSettings()
     smtp: SMTPSettings | None = None
 
