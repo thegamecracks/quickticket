@@ -73,6 +73,9 @@ class SMTPSettings(BaseSettings):
         return self
 
 
+Settings.model_rebuild()
+
+
 if __name__ == "__main__":
     import json
 
