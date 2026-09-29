@@ -102,9 +102,6 @@ async def oauth_callback(
         log.debug("Cannot validate ID token: %s", e, exc_info=e)
         raise HTTPException(400, "OpenID returned invalid token") from e
 
-    log.debug("id_token.header = %r", id_token.header)
-    log.debug("id_token.claims = %r", id_token.claims)
-
     id_token_nonce = id_token.claims.get("nonce")
     if id_token_nonce != nonce_cookie:
         log.debug(
