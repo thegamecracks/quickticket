@@ -367,7 +367,7 @@ async def get_user_or_redirect(
     request: Request,
 ) -> User:
     if user is None:
-        url = request.url_for("oauth_login", redirect_uri=request.url)
+        url = request.url_for("oauth_login").include_query_params(redirect_uri=request.url)
         cookies.delete_all()
         return cookies.force_redirect(url)
     return user
