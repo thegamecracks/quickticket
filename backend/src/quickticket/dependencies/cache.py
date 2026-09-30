@@ -38,6 +38,7 @@ async def get_cache(
             username=url.username,
             password=url.password,
             ssl=url.scheme == "rediss",
+            decode_responses=True,  # without this, bytes are returned instead of str
         )
         state.cache = await stack.enter_async_context(RedisCache(client))
     else:
