@@ -56,11 +56,17 @@ OAuthPostRedirectCookie = Cookie(
 # )
 OAuthRefreshTokenCookie = Cookie(
     alias=COOKIE_OAUTH_REFRESH_TOKEN,
-    description="The refresh token received after authentication.",
+    description=(
+        "The refresh token received after authentication. "
+        "This token is automatically used by the API to refresh your ID token."
+    ),
 )
 OAuthIdTokenCookie = Cookie(
     alias=COOKIE_OAUTH_ID_TOKEN,
-    description="The ID token received after authentication.",
+    description=(
+        "The ID token received after authentication. "
+        "This token is used to prove your identity."
+    ),
 )
 
 

@@ -52,8 +52,9 @@ async def oauth_login(
 ):
     """Redirect the user to login at the OpenID provider.
 
-    If a valid ID token is provided, or the ID token can be refreshed,
-    this redirects straight to the specified ``redirect_uri``.
+    The ID and refresh token cookies are optional.
+    If a valid ID token is provided or the ID token can be refreshed,
+    this redirects straight to ``redirect_uri``.
 
     """
     if id_token is not None:
@@ -170,8 +171,7 @@ async def oauth_logout(
 ):
     """Redirect the user to logout at the OpenID provider.
 
-    If no ID token is provided, this redirects straight to the specified
-    ``redirect_uri``.
+    If no ID token is provided, this redirects straight to ``redirect_uri``.
 
     """
     if id_token_hint is None:
