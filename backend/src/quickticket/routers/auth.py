@@ -6,22 +6,21 @@ from authlib.common.security import generate_token
 from fastapi import APIRouter, HTTPException, Query, Request
 from joserfc.errors import JoseError
 
-from quickticket.dependencies import (
-    CacheDep,
+from quickticket.dependencies.auth import (
     JWTClaimsRegistryDep,
     OAuth2ClientDep,
     OAuthCookieControllerDep,
     OAuthIdTokenCookie,
-    OAuthNonceCookie,
-    OAuthStateCookie,
     OpenIDProviderJWKsDep,
     OptionalIdTokenDep,
     PostRedirectUriDep,
     RedirectUriDep,
     RegistrationControllerDep,
     RequiredIdTokenDep,
+    parse_id_token,
 )
-from quickticket.dependencies.auth import parse_id_token
+from quickticket.dependencies.cache import CacheDep
+from quickticket.dependencies.cookies import OAuthNonceCookie, OAuthStateCookie
 
 LOGIN_EXPIRY = 1800
 LOGOUT_EXPIRY = 1800

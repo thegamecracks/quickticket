@@ -4,7 +4,8 @@ from contextlib import AsyncExitStack, asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from quickticket.dependencies import OptionalIdTokenDep, SettingsDep
+from quickticket.dependencies.auth import OptionalIdTokenDep
+from quickticket.dependencies.state import SettingsDep
 from quickticket.logging import setup_logging
 from quickticket.routers import auth
 from quickticket.settings import Settings

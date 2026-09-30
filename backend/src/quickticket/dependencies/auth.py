@@ -368,16 +368,3 @@ RegistrationControllerDep = Annotated[
     RegistrationController, Depends(RegistrationController)
 ]
 RequiredIdTokenDep = Annotated[IdToken, Depends(get_valid_id_token)]
-
-__all__ = (
-    "IdToken",
-    "JWTClaimsRegistryDep",
-    "OAuth2ClientDep",
-    "OpenIDProviderDep",
-    "OpenIDProviderJWKsDep",
-    "OptionalIdTokenDep",
-    "PostRedirectUriDep",
-    "RedirectUriDep",
-    "RegistrationControllerDep",
-    "RequiredIdTokenDep",
-)
