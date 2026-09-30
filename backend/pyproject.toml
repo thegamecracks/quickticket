@@ -26,6 +26,7 @@ dependencies = [
     "pydantic-settings>=2.15.0",
     "redis[hiredis]>=8.1.0",
     "sqlalchemy[asyncio]>=2.1.1",
+    "starlette-securecookies>=1.1.1",
     "uvicorn>=0.54.0",
     "whenever>=0.10.5",
 ]

@@ -99,8 +99,7 @@ class SQLiteCache(Cache):
         await self._create_schema()
 
         c = await self.client.execute(
-            "SELECT value FROM kv_cache WHERE key = ?1 AND "
-            "(expires_at IS NULL OR expires_at > ?2)",
+            "SELECT value FROM kv_cache WHERE key = ?1 AND (expires_at IS NULL OR expires_at > ?2)",
             (key, datetime.now(UTC).timestamp()),
         )
         row = await c.fetchone()

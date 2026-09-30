@@ -1,9 +1,15 @@
+import logging
 from collections.abc import AsyncIterator
 from contextlib import AsyncExitStack, asynccontextmanager
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from securecookies import SecureCookiesMiddleware
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
+# from starlette_csrf.middleware import CSRFMiddleware
 from quickticket.dependencies.auth import OptionalIdTokenDep, OptionalUserDep
 from quickticket.dependencies.state import SettingsDep
 from quickticket.errors import ForcedResponse
@@ -13,12 +19,13 @@ from quickticket.settings import Settings
 
 # HACK: bypasses dependency injection
 _settings = Settings()
+setup_logging(verbosity=_settings.log.verbosity)
+log = logging.getLogger(__name__)
 
 
 # https://github.com/fastapi/fastapi/discussions/8054#discussioncomment-11346542
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    setup_logging(verbosity=_settings.log.verbosity)
     async with AsyncExitStack() as stack:
         _app.state.stack = stack
         try:
@@ -30,6 +37,23 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(lifespan=lifespan)
 app.include_router(auth.router, prefix="/auth")
 app.include_router(profile.router, prefix="/profile")
+
+# Middleware in LIFO order; bottom/outermost middleware runs first
+
+# Cookie encryption must be innermost middleware, after other middlewares add their cookies
+cookie_encryption_secrets = _settings.security.cookie_encryption_secrets.get_secret_value()
+if (
+    cookie_encryption_secrets
+    and cookie_encryption_secrets[0] == "Qfw1bmzNtFba8qLxYZzxtEDfgd4P58LCDKiuMezO6lU="
+):
+    log.warning("cookie_encryption_secrets not set, using insecure hardcoded value")
+app.add_middleware(
+    SecureCookiesMiddleware,
+    secrets=cookie_encryption_secrets,
+    cookie_httponly=True,
+    cookie_secure=True,
+)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_settings.frontend.origins,
@@ -37,6 +61,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(GZipMiddleware, compresslevel=1)
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=_settings.security.trusted_proxies)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=_settings.security.allowed_hosts)
+
+# TODO: require frontend to send x-csrftoken header from csrftoken cookie
+# csrf_secret = _settings.security.csrf_secret.get_secret_value()
+# if csrf_secret.startswith("insecure"):
+#     log.warning("csrf_secret not set, using insecure hardcoded value")
+# app.add_middleware(CSRFMiddleware, secret=csrf_secret)
 
 
 @app.exception_handler(ForcedResponse)

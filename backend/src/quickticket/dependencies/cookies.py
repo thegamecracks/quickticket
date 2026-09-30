@@ -57,8 +57,7 @@ OAuthRefreshTokenCookie = Cookie(
 OAuthIdTokenCookie = Cookie(
     alias=COOKIE_OAUTH_ID_TOKEN,
     description=(
-        "The ID token received after authentication. "
-        "This token is used to prove your identity."
+        "The ID token received after authentication. This token is used to prove your identity."
     ),
 )
 
@@ -104,33 +103,17 @@ class OAuthCookieController:
         return self.request.app
 
     def set_nonce(self, nonce: str, *, max_age: int) -> None:
-        self.response.set_cookie(
-            COOKIE_OAUTH_NONCE,
-            nonce,
-            httponly=True,
-            max_age=max_age,
-            path=self.auth_path,
-            secure=True,
-        )
+        self.response.set_cookie(COOKIE_OAUTH_NONCE, nonce, max_age=max_age, path=self.auth_path)
 
     def set_state(self, state: str, *, max_age: int) -> None:
-        self.response.set_cookie(
-            COOKIE_OAUTH_STATE,
-            state,
-            httponly=True,
-            max_age=max_age,
-            path=self.auth_path,
-            secure=True,
-        )
+        self.response.set_cookie(COOKIE_OAUTH_STATE, state, max_age=max_age, path=self.auth_path)
 
     def set_post_redirect(self, url: str | URL, *, max_age: int) -> None:
         self.response.set_cookie(
             COOKIE_OAUTH_POST_REDIRECT,
             str(url),
-            httponly=True,
             max_age=max_age,
             path=self.auth_path,
-            secure=True,
         )
 
     def set_tokens(
@@ -141,64 +124,27 @@ class OAuthCookieController:
         refresh_expires_in: int,
     ) -> None:
         self.delete_flow()
-        # self.response.set_cookie(
-        #     COOKIE_OAUTH_ACCESS_TOKEN,
-        #     access_token,
-        #     httponly=True,
-        #     max_age=int(expires_in),
-        #     secure=True,
-        # )
+        # self.response.set_cookie(COOKIE_OAUTH_ACCESS_TOKEN, access_token, max_age=expires_in)
         self.response.set_cookie(
             COOKIE_OAUTH_REFRESH_TOKEN,
             refresh_token,
-            httponly=True,
-            max_age=int(refresh_expires_in),
-            secure=True,
+            max_age=refresh_expires_in,
         )
         self.response.set_cookie(
             COOKIE_OAUTH_ID_TOKEN,
             id_token.raw,
-            httponly=True,
             max_age=id_token.claims.exp - id_token.claims.iat,
-            secure=True,
         )
 
     def delete_flow(self) -> None:
-        self.response.delete_cookie(
-            COOKIE_OAUTH_NONCE,
-            httponly=True,
-            path=self.auth_path,
-            secure=True,
-        )
-        self.response.delete_cookie(
-            COOKIE_OAUTH_STATE,
-            httponly=True,
-            path=self.auth_path,
-            secure=True,
-        )
-        self.response.delete_cookie(
-            COOKIE_OAUTH_POST_REDIRECT,
-            httponly=True,
-            path=self.auth_path,
-            secure=True,
-        )
+        self.response.delete_cookie(COOKIE_OAUTH_NONCE, path=self.auth_path)
+        self.response.delete_cookie(COOKIE_OAUTH_STATE, path=self.auth_path)
+        self.response.delete_cookie(COOKIE_OAUTH_POST_REDIRECT, path=self.auth_path)
 
     def delete_tokens(self) -> None:
-        # self.response.delete_cookie(
-        #     COOKIE_OAUTH_ACCESS_TOKEN,
-        #     httponly=True,
-        #     secure=True,
-        # )
-        self.response.delete_cookie(
-            COOKIE_OAUTH_REFRESH_TOKEN,
-            httponly=True,
-            secure=True,
-        )
-        self.response.delete_cookie(
-            COOKIE_OAUTH_ID_TOKEN,
-            httponly=True,
-            secure=True,
-        )
+        # self.response.delete_cookie(COOKIE_OAUTH_ACCESS_TOKEN)
+        self.response.delete_cookie(COOKIE_OAUTH_REFRESH_TOKEN)
+        self.response.delete_cookie(COOKIE_OAUTH_ID_TOKEN)
 
     def delete_all(self) -> None:
         self.delete_flow()

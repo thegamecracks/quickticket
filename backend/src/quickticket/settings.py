@@ -7,12 +7,10 @@ from pydantic import (
     AnyUrl,
     Field,
     HttpUrl,
-    IPvAnyAddress,
     NameEmail,
     Secret,
     model_validator,
 )
-from pydantic_extra_types.domain import DomainStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from quickticket.logging import LogVerbosity
@@ -123,8 +121,43 @@ class OpenIDSettings(BaseSettings):
     """
 
 
+class SecuritySettings(BaseSettings):
+    # TODO: validate host / host:port / [ipv6]:port
+    allowed_hosts: list[str] = ["127.0.0.1", "localhost"]
+    """A list of allowed origins for the Host header.
+
+    If ["*"] is given, all hosts are allowed. Not safe!
+
+    """
+    trusted_proxies: list[str] = ["127.0.0.1"]
+    """A list of trusted proxy addresses to accept ``X-Forwarded-*`` headers from.
+
+    If ["*"] is given, all hosts are allowed. Not safe!
+
+    """
+    csrf_secret: Secret[str] = Secret("insecure_qt9u0SCF3DuSJ69ZrqvzlJGTWxx7C5wh")
+    """The secret to use for ``csrftoken`` double submit cookies / ``x-csrf-token`` headers."""
+    cookie_encryption_secrets: Secret[list[str]] = Secret(
+        ["Qfw1bmzNtFba8qLxYZzxtEDfgd4P58LCDKiuMezO6lU="]
+    )
+    """The secrets to use for encrypting cookies.
+
+    Each secret must be a random, 256-bit (32 bytes) base64-encoded string.
+    You can generate a valid secret with::
+
+        uv run python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+
+    The first-most secret is used for encrypting cookies, and extra secrets
+    can be given to allow decrypting older cookies.
+    For example, to set a new secret in your dev environment without losing existing cookies::
+
+        BACKEND__SECURITY__COOKIE_ENCRYPTION_SECRETS=["my-new-secret", "dev-secret"]
+
+    """
+
+
 class SMTPSettings(BaseSettings):
-    host: DomainStr | IPvAnyAddress
+    host: str  # TODO: validate host / host:port / [ipv6]:port
     """The mail server's hostname to connect to."""
     port: int = Field(gt=0, lt=65536)
     """The mail server port to connect to."""
@@ -173,6 +206,7 @@ class Settings(BaseSettings):
     frontend: FrontendSettings = Field(default_factory=FrontendSettings)
     log: LogSettings = Field(default_factory=LogSettings)
     openid: OpenIDSettings | None = None
+    security: SecuritySettings = Field(default_factory=SecuritySettings)
     smtp: SMTPSettings | None = None
 
 
