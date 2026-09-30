@@ -1,5 +1,6 @@
 import logging
-from typing import Annotated, cast
+from datetime import timedelta
+from typing import Annotated, NoReturn, cast
 
 from authlib.integrations.base_client import OAuthError
 from fastapi import Depends, HTTPException, Query, Request, Response
@@ -9,9 +10,11 @@ from joserfc.errors import ExpiredTokenError, JoseError
 from joserfc.jwk import KeySet
 from joserfc.jwt import JWTClaimsRegistry, Token
 from pydantic import HttpUrl
+from pydantic_core import from_json
 
 from quickticket.dependencies import (
     COOKIE_OAUTH_POST_REDIRECT,
+    CacheDep,
     HTTPClientDep,
     OAuthIdTokenCookie,
     OAuthPostRedirectCookie,
@@ -54,18 +57,45 @@ async def get_openid_provider(
 
 
 async def get_openid_provider_jwks(
+    cache: CacheDep,
     http: HTTPClientDep,
     provider: OpenIDProviderDep,
-    state: StateDep,
 ) -> KeySet:
-    keys = cast(KeySet | None, getattr(state, "openid_provider_jwks", None))
-    if keys is not None:
-        return keys
+    async def fail(short: str = "", full: str = "") -> NoReturn:
+        expiry = timedelta(minutes=10)
+        message = (
+            full
+            or f"ERROR: OpenID JWKs are misconfigured, please wait {expiry} minutes to try again. ({short})"
+        )
+        await cache.set(cache_key, message, expiry=expiry)
+        raise HTTPException(500, message)
 
-    log.info("Fetching JWKs from OpenID provider")
-    response = await http.get(str(provider.discovery.jwks_uri))
-    state.openid_provider_jwks = KeySet.import_key_set(response.json())
-    return state.openid_provider_jwks
+    cache_key = "openid-provider-jwks"
+    json = await cache.get(cache_key)
+    cached = json is not None
+
+    if not cached:
+        log.info("Fetching JWKs from OpenID provider")
+
+        response = await http.get(str(provider.discovery.jwks_uri))
+        if not response.is_success:
+            await fail(f"HTTP {response.status_code}")
+
+        json = response.text
+
+    elif json.startswith("ERROR"):
+        await fail(full=json)
+
+    try:
+        keys = KeySet.import_key_set(from_json(json))
+    except ValueError:
+        await fail("JWKs response is malformed")
+
+    if not cached:
+        # Who knows how long to cache this
+        await cache.set(cache_key, json, expiry=timedelta(hours=1))
+
+    return keys
 
 
 def get_oauth_client(
