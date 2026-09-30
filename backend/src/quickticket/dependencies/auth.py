@@ -366,15 +366,16 @@ async def get_user(id_token: OptionalIdTokenDep, session: AsyncSessionDep) -> Us
     return await session.scalar(query)
 
 
-async def get_user_or_redirect(
+async def get_user_or_fail(
     user: OptionalUserDep,
     cookies: OAuthCookieControllerDep,
     request: Request,
 ) -> User:
     if user is None:
-        url = request.url_for("oauth_login").include_query_params(redirect_uri=request.url)
-        cookies.delete_all()
-        return cookies.force_redirect(url)
+        # This dependency may be used in unsafe routes where the body/method is required.
+        # We cannot redirect the user to login without losing their body/method,
+        # and we cannot redirect the user to POST /auth/login, so we must return 401.
+        raise HTTPException(401, "Not authenticated")
     return user
 
 
@@ -388,4 +389,4 @@ PostRedirectUriDep = Annotated[URL, Depends(get_post_redirect_uri)]
 RedirectUriDep = Annotated[URL, Depends(get_allowed_redirect_uri)]
 RegistrationControllerDep = Annotated[RegistrationController, Depends(RegistrationController)]
 RequiredIdTokenDep = Annotated[IdToken, Depends(get_valid_id_token)]
-RequiredUserDep = Annotated[User, Depends(get_user_or_redirect)]
+RequiredUserDep = Annotated[User, Depends(get_user_or_fail)]
