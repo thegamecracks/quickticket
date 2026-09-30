@@ -14,7 +14,6 @@ from pydantic import BaseModel, EmailStr, Field, HttpUrl
 from pydantic_core import from_json
 from sqlalchemy import select
 
-from quickticket.db.models import User
 from quickticket.dependencies.cache import (
     CacheDep,
     SettingsDep,
@@ -29,6 +28,7 @@ from quickticket.dependencies.cookies import (
 )
 from quickticket.dependencies.db import AsyncSessionDep
 from quickticket.dependencies.state import HTTPClientDep
+from quickticket.models import User
 from quickticket.oauth import OAuth2Client, OpenIDProvider
 from quickticket.settings import OpenIDSettings
 
