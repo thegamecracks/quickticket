@@ -14,7 +14,7 @@ from quickticket.dependencies.auth import OptionalIdTokenDep, OptionalUserDep
 from quickticket.dependencies.state import SettingsDep
 from quickticket.errors import ForcedResponse
 from quickticket.logging import setup_logging
-from quickticket.routers import auth, profile
+from quickticket.routers import auth, events, notifications, organizations, profile, venues
 from quickticket.settings import Settings
 
 # HACK: bypasses dependency injection
@@ -36,7 +36,11 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(auth.router, prefix="/auth")
+app.include_router(events.router, prefix="/events")
+app.include_router(notifications.router, prefix="/notifications")
+app.include_router(organizations.router, prefix="/organizations")
 app.include_router(profile.router, prefix="/profile")
+app.include_router(venues.router, prefix="/venues")
 
 # Middleware in LIFO order; bottom/outermost middleware runs first
 
