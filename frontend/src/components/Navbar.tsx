@@ -5,10 +5,7 @@ import { useAuth } from '../lib/auth'
 export default function Navbar() {
   const { login, logout, user } = useAuth();
 
-  /* To be used when auth is figured out will replace inside of AuthProvider
-   * const login = () => {
-    window.location.assign(`${API_URL}/auth/login`);
-  }*/
+
 
   return (
     <header className="navbar bg-base-200 shadow-sm">
