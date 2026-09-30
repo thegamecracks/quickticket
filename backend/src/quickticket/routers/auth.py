@@ -145,7 +145,6 @@ async def oauth_post_login(
 
     # TODO: upsert user model with latest identity
 
-    # FIXME: which cookies need to be saved on browser?
     id_token_expires_in = id_token.claims["exp"] - id_token.claims["iat"]
     set_oauth_token_cookies(response, tokens, id_token_expires_in=id_token_expires_in)
     return cookie_safe_redirect(response, redirect_uri)
