@@ -20,7 +20,7 @@ class CacheSettings(BaseSettings):
     url: Secret[AnyUrl] = Secret(AnyUrl("sqlite:///quickticket-cache.db"))
     """The connection string to use for caching.
 
-    This supports ``sqlite://`` and ``redis://`` schemes.
+    This supports ``sqlite://``, ``redis://``, and  ``rediss://`` (SSL) schemes.
 
     .. note::
 

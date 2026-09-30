@@ -29,7 +29,7 @@ async def get_cache(
             uri=True,
         )
         state.cache = await stack.enter_async_context(SQLiteCache(conn))
-    elif url.scheme == "redis":
+    elif url.scheme in ("redis", "rediss"):
         assert url.host is not None
         assert url.port is not None
         client = Redis(
@@ -37,7 +37,7 @@ async def get_cache(
             port=url.port,
             username=url.username,
             password=url.password,
-            # TODO: support ssl
+            ssl=url.scheme == "rediss",
         )
         state.cache = await stack.enter_async_context(RedisCache(client))
     else:
