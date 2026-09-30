@@ -80,10 +80,10 @@ async def oauth_login(
 @router.get(
     "/post-login",
     responses={
-        307: {"description": "The user successfully logged in."},
+        303: {"description": "The user successfully logged in."},
         400: {"description": "The token exchange is invalid."},
     },
-    status_code=307,
+    status_code=303,
 )
 async def oauth_post_login(
     # Required
@@ -145,7 +145,7 @@ async def oauth_post_login(
         refresh_expires_in=tokens.refresh_expires_in,
         id_token=id_token,
     )
-    return registration.force_redirect(redirect_uri, 307)
+    return registration.force_redirect(redirect_uri, 303)
 
 
 @router.get("/validate")
