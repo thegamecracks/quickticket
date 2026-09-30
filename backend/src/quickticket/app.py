@@ -38,6 +38,9 @@ app = FastAPI(
     lifespan=lifespan,
     title="QuickTicket",
     description="",
+    openapi_url=_settings.openapi.url,
+    docs_url=_settings.openapi.swagger_url,
+    redoc_url=_settings.openapi.redoc_url,
     # https://swagger.io/docs/open-source-tools/swagger-ui/usage/configuration/
     # set withCredentials to allow cross-origin cookies for OpenID
     swagger_ui_parameters={"withCredentials": True},

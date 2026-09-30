@@ -101,6 +101,19 @@ class LogSettings(BaseSettings):
     """The logging verbosity starting from 0, where larger numbers mean greater verbosity."""
 
 
+class OpenAPISettings(BaseSettings):
+    url: str | None = "/openapi.json"
+    """The route where the OpenAPI schema will be hosted.
+
+    If empty, the route will be disabled, and the Swagger UI docs and ReDoc will also be disabled.
+
+    """
+    swagger_url: str = "/docs"
+    """The route where Swagger UI documentation will be hosted."""
+    redoc_url: str = "/redoc"
+    """The route where ReDoc documentation will be hosted."""
+
+
 class OpenIDSettings(BaseSettings):
     client_id: Secret[str]
     """The client ID for the OpenID Connect provider."""
@@ -205,6 +218,7 @@ class Settings(BaseSettings):
     db: DatabaseSettings = Field(default_factory=DatabaseSettings)
     frontend: FrontendSettings = Field(default_factory=FrontendSettings)
     log: LogSettings = Field(default_factory=LogSettings)
+    openapi: OpenAPISettings = Field(default_factory=OpenAPISettings)
     openid: OpenIDSettings | None = None
     security: SecuritySettings = Field(default_factory=SecuritySettings)
     smtp: SMTPSettings | None = None
