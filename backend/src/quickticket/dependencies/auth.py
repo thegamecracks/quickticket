@@ -357,12 +357,32 @@ class RegistrationController:
         # TODO: set admin flag or enum on user
 
 
+async def get_user(id_token: RequiredIdTokenDep, session: AsyncSessionDep) -> User | None:
+    query = select(User).where(User.openid_sub == id_token.claims.sub)
+    return await session.scalar(query)
+
+
+async def get_user_or_redirect(
+    user: OptionalUserDep,
+    cookies: OAuthCookieControllerDep,
+    request: Request,
+) -> User:
+    if user is None:
+        # Uh oh, account deleted or openid_sub changed? Prompt for login
+        url = request.url_for("oauth_login", redirect_uri=request.url)
+        cookies.delete_all()
+        return cookies.force_redirect(url)
+    return user
+
+
 JWTClaimsRegistryDep = Annotated[JWTClaimsRegistry, Depends(get_claims_registry)]
 OAuth2ClientDep = Annotated[OAuth2Client, Depends(get_oauth_client)]
 OpenIDProviderDep = Annotated[OpenIDProvider, Depends(get_openid_provider)]
 OpenIDProviderJWKsDep = Annotated[KeySet, Depends(get_openid_provider_jwks)]
 OptionalIdTokenDep = Annotated[IdToken | None, Depends(get_or_refresh_id_token)]
+OptionalUserDep = Annotated[User | None, Depends(get_user)]
 PostRedirectUriDep = Annotated[URL, Depends(get_post_redirect_uri)]
 RedirectUriDep = Annotated[URL, Depends(get_allowed_redirect_uri)]
 RegistrationControllerDep = Annotated[RegistrationController, Depends(RegistrationController)]
 RequiredIdTokenDep = Annotated[IdToken, Depends(get_valid_id_token)]
+RequiredUserDep = Annotated[User, Depends(get_user_or_redirect)]

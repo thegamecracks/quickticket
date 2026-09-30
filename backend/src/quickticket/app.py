@@ -4,11 +4,11 @@ from contextlib import AsyncExitStack, asynccontextmanager
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
-from quickticket.dependencies.auth import OptionalIdTokenDep
+from quickticket.dependencies.auth import OptionalIdTokenDep, OptionalUserDep
 from quickticket.dependencies.state import SettingsDep
 from quickticket.errors import ForcedResponse
 from quickticket.logging import setup_logging
-from quickticket.routers import auth
+from quickticket.routers import auth, profile
 from quickticket.settings import Settings
 
 # HACK: bypasses dependency injection
@@ -29,6 +29,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(auth.router, prefix="/auth")
+app.include_router(profile.router, prefix="/profile")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_settings.frontend.origins,
@@ -45,7 +46,12 @@ def send_forced_response(request: Request, exc: ForcedResponse) -> Response:
 
 
 @app.get("/")
-async def root(request: Request, settings: SettingsDep, token: OptionalIdTokenDep):
+async def root(
+    request: Request,
+    settings: SettingsDep,
+    token: OptionalIdTokenDep,
+    user: OptionalUserDep,
+):
     redirect_uri = str(settings.frontend.default_redirect_uri or request.base_url)
     return {
         "auth": {
@@ -55,6 +61,7 @@ async def root(request: Request, settings: SettingsDep, token: OptionalIdTokenDe
             "logout_url": str(request.url_for("oauth_logout")),
             "id_token": token,
         },
+        "profile": user and await profile.profile_me(user),
         "settings": {
             "default_redirect_uri": redirect_uri,
             "origins": settings.frontend.origins,
