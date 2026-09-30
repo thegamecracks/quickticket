@@ -9,6 +9,7 @@ for project management.
 
 ```sh
 /        $ cd backend
+/backend $ uv run alembic upgrade head  # create/migrate database from .env
 /backend $ uv run fastapi dev
 ```
 
