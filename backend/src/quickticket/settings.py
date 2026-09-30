@@ -1,4 +1,5 @@
 # https://fastapi.tiangolo.com/advanced/settings/
+from fnmatch import fnmatch
 from typing import Literal, Self
 
 from fastapi.datastructures import URL
@@ -50,14 +51,22 @@ class DatabaseSettings(BaseSettings):
 
 
 class FrontendSettings(BaseSettings):
+    default_redirect_uri: HttpUrl = HttpUrl("http://127.0.0.1:8000/")
+    """The default URL to redirect to if no origin is specified.
+
+    Must be matched by one of the patterns in :attr:`redirect_uris`.
+
+    """
     redirect_uris: list[HttpUrl] = [
         HttpUrl("http://127.0.0.1:5173/*"),
         HttpUrl("http://localhost:5173/*"),
+        HttpUrl("http://127.0.0.1:8000/*"),
+        HttpUrl("http://localhost:8000/*"),
     ]
     """A list of URL glob patterns allowed to be used in ``/auth/*?redirect_uri=``
     query parameters.
 
-    The base URLs are automatically added to CORS headers.
+    URL origins are automatically added to CORS headers.
 
     """
 
@@ -69,6 +78,21 @@ class FrontendSettings(BaseSettings):
             for uri in self.redirect_uris
             if uri.host is not None
         ]
+
+    def match_redirect_uri(self, uri: str | URL | AnyUrl) -> AnyUrl | None:
+        """Return the first origin that matches the URL, if any."""
+        return next(
+            (pat for pat in self.redirect_uris if fnmatch(str(uri), str(pat))),
+            None,
+        )
+
+    @model_validator(mode="after")
+    def is_matching_default_redirect_uri(self) -> Self:
+        if not self.match_redirect_uri(self.default_redirect_uri):
+            raise ValueError(
+                "default_redirect_uri does not match any pattern in redirect_uris"
+            )
+        return self
 
 
 class OpenIDSettings(BaseSettings):

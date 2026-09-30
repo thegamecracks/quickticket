@@ -9,17 +9,38 @@ from quickticket.oauth import TokenExchangeResponse
 
 COOKIE_OAUTH_NONCE = "oauth-nonce"
 COOKIE_OAUTH_STATE = "oauth-state"
+COOKIE_OAUTH_POST_REDIRECT = "oauth-post-redirect"
 COOKIE_OAUTH_ACCESS_TOKEN = "oauth-access-token"
 COOKIE_OAUTH_REFRESH_TOKEN = "oauth-refresh-token"
 COOKIE_OAUTH_ID_TOKEN = "oauth-id-token"
 
-OAuthNonceCookie = Cookie(alias=COOKIE_OAUTH_NONCE)
-OAuthStateCookie = Cookie(alias=COOKIE_OAUTH_STATE)
-OAuthAccessTokenCookie = Cookie(alias=COOKIE_OAUTH_ACCESS_TOKEN)
-OAuthRefreshTokenCookie = Cookie(alias=COOKIE_OAUTH_REFRESH_TOKEN)
-OAuthIdTokenCookie = Cookie(alias=COOKIE_OAUTH_ID_TOKEN)
+OAuthNonceCookie = Cookie(
+    alias=COOKIE_OAUTH_NONCE,
+    description="The OAuth2 flow nonce for login.",
+)
+OAuthStateCookie = Cookie(
+    alias=COOKIE_OAUTH_STATE,
+    description="The OAuth2 flow state for login/logout.",
+)
+OAuthPostRedirectCookie = Cookie(
+    alias=COOKIE_OAUTH_POST_REDIRECT,
+    description="The URL to redirect after a successful login/logout.",
+)
+OAuthAccessTokenCookie = Cookie(
+    alias=COOKIE_OAUTH_ACCESS_TOKEN,
+    description="The access token received after authentication.",
+)
+OAuthRefreshTokenCookie = Cookie(
+    alias=COOKIE_OAUTH_REFRESH_TOKEN,
+    description="The refresh token received after authentication.",
+)
+OAuthIdTokenCookie = Cookie(
+    alias=COOKIE_OAUTH_ID_TOKEN,
+    description="The ID token received after authentication.",
+)
 
 
+# TODO: restrict flow cookies by /auth path
 def set_oauth_nonce_cookie(
     response: Response,
     nonce: str,
@@ -50,9 +71,25 @@ def set_oauth_state_cookie(
     )
 
 
-def delete_oauth_nonce_state_cookies(response: Response) -> None:
+def set_oauth_post_redirect_cookie(
+    response: Response,
+    url: str | URL,
+    *,
+    max_age: int,
+) -> None:
+    response.set_cookie(
+        COOKIE_OAUTH_POST_REDIRECT,
+        str(url),
+        httponly=True,
+        max_age=max_age,
+        secure=True,
+    )
+
+
+def delete_oauth_flow_cookies(response: Response) -> None:
     response.delete_cookie(COOKIE_OAUTH_NONCE, httponly=True, secure=True)
     response.delete_cookie(COOKIE_OAUTH_STATE, httponly=True, secure=True)
+    response.delete_cookie(COOKIE_OAUTH_POST_REDIRECT, httponly=True, secure=True)
 
 
 def set_oauth_token_cookies(
@@ -61,7 +98,7 @@ def set_oauth_token_cookies(
     *,
     id_token_expires_in: int,
 ) -> None:
-    delete_oauth_nonce_state_cookies(response)
+    delete_oauth_flow_cookies(response)
     response.set_cookie(
         COOKIE_OAUTH_ACCESS_TOKEN,
         tokens.access_token,
@@ -85,8 +122,8 @@ def set_oauth_token_cookies(
     )
 
 
-def delete_oauth_token_cookies(response: Response) -> None:
-    delete_oauth_nonce_state_cookies(response)
+def delete_all_oauth_cookies(response: Response) -> None:
+    delete_oauth_flow_cookies(response)
     response.delete_cookie(COOKIE_OAUTH_ACCESS_TOKEN, httponly=True, secure=True)
     response.delete_cookie(COOKIE_OAUTH_REFRESH_TOKEN, httponly=True, secure=True)
     response.delete_cookie(COOKIE_OAUTH_ID_TOKEN, httponly=True, secure=True)

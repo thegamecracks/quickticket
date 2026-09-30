@@ -2,14 +2,18 @@ import logging
 from typing import Annotated, cast
 
 from authlib.integrations.base_client import OAuthError
-from fastapi import Depends, HTTPException, Request, Response
+from fastapi import Depends, HTTPException, Query, Request, Response
+from fastapi.datastructures import URL
 from joserfc import jwt
 from joserfc.errors import ExpiredTokenError, JoseError
 from joserfc.jwk import KeySet
 from joserfc.jwt import JWTClaimsRegistry, Token
+from pydantic import HttpUrl
 
 from quickticket.dependencies.cookies import (
+    COOKIE_OAUTH_POST_REDIRECT,
     OAuthIdTokenCookie,
+    OAuthPostRedirectCookie,
     OAuthRefreshTokenCookie,
     set_oauth_token_cookies,
 )
@@ -158,9 +162,52 @@ def get_valid_id_token(token: OptionalIdTokenDep) -> Token:
     return token
 
 
+def get_allowed_redirect_uri(
+    settings: SettingsDep,
+    redirect_uri: Annotated[
+        HttpUrl | None,
+        Query(
+            description=(
+                "The URL to redirect after a successful login/logout. "
+                "Must match one of the whitelisted ``redirect_uris`` on the server."
+            ),
+        ),
+    ] = None,
+) -> URL:
+    if redirect_uri is None:
+        return URL(str(settings.frontend.default_redirect_uri))
+    elif not settings.frontend.match_redirect_uri(redirect_uri):
+        raise HTTPException(400, "Invalid redirect_uri= query parameter")
+    return URL(str(redirect_uri))
+
+
+def get_post_redirect_uri(
+    settings: SettingsDep,
+    redirect_cookie: Annotated[HttpUrl | None, OAuthPostRedirectCookie] = None,
+) -> URL:
+    if redirect_cookie is None:
+        return URL(str(settings.frontend.default_redirect_uri))
+    elif not settings.frontend.match_redirect_uri(redirect_cookie):
+        raise HTTPException(400, f"Invalid {COOKIE_OAUTH_POST_REDIRECT} cookie")
+    return URL(str(redirect_cookie))
+
+
 JWTClaimsRegistryDep = Annotated[JWTClaimsRegistry, Depends(get_claims_registry)]
 OAuth2ClientDep = Annotated[OAuth2Client, Depends(get_oauth_client)]
 OpenIDProviderDep = Annotated[OpenIDProvider, Depends(get_openid_provider)]
 OpenIDProviderJWKsDep = Annotated[KeySet, Depends(get_openid_provider_jwks)]
 OptionalIdTokenDep = Annotated[Token | None, Depends(get_or_refresh_id_token)]
+PostRedirectUriDep = Annotated[URL, Depends(get_post_redirect_uri)]
+RedirectUriDep = Annotated[URL, Depends(get_allowed_redirect_uri)]
 RequiredIdTokenDep = Annotated[Token, Depends(get_valid_id_token)]
+
+__all__ = (
+    "JWTClaimsRegistryDep",
+    "OAuth2ClientDep",
+    "OpenIDProviderDep",
+    "OpenIDProviderJWKsDep",
+    "OptionalIdTokenDep",
+    "PostRedirectUriDep",
+    "RedirectUriDep",
+    "RequiredIdTokenDep",
+)

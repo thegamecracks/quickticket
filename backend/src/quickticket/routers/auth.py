@@ -15,19 +15,22 @@ from quickticket.dependencies import (
     OAuthStateCookie,
     OpenIDProviderJWKsDep,
     OptionalIdTokenDep,
+    PostRedirectUriDep,
+    RedirectUriDep,
     RequiredIdTokenDep,
 )
 from quickticket.dependencies.auth import parse_id_token
 from quickticket.dependencies.cookies import (
     cookie_safe_redirect,
-    delete_oauth_token_cookies,
+    delete_all_oauth_cookies,
     set_oauth_nonce_cookie,
+    set_oauth_post_redirect_cookie,
     set_oauth_state_cookie,
     set_oauth_token_cookies,
 )
-from quickticket.oauth import TokenExchangeResponse
 
 LOGIN_EXPIRY = 1800
+LOGOUT_EXPIRY = 1800
 CACHE_STATE_TO_CODE_VERIFIER = "oauth-state-{}"
 
 router = APIRouter()
@@ -35,17 +38,26 @@ log = logging.getLogger(__name__)
 
 
 # https://docs.authlib.org/en/latest/oauth2/client/http/index.html#oidc-session
-@router.get("/login")
+@router.get(
+    "/login",
+    responses={307: {"description": "The user is being redirected."}},
+    status_code=307,
+)
 async def oauth_login(
+    id_token: OptionalIdTokenDep,
+    redirect_uri: RedirectUriDep,
+    response: Response,
     client: OAuth2ClientDep,
     cache: CacheDep,
-    id_token: OptionalIdTokenDep,
-    request: Request,
-    response: Response,
 ):
-    # TODO: parametrize to go to any frontend page, perhaps using /path cookie?
+    """Redirect the user to login at the OpenID provider.
+
+    If a valid ID token is provided, or the ID token can be refreshed,
+    this redirects straight to the specified ``redirect_uri``.
+
+    """
     if id_token is not None:
-        return cookie_safe_redirect(response, request.url_for("oauth_validate"))
+        return cookie_safe_redirect(response, redirect_uri)
 
     # Proof Key for Code Exchange (PKCE)
     code_verifier = generate_token(48)
@@ -65,23 +77,39 @@ async def oauth_login(
     # https://auth0.com/blog/demystifying-oauth-security-state-vs-nonce-vs-pkce/
     set_oauth_nonce_cookie(response, nonce, max_age=LOGIN_EXPIRY)
     set_oauth_state_cookie(response, state, max_age=LOGIN_EXPIRY)
-    return cookie_safe_redirect(response, url, 302)
+    set_oauth_post_redirect_cookie(response, redirect_uri, max_age=LOGIN_EXPIRY)
+    return cookie_safe_redirect(response, url)
 
 
-@router.get("/post-login")
+@router.get(
+    "/post-login",
+    responses={
+        307: {"description": "The user successfully logged in."},
+        400: {"description": "The token exchange is invalid."},
+    },
+    status_code=307,
+)
 async def oauth_post_login(
-    # User-provided
-    state_query: Annotated[str, Query(alias="state")],
+    # Required
+    state_query: Annotated[
+        str,
+        Query(
+            alias="state",
+            description="The OAuth2 flow state to validate against the cookie.",
+        ),
+    ],
     state_cookie: Annotated[str, OAuthStateCookie],
     nonce_cookie: Annotated[str, OAuthNonceCookie],
     # Dependencies
+    cache: CacheDep,
+    client: OAuth2ClientDep,
+    request: Request,
     keys: OpenIDProviderJWKsDep,
     registry: JWTClaimsRegistryDep,
-    cache: CacheDep,
-    request: Request,
     response: Response,
-    client: OAuth2ClientDep,
-) -> TokenExchangeResponse:
+    # Optional
+    redirect_uri: PostRedirectUriDep,
+):
     if state_query != state_cookie:
         # Cross-site request forgery
         log.debug("?state= query mismatch with state cookie, possible CSRF")
@@ -119,49 +147,72 @@ async def oauth_post_login(
     # FIXME: which cookies need to be saved on browser?
     id_token_expires_in = id_token.claims["exp"] - id_token.claims["iat"]
     set_oauth_token_cookies(response, tokens, id_token_expires_in=id_token_expires_in)
-
-    # TODO: parametrize to go to any frontend page, perhaps using /path cookie?
-    return tokens
+    return cookie_safe_redirect(response, redirect_uri)
 
 
 @router.get("/validate")
 async def oauth_validate(token: RequiredIdTokenDep):
+    """Verify authentication and return the ID token's header and claims."""
     return token
 
 
-@router.get("/logout")
+@router.get(
+    "/logout",
+    responses={307: {"description": "The user is being redirected."}},
+    status_code=307,
+)
 async def oauth_logout(
+    response: Response,
+    redirect_uri: RedirectUriDep,
     client: OAuth2ClientDep,
     request: Request,
-    response: Response,
     id_token_hint: Annotated[str | None, OAuthIdTokenCookie] = None,
 ):
-    # TODO: parametrize to go to any frontend page, perhaps using /path cookie?
+    """Redirect the user to logout at the OpenID provider.
+
+    If no ID token is provided, this redirects straight to the specified
+    ``redirect_uri``.
+
+    """
     if id_token_hint is None:
-        return cookie_safe_redirect(response, request.url_for("root"), 302)
+        return cookie_safe_redirect(response, redirect_uri)
 
     url, state = client.create_logout_url(
         id_token_hint=id_token_hint,  # token can be expired/invalid
         post_logout_redirect_uri=str(request.url_for("oauth_post_logout")),
     )
-    set_oauth_state_cookie(response, state, max_age=LOGIN_EXPIRY)
-    return cookie_safe_redirect(response, url, 302)
+    set_oauth_state_cookie(response, state, max_age=LOGOUT_EXPIRY)
+    set_oauth_post_redirect_cookie(response, redirect_uri, max_age=LOGOUT_EXPIRY)
+    return cookie_safe_redirect(response, url)
 
 
-@router.get("/post-logout")
+@router.get(
+    "/post-logout",
+    responses={
+        307: {"description": "The user successfully logged out."},
+        400: {"description": "The state is invalid."},
+    },
+    status_code=307,
+)
 async def oauth_post_logout(
-    # User-provided
-    state_query: Annotated[str, Query(alias="state")],
+    # Required
+    state_query: Annotated[
+        str,
+        Query(
+            alias="state",
+            description="The OAuth2 flow state to validate against the cookie.",
+        ),
+    ],
     state_cookie: Annotated[str, OAuthStateCookie],
     # Dependencies
-    request: Request,
     response: Response,
+    # Optional
+    redirect_uri: PostRedirectUriDep,
 ):
-    # TODO: parametrize to go to any frontend page, perhaps using /path cookie?
     if state_query != state_cookie:
         # Cross-site request forgery
         log.debug("?state= query mismatch with state cookie, possible CSRF")
         raise HTTPException(400, "Invalid or expired state")
 
-    delete_oauth_token_cookies(response)
-    return cookie_safe_redirect(response, request.url_for("root"), 302)
+    delete_all_oauth_cookies(response)
+    return cookie_safe_redirect(response, redirect_uri)
