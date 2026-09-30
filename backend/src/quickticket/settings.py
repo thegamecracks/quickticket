@@ -137,9 +137,9 @@ class SecuritySettings(BaseSettings):
     """
     csrf_secret: Secret[str] = Secret("insecure_qt9u0SCF3DuSJ69ZrqvzlJGTWxx7C5wh")
     """The secret to use for ``csrftoken`` double submit cookies / ``x-csrf-token`` headers."""
-    cookie_encryption_secrets: Secret[list[str]] = Secret(
-        ["Qfw1bmzNtFba8qLxYZzxtEDfgd4P58LCDKiuMezO6lU="]
-    )
+    cookie_encryption_secrets: list[Secret[str]] = [
+        Secret("Qfw1bmzNtFba8qLxYZzxtEDfgd4P58LCDKiuMezO6lU=")
+    ]
     """The secrets to use for encrypting cookies.
 
     Each secret must be a random, 256-bit (32 bytes) base64-encoded string.
@@ -151,7 +151,7 @@ class SecuritySettings(BaseSettings):
     can be given to allow decrypting older cookies.
     For example, to set a new secret in your dev environment without losing existing cookies::
 
-        BACKEND__SECURITY__COOKIE_ENCRYPTION_SECRETS=["my-new-secret", "dev-secret"]
+        BACKEND__SECURITY__COOKIE_ENCRYPTION_SECRETS=["my-new-base64-secret", "Qfw1bmzNtFba8qLxYZzxtEDfgd4P58LCDKiuMezO6lU="]
 
     """
 

@@ -41,15 +41,12 @@ app.include_router(profile.router, prefix="/profile")
 # Middleware in LIFO order; bottom/outermost middleware runs first
 
 # Cookie encryption must be innermost middleware, after other middlewares add their cookies
-cookie_encryption_secrets = _settings.security.cookie_encryption_secrets.get_secret_value()
-if (
-    cookie_encryption_secrets
-    and cookie_encryption_secrets[0] == "Qfw1bmzNtFba8qLxYZzxtEDfgd4P58LCDKiuMezO6lU="
-):
+cookie_secrets = [s.get_secret_value() for s in _settings.security.cookie_encryption_secrets]
+if cookie_secrets and cookie_secrets[0] == "Qfw1bmzNtFba8qLxYZzxtEDfgd4P58LCDKiuMezO6lU=":
     log.warning("cookie_encryption_secrets not set, using insecure hardcoded value")
 app.add_middleware(
     SecureCookiesMiddleware,
-    secrets=cookie_encryption_secrets,
+    secrets=cookie_secrets,
     cookie_httponly=True,
     cookie_secure=True,
 )
