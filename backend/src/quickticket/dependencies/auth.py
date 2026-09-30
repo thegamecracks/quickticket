@@ -10,7 +10,7 @@ from joserfc import jwt
 from joserfc.errors import ExpiredTokenError, JoseError
 from joserfc.jwk import KeySet
 from joserfc.jwt import JWTClaimsRegistry
-from pydantic import BaseModel, EmailStr, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl
 from pydantic_core import from_json
 from sqlalchemy import select
 from sqlalchemy.orm import load_only
@@ -137,12 +137,16 @@ def get_claims_registry(provider: OpenIDProviderDep) -> JWTClaimsRegistry:
 
 
 class IdTokenHeader(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     alg: str
     typ: str
     kid: str
 
 
 class IdTokenClaims(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     # FIXME: likely needs looser validation to support other providers
     exp: int
     iat: int

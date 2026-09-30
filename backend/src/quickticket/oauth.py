@@ -4,13 +4,15 @@ import authlib.oauth2
 from authlib.common.security import generate_token
 from authlib.integrations.httpx_client import AsyncOAuth2Client
 from fastapi.datastructures import URL
-from pydantic import AnyUrl, BaseModel, Field, Secret
+from pydantic import AnyUrl, BaseModel, ConfigDict, Field, Secret
 
 log = logging.getLogger(__name__)
 
 
 class OpenIDDiscovery(BaseModel):
     """https://aboutauth.com/docs/learn/oidc/openid-connect-discovery/"""
+
+    model_config = ConfigDict(extra="allow")
 
     # Required
     issuer: AnyUrl
@@ -62,6 +64,8 @@ class OpenIDProvider(BaseModel):
 # https://openid.net/specs/openid-connect-core-1_0.html#rfc.section.3.2.2.5
 # Derived from Keycloak response
 class TokenExchangeResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     access_token: str  # Secret[str]
     expires_in: int
     refresh_expires_in: int
