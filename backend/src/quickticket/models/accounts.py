@@ -14,10 +14,20 @@ class User(Base):
 
     id: Mapped[UUID] = mapped_column("account_id", primary_key=True, default=uuid4)
     created_at: Mapped[timestamp]
+
+    # Fields derived from provider
     display_name: Mapped[str_128]
     first_name: Mapped[str_128]
     last_name: Mapped[str_128]
     email: Mapped[str_256] = mapped_column(unique=True)
+    openid_sub: Mapped[str | None] = mapped_column(unique=True)
+    """The provider's unique identifier for this account.
+
+    When a user logs in via OpenID Connect, the ``sub`` claim maps to this column.
+    This will impose lock-in between providers due to complications in migrating
+    between provider account IDs.
+
+    """
 
     addresses: Mapped[list[Address]] = relationship(back_populates="user")
 

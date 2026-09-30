@@ -315,9 +315,14 @@ class RegistrationController:
         id_token: IdToken,
     ) -> None:
         claims = id_token.claims
-        # FIXME: email is unstable, link by sub claim instead
-        query = select(User).where(User.email == claims.email)
-        user = await self.session.scalar(query) or User()
+        query = select(User).where(User.openid_sub == claims.sub)
+        user = await self.session.scalar(query)
+        if user is None:
+            # FIXME: no guarantee two users don't share same email, prompt recommended
+            query = select(User).where(User.email == claims.email)
+            user = await self.session.scalar(query)
+        if user is None:
+            user = User()
 
         self._update_user_with_claims(user, claims)
         self.session.add(user)
