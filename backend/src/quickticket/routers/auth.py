@@ -26,7 +26,7 @@ LOGIN_EXPIRY = 1800
 LOGOUT_EXPIRY = 1800
 CACHE_STATE_TO_CODE_VERIFIER = "oauth-state-{}"
 
-router = APIRouter()
+router = APIRouter(tags=["Authentication"])
 log = logging.getLogger(__name__)
 
 

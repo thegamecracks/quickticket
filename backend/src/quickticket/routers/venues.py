@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter
 
-router = APIRouter()
+router = APIRouter(tags=["Venues"])
 log = logging.getLogger(__name__)
 
 

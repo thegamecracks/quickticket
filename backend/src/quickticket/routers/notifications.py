@@ -2,7 +2,7 @@ import logging
 
 from fastapi import APIRouter, WebSocket
 
-router = APIRouter()
+router = APIRouter(tags=["Notifications"])
 log = logging.getLogger(__name__)
 
 

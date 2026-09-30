@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from quickticket.dependencies.auth import RequiredUserDep
 
-router = APIRouter()
+router = APIRouter(tags=["Profiles"])
 log = logging.getLogger(__name__)
 
 
