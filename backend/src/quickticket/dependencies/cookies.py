@@ -1,14 +1,17 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
 from dataclasses import dataclass
 from functools import cached_property
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 from urllib.parse import quote
 
 from fastapi import Cookie, Depends, FastAPI, Request, Response
 from fastapi.datastructures import URL
 from starlette.background import BackgroundTask
 
-from quickticket.oauth import TokenExchangeResponse
+if TYPE_CHECKING:
+    from quickticket.dependencies import IdToken
 
 __all__ = (
     # "COOKIE_OAUTH_ACCESS_TOKEN",
@@ -148,30 +151,31 @@ class OAuthCookieController:
 
     def set_tokens(
         self,
-        tokens: TokenExchangeResponse,
         *,
-        id_token_expires_in: int,
+        id_token: IdToken,
+        refresh_token: str,
+        refresh_expires_in: int,
     ) -> None:
         self.delete_flow()
         # self.response.set_cookie(
         #     COOKIE_OAUTH_ACCESS_TOKEN,
-        #     tokens.access_token,
+        #     access_token,
         #     httponly=True,
-        #     max_age=int(tokens.expires_in),
+        #     max_age=int(expires_in),
         #     secure=True,
         # )
         self.response.set_cookie(
             COOKIE_OAUTH_REFRESH_TOKEN,
-            tokens.refresh_token,
+            refresh_token,
             httponly=True,
-            max_age=int(tokens.refresh_expires_in),
+            max_age=int(refresh_expires_in),
             secure=True,
         )
         self.response.set_cookie(
             COOKIE_OAUTH_ID_TOKEN,
-            tokens.id_token,
+            id_token.raw,
             httponly=True,
-            max_age=id_token_expires_in,
+            max_age=id_token.claims.exp - id_token.claims.iat,
             secure=True,
         )
 

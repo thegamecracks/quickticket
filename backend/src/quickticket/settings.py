@@ -109,6 +109,13 @@ class OpenIDSettings(BaseSettings):
     Example: https://example.com/.well-known/openid-configuration
 
     """
+    admin_group: str | None = None
+    """The group claim required for administrator privileges.
+
+    If None, administrator privileges will not be linked to the provider.
+    Existing administrators can be revoked by removing this claim on the provider.
+
+    """
 
 
 class SMTPSettings(BaseSettings):

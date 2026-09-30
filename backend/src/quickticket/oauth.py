@@ -65,13 +65,13 @@ class OpenIDProvider(BaseModel):
 # Derived from Keycloak response
 class TokenExchangeResponse(BaseModel):
     access_token: str  # Secret[str]
-    expires_in: float | int
-    refresh_expires_in: float | int
+    expires_in: int
+    refresh_expires_in: int
     refresh_token: str  # Secret[str]
     token_type: str
     id_token: str  # Secret[str]
     scope: str
-    expires_at: float | int
+    expires_at: int
 
 
 class OAuth2Client:

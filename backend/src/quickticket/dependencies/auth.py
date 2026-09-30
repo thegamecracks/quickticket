@@ -1,17 +1,20 @@
 import logging
+from dataclasses import dataclass
 from datetime import timedelta
 from typing import Annotated, NoReturn, cast
 
 from authlib.integrations.base_client import OAuthError
-from fastapi import Depends, HTTPException, Query, Request
+from fastapi import Depends, HTTPException, Query, Request, Response
 from fastapi.datastructures import URL
 from joserfc import jwt
 from joserfc.errors import ExpiredTokenError, JoseError
 from joserfc.jwk import KeySet
-from joserfc.jwt import JWTClaimsRegistry, Token
-from pydantic import HttpUrl
+from joserfc.jwt import JWTClaimsRegistry
+from pydantic import BaseModel, EmailStr, Field, HttpUrl
 from pydantic_core import from_json
+from sqlalchemy import select
 
+from quickticket.db.models import User
 from quickticket.dependencies.cache import (
     CacheDep,
     SettingsDep,
@@ -24,8 +27,10 @@ from quickticket.dependencies.cookies import (
     OAuthPostRedirectCookie,
     OAuthRefreshTokenCookie,
 )
+from quickticket.dependencies.db import AsyncSessionDep
 from quickticket.dependencies.state import HTTPClientDep
 from quickticket.oauth import OAuth2Client, OpenIDProvider
+from quickticket.settings import OpenIDSettings
 
 log = logging.getLogger(__name__)
 
@@ -121,15 +126,59 @@ def get_claims_registry(provider: OpenIDProviderDep) -> JWTClaimsRegistry:
         aud={"essential": True, "value": provider.client_id.get_secret_value()},
         exp={"essential": True},
         iat={"essential": True},
+        # Identity
+        email={"essential": True},
+        email_verified={"essential": True, "value": True},
+        name={"essential": True},
+        given_name={"essential": True},
+        family_name={"essential": True},
+        preferred_username={"essential": True},
+        groups={"essential": True},
     )
     return registry
+
+
+class IdTokenHeader(BaseModel):
+    alg: str
+    typ: str
+    kid: str
+
+
+class IdTokenClaims(BaseModel):
+    # FIXME: likely needs looser validation to support other providers
+    exp: int
+    iat: int
+    auth_time: int
+    jti: str
+    iss: str
+    aud: str
+    sub: str
+    typ: str
+    azp: str
+    sid: str
+    at_hash: str
+    acr: str
+    email_verified: bool
+    name: str
+    groups: list[str] = Field(default_factory=list)
+    preferred_username: str
+    given_name: str
+    family_name: str
+    email: EmailStr
+    nonce: str | None = None
+
+
+class IdToken(BaseModel):
+    header: IdTokenHeader
+    claims: IdTokenClaims
+    raw: str
 
 
 def parse_id_token(
     raw: Annotated[str, OAuthIdTokenCookie],
     keys: OpenIDProviderJWKsDep,
     registry: JWTClaimsRegistryDep,
-) -> Token:
+) -> IdToken:
     # Can raise JoseError exceptions:
     # - BadSignatureError
     # - InvalidPayloadError
@@ -137,7 +186,7 @@ def parse_id_token(
     # - MissingClaimError
     token = jwt.decode(raw, keys)
     registry.validate(token.claims)
-    return token
+    return IdToken(header=token.header, claims=token.claims, raw=raw)
 
 
 async def get_or_refresh_id_token(
@@ -145,10 +194,11 @@ async def get_or_refresh_id_token(
     registry: JWTClaimsRegistryDep,
     client: OAuth2ClientDep,
     cookies: OAuthCookieControllerDep,
+    registration: RegistrationControllerDep,
     # NOTE: below cookies can expire on browser
     id_token_cookie: Annotated[str | None, OAuthIdTokenCookie] = None,
     refresh_token_cookie: Annotated[str | None, OAuthRefreshTokenCookie] = None,
-) -> Token | None:
+) -> IdToken | None:
     """Attempt to return a valid ID token from the user's cookies.
 
     If the ID token is invalid and a refresh token is present,
@@ -190,14 +240,19 @@ async def get_or_refresh_id_token(
 
     # CAUTION: a route that returns a Response directly like RedirectResponse
     #          will bypass these cookies! Blame FastAPI
-    id_token_expires_in = id_token.claims["exp"] - id_token.claims["iat"]
-    cookies.set_tokens(tokens, id_token_expires_in=id_token_expires_in)
-    # TODO: update user model with latest userinfo
+    await registration.register(
+        access_token=tokens.access_token,
+        expires_in=tokens.expires_in,
+        refresh_token=tokens.refresh_token,
+        refresh_expires_in=tokens.refresh_expires_in,
+        id_token=id_token,
+    )
+    await registration.session.commit()
 
     return id_token
 
 
-def get_valid_id_token(token: OptionalIdTokenDep) -> Token:
+def get_valid_id_token(token: OptionalIdTokenDep) -> IdToken:
     if token is None:
         raise HTTPException(401, "Not authenticated")
     return token
@@ -235,16 +290,81 @@ def get_post_redirect_uri(
     return URL(str(redirect_cookie))
 
 
+@dataclass
+class RegistrationController:
+    cookies: OAuthCookieControllerDep
+    session: AsyncSessionDep
+    settings: SettingsDep
+
+    @property
+    def admin_group(self) -> str | None:
+        return self.openid.admin_group
+
+    @property
+    def openid(self) -> OpenIDSettings:
+        assert self.settings.openid is not None
+        return self.settings.openid
+
+    async def register(
+        self,
+        *,
+        access_token: str,  # TODO: fetch userinfo with OAuth2Client?
+        expires_in: int,
+        refresh_token: str,
+        refresh_expires_in: int,
+        id_token: IdToken,
+    ) -> None:
+        claims = id_token.claims
+        query = select(User).where(User.email == claims.email)
+        user = await self.session.scalar(query) or User()
+
+        self._update_user_with_claims(user, claims)
+        self.session.add(user)
+
+        self.cookies.set_tokens(
+            id_token=id_token,
+            refresh_token=refresh_token,
+            refresh_expires_in=refresh_expires_in,
+        )
+
+    def redirect(self, url: str | URL) -> Response:
+        return self.cookies.redirect(url)
+
+    def _update_user_with_claims(
+        self,
+        user: User,
+        claims: IdTokenClaims,
+    ) -> None:
+        # https://openid.net/specs/openid-connect-basic-1_0.html#rfc.section.2.5
+        # Consider retrieving claims from userinfo endpoint with access token
+        # "picture", "gender", "birthdate", "zoneinfo", "locale", "phone_number", "address"
+        user.display_name = claims.preferred_username or claims.name
+        user.first_name = claims.given_name
+        user.last_name = claims.family_name
+        user.email = claims.email
+
+        groups = claims.groups
+        if self.admin_group is not None:
+            is_admin = self.admin_group in groups
+        else:
+            is_admin = None  # noqa: F841
+        # TODO: set admin flag or enum on user
+
+
 JWTClaimsRegistryDep = Annotated[JWTClaimsRegistry, Depends(get_claims_registry)]
 OAuth2ClientDep = Annotated[OAuth2Client, Depends(get_oauth_client)]
 OpenIDProviderDep = Annotated[OpenIDProvider, Depends(get_openid_provider)]
 OpenIDProviderJWKsDep = Annotated[KeySet, Depends(get_openid_provider_jwks)]
-OptionalIdTokenDep = Annotated[Token | None, Depends(get_or_refresh_id_token)]
+OptionalIdTokenDep = Annotated[IdToken | None, Depends(get_or_refresh_id_token)]
 PostRedirectUriDep = Annotated[URL, Depends(get_post_redirect_uri)]
 RedirectUriDep = Annotated[URL, Depends(get_allowed_redirect_uri)]
-RequiredIdTokenDep = Annotated[Token, Depends(get_valid_id_token)]
+RegistrationControllerDep = Annotated[
+    RegistrationController, Depends(RegistrationController)
+]
+RequiredIdTokenDep = Annotated[IdToken, Depends(get_valid_id_token)]
 
 __all__ = (
+    "IdToken",
     "JWTClaimsRegistryDep",
     "OAuth2ClientDep",
     "OpenIDProviderDep",
@@ -252,5 +372,6 @@ __all__ = (
     "OptionalIdTokenDep",
     "PostRedirectUriDep",
     "RedirectUriDep",
+    "RegistrationControllerDep",
     "RequiredIdTokenDep",
 )

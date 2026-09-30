@@ -18,6 +18,7 @@ from quickticket.dependencies import (
     OptionalIdTokenDep,
     PostRedirectUriDep,
     RedirectUriDep,
+    RegistrationControllerDep,
     RequiredIdTokenDep,
 )
 from quickticket.dependencies.auth import parse_id_token
@@ -102,7 +103,7 @@ async def oauth_post_login(
     request: Request,
     keys: OpenIDProviderJWKsDep,
     registry: JWTClaimsRegistryDep,
-    cookies: OAuthCookieControllerDep,
+    registration: RegistrationControllerDep,
     # Optional
     redirect_uri: PostRedirectUriDep,
 ):
@@ -130,20 +131,23 @@ async def oauth_post_login(
         log.debug("OpenID returned invalid ID token", exc_info=e)
         raise HTTPException(400, "OpenID returned invalid ID token") from e
 
-    id_token_nonce = id_token.claims.get("nonce")
-    if id_token_nonce != nonce_cookie:
+    if id_token.claims.nonce != nonce_cookie:
         log.debug(
             "ID token nonce does not match nonce cookie (%r != %r)",
-            id_token_nonce,
+            id_token.claims.nonce,
             nonce_cookie,
         )
         raise HTTPException(400, "OpenID returned invalid ID token")
 
-    # TODO: upsert user model with latest identity
-
-    id_token_expires_in = id_token.claims["exp"] - id_token.claims["iat"]
-    cookies.set_tokens(tokens, id_token_expires_in=id_token_expires_in)
-    return cookies.redirect(redirect_uri)
+    await registration.register(
+        access_token=tokens.access_token,
+        expires_in=tokens.expires_in,
+        refresh_token=tokens.refresh_token,
+        refresh_expires_in=tokens.refresh_expires_in,
+        id_token=id_token,
+    )
+    await registration.session.commit()
+    return registration.redirect(redirect_uri)
 
 
 @router.get("/validate")
