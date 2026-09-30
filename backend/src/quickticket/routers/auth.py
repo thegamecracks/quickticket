@@ -10,6 +10,7 @@ from quickticket.dependencies import (
     CacheDep,
     JWTClaimsRegistryDep,
     OAuth2ClientDep,
+    OAuthCookieControllerDep,
     OAuthIdTokenCookie,
     OAuthNonceCookie,
     OAuthStateCookie,
@@ -18,12 +19,6 @@ from quickticket.dependencies import (
     PostRedirectUriDep,
     RedirectUriDep,
     RequiredIdTokenDep,
-    cookie_safe_redirect,
-    delete_all_oauth_cookies,
-    set_oauth_nonce_cookie,
-    set_oauth_post_redirect_cookie,
-    set_oauth_state_cookie,
-    set_oauth_token_cookies,
 )
 from quickticket.dependencies.auth import parse_id_token
 
@@ -47,6 +42,7 @@ async def oauth_login(
     response: Response,
     client: OAuth2ClientDep,
     cache: CacheDep,
+    cookies: OAuthCookieControllerDep,
 ):
     """Redirect the user to login at the OpenID provider.
 
@@ -56,7 +52,7 @@ async def oauth_login(
 
     """
     if id_token is not None:
-        return cookie_safe_redirect(response, redirect_uri)
+        return cookies.redirect(redirect_uri)
 
     # Proof Key for Code Exchange (PKCE)
     code_verifier = generate_token(48)
@@ -74,10 +70,10 @@ async def oauth_login(
 
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Cookies
     # https://auth0.com/blog/demystifying-oauth-security-state-vs-nonce-vs-pkce/
-    set_oauth_nonce_cookie(response, nonce, max_age=LOGIN_EXPIRY)
-    set_oauth_state_cookie(response, state, max_age=LOGIN_EXPIRY)
-    set_oauth_post_redirect_cookie(response, redirect_uri, max_age=LOGIN_EXPIRY)
-    return cookie_safe_redirect(response, url)
+    cookies.set_nonce(nonce, max_age=LOGIN_EXPIRY)
+    cookies.set_state(state, max_age=LOGIN_EXPIRY)
+    cookies.set_post_redirect(redirect_uri, max_age=LOGIN_EXPIRY)
+    return cookies.redirect(url)
 
 
 @router.get(
@@ -105,7 +101,7 @@ async def oauth_post_login(
     request: Request,
     keys: OpenIDProviderJWKsDep,
     registry: JWTClaimsRegistryDep,
-    response: Response,
+    cookies: OAuthCookieControllerDep,
     # Optional
     redirect_uri: PostRedirectUriDep,
 ):
@@ -144,8 +140,8 @@ async def oauth_post_login(
     # TODO: upsert user model with latest identity
 
     id_token_expires_in = id_token.claims["exp"] - id_token.claims["iat"]
-    set_oauth_token_cookies(response, tokens, id_token_expires_in=id_token_expires_in)
-    return cookie_safe_redirect(response, redirect_uri)
+    cookies.set_tokens(tokens, id_token_expires_in=id_token_expires_in)
+    return cookies.redirect(redirect_uri)
 
 
 @router.get("/validate")
@@ -160,7 +156,7 @@ async def oauth_validate(token: RequiredIdTokenDep):
     status_code=307,
 )
 async def oauth_logout(
-    response: Response,
+    cookies: OAuthCookieControllerDep,
     redirect_uri: RedirectUriDep,
     client: OAuth2ClientDep,
     request: Request,
@@ -172,15 +168,15 @@ async def oauth_logout(
 
     """
     if id_token_hint is None:
-        return cookie_safe_redirect(response, redirect_uri)
+        return cookies.redirect(redirect_uri)
 
     url, state = client.create_logout_url(
         id_token_hint=id_token_hint,  # token can be expired/invalid
         post_logout_redirect_uri=str(request.url_for("oauth_post_logout")),
     )
-    set_oauth_state_cookie(response, state, max_age=LOGOUT_EXPIRY)
-    set_oauth_post_redirect_cookie(response, redirect_uri, max_age=LOGOUT_EXPIRY)
-    return cookie_safe_redirect(response, url)
+    cookies.set_state(state, max_age=LOGOUT_EXPIRY)
+    cookies.set_post_redirect(redirect_uri, max_age=LOGOUT_EXPIRY)
+    return cookies.redirect(url)
 
 
 @router.get(
@@ -202,7 +198,7 @@ async def oauth_post_logout(
     ],
     state_cookie: Annotated[str, OAuthStateCookie],
     # Dependencies
-    response: Response,
+    cookies: OAuthCookieControllerDep,
     # Optional
     redirect_uri: PostRedirectUriDep,
 ):
@@ -211,5 +207,5 @@ async def oauth_post_logout(
         log.debug("?state= query mismatch with state cookie, possible CSRF")
         raise HTTPException(400, "Invalid or expired state")
 
-    delete_all_oauth_cookies(response)
-    return cookie_safe_redirect(response, redirect_uri)
+    cookies.delete_all()
+    return cookies.redirect(redirect_uri)

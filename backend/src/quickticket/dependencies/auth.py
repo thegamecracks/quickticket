@@ -3,7 +3,7 @@ from datetime import timedelta
 from typing import Annotated, NoReturn, cast
 
 from authlib.integrations.base_client import OAuthError
-from fastapi import Depends, HTTPException, Query, Request, Response
+from fastapi import Depends, HTTPException, Query, Request
 from fastapi.datastructures import URL
 from joserfc import jwt
 from joserfc.errors import ExpiredTokenError, JoseError
@@ -19,11 +19,10 @@ from quickticket.dependencies.cache import (
 )
 from quickticket.dependencies.cookies import (
     COOKIE_OAUTH_POST_REDIRECT,
+    OAuthCookieControllerDep,
     OAuthIdTokenCookie,
     OAuthPostRedirectCookie,
     OAuthRefreshTokenCookie,
-    delete_oauth_token_cookies,
-    set_oauth_token_cookies,
 )
 from quickticket.dependencies.state import HTTPClientDep
 from quickticket.oauth import OAuth2Client, OpenIDProvider
@@ -148,7 +147,7 @@ async def get_or_refresh_id_token(
     keys: OpenIDProviderJWKsDep,
     registry: JWTClaimsRegistryDep,
     client: OAuth2ClientDep,
-    response: Response,
+    cookies: OAuthCookieControllerDep,
     # NOTE: below cookies can expire on browser
     id_token_cookie: Annotated[str | None, OAuthIdTokenCookie] = None,
     refresh_token_cookie: Annotated[str | None, OAuthRefreshTokenCookie] = None,
@@ -170,7 +169,7 @@ async def get_or_refresh_id_token(
             log.debug("Ignoring invalid ID token", exc_info=e)
 
     if refresh_token_cookie is None:
-        delete_oauth_token_cookies(response)  # clean out ID token if any
+        cookies.delete_tokens()  # flush out invalid ID token if present
         return
 
     log.debug("Refreshing ID token")
@@ -181,7 +180,7 @@ async def get_or_refresh_id_token(
             log.debug("OpenID session expired, re-authentication required")
         else:
             log.debug("Failed to refresh ID token", exc_info=e)
-        delete_oauth_token_cookies(response)
+        cookies.delete_tokens()
         return
 
     try:
@@ -195,7 +194,7 @@ async def get_or_refresh_id_token(
     # CAUTION: a route that returns a Response directly like RedirectResponse
     #          will bypass these cookies! Blame FastAPI
     id_token_expires_in = id_token.claims["exp"] - id_token.claims["iat"]
-    set_oauth_token_cookies(response, tokens, id_token_expires_in=id_token_expires_in)
+    cookies.set_tokens(tokens, id_token_expires_in=id_token_expires_in)
     # TODO: update user model with latest userinfo
 
     return id_token

@@ -1,7 +1,9 @@
 from collections.abc import Mapping
+from dataclasses import dataclass
+from typing import Annotated
 from urllib.parse import quote
 
-from fastapi import Cookie, Response
+from fastapi import Cookie, Depends, Request, Response
 from fastapi.datastructures import URL
 from starlette.background import BackgroundTask
 
@@ -14,6 +16,8 @@ __all__ = (
     "COOKIE_OAUTH_POST_REDIRECT",
     "COOKIE_OAUTH_REFRESH_TOKEN",
     "COOKIE_OAUTH_STATE",
+    "OAuthCookieController",
+    "OAuthCookieControllerDep",
     # "OAuthAccessTokenCookie",
     "OAuthIdTokenCookie",
     "OAuthNonceCookie",
@@ -21,13 +25,6 @@ __all__ = (
     "OAuthRefreshTokenCookie",
     "OAuthStateCookie",
     "cookie_safe_redirect",
-    "delete_all_oauth_cookies",
-    "delete_oauth_flow_cookies",
-    "delete_oauth_token_cookies",
-    "set_oauth_nonce_cookie",
-    "set_oauth_post_redirect_cookie",
-    "set_oauth_state_cookie",
-    "set_oauth_token_cookies",
 )
 
 COOKIE_OAUTH_NONCE = "oauth-nonce"
@@ -78,99 +75,6 @@ OAuthIdTokenCookie = Cookie(
 )
 
 
-# TODO: restrict flow cookies by /auth path
-def set_oauth_nonce_cookie(
-    response: Response,
-    nonce: str,
-    *,
-    max_age: int,
-) -> None:
-    response.set_cookie(
-        COOKIE_OAUTH_NONCE,
-        nonce,
-        httponly=True,
-        max_age=max_age,
-        secure=True,
-    )
-
-
-def set_oauth_state_cookie(
-    response: Response,
-    state: str,
-    *,
-    max_age: int,
-) -> None:
-    response.set_cookie(
-        COOKIE_OAUTH_STATE,
-        state,
-        httponly=True,
-        max_age=max_age,
-        secure=True,
-    )
-
-
-def set_oauth_post_redirect_cookie(
-    response: Response,
-    url: str | URL,
-    *,
-    max_age: int,
-) -> None:
-    response.set_cookie(
-        COOKIE_OAUTH_POST_REDIRECT,
-        str(url),
-        httponly=True,
-        max_age=max_age,
-        secure=True,
-    )
-
-
-def delete_oauth_flow_cookies(response: Response) -> None:
-    response.delete_cookie(COOKIE_OAUTH_NONCE, httponly=True, secure=True)
-    response.delete_cookie(COOKIE_OAUTH_STATE, httponly=True, secure=True)
-    response.delete_cookie(COOKIE_OAUTH_POST_REDIRECT, httponly=True, secure=True)
-
-
-def set_oauth_token_cookies(
-    response: Response,
-    tokens: TokenExchangeResponse,
-    *,
-    id_token_expires_in: int,
-) -> None:
-    delete_oauth_flow_cookies(response)
-    # response.set_cookie(
-    #     COOKIE_OAUTH_ACCESS_TOKEN,
-    #     tokens.access_token,
-    #     httponly=True,
-    #     max_age=int(tokens.expires_in),
-    #     secure=True,
-    # )
-    response.set_cookie(
-        COOKIE_OAUTH_REFRESH_TOKEN,
-        tokens.refresh_token,
-        httponly=True,
-        max_age=int(tokens.refresh_expires_in),
-        secure=True,
-    )
-    response.set_cookie(
-        COOKIE_OAUTH_ID_TOKEN,
-        tokens.id_token,
-        httponly=True,
-        max_age=id_token_expires_in,
-        secure=True,
-    )
-
-
-def delete_all_oauth_cookies(response: Response) -> None:
-    delete_oauth_flow_cookies(response)
-    delete_oauth_token_cookies(response)
-
-
-def delete_oauth_token_cookies(response: Response) -> None:
-    # response.delete_cookie(COOKIE_OAUTH_ACCESS_TOKEN, httponly=True, secure=True)
-    response.delete_cookie(COOKIE_OAUTH_REFRESH_TOKEN, httponly=True, secure=True)
-    response.delete_cookie(COOKIE_OAUTH_ID_TOKEN, httponly=True, secure=True)
-
-
 def cookie_safe_redirect(
     response: Response,
     url: str | URL,
@@ -195,3 +99,124 @@ def cookie_safe_redirect(
 
     response.headers["location"] = quote(str(url), safe=":/%#?=@[]!$&'()*+,;")
     return response
+
+
+# TODO: restrict flow cookies by /auth path
+@dataclass(kw_only=True, repr=False)
+class OAuthCookieController:
+    request: Request
+    response: Response
+
+    def set_nonce(self, nonce: str, *, max_age: int) -> None:
+        self.response.set_cookie(
+            COOKIE_OAUTH_NONCE,
+            nonce,
+            httponly=True,
+            max_age=max_age,
+            secure=True,
+        )
+
+    def set_state(self, state: str, *, max_age: int) -> None:
+        self.response.set_cookie(
+            COOKIE_OAUTH_STATE,
+            state,
+            httponly=True,
+            max_age=max_age,
+            secure=True,
+        )
+
+    def set_post_redirect(self, url: str | URL, *, max_age: int) -> None:
+        self.response.set_cookie(
+            COOKIE_OAUTH_POST_REDIRECT,
+            str(url),
+            httponly=True,
+            max_age=max_age,
+            secure=True,
+        )
+
+    def set_tokens(
+        self,
+        tokens: TokenExchangeResponse,
+        *,
+        id_token_expires_in: int,
+    ) -> None:
+        self.delete_flow()
+        # self.response.set_cookie(
+        #     COOKIE_OAUTH_ACCESS_TOKEN,
+        #     tokens.access_token,
+        #     httponly=True,
+        #     max_age=int(tokens.expires_in),
+        #     secure=True,
+        # )
+        self.response.set_cookie(
+            COOKIE_OAUTH_REFRESH_TOKEN,
+            tokens.refresh_token,
+            httponly=True,
+            max_age=int(tokens.refresh_expires_in),
+            secure=True,
+        )
+        self.response.set_cookie(
+            COOKIE_OAUTH_ID_TOKEN,
+            tokens.id_token,
+            httponly=True,
+            max_age=id_token_expires_in,
+            secure=True,
+        )
+
+    def delete_flow(self) -> None:
+        self.response.delete_cookie(COOKIE_OAUTH_NONCE, httponly=True, secure=True)
+        self.response.delete_cookie(COOKIE_OAUTH_STATE, httponly=True, secure=True)
+        self.response.delete_cookie(
+            COOKIE_OAUTH_POST_REDIRECT,
+            httponly=True,
+            secure=True,
+        )
+
+    def delete_tokens(self) -> None:
+        # self.response.delete_cookie(
+        #     COOKIE_OAUTH_ACCESS_TOKEN,
+        #     httponly=True,
+        #     secure=True,
+        # )
+        self.response.delete_cookie(
+            COOKIE_OAUTH_REFRESH_TOKEN,
+            httponly=True,
+            secure=True,
+        )
+        self.response.delete_cookie(
+            COOKIE_OAUTH_ID_TOKEN,
+            httponly=True,
+            secure=True,
+        )
+
+    def delete_all(self) -> None:
+        self.delete_flow()
+        self.delete_tokens()
+
+    def redirect(
+        self,
+        url: str | URL,
+        status_code: int = 307,
+        *,
+        headers: Mapping[str, str] | None = None,
+        background: BackgroundTask | None = None,
+    ) -> Response:
+        return cookie_safe_redirect(
+            self.response,
+            url,
+            status_code,
+            headers=headers,
+            background=background,
+        )
+
+
+def get_oauth_cookie_controller(
+    request: Request,
+    response: Response,
+) -> OAuthCookieController:
+    return OAuthCookieController(request=request, response=response)
+
+
+OAuthCookieControllerDep = Annotated[
+    OAuthCookieController, Depends(get_oauth_cookie_controller)
+]
