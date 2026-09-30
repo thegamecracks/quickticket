@@ -13,6 +13,7 @@ from joserfc.jwt import JWTClaimsRegistry
 from pydantic import BaseModel, EmailStr, Field, HttpUrl
 from pydantic_core import from_json
 from sqlalchemy import select
+from sqlalchemy.orm import load_only
 
 from quickticket.dependencies.cache import (
     CacheDep,
@@ -314,12 +315,11 @@ class RegistrationController:
         id_token: IdToken,
     ) -> None:
         claims = id_token.claims
-        query = select(User).where(User.openid_sub == claims.sub)
-        user = await self.session.scalar(query)
+        query = select(User).options(load_only(User.id))
+        user = await self.session.scalar(query.where(User.openid_sub == claims.sub))
         if user is None:
             # FIXME: no guarantee two users don't share same email, prompt recommended
-            query = select(User).where(User.email == claims.email)
-            user = await self.session.scalar(query)
+            user = await self.session.scalar(query.where(User.email == claims.email))
         if user is None:
             user = User()
 
