@@ -161,6 +161,4 @@ class Settings(BaseSettings):
 
 
 if __name__ == "__main__":
-    import json
-
-    print(json.dumps(Settings.model_json_schema(), indent=4))
+    print(Settings().model_dump_json(indent=4))
