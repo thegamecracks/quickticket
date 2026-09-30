@@ -87,6 +87,10 @@ class SQLiteCache(Cache):
             );
             """
         )
+        await self.client.execute(
+            "DELETE FROM kv_cache WHERE expires_at <= ?1",
+            (datetime.now(UTC).timestamp(),),
+        )
         await self.client.commit()
         self._created_schema = True
 
