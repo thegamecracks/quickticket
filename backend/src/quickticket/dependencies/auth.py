@@ -41,10 +41,7 @@ async def get_openid_provider(
     state: StateDep,
     settings: SettingsDep,
 ) -> OpenIDProvider:
-    provider = cast(
-        OpenIDProvider | None,
-        getattr(state, "openid_provider", None),
-    )
+    provider = cast(OpenIDProvider | None, getattr(state, "openid_provider", None))
     if provider is not None:
         return provider
 
@@ -335,11 +332,7 @@ class RegistrationController:
     def force_redirect(self, url: str | URL) -> NoReturn:
         return self.cookies.force_redirect(url)
 
-    def _update_user_with_claims(
-        self,
-        user: User,
-        claims: IdTokenClaims,
-    ) -> None:
+    def _update_user_with_claims(self, user: User, claims: IdTokenClaims) -> None:
         # https://openid.net/specs/openid-connect-basic-1_0.html#rfc.section.2.5
         # Consider retrieving claims from userinfo endpoint with access token
         # "picture", "gender", "birthdate", "zoneinfo", "locale", "phone_number", "address"

@@ -116,13 +116,7 @@ class OAuthCookieController:
             path=self.auth_path,
         )
 
-    def set_tokens(
-        self,
-        *,
-        id_token: IdToken,
-        refresh_token: str,
-        refresh_expires_in: int,
-    ) -> None:
+    def set_tokens(self, *, id_token: IdToken, refresh_token: str, refresh_expires_in: int) -> None:
         self.delete_flow()
         # self.response.set_cookie(COOKIE_OAUTH_ACCESS_TOKEN, access_token, max_age=expires_in)
         self.response.set_cookie(

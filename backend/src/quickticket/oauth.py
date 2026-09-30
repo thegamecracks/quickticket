@@ -73,10 +73,7 @@ class TokenExchangeResponse(BaseModel):
 
 
 class OAuth2Client:
-    def __init__(
-        self,
-        provider: OpenIDProvider,
-    ) -> None:
+    def __init__(self, provider: OpenIDProvider) -> None:
         self.provider = provider
 
         if "S256" not in self.discovery.code_challenge_methods_supported:
