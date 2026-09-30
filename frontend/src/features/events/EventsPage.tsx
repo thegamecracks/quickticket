@@ -2,6 +2,7 @@
 import { useSearchParams } from 'react-router'
 import EventCard, { type EventInfo } from '../../components/EventCard'
 import { useState } from 'react'
+import { Pagination } from '../../components/Pagination'
 
 // Available event categories
 const categories = [
@@ -103,7 +104,7 @@ export default function EventsPage() {
   })
 
   // Pagination
-  const eventsPerPage = 4
+  const eventsPerPage = 3 // will be set to higher once we get more data in
 
   const totalPages = Math.ceil(
     filteredEvents.length / eventsPerPage
@@ -199,34 +200,7 @@ export default function EventsPage() {
         </p>
       )}
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-8 flex items-center justify-center gap-4">
-
-          <button
-            type="button"
-            className="btn btn-outline"
-            disabled={safePage === 1}
-            onClick={() => setCurrentPage(safePage - 1)}
-          >
-            Previous
-          </button>
-
-          <span className="text-sm">
-            Page {safePage} of {totalPages}
-          </span>
-
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={safePage === totalPages}
-            onClick={() => setCurrentPage(safePage + 1)}
-          >
-            Next
-          </button>
-
-        </div>
-      )}
+      <Pagination currentPage={currentPage} totalPages={totalPages} onChangePage={(page) => setCurrentPage(page)} />
     </section>
   )
 }
