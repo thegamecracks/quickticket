@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -12,7 +12,7 @@ from quickticket.models.types import str_128, str_256, timestamp
 class User(Base):
     __tablename__ = "account"
 
-    id: Mapped[UUID] = mapped_column("account_id", primary_key=True)
+    id: Mapped[UUID] = mapped_column("account_id", primary_key=True, default=uuid4)
     created_at: Mapped[timestamp]
     display_name: Mapped[str_128]
     first_name: Mapped[str_128]
@@ -25,7 +25,7 @@ class User(Base):
 class Address(Base):
     __tablename__ = "address"
 
-    id: Mapped[UUID] = mapped_column("address_id", primary_key=True)
+    id: Mapped[UUID] = mapped_column("address_id", primary_key=True, default=uuid4)
     account_id: Mapped[UUID] = mapped_column(ForeignKey("account.account_id"))
     line_1: Mapped[str_128]
     line_2: Mapped[str_128]
