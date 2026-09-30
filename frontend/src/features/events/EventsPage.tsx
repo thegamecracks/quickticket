@@ -2,7 +2,7 @@
 import { useSearchParams } from 'react-router'
 import EventCard, { type EventInfo } from '../../components/EventCard'
 import { useState } from 'react'
-import { Pagination } from '../../components/Pagination'
+import { Pagination, safePage } from '../../components/Pagination'
 
 // Available event categories
 const categories = [
@@ -110,14 +110,11 @@ export default function EventsPage() {
     filteredEvents.length / eventsPerPage
   )
 
-  const safePage = Math.min(
-    currentPage,
-    Math.max(totalPages, 1)
-  )
+  const page = safePage(currentPage, totalPages)
 
   const paginatedEvents = filteredEvents.slice(
-    (safePage - 1) * eventsPerPage,
-    safePage * eventsPerPage
+    (page - 1) * eventsPerPage,
+    page * eventsPerPage
   )
 
   // Update search and return to page 1
@@ -200,7 +197,7 @@ export default function EventsPage() {
         </p>
       )}
 
-      <Pagination currentPage={currentPage} totalPages={totalPages} onChangePage={(page) => setCurrentPage(page)} />
+      <Pagination currentPage={page} totalPages={totalPages} onChangePage={(page) => setCurrentPage(page)} />
     </section>
   )
 }
