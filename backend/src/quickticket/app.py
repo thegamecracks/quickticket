@@ -34,7 +34,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
             del _app.state.stack
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, title="QuickTicket", description="")
 app.include_router(auth.router, prefix="/auth")
 app.include_router(events.router, prefix="/events")
 app.include_router(notifications.router, prefix="/notifications")
