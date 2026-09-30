@@ -347,6 +347,7 @@ class RegistrationController:
         user.first_name = claims.given_name
         user.last_name = claims.family_name
         user.email = claims.email
+        user.openid_sub = claims.sub
 
         groups = claims.groups
         if self.admin_group is not None:
