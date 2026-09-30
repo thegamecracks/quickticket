@@ -4,7 +4,7 @@ from contextlib import AsyncExitStack, asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from quickticket.dependencies import SettingsDep
+from quickticket.dependencies import SettingsDep, OptionalIdTokenDep
 from quickticket.logging import LogVerbosity, setup_logging
 from quickticket.routers import auth
 from quickticket.settings import Settings
@@ -34,15 +34,23 @@ app.add_middleware(
 
 
 @app.get("/")
-async def root(request: Request, settings: SettingsDep):
-    redirect_uri = settings.frontend.default_redirect_uri or request.base_url
+async def root(request: Request, settings: SettingsDep, token: OptionalIdTokenDep):
+    redirect_uri = str(settings.frontend.default_redirect_uri or request.base_url)
     return {
-        "openapi": str(request.url_for("openapi")),
-        "swagger_url": str(request.url_for("swagger_ui_html")),
-        "redoc_url": str(request.url_for("redoc_html")),
-        "login_url": str(request.url_for("oauth_login")),
-        "validate_url": str(request.url_for("oauth_validate")),
-        "logout_url": str(request.url_for("oauth_logout")),
-        "default_redirect_uri": redirect_uri,
-        "origins": settings.frontend.origins,
+        "auth": {
+            "status": "Authenticated" if token is not None else "Not authenticated",
+            "login_url": str(request.url_for("oauth_login")),
+            "validate_url": str(request.url_for("oauth_validate")),
+            "logout_url": str(request.url_for("oauth_logout")),
+            "id_token": token,
+        },
+        "settings": {
+            "default_redirect_uri": redirect_uri,
+            "origins": settings.frontend.origins,
+        },
+        "docs": {
+            "openapi": str(request.url_for("openapi")),
+            "swagger_url": str(request.url_for("swagger_ui_html")),
+            "redoc_url": str(request.url_for("redoc_html")),
+        },
     }
