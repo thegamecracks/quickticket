@@ -315,6 +315,7 @@ class RegistrationController:
         id_token: IdToken,
     ) -> None:
         claims = id_token.claims
+        # FIXME: email is unstable, link by sub claim instead
         query = select(User).where(User.email == claims.email)
         user = await self.session.scalar(query) or User()
 
