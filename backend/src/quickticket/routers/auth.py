@@ -3,7 +3,7 @@ from datetime import timedelta
 from typing import Annotated
 
 from authlib.common.security import generate_token
-from fastapi import APIRouter, HTTPException, Query, Request, Response
+from fastapi import APIRouter, HTTPException, Query, Request
 from joserfc.errors import JoseError
 
 from quickticket.dependencies import (
@@ -39,7 +39,7 @@ log = logging.getLogger(__name__)
 async def oauth_login(
     id_token: OptionalIdTokenDep,
     redirect_uri: RedirectUriDep,
-    response: Response,
+    request: Request,
     client: OAuth2ClientDep,
     cache: CacheDep,
     cookies: OAuthCookieControllerDep,
@@ -63,6 +63,7 @@ async def oauth_login(
     url, state = client.create_authorization_url(
         code_verifier=code_verifier,
         nonce=nonce,
+        redirect_uri=request.url_for("oauth_post_login"),
     )
 
     cache_key = CACHE_STATE_TO_CODE_VERIFIER.format(state)
@@ -119,6 +120,7 @@ async def oauth_post_login(
     tokens = await client.fetch_token(
         authorization_response=str(request.url),
         code_verifier=code_verifier,
+        redirect_uri=request.url_for("oauth_post_login"),
     )
 
     # Verify ID token validity + nonce

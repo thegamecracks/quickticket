@@ -109,10 +109,7 @@ def get_oauth_client(
         return client
 
     log.info("Initializing OAuth2 client")
-    state.oauth_client = OAuth2Client(
-        provider,
-        redirect_uri=str(request.url_for("oauth_post_login")),
-    )
+    state.oauth_client = OAuth2Client(provider)
     return state.oauth_client
 
 

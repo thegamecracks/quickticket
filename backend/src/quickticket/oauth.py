@@ -78,8 +78,6 @@ class OAuth2Client:
     def __init__(
         self,
         provider: OpenIDProvider,
-        *,
-        redirect_uri: str,
     ) -> None:
         self.provider = provider
 
@@ -95,7 +93,6 @@ class OAuth2Client:
         self._client = AsyncOAuth2Client(
             client_id=provider.client_id.get_secret_value(),
             client_secret=provider.client_secret.get_secret_value(),
-            redirect_uri=redirect_uri,
             scope="openid email profile",
             # Passed to underyling OAuth2Client
             code_challenge_method="S256",
@@ -118,6 +115,7 @@ class OAuth2Client:
         *,
         code_verifier: str,
         nonce: str,
+        redirect_uri: str | URL,
     ) -> tuple[str, str]:
         """Create the authorization url and state."""
         log.debug("Creating authorization URL")
@@ -125,6 +123,7 @@ class OAuth2Client:
             str(self.discovery.authorization_endpoint),
             code_verifier=code_verifier,
             nonce=nonce,
+            redirect_uri=str(redirect_uri),
         )
 
     async def fetch_token(
@@ -132,11 +131,13 @@ class OAuth2Client:
         *,
         authorization_response: str,
         code_verifier: str,
+        redirect_uri: str | URL,
     ) -> TokenExchangeResponse:
         log.debug("Fetching token from provider")
         response = await self.client.fetch_token(
             authorization_response=authorization_response,
             code_verifier=code_verifier,
+            redirect_uri=str(redirect_uri),
         )
         return TokenExchangeResponse.model_validate(response)
 
@@ -144,7 +145,7 @@ class OAuth2Client:
         self,
         *,
         id_token_hint: str,
-        post_logout_redirect_uri: str,
+        post_logout_redirect_uri: str | URL,
     ) -> tuple[str, str]:
         """
 
