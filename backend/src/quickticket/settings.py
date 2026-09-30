@@ -94,9 +94,7 @@ class FrontendSettings(BaseSettings):
         if self.default_redirect_uri is None:
             pass
         elif not self.match_redirect_uri(self.default_redirect_uri):
-            raise ValueError(
-                "default_redirect_uri does not match any pattern in redirect_uris"
-            )
+            raise ValueError("default_redirect_uri does not match any pattern in redirect_uris")
         return self
 
 

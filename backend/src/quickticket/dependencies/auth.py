@@ -364,7 +364,5 @@ OpenIDProviderJWKsDep = Annotated[KeySet, Depends(get_openid_provider_jwks)]
 OptionalIdTokenDep = Annotated[IdToken | None, Depends(get_or_refresh_id_token)]
 PostRedirectUriDep = Annotated[URL, Depends(get_post_redirect_uri)]
 RedirectUriDep = Annotated[URL, Depends(get_allowed_redirect_uri)]
-RegistrationControllerDep = Annotated[
-    RegistrationController, Depends(RegistrationController)
-]
+RegistrationControllerDep = Annotated[RegistrationController, Depends(RegistrationController)]
 RequiredIdTokenDep = Annotated[IdToken, Depends(get_valid_id_token)]

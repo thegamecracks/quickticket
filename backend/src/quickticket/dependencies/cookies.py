@@ -221,6 +221,4 @@ class OAuthCookieController:
         )
 
 
-OAuthCookieControllerDep = Annotated[
-    OAuthCookieController, Depends(OAuthCookieController)
-]
+OAuthCookieControllerDep = Annotated[OAuthCookieController, Depends(OAuthCookieController)]

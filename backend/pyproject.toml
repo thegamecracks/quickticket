@@ -43,5 +43,8 @@ dev = [
 [tool.fastapi]
 entrypoint = "quickticket.app:app"
 
+[tool.ruff]
+line-length = 100
+
 [tool.ruff.lint.isort]
 combine-as-imports = true

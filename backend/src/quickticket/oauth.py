@@ -38,9 +38,7 @@ class OpenIDDiscovery(BaseModel):
 
     revocation_endpoint: AnyUrl | None = None
     revocation_endpoint_auth_methods_supported: list[str] = Field(default_factory=list)
-    revocation_endpoint_auth_signing_alg_values_supported: list[str] = Field(
-        default_factory=list
-    )
+    revocation_endpoint_auth_signing_alg_values_supported: list[str] = Field(default_factory=list)
     backchannel_logout_supported: bool | None = None
     backchannel_logout_session_supported: bool | None = None
     backchannel_token_delivery_modes_supported: list[str] = Field(default_factory=list)
@@ -84,9 +82,7 @@ class OAuth2Client:
         if "S256" not in self.discovery.code_challenge_methods_supported:
             raise ValueError("Provider does not support 'S256' code challenge method")
         if "authorization_code" not in self.discovery.grant_types_supported:
-            raise ValueError(
-                "Provider does not support 'authorization_code' grant type"
-            )
+            raise ValueError("Provider does not support 'authorization_code' grant type")
         if "code" not in self.discovery.response_types_supported:
             raise ValueError("Provider does not support 'code' response type")
 
