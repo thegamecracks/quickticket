@@ -15,11 +15,7 @@ from pydantic_core import from_json
 from sqlalchemy import select
 from sqlalchemy.orm import load_only
 
-from quickticket.dependencies.cache import (
-    CacheDep,
-    SettingsDep,
-    StateDep,
-)
+from quickticket.dependencies.cache import CacheDep, SettingsDep
 from quickticket.dependencies.cookies import (
     COOKIE_OAUTH_POST_REDIRECT,
     OAuthCookieControllerDep,
