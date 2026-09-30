@@ -1,0 +1,224 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
+from dataclasses import dataclass
+from functools import cached_property
+from typing import TYPE_CHECKING, Annotated, NoReturn
+from urllib.parse import quote
+
+from fastapi import Cookie, Depends, FastAPI, Request, Response
+from fastapi.datastructures import URL
+from starlette.background import BackgroundTask
+
+from quickticket.errors import ForcedResponse
+
+if TYPE_CHECKING:
+    from quickticket.dependencies.auth import IdToken
+
+COOKIE_OAUTH_NONCE = "oauth-nonce"
+COOKIE_OAUTH_STATE = "oauth-state"
+COOKIE_OAUTH_POST_REDIRECT = "oauth-post-redirect"
+# COOKIE_OAUTH_ACCESS_TOKEN = "oauth-access-token"
+COOKIE_OAUTH_REFRESH_TOKEN = "oauth-refresh-token"
+COOKIE_OAUTH_ID_TOKEN = "oauth-id-token"
+
+OAuthNonceCookie = Cookie(
+    alias=COOKIE_OAUTH_NONCE,
+    description="The OAuth2 flow nonce for login.",
+)
+OAuthStateCookie = Cookie(
+    alias=COOKIE_OAUTH_STATE,
+    description="The OAuth2 flow state for login/logout.",
+)
+OAuthPostRedirectCookie = Cookie(
+    alias=COOKIE_OAUTH_POST_REDIRECT,
+    description="The URL to redirect after a successful login/logout.",
+)
+# OAuthAccessTokenCookie = Cookie(
+#     alias=COOKIE_OAUTH_ACCESS_TOKEN,
+#     description=(
+#         "The access token received after authentication. "
+#         "This token is used to make requests to the OpenID provider's API."
+#         # To my understanding, access tokens can be opaque strings so we can't
+#         # validate its authenticity from our client unless we sent a request
+#         # to the provider each time.
+#         # The ID token on the other hand is signed by a publicly available key
+#         # in the JWKs URL (JSON Web Keys), so we can cache the keys and verify
+#         # ID tokens client-side.
+#     ),
+# )
+OAuthRefreshTokenCookie = Cookie(
+    alias=COOKIE_OAUTH_REFRESH_TOKEN,
+    description=(
+        "The refresh token received after authentication. "
+        "This token is automatically used by the API to refresh your ID token."
+    ),
+)
+OAuthIdTokenCookie = Cookie(
+    alias=COOKIE_OAUTH_ID_TOKEN,
+    description=(
+        "The ID token received after authentication. "
+        "This token is used to prove your identity."
+    ),
+)
+
+
+def cookie_safe_redirect(
+    response: Response,
+    url: str | URL,
+    status_code: int = 307,
+    *,
+    headers: Mapping[str, str] | None = None,
+    background: BackgroundTask | None = None,
+) -> NoReturn:
+    """Raise a ForcedResponse to redirect the user while preserving headers like cookies.
+
+    This should be used over :class:`pydantic.responses.RedirectResponse`
+    because it avoids overwriting headers set by middleware and dependencies.
+
+    """
+    # Copied from RedirectResponse body
+    response.body = b""
+    response.status_code = status_code
+    if headers is not None:
+        response.headers.update(headers)
+    if background is not None:
+        response.background = background
+
+    response.headers["location"] = quote(str(url), safe=":/%#?=@[]!$&'()*+,;")
+    raise ForcedResponse(response)
+
+
+@dataclass(kw_only=True, repr=False)
+class OAuthCookieController:
+    request: Request
+    response: Response
+
+    @cached_property
+    def auth_path(self) -> str:
+        # Feels like a hack...
+        return self.app.url_path_for("oauth_login").rpartition("/")[0]
+
+    @property
+    def app(self) -> FastAPI:
+        return self.request.app
+
+    def set_nonce(self, nonce: str, *, max_age: int) -> None:
+        self.response.set_cookie(
+            COOKIE_OAUTH_NONCE,
+            nonce,
+            httponly=True,
+            max_age=max_age,
+            path=self.auth_path,
+            secure=True,
+        )
+
+    def set_state(self, state: str, *, max_age: int) -> None:
+        self.response.set_cookie(
+            COOKIE_OAUTH_STATE,
+            state,
+            httponly=True,
+            max_age=max_age,
+            path=self.auth_path,
+            secure=True,
+        )
+
+    def set_post_redirect(self, url: str | URL, *, max_age: int) -> None:
+        self.response.set_cookie(
+            COOKIE_OAUTH_POST_REDIRECT,
+            str(url),
+            httponly=True,
+            max_age=max_age,
+            path=self.auth_path,
+            secure=True,
+        )
+
+    def set_tokens(
+        self,
+        *,
+        id_token: IdToken,
+        refresh_token: str,
+        refresh_expires_in: int,
+    ) -> None:
+        self.delete_flow()
+        # self.response.set_cookie(
+        #     COOKIE_OAUTH_ACCESS_TOKEN,
+        #     access_token,
+        #     httponly=True,
+        #     max_age=int(expires_in),
+        #     secure=True,
+        # )
+        self.response.set_cookie(
+            COOKIE_OAUTH_REFRESH_TOKEN,
+            refresh_token,
+            httponly=True,
+            max_age=int(refresh_expires_in),
+            secure=True,
+        )
+        self.response.set_cookie(
+            COOKIE_OAUTH_ID_TOKEN,
+            id_token.raw,
+            httponly=True,
+            max_age=id_token.claims.exp - id_token.claims.iat,
+            secure=True,
+        )
+
+    def delete_flow(self) -> None:
+        self.response.delete_cookie(
+            COOKIE_OAUTH_NONCE,
+            httponly=True,
+            path=self.auth_path,
+            secure=True,
+        )
+        self.response.delete_cookie(
+            COOKIE_OAUTH_STATE,
+            httponly=True,
+            path=self.auth_path,
+            secure=True,
+        )
+        self.response.delete_cookie(
+            COOKIE_OAUTH_POST_REDIRECT,
+            httponly=True,
+            path=self.auth_path,
+            secure=True,
+        )
+
+    def delete_tokens(self) -> None:
+        # self.response.delete_cookie(
+        #     COOKIE_OAUTH_ACCESS_TOKEN,
+        #     httponly=True,
+        #     secure=True,
+        # )
+        self.response.delete_cookie(
+            COOKIE_OAUTH_REFRESH_TOKEN,
+            httponly=True,
+            secure=True,
+        )
+        self.response.delete_cookie(
+            COOKIE_OAUTH_ID_TOKEN,
+            httponly=True,
+            secure=True,
+        )
+
+    def delete_all(self) -> None:
+        self.delete_flow()
+        self.delete_tokens()
+
+    def force_redirect(
+        self,
+        url: str | URL,
+        status_code: int = 307,
+        *,
+        headers: Mapping[str, str] | None = None,
+        background: BackgroundTask | None = None,
+    ) -> NoReturn:
+        return cookie_safe_redirect(
+            self.response,
+            url,
+            status_code,
+            headers=headers,
+            background=background,
+        )
+
+
+OAuthCookieControllerDep = Annotated[OAuthCookieController, Depends(OAuthCookieController)]

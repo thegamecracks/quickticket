@@ -1,7 +1,12 @@
+import logging
+
 import authlib.oauth2
+from authlib.common.security import generate_token
 from authlib.integrations.httpx_client import AsyncOAuth2Client
 from fastapi.datastructures import URL
 from pydantic import AnyUrl, BaseModel, Field, Secret
+
+log = logging.getLogger(__name__)
 
 
 class OpenIDDiscovery(BaseModel):
@@ -33,9 +38,7 @@ class OpenIDDiscovery(BaseModel):
 
     revocation_endpoint: AnyUrl | None = None
     revocation_endpoint_auth_methods_supported: list[str] = Field(default_factory=list)
-    revocation_endpoint_auth_signing_alg_values_supported: list[str] = Field(
-        default_factory=list
-    )
+    revocation_endpoint_auth_signing_alg_values_supported: list[str] = Field(default_factory=list)
     backchannel_logout_supported: bool | None = None
     backchannel_logout_session_supported: bool | None = None
     backchannel_token_delivery_modes_supported: list[str] = Field(default_factory=list)
@@ -60,37 +63,32 @@ class OpenIDProvider(BaseModel):
 # Derived from Keycloak response
 class TokenExchangeResponse(BaseModel):
     access_token: str  # Secret[str]
-    expires_in: float | int
-    refresh_expires_in: float | int
+    expires_in: int
+    refresh_expires_in: int
     refresh_token: str  # Secret[str]
     token_type: str
     id_token: str  # Secret[str]
     scope: str
-    expires_at: float | int
+    expires_at: int
 
 
 class OAuth2Client:
     def __init__(
         self,
         provider: OpenIDProvider,
-        *,
-        redirect_uri: str,
     ) -> None:
         self.provider = provider
 
         if "S256" not in self.discovery.code_challenge_methods_supported:
             raise ValueError("Provider does not support 'S256' code challenge method")
         if "authorization_code" not in self.discovery.grant_types_supported:
-            raise ValueError(
-                "Provider does not support 'authorization_code' grant type"
-            )
+            raise ValueError("Provider does not support 'authorization_code' grant type")
         if "code" not in self.discovery.response_types_supported:
             raise ValueError("Provider does not support 'code' response type")
 
         self._client = AsyncOAuth2Client(
             client_id=provider.client_id.get_secret_value(),
             client_secret=provider.client_secret.get_secret_value(),
-            redirect_uri=redirect_uri,
             scope="openid email profile",
             # Passed to underyling OAuth2Client
             code_challenge_method="S256",
@@ -100,50 +98,73 @@ class OAuth2Client:
         )
 
     @property
-    def discovery(self) -> OpenIDDiscovery:
-        return self.provider.discovery
-
-    @property
-    def _typed_client(self) -> authlib.oauth2.OAuth2Client:
+    def client(self) -> authlib.oauth2.OAuth2Client:
         # HACK: workaround for poor typehinting support in authlib
         return self._client
 
-    def create_authorization_url(self, code_verifier: str) -> tuple[str, str]:
+    @property
+    def discovery(self) -> OpenIDDiscovery:
+        return self.provider.discovery
+
+    def create_authorization_url(
+        self,
+        *,
+        code_verifier: str,
+        nonce: str,
+        redirect_uri: str | URL,
+    ) -> tuple[str, str]:
         """Create the authorization url and state."""
-        return self._typed_client.create_authorization_url(
+        log.debug("Creating authorization URL")
+        return self.client.create_authorization_url(
             str(self.discovery.authorization_endpoint),
             code_verifier=code_verifier,
+            nonce=nonce,
+            redirect_uri=str(redirect_uri),
         )
 
-    # TODO: parse with pydantic model
     async def fetch_token(
-        self, request_uri: str, *, code_verifier: str
+        self,
+        *,
+        authorization_response: str,
+        code_verifier: str,
+        redirect_uri: str | URL,
     ) -> TokenExchangeResponse:
-        response = await self._typed_client.fetch_token(
-            authorization_response=request_uri,
+        log.debug("Fetching token from provider")
+        response = await self.client.fetch_token(
+            authorization_response=authorization_response,
             code_verifier=code_verifier,
+            redirect_uri=str(redirect_uri),
         )
         return TokenExchangeResponse.model_validate(response)
 
     def create_logout_url(
         self,
         *,
-        id_token: str,
-        post_logout_redirect_uri: str,
-    ) -> str:
+        id_token_hint: str,
+        post_logout_redirect_uri: str | URL,
+    ) -> tuple[str, str]:
         """
 
         https://openid.net/specs/openid-connect-rpinitiated-1_0.html
         https://docs.authlib.org/en/latest/oauth2/client/web/starlette.html#rp-initiated-logout
 
         """
+        log.debug("Creating logout URL")
         if self.discovery.end_session_endpoint is None:
             raise ValueError("Front-channel logout not supported by provider")
 
+        state = generate_token()
         url = URL(self.discovery.end_session_endpoint.encoded_string())
-        url.include_query_params(
-            id_token=id_token,
+        url = url.include_query_params(
+            id_token_hint=id_token_hint,
             client_id=self.provider.client_id.get_secret_value(),
             post_logout_redirect_uri=post_logout_redirect_uri,
+            state=state,
         )
-        return str(url)
+        return str(url), state
+
+    async def refresh_token(self, refresh_token: str) -> TokenExchangeResponse:
+        response = await self.client.refresh_token(
+            refresh_token=refresh_token,
+        )
+        return TokenExchangeResponse.model_validate(response)

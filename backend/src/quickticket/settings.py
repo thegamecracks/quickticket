@@ -1,16 +1,28 @@
 # https://fastapi.tiangolo.com/advanced/settings/
+from fnmatch import fnmatch
 from typing import Literal, Self
 
-from pydantic import AnyUrl, Field, IPvAnyAddress, NameEmail, Secret, model_validator
+from fastapi.datastructures import URL
+from pydantic import (
+    AnyUrl,
+    Field,
+    HttpUrl,
+    IPvAnyAddress,
+    NameEmail,
+    Secret,
+    model_validator,
+)
 from pydantic_extra_types.domain import DomainStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from quickticket.logging import LogVerbosity
 
 
 class CacheSettings(BaseSettings):
     url: Secret[AnyUrl] = Secret(AnyUrl("sqlite:///quickticket-cache.db"))
     """The connection string to use for caching.
 
-    This supports ``sqlite://`` and ``redis://`` schemes.
+    This supports ``sqlite://``, ``redis://``, and  ``rediss://`` (SSL) schemes.
 
     .. note::
 
@@ -40,6 +52,57 @@ class DatabaseSettings(BaseSettings):
     """
 
 
+class FrontendSettings(BaseSettings):
+    default_redirect_uri: HttpUrl | None = None
+    """The default URL to redirect if no origin is specified.
+
+    Must be matched by one of the patterns in :attr:`redirect_uris`.
+    If None, the redirect URI will be dynamically set to the request's origin.
+
+    """
+    redirect_uris: list[HttpUrl] = [
+        HttpUrl("http://127.0.0.1:5173/*"),
+        HttpUrl("http://localhost:5173/*"),
+        HttpUrl("http://127.0.0.1:8000/*"),
+        HttpUrl("http://localhost:8000/*"),
+    ]
+    """A list of URL glob patterns allowed to be used in ``/auth/*?redirect_uri=``
+    query parameters.
+
+    URL origins are automatically added to CORS headers.
+
+    """
+
+    @property
+    def origins(self) -> list[str]:
+        """A list of allowed frontend origins."""
+        return [
+            str(URL(scheme=uri.scheme, hostname=uri.host, port=uri.port))
+            for uri in self.redirect_uris
+            if uri.host is not None
+        ]
+
+    def match_redirect_uri(self, uri: str | URL | AnyUrl) -> AnyUrl | None:
+        """Return the first origin that matches the URL, if any."""
+        return next(
+            (pat for pat in self.redirect_uris if fnmatch(str(uri), str(pat))),
+            None,
+        )
+
+    @model_validator(mode="after")
+    def is_matching_default_redirect_uri(self) -> Self:
+        if self.default_redirect_uri is None:
+            pass
+        elif not self.match_redirect_uri(self.default_redirect_uri):
+            raise ValueError("default_redirect_uri does not match any pattern in redirect_uris")
+        return self
+
+
+class LogSettings(BaseSettings):
+    verbosity: LogVerbosity = LogVerbosity.PROJECT_DEBUG
+    """The logging verbosity starting from 0, where larger numbers mean greater verbosity."""
+
+
 class OpenIDSettings(BaseSettings):
     client_id: Secret[str]
     """The client ID for the OpenID Connect provider."""
@@ -49,6 +112,13 @@ class OpenIDSettings(BaseSettings):
     """The OpenID Connect provider's auto-discovery URL.
 
     Example: https://example.com/.well-known/openid-configuration
+
+    """
+    admin_group: str | None = None
+    """The group claim required for administrator privileges.
+
+    If None, administrator privileges will not be linked to the provider.
+    Existing administrators can be revoked by removing this claim on the provider.
 
     """
 
@@ -98,13 +168,13 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    cache: CacheSettings = CacheSettings()
-    db: DatabaseSettings = DatabaseSettings()
+    cache: CacheSettings = Field(default_factory=CacheSettings)
+    db: DatabaseSettings = Field(default_factory=DatabaseSettings)
+    frontend: FrontendSettings = Field(default_factory=FrontendSettings)
+    log: LogSettings = Field(default_factory=LogSettings)
     openid: OpenIDSettings | None = None
     smtp: SMTPSettings | None = None
 
 
 if __name__ == "__main__":
-    import json
-
-    print(json.dumps(Settings.model_json_schema(), indent=4))
+    print(Settings().model_dump_json(indent=4))

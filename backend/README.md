@@ -1,6 +1,6 @@
 # QuickTicket Backend
 
-[![](https://img.shields.io/github/actions/workflow/status/thegamecracks/quickticket/backend-test.yml?style=flat-square&logo=django&label=backend)](https://github.com/thegamecracks/quickticket/blob/main/backend)
+[![](https://img.shields.io/github/actions/workflow/status/thegamecracks/quickticket/backend-test.yml?style=flat-square&logo=fastapi&label=backend)](https://github.com/thegamecracks/quickticket/blob/main/backend)
 
 ## Installation
 
@@ -9,36 +9,9 @@ for project management.
 
 ```sh
 /        $ cd backend
+/backend $ uv run alembic upgrade head  # create/migrate database from .env
 /backend $ uv run fastapi dev
 ```
-
-**Outdated:** `uv run quickticket` provides an entrypoint for django-admin / manage.py.
-See the [documentation](https://docs.djangoproject.com/en/6.1/ref/django-admin/#django-admin-runserver)
-for CLI reference.
-
-## (Outdated) Using a production settings.py file
-
-`settings.py` is considered a confidential file and is expected to store
-hostnames and credentials directly. To avoid accidentally committing these
-credentials to the repository, you can create a copy of settings.py in the
-project directory and tell Django to load it with the [DJANGO_SETTINGS_MODULE](https://docs.djangoproject.com/en/6.1/topics/settings/#envvar-DJANGO_SETTINGS_MODULE)
-environment variable:
-
-```sh
-# backend/
-# ├── settings.py
-# └── .env
-#     DJANGO_SETTINGS_MODULE=settings
-/backend $ uv run --env-file .env -m quickticket.manage runserver
-```
-
-Note that `DJANGO_SETTINGS_MODULE` takes a Python module import path
-and so is dependent on Python's [sys.path](https://docs.python.org/3/library/sys.html#sys.path)
-for discovering the settings module.
-The `uv run quickticket` [entrypoint](https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#console-scripts)
-isolates itself from the current working directory, so we have to run manage.py
-directly with the `-m <path.to.module>` option to ensure the CWD is included
-in `sys.path`, hence `-m quickticket.manage runserver`.
 
 ## Running tests
 
@@ -52,8 +25,39 @@ When updating SQLAlchemy models, you can auto-generate a new migration with Alem
 like so:
 
 ```sh
-/backend $ uv run alembic revision --autogenerate -m "Add account and address tables"
+/backend $ uv run alembic upgrade head  # ensure database is up to date
+/backend $ uv run alembic revision --autogenerate -m "Add table.xyz columns"
 ```
+
+Make sure to set a suitable message and check the resulting migration file
+before committing. **Seriously, check.** Auto-generated migrations are
+unreliable since it relies on introspecting the live database schema configured
+in settings. This can result in unwanted objects if a previous upgrade failed
+or the database schema was modified by hand. Sometimes Alembic will also ask
+for manual adjustments inside the file if it cannot unambiguously generate
+the migration.
+
+For a clean slate, you can set a local database driver like SQLite (the default)
+and re-create the entire database before generating your migration:
+
+```sh
+/backend $ unset BACKEND__DB__URL  # or export `sqlite+aiosqlite:///quickticket.db`
+/backend $ rm quickticket.db
+/backend $ uv run alembic upgrade head
+/backend $ uv run alembic revision --autogenerate -m "Add table.xyz columns"
+```
+
+If you are confident with your migration script, you can apply your migration
+to the database:
+
+```sh
+/backend $ uv run alembic upgrade head
+```
+
+If you need to revert this migration, run `uv run alembic downgrade -1` to downgrade
+the database schema, and then remove your old migration script.
+If this fails, you can delete the database and regenerate it with
+`uv run alembic upgrade head`.
 
 ## Resources
 
@@ -65,7 +69,7 @@ Python libraries:
 - [joserfc](https://jose.authlib.org/en/guide/jwt/) (JWT parsing and validation)
 - [obstore](https://developmentseed.org/obstore/latest/) (S3 client)
 - [pillow](https://pillow.readthedocs.io/en/stable/) (image library)
-- [psycopg](https://www.psycopg.org/psycopg3/docs/) (PostgreSQL driver used by Django)
+- [psycopg](https://www.psycopg.org/psycopg3/docs/) (PostgreSQL driver)
 - [pydantic](https://pydantic.dev/docs/validation/latest/get-started/)
 - [pydantic-settings](https://pydantic.dev/docs/validation/latest/concepts/pydantic_settings/)
 - [pytest](https://docs.pytest.org/en/stable/)
