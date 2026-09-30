@@ -233,13 +233,6 @@ class OAuthCookieController:
         )
 
 
-def get_oauth_cookie_controller(
-    request: Request,
-    response: Response,
-) -> OAuthCookieController:
-    return OAuthCookieController(request=request, response=response)
-
-
 OAuthCookieControllerDep = Annotated[
-    OAuthCookieController, Depends(get_oauth_cookie_controller)
+    OAuthCookieController, Depends(OAuthCookieController)
 ]
