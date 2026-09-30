@@ -13,10 +13,17 @@ from typing import Any, ClassVar
 
 class LogVerbosity(IntEnum):
     MINIMAL = 0
+    """Only show warning logs and errors."""
     PROJECT_INFO = 1
-    PROJECT_DEBUG = 2
-    PROJECT_TRACE = 3
-    GLOBAL_DEBUG = 4
+    """Show info logs from this package."""
+    GLOBAL_INFO = 2
+    """Show info logs from all packages."""
+    PROJECT_DEBUG = 3
+    """Show debug logs from this package."""
+    PROJECT_QUERIES = 4
+    """Show SQLAlchemy queries. Includes sensitive information!"""
+    GLOBAL_DEBUG = 5
+    """Show debug logs from all dependencies. Very noisy!"""
 
 
 def setup_logging(*, verbosity: LogVerbosity) -> None:
@@ -25,13 +32,15 @@ def setup_logging(*, verbosity: LogVerbosity) -> None:
     sqlalchemy_level = logging.NOTSET
 
     if verbosity >= LogVerbosity.PROJECT_INFO:
-        root_level = logging.INFO  # show info logs from all dependencies
+        project_level = logging.INFO
+    if verbosity >= LogVerbosity.GLOBAL_INFO:
+        root_level = logging.INFO
     if verbosity >= LogVerbosity.PROJECT_DEBUG:
-        project_level = logging.DEBUG  # show log.debug() statements
-    if verbosity >= LogVerbosity.PROJECT_TRACE:
-        sqlalchemy_level = logging.INFO  # show SQLAlchemy queries (sensitive info!)
+        project_level = logging.DEBUG
+    if verbosity >= LogVerbosity.PROJECT_QUERIES:
+        sqlalchemy_level = logging.INFO
     if verbosity >= LogVerbosity.GLOBAL_DEBUG:
-        root_level = logging.DEBUG  # show everything (very noisy!)
+        root_level = logging.DEBUG
 
     handler = logging.StreamHandler()
     if stream_supports_colour(handler.stream):
