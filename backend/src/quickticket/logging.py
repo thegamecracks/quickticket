@@ -12,21 +12,26 @@ from typing import Any, ClassVar
 
 
 class LogVerbosity(IntEnum):
-    INFO = 0
-    PACKAGE_DEBUG = 1
-    GLOBAL_DEBUG = 2
+    MINIMAL = 0
+    PROJECT_INFO = 1
+    PROJECT_DEBUG = 2
+    PROJECT_TRACE = 3
+    GLOBAL_DEBUG = 4
 
 
-def setup_logging(*, verbose: LogVerbosity) -> None:
-    if verbose <= LogVerbosity.INFO:
-        root_level = logging.INFO
-        package_level = logging.NOTSET
-    elif verbose <= LogVerbosity.PACKAGE_DEBUG:
-        root_level = logging.INFO
-        package_level = logging.DEBUG
-    else:
-        root_level = logging.DEBUG
-        package_level = logging.NOTSET
+def setup_logging(*, verbosity: LogVerbosity) -> None:
+    root_level = logging.WARNING
+    project_level = logging.NOTSET
+    sqlalchemy_level = logging.NOTSET
+
+    if verbosity >= LogVerbosity.PROJECT_INFO:
+        root_level = logging.INFO  # show info logs from all dependencies
+    if verbosity >= LogVerbosity.PROJECT_DEBUG:
+        project_level = logging.DEBUG  # show log.debug() statements
+    if verbosity >= LogVerbosity.PROJECT_TRACE:
+        sqlalchemy_level = logging.INFO  # show SQLAlchemy queries (sensitive info!)
+    if verbosity >= LogVerbosity.GLOBAL_DEBUG:
+        root_level = logging.DEBUG  # show everything (very noisy!)
 
     handler = logging.StreamHandler()
     if stream_supports_colour(handler.stream):
@@ -44,17 +49,18 @@ def setup_logging(*, verbose: LogVerbosity) -> None:
     logger.setLevel(root_level)
     logger.addHandler(handler)
 
-    # NOTE: Logging propagation only applies to handlers and not filters,
-    #       so root.addFilter() won't catch logs from all loggers.
-    #       We need to add filters directly to each package's logger.
-    logging.getLogger("discord.client").addFilter(
-        lambda r: not r.getMessage().endswith("voice will NOT be supported")
-    )
-    logging.getLogger("discord.gateway").addFilter(
-        lambda r: "has successfully RESUMED session" not in r.getMessage()
-    )
+    # # NOTE: Logging propagation only applies to handlers and not filters,
+    # #       so root.addFilter() won't catch logs from all loggers.
+    # #       We need to add filters directly to each package's logger.
+    # logging.getLogger("discord.client").addFilter(
+    #     lambda r: not r.getMessage().endswith("voice will NOT be supported")
+    # )
+    # logging.getLogger("discord.gateway").addFilter(
+    #     lambda r: "has successfully RESUMED session" not in r.getMessage()
+    # )
 
-    logging.getLogger(__package__).setLevel(package_level)
+    logging.getLogger(__package__).setLevel(project_level)
+    logging.getLogger("sqlalchemy.engine").setLevel(sqlalchemy_level)
 
 
 def stream_supports_colour(stream: Any) -> bool:

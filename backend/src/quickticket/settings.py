@@ -15,6 +15,8 @@ from pydantic import (
 from pydantic_extra_types.domain import DomainStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from quickticket.logging import LogVerbosity
+
 
 class CacheSettings(BaseSettings):
     url: Secret[AnyUrl] = Secret(AnyUrl("sqlite:///quickticket-cache.db"))
@@ -98,6 +100,11 @@ class FrontendSettings(BaseSettings):
         return self
 
 
+class LogSettings(BaseSettings):
+    verbosity: LogVerbosity = LogVerbosity.PROJECT_DEBUG
+    """The logging verbosity starting from 0, where larger numbers mean greater verbosity."""
+
+
 class OpenIDSettings(BaseSettings):
     client_id: Secret[str]
     """The client ID for the OpenID Connect provider."""
@@ -166,6 +173,7 @@ class Settings(BaseSettings):
     cache: CacheSettings = Field(default_factory=CacheSettings)
     db: DatabaseSettings = Field(default_factory=DatabaseSettings)
     frontend: FrontendSettings = Field(default_factory=FrontendSettings)
+    log: LogSettings = Field(default_factory=LogSettings)
     openid: OpenIDSettings | None = None
     smtp: SMTPSettings | None = None
 

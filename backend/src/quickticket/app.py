@@ -5,15 +5,18 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from quickticket.dependencies import OptionalIdTokenDep, SettingsDep
-from quickticket.logging import LogVerbosity, setup_logging
+from quickticket.logging import setup_logging
 from quickticket.routers import auth
 from quickticket.settings import Settings
+
+# HACK: bypasses dependency injection
+_settings = Settings()
 
 
 # https://github.com/fastapi/fastapi/discussions/8054#discussioncomment-11346542
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    setup_logging(verbose=LogVerbosity.PACKAGE_DEBUG)  # TODO: add setting for verbosity
+    setup_logging(verbosity=_settings.log.verbosity)
     async with AsyncExitStack() as stack:
         _app.state.stack = stack
         try:
@@ -26,7 +29,7 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(auth.router, prefix="/auth")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=Settings().frontend.origins,  # HACK: bypasses dependency injection
+    allow_origins=_settings.frontend.origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
