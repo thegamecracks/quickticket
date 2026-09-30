@@ -49,6 +49,7 @@ async def get_openid_provider(
         raise HTTPException(404, "OpenID is not configured for this backend")
 
     # FIXME: exceptions here can result in spamming the discovery URL
+    # TODO: cache response.json()
     log.info("Fetching discovery URL from OpenID provider")
     response = await http.get(str(settings.openid.discovery_url))
     state.openid_provider = OpenIDProvider(
