@@ -33,8 +33,8 @@ log = logging.getLogger(__name__)
 # https://docs.authlib.org/en/latest/oauth2/client/http/index.html#oidc-session
 @router.post(
     "/login",
-    responses={307: {"description": "The user is being redirected."}},
-    status_code=307,
+    responses={303: {"description": "The user is being redirected."}},
+    status_code=303,
 )
 async def oauth_login(
     id_token: OptionalIdTokenDep,
@@ -52,7 +52,7 @@ async def oauth_login(
 
     """
     if id_token is not None:
-        return cookies.force_redirect(redirect_uri)
+        return cookies.force_redirect(redirect_uri, 303)
 
     # Proof Key for Code Exchange (PKCE)
     code_verifier = generate_token(48)
@@ -74,7 +74,7 @@ async def oauth_login(
     cookies.set_nonce(nonce, max_age=LOGIN_EXPIRY)
     cookies.set_state(state, max_age=LOGIN_EXPIRY)
     cookies.set_post_redirect(redirect_uri, max_age=LOGIN_EXPIRY)
-    return cookies.force_redirect(url)
+    return cookies.force_redirect(url, 303)
 
 
 @router.get(
@@ -145,7 +145,7 @@ async def oauth_post_login(
         refresh_expires_in=tokens.refresh_expires_in,
         id_token=id_token,
     )
-    return registration.force_redirect(redirect_uri)
+    return registration.force_redirect(redirect_uri, 307)
 
 
 @router.get("/validate")
@@ -172,7 +172,7 @@ async def oauth_logout(
 
     """
     if id_token_hint is None:
-        return cookies.force_redirect(redirect_uri)
+        return cookies.force_redirect(redirect_uri, 303)
 
     url, state = client.create_logout_url(
         id_token_hint=id_token_hint,  # token can be expired/invalid
@@ -180,7 +180,7 @@ async def oauth_logout(
     )
     cookies.set_state(state, max_age=LOGOUT_EXPIRY)
     cookies.set_post_redirect(redirect_uri, max_age=LOGOUT_EXPIRY)
-    return cookies.force_redirect(url)
+    return cookies.force_redirect(url, 303)
 
 
 @router.get(
@@ -212,4 +212,4 @@ async def oauth_post_logout(
         raise HTTPException(400, "Invalid or expired state")
 
     cookies.delete_all()
-    return cookies.force_redirect(redirect_uri)
+    return cookies.force_redirect(redirect_uri, 307)

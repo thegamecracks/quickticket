@@ -65,7 +65,7 @@ OAuthIdTokenCookie = Cookie(
 def cookie_safe_redirect(
     response: Response,
     url: str | URL,
-    status_code: int = 307,
+    status_code: int,
     *,
     headers: Mapping[str, str] | None = None,
     background: BackgroundTask | None = None,
@@ -147,7 +147,7 @@ class OAuthCookieController:
     def force_redirect(
         self,
         url: str | URL,
-        status_code: int = 307,
+        status_code: int,
         *,
         headers: Mapping[str, str] | None = None,
         background: BackgroundTask | None = None,

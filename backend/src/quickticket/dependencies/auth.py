@@ -338,8 +338,8 @@ class RegistrationController:
             refresh_expires_in=refresh_expires_in,
         )
 
-    def force_redirect(self, url: str | URL) -> NoReturn:
-        return self.cookies.force_redirect(url)
+    def force_redirect(self, url: str | URL, status_code: int) -> NoReturn:
+        return self.cookies.force_redirect(url, status_code)
 
     def _update_user_with_claims(self, user: User, claims: IdTokenClaims) -> None:
         # https://openid.net/specs/openid-connect-basic-1_0.html#rfc.section.2.5
