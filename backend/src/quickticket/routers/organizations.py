@@ -7,7 +7,7 @@ router = APIRouter(tags=["Organizations"])
 log = logging.getLogger(__name__)
 
 
-@router.get("/")
+@router.get("")
 async def get_organizations() -> None:
     """Get a list of organizations."""
     # TODO: support pagination
@@ -22,7 +22,7 @@ async def get_organization(organization_id: UUID) -> None:
     # TODO: load user's tickets for organization if logged in
 
 
-@router.post("/")
+@router.post("")
 async def create_organization() -> None:
     """Create a new organization."""
     # TODO: only allow one organization per user

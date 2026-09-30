@@ -7,7 +7,7 @@ router = APIRouter(tags=["Venues"])
 log = logging.getLogger(__name__)
 
 
-@router.get("/")
+@router.get("")
 async def get_venues() -> None:
     """Get a list of venues."""
     # TODO: sort by location proximity in latitude/longitude
@@ -23,7 +23,7 @@ async def get_venue(venue_id: UUID) -> None:
     # TODO: load user's tickets for venue if logged in
 
 
-@router.post("/")
+@router.post("")
 async def create_venue() -> None:
     """Create a new venue in an organization."""
     # TODO: check authorization by organization

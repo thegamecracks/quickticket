@@ -7,7 +7,7 @@ router = APIRouter(tags=["Events"])
 log = logging.getLogger(__name__)
 
 
-@router.get("/")
+@router.get("")
 async def get_events() -> None:
     """Get a list of events."""
     # TODO: sort by newest events, most tickets?
@@ -23,7 +23,7 @@ async def get_event(event_id: UUID) -> None:
     # TODO: load user's tickets for event if logged in
 
 
-@router.post("/")
+@router.post("")
 async def create_event() -> None:
     """Create a new event for a venue."""
     # TODO: check authorization by organization
