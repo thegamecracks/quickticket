@@ -18,9 +18,6 @@ from quickticket.dependencies import (
     PostRedirectUriDep,
     RedirectUriDep,
     RequiredIdTokenDep,
-)
-from quickticket.dependencies.auth import parse_id_token
-from quickticket.dependencies.cookies import (
     cookie_safe_redirect,
     delete_all_oauth_cookies,
     set_oauth_nonce_cookie,
@@ -28,6 +25,7 @@ from quickticket.dependencies.cookies import (
     set_oauth_state_cookie,
     set_oauth_token_cookies,
 )
+from quickticket.dependencies.auth import parse_id_token
 
 LOGIN_EXPIRY = 1800
 LOGOUT_EXPIRY = 1800

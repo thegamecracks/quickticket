@@ -10,14 +10,17 @@ from joserfc.jwk import KeySet
 from joserfc.jwt import JWTClaimsRegistry, Token
 from pydantic import HttpUrl
 
-from quickticket.dependencies.cookies import (
+from quickticket.dependencies import (
     COOKIE_OAUTH_POST_REDIRECT,
+    HTTPClientDep,
     OAuthIdTokenCookie,
     OAuthPostRedirectCookie,
     OAuthRefreshTokenCookie,
+    SettingsDep,
+    StateDep,
+    delete_oauth_token_cookies,
     set_oauth_token_cookies,
 )
-from quickticket.dependencies.state import HTTPClientDep, SettingsDep, StateDep
 from quickticket.oauth import OAuth2Client, OpenIDProvider
 
 log = logging.getLogger(__name__)
@@ -118,6 +121,13 @@ async def get_or_refresh_id_token(
     id_token_cookie: Annotated[str | None, OAuthIdTokenCookie] = None,
     refresh_token_cookie: Annotated[str | None, OAuthRefreshTokenCookie] = None,
 ) -> Token | None:
+    """Attempt to return a valid ID token from the user's cookies.
+
+    If the ID token is invalid and a refresh token is present,
+    the server will attempt to fetch a new ID token from the OpenID provider.
+    If this fails, both token cookies will be marked for deletion.
+
+    """
     if id_token_cookie is not None:
         # ID token is present, check validity
         try:
@@ -128,6 +138,7 @@ async def get_or_refresh_id_token(
             log.debug("Ignoring invalid ID token", exc_info=e)
 
     if refresh_token_cookie is None:
+        delete_oauth_token_cookies(response)  # clean out ID token if any
         return
 
     log.debug("Refreshing ID token")
@@ -138,13 +149,15 @@ async def get_or_refresh_id_token(
             log.debug("OpenID session expired, re-authentication required")
         else:
             log.debug("Failed to refresh ID token", exc_info=e)
-        # TODO: redirect to provider for login, then redirect back to request.url?
+        delete_oauth_token_cookies(response)
         return
 
     try:
         id_token = parse_id_token(tokens.id_token, keys, registry)
     except JoseError as e:
-        log.debug("OpenID returned invalid ID token", exc_info=e)
+        # This suggests conflicting configuration,
+        # perhaps incorrect system time or outdated JWKs?
+        log.warning("OpenID returned invalid ID token", exc_info=e)
         return
 
     # CAUTION: a route that returns a Response directly like RedirectResponse

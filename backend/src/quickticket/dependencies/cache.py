@@ -6,7 +6,7 @@ from fastapi import Depends
 from redis.asyncio import Redis
 
 from quickticket.cache import Cache, RedisCache, SQLiteCache
-from quickticket.dependencies.state import AsyncExitStackDep, SettingsDep, StateDep
+from quickticket.dependencies import AsyncExitStackDep, SettingsDep, StateDep
 
 log = logging.getLogger(__name__)
 

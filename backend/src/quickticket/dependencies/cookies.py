@@ -20,6 +20,14 @@ __all__ = (
     "OAuthPostRedirectCookie",
     "OAuthRefreshTokenCookie",
     "OAuthStateCookie",
+    "cookie_safe_redirect",
+    "delete_all_oauth_cookies",
+    "delete_oauth_flow_cookies",
+    "delete_oauth_token_cookies",
+    "set_oauth_nonce_cookie",
+    "set_oauth_post_redirect_cookie",
+    "set_oauth_state_cookie",
+    "set_oauth_token_cookies",
 )
 
 COOKIE_OAUTH_NONCE = "oauth-nonce"
@@ -154,6 +162,10 @@ def set_oauth_token_cookies(
 
 def delete_all_oauth_cookies(response: Response) -> None:
     delete_oauth_flow_cookies(response)
+    delete_oauth_token_cookies(response)
+
+
+def delete_oauth_token_cookies(response: Response) -> None:
     # response.delete_cookie(COOKIE_OAUTH_ACCESS_TOKEN, httponly=True, secure=True)
     response.delete_cookie(COOKIE_OAUTH_REFRESH_TOKEN, httponly=True, secure=True)
     response.delete_cookie(COOKIE_OAUTH_ID_TOKEN, httponly=True, secure=True)
