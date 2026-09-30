@@ -7,10 +7,25 @@ from starlette.background import BackgroundTask
 
 from quickticket.oauth import TokenExchangeResponse
 
+__all__ = (
+    # "COOKIE_OAUTH_ACCESS_TOKEN",
+    "COOKIE_OAUTH_ID_TOKEN",
+    "COOKIE_OAUTH_NONCE",
+    "COOKIE_OAUTH_POST_REDIRECT",
+    "COOKIE_OAUTH_REFRESH_TOKEN",
+    "COOKIE_OAUTH_STATE",
+    # "OAuthAccessTokenCookie",
+    "OAuthIdTokenCookie",
+    "OAuthNonceCookie",
+    "OAuthPostRedirectCookie",
+    "OAuthRefreshTokenCookie",
+    "OAuthStateCookie",
+)
+
 COOKIE_OAUTH_NONCE = "oauth-nonce"
 COOKIE_OAUTH_STATE = "oauth-state"
 COOKIE_OAUTH_POST_REDIRECT = "oauth-post-redirect"
-COOKIE_OAUTH_ACCESS_TOKEN = "oauth-access-token"
+# COOKIE_OAUTH_ACCESS_TOKEN = "oauth-access-token"
 COOKIE_OAUTH_REFRESH_TOKEN = "oauth-refresh-token"
 COOKIE_OAUTH_ID_TOKEN = "oauth-id-token"
 
@@ -26,10 +41,19 @@ OAuthPostRedirectCookie = Cookie(
     alias=COOKIE_OAUTH_POST_REDIRECT,
     description="The URL to redirect after a successful login/logout.",
 )
-OAuthAccessTokenCookie = Cookie(
-    alias=COOKIE_OAUTH_ACCESS_TOKEN,
-    description="The access token received after authentication.",
-)
+# OAuthAccessTokenCookie = Cookie(
+#     alias=COOKIE_OAUTH_ACCESS_TOKEN,
+#     description=(
+#         "The access token received after authentication. "
+#         "This token is used to make requests to the OpenID provider's API."
+#         # To my understanding, access tokens can be opaque strings so we can't
+#         # validate its authenticity from our client unless we sent a request
+#         # to the provider each time.
+#         # The ID token on the other hand is signed by a publicly available key
+#         # in the JWKs URL (JSON Web Keys), so we can cache the keys and verify
+#         # ID tokens client-side.
+#     ),
+# )
 OAuthRefreshTokenCookie = Cookie(
     alias=COOKIE_OAUTH_REFRESH_TOKEN,
     description="The refresh token received after authentication.",
@@ -99,13 +123,13 @@ def set_oauth_token_cookies(
     id_token_expires_in: int,
 ) -> None:
     delete_oauth_flow_cookies(response)
-    response.set_cookie(
-        COOKIE_OAUTH_ACCESS_TOKEN,
-        tokens.access_token,
-        httponly=True,
-        max_age=int(tokens.expires_in),
-        secure=True,
-    )
+    # response.set_cookie(
+    #     COOKIE_OAUTH_ACCESS_TOKEN,
+    #     tokens.access_token,
+    #     httponly=True,
+    #     max_age=int(tokens.expires_in),
+    #     secure=True,
+    # )
     response.set_cookie(
         COOKIE_OAUTH_REFRESH_TOKEN,
         tokens.refresh_token,
@@ -124,7 +148,7 @@ def set_oauth_token_cookies(
 
 def delete_all_oauth_cookies(response: Response) -> None:
     delete_oauth_flow_cookies(response)
-    response.delete_cookie(COOKIE_OAUTH_ACCESS_TOKEN, httponly=True, secure=True)
+    # response.delete_cookie(COOKIE_OAUTH_ACCESS_TOKEN, httponly=True, secure=True)
     response.delete_cookie(COOKIE_OAUTH_REFRESH_TOKEN, httponly=True, secure=True)
     response.delete_cookie(COOKIE_OAUTH_ID_TOKEN, httponly=True, secure=True)
 
