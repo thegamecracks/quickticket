@@ -1,0 +1,60 @@
+
+export type EventInfo = {
+  id: number
+  title: string
+  date: string
+  location: string
+  price: number
+  imageUrl?: string
+  available?: boolean
+}
+
+type EventCardProps = {
+  event: EventInfo
+}
+
+export default function EventCard({ event }: EventCardProps) {
+  return (
+    <div className="card overflow-hidden border border-base-300 bg-base-200 shadow-sm">
+
+      {/* Event image */}
+      <figure>
+        <img
+          src={event.imageUrl ?? 'https://placehold.co/800x450/272c35/ffffff?text=QuickTicket+Event'}
+          alt={event.title}
+          className="h-48 w-full object-cover"
+          loading="lazy"
+        />
+      </figure>
+
+      <div className="card-body">
+
+        {/* Event name */}
+        <h2 className="card-title">{event.title}</h2>
+
+        {/* Event information */}
+        <p>📅 {event.date}</p>
+        <p>📍 {event.location}</p>
+
+        {/* Price and availability */}
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+
+          <span className="badge badge-primary">
+            ${event.price}
+          </span>
+
+          {event.available !== false ? (
+            <span className="badge badge-success">
+              Available
+            </span>
+          ) : (
+            <span className="badge badge-error">
+              Sold Out
+            </span>
+          )}
+
+        </div>
+      </div>
+    </div>
+  )
+}
