@@ -42,5 +42,6 @@ async def root(request: Request, settings: SettingsDep):
         "login_url": str(request.url_for("oauth_login")),
         "validate_url": str(request.url_for("oauth_validate")),
         "logout_url": str(request.url_for("oauth_logout")),
+        "default_redirect_uri": settings.frontend.default_redirect_uri,
         "origins": settings.frontend.origins,
     }
