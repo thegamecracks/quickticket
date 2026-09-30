@@ -350,7 +350,9 @@ class RegistrationController:
         # TODO: set admin flag or enum on user
 
 
-async def get_user(id_token: RequiredIdTokenDep, session: AsyncSessionDep) -> User | None:
+async def get_user(id_token: OptionalIdTokenDep, session: AsyncSessionDep) -> User | None:
+    if id_token is None:
+        return
     query = select(User).where(User.openid_sub == id_token.claims.sub)
     return await session.scalar(query)
 
@@ -361,7 +363,6 @@ async def get_user_or_redirect(
     request: Request,
 ) -> User:
     if user is None:
-        # Uh oh, account deleted or openid_sub changed? Prompt for login
         url = request.url_for("oauth_login", redirect_uri=request.url)
         cookies.delete_all()
         return cookies.force_redirect(url)
