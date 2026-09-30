@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import type { User } from "../features/account/types";
+import axios from "axios";
+import { API_URL } from "./api";
 
 interface AuthContextType {
   user: User | null;
@@ -17,9 +19,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return stored ? JSON.parse(stored) : null;
   });
 
-  const login = (userData: User) => {
-    setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
+  const login = () => {
+    axios.get(`${API_URL} / auth / login`);
+    //    setUser(userData);
+    //  localStorage.setItem("user", JSON.stringify(userData));
   };
 
   const logout = () => {
