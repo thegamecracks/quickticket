@@ -26,23 +26,38 @@ like so:
 
 ```sh
 /backend $ uv run alembic upgrade head  # ensure database is up to date
-/backend $ uv run alembic revision --autogenerate -m "Add account and address tables"
+/backend $ uv run alembic revision --autogenerate -m "Add table.xyz columns"
 ```
 
 Make sure to set a suitable message and check the resulting migration file
-before committing. Sometimes Alembic will ask for manual adjustments if it
-cannot unambiguously generate the migration.
+before committing. **Seriously, check.** Auto-generated migrations are
+unreliable since it relies on introspecting the live database schema configured
+in settings. This can result in unwanted objects if a previous upgrade failed
+or the database schema was modified by hand. Sometimes Alembic will also ask
+for manual adjustments inside the file if it cannot unambiguously generate
+the migration.
 
-If you need to redo a migration, you should delete the database and regenerate
-it with `uv run alembic upgrade head`, since autogeneration relies on comparing
-against a live database.
+For a clean slate, you can set a local database driver like SQLite (the default)
+and re-create the entire database before generating your migration:
 
-To apply your migration after creating it:
+```sh
+/backend $ unset BACKEND__DB__URL  # or export `sqlite+aiosqlite:///quickticket.db`
+/backend $ rm quickticket.db
+/backend $ uv run alembic upgrade head
+/backend $ uv run alembic revision --autogenerate -m "Add table.xyz columns"
+```
+
+If you are confident with your migration script, you can apply your migration
+to the database:
 
 ```sh
 /backend $ uv run alembic upgrade head
-/backend $ uv run fastapi dev
 ```
+
+If you need to revert this migration, run `uv run alembic downgrade -1` to downgrade
+the database schema, and then remove your old migration script.
+If this fails, you can delete the database and regenerate it with
+`uv run alembic upgrade head`.
 
 ## Resources
 
