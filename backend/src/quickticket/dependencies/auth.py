@@ -12,18 +12,20 @@ from joserfc.jwt import JWTClaimsRegistry, Token
 from pydantic import HttpUrl
 from pydantic_core import from_json
 
-from quickticket.dependencies import (
-    COOKIE_OAUTH_POST_REDIRECT,
+from quickticket.dependencies.cache import (
     CacheDep,
-    HTTPClientDep,
+    SettingsDep,
+    StateDep,
+)
+from quickticket.dependencies.cookies import (
+    COOKIE_OAUTH_POST_REDIRECT,
     OAuthIdTokenCookie,
     OAuthPostRedirectCookie,
     OAuthRefreshTokenCookie,
-    SettingsDep,
-    StateDep,
     delete_oauth_token_cookies,
     set_oauth_token_cookies,
 )
+from quickticket.dependencies.state import HTTPClientDep
 from quickticket.oauth import OAuth2Client, OpenIDProvider
 
 log = logging.getLogger(__name__)
