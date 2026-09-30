@@ -1,3 +1,4 @@
+import logging
 from collections.abc import AsyncIterator
 from typing import Annotated, cast
 
@@ -10,6 +11,9 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from quickticket.dependencies.state import AsyncExitStackDep, SettingsDep, StateDep
+from quickticket.errors import ForcedResponse
+
+log = logging.getLogger(__name__)
 
 
 def get_async_engine(
@@ -37,12 +41,14 @@ async def get_async_session(
     make_session: AsyncSessionMakerDep,
 ) -> AsyncIterator[AsyncSession]:
     async with make_session.begin() as session:
-        yield session
+        try:
+            yield session
+        except ForcedResponse:
+            # Response is being sent, assume the caller wants us to commit
+            await session.commit()
+            raise
 
 
 AsyncEngineDep = Annotated[AsyncEngine, Depends(get_async_engine)]
 AsyncSessionDep = Annotated[AsyncSession, Depends(get_async_session, scope="function")]
-AsyncSessionMakerDep = Annotated[
-    async_sessionmaker[AsyncSession],
-    Depends(get_async_sessionmaker),
-]
+AsyncSessionMakerDep = Annotated[async_sessionmaker[AsyncSession], Depends(get_async_sessionmaker)]
