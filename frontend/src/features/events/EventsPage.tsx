@@ -1,6 +1,7 @@
 
 import { useSearchParams } from 'react-router'
-import EventCard, { type EventInfo } from '../components/EventCard'
+import EventCard, { type EventInfo } from '../../components/EventCard'
+import { useState } from 'react'
 
 // Available event categories
 const categories = [
@@ -27,6 +28,8 @@ const events: CategorizedEvent[] = [
     location: 'Toronto, ON',
     price: 50,
     category: 'Music',
+    imageUrl: '/images/music.jpg',
+    available: false,
   },
   {
     id: 2,
@@ -35,6 +38,7 @@ const events: CategorizedEvent[] = [
     location: 'Mississauga, ON',
     price: 30,
     category: 'Comedy',
+    imageUrl: '/images/comedy.jpg',
   },
   {
     id: 3,
@@ -43,6 +47,7 @@ const events: CategorizedEvent[] = [
     location: 'Toronto, ON',
     price: 20,
     category: 'Art',
+    imageUrl: '/images/art.jpg',
   },
   {
     id: 4,
@@ -51,6 +56,7 @@ const events: CategorizedEvent[] = [
     location: 'Vaughan, ON',
     price: 45,
     category: 'Music',
+    imageUrl: '/images/jazz.jpg',
   },
   {
     id: 5,
@@ -59,6 +65,7 @@ const events: CategorizedEvent[] = [
     location: 'Toronto, ON',
     price: 25,
     category: 'Food',
+    imageUrl: '/images/food.jpg',
   },
   {
     id: 6,
@@ -67,19 +74,22 @@ const events: CategorizedEvent[] = [
     location: 'Markham, ON',
     price: 15,
     category: 'Technology',
+    imageUrl: '/images/tech.jpg',
+    available: false,
   },
 ]
 
 export default function EventsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const [currentPage, setCurrentPage] = useState(1)
 
-  // Read search and category from the URL
+  // Read search and category from URL
   const search = searchParams.get('search') ?? ''
   const selectedCategory = searchParams.get('category') ?? 'All'
 
-  // Filter events by search and category
+  // Filter events by title, location and category
   const filteredEvents = events.filter((event) => {
-    const searchText = search.toLowerCase()
+    const searchText = search.trim().toLowerCase()
 
     const matchesSearch =
       event.title.toLowerCase().includes(searchText) ||
@@ -92,7 +102,24 @@ export default function EventsPage() {
     return matchesSearch && matchesCategory
   })
 
-  // Update the search parameter
+  // Pagination
+  const eventsPerPage = 4
+
+  const totalPages = Math.ceil(
+    filteredEvents.length / eventsPerPage
+  )
+
+  const safePage = Math.min(
+    currentPage,
+    Math.max(totalPages, 1)
+  )
+
+  const paginatedEvents = filteredEvents.slice(
+    (safePage - 1) * eventsPerPage,
+    safePage * eventsPerPage
+  )
+
+  // Update search and return to page 1
   const handleSearch = (value: string) => {
     const nextParams = new URLSearchParams(searchParams)
 
@@ -103,9 +130,10 @@ export default function EventsPage() {
     }
 
     setSearchParams(nextParams, { replace: true })
+    setCurrentPage(1)
   }
 
-  // Update the category parameter
+  // Update category and return to page 1
   const handleCategory = (value: string) => {
     const nextParams = new URLSearchParams(searchParams)
 
@@ -116,10 +144,13 @@ export default function EventsPage() {
     }
 
     setSearchParams(nextParams, { replace: true })
+    setCurrentPage(1)
   }
 
   return (
     <section className="mx-auto w-full max-w-5xl grow px-4 py-12">
+
+      {/* Page heading */}
       <h1 className="mb-6 text-2xl font-semibold">
         Events
       </h1>
@@ -143,7 +174,9 @@ export default function EventsPage() {
         >
           {categories.map((category) => (
             <option key={category} value={category}>
-              {category === 'All' ? 'All Categories' : category}
+              {category === 'All'
+                ? 'All Categories'
+                : category}
             </option>
           ))}
         </select>
@@ -151,8 +184,11 @@ export default function EventsPage() {
 
       {/* Event cards */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredEvents.map((event) => (
-          <EventCard key={event.id} event={event} />
+        {paginatedEvents.map((event) => (
+          <EventCard
+            key={event.id}
+            event={event}
+          />
         ))}
       </div>
 
@@ -161,6 +197,35 @@ export default function EventsPage() {
         <p className="text-base-content/70">
           No events found.
         </p>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-8 flex items-center justify-center gap-4">
+
+          <button
+            type="button"
+            className="btn btn-outline"
+            disabled={safePage === 1}
+            onClick={() => setCurrentPage(safePage - 1)}
+          >
+            Previous
+          </button>
+
+          <span className="text-sm">
+            Page {safePage} of {totalPages}
+          </span>
+
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={safePage === totalPages}
+            onClick={() => setCurrentPage(safePage + 1)}
+          >
+            Next
+          </button>
+
+        </div>
       )}
     </section>
   )
