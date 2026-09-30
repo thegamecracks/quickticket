@@ -30,10 +30,9 @@ target_metadata = Base.metadata
 
 
 def _get_database_url() -> str:
-    from quickticket.settings import DatabaseSettings
+    from quickticket.settings import Settings
 
-    db_settings = DatabaseSettings()
-    return db_settings.url.get_secret_value().unicode_string()
+    return Settings().db.url.get_secret_value().unicode_string()
 
 
 def run_migrations_offline() -> None:
