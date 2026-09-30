@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 
 
 # https://docs.authlib.org/en/latest/oauth2/client/http/index.html#oidc-session
-@router.get(
+@router.post(
     "/login",
     responses={307: {"description": "The user is being redirected."}},
     status_code=307,
@@ -154,7 +154,7 @@ async def oauth_validate(token: RequiredIdTokenDep):
     return token
 
 
-@router.get(
+@router.post(
     "/logout",
     responses={307: {"description": "The user is being redirected."}},
     status_code=307,
