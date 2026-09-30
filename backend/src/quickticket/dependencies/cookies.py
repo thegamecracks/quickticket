@@ -1,9 +1,10 @@
 from collections.abc import Mapping
 from dataclasses import dataclass
+from functools import cached_property
 from typing import Annotated
 from urllib.parse import quote
 
-from fastapi import Cookie, Depends, Request, Response
+from fastapi import Cookie, Depends, FastAPI, Request, Response
 from fastapi.datastructures import URL
 from starlette.background import BackgroundTask
 
@@ -101,11 +102,19 @@ def cookie_safe_redirect(
     return response
 
 
-# TODO: restrict flow cookies by /auth path
 @dataclass(kw_only=True, repr=False)
 class OAuthCookieController:
     request: Request
     response: Response
+
+    @cached_property
+    def auth_path(self) -> str:
+        # Feels like a hack...
+        return self.app.url_path_for("oauth_login").rpartition("/")[0]
+
+    @property
+    def app(self) -> FastAPI:
+        return self.request.app
 
     def set_nonce(self, nonce: str, *, max_age: int) -> None:
         self.response.set_cookie(
@@ -113,6 +122,7 @@ class OAuthCookieController:
             nonce,
             httponly=True,
             max_age=max_age,
+            path=self.auth_path,
             secure=True,
         )
 
@@ -122,6 +132,7 @@ class OAuthCookieController:
             state,
             httponly=True,
             max_age=max_age,
+            path=self.auth_path,
             secure=True,
         )
 
@@ -131,6 +142,7 @@ class OAuthCookieController:
             str(url),
             httponly=True,
             max_age=max_age,
+            path=self.auth_path,
             secure=True,
         )
 
@@ -164,11 +176,22 @@ class OAuthCookieController:
         )
 
     def delete_flow(self) -> None:
-        self.response.delete_cookie(COOKIE_OAUTH_NONCE, httponly=True, secure=True)
-        self.response.delete_cookie(COOKIE_OAUTH_STATE, httponly=True, secure=True)
+        self.response.delete_cookie(
+            COOKIE_OAUTH_NONCE,
+            httponly=True,
+            path=self.auth_path,
+            secure=True,
+        )
+        self.response.delete_cookie(
+            COOKIE_OAUTH_STATE,
+            httponly=True,
+            path=self.auth_path,
+            secure=True,
+        )
         self.response.delete_cookie(
             COOKIE_OAUTH_POST_REDIRECT,
             httponly=True,
+            path=self.auth_path,
             secure=True,
         )
 
