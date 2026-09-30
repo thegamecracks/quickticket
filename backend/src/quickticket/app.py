@@ -34,7 +34,14 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
             del _app.state.stack
 
 
-app = FastAPI(lifespan=lifespan, title="QuickTicket", description="")
+app = FastAPI(
+    lifespan=lifespan,
+    title="QuickTicket",
+    description="",
+    # https://swagger.io/docs/open-source-tools/swagger-ui/usage/configuration/
+    # set withCredentials to allow cross-origin cookies for OpenID
+    swagger_ui_parameters={"withCredentials": True},
+)
 app.include_router(auth.router, prefix="/auth")
 app.include_router(events.router, prefix="/events")
 app.include_router(notifications.router, prefix="/notifications")
