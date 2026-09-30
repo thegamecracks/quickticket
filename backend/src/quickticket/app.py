@@ -35,6 +35,7 @@ app.add_middleware(
 
 @app.get("/")
 async def root(request: Request, settings: SettingsDep):
+    redirect_uri = settings.frontend.default_redirect_uri or request.base_url
     return {
         "openapi": str(request.url_for("openapi")),
         "swagger_url": str(request.url_for("swagger_ui_html")),
@@ -42,6 +43,6 @@ async def root(request: Request, settings: SettingsDep):
         "login_url": str(request.url_for("oauth_login")),
         "validate_url": str(request.url_for("oauth_validate")),
         "logout_url": str(request.url_for("oauth_logout")),
-        "default_redirect_uri": settings.frontend.default_redirect_uri,
+        "default_redirect_uri": redirect_uri,
         "origins": settings.frontend.origins,
     }

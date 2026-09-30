@@ -51,10 +51,11 @@ class DatabaseSettings(BaseSettings):
 
 
 class FrontendSettings(BaseSettings):
-    default_redirect_uri: HttpUrl = HttpUrl("http://127.0.0.1:8000/")
-    """The default URL to redirect to if no origin is specified.
+    default_redirect_uri: HttpUrl | None = None
+    """The default URL to redirect if no origin is specified.
 
     Must be matched by one of the patterns in :attr:`redirect_uris`.
+    If None, the redirect URI will be dynamically set to the request's origin.
 
     """
     redirect_uris: list[HttpUrl] = [
@@ -88,7 +89,9 @@ class FrontendSettings(BaseSettings):
 
     @model_validator(mode="after")
     def is_matching_default_redirect_uri(self) -> Self:
-        if not self.match_redirect_uri(self.default_redirect_uri):
+        if self.default_redirect_uri is None:
+            pass
+        elif not self.match_redirect_uri(self.default_redirect_uri):
             raise ValueError(
                 "default_redirect_uri does not match any pattern in redirect_uris"
             )

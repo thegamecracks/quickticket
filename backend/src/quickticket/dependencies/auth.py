@@ -205,6 +205,7 @@ def get_valid_id_token(token: OptionalIdTokenDep) -> Token:
 
 def get_allowed_redirect_uri(
     settings: SettingsDep,
+    request: Request,
     redirect_uri: Annotated[
         HttpUrl | None,
         Query(
@@ -216,7 +217,7 @@ def get_allowed_redirect_uri(
     ] = None,
 ) -> URL:
     if redirect_uri is None:
-        return URL(str(settings.frontend.default_redirect_uri))
+        return URL(str(settings.frontend.default_redirect_uri or request.base_url))
     elif not settings.frontend.match_redirect_uri(redirect_uri):
         raise HTTPException(400, "Invalid redirect_uri= query parameter")
     return URL(str(redirect_uri))
@@ -224,10 +225,11 @@ def get_allowed_redirect_uri(
 
 def get_post_redirect_uri(
     settings: SettingsDep,
+    request: Request,
     redirect_cookie: Annotated[HttpUrl | None, OAuthPostRedirectCookie] = None,
 ) -> URL:
     if redirect_cookie is None:
-        return URL(str(settings.frontend.default_redirect_uri))
+        return URL(str(settings.frontend.default_redirect_uri or request.base_url))
     elif not settings.frontend.match_redirect_uri(redirect_cookie):
         raise HTTPException(400, f"Invalid {COOKIE_OAUTH_POST_REDIRECT} cookie")
     return URL(str(redirect_cookie))
