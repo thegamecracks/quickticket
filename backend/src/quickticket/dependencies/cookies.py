@@ -3,12 +3,14 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 from functools import cached_property
-from typing import TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING, Annotated, NoReturn
 from urllib.parse import quote
 
 from fastapi import Cookie, Depends, FastAPI, Request, Response
 from fastapi.datastructures import URL
 from starlette.background import BackgroundTask
+
+from quickticket.errors import ForcedResponse
 
 if TYPE_CHECKING:
     from quickticket.dependencies.auth import IdToken
@@ -68,11 +70,11 @@ def cookie_safe_redirect(
     *,
     headers: Mapping[str, str] | None = None,
     background: BackgroundTask | None = None,
-) -> Response:
-    """Set a response to redirect the user without.
+) -> NoReturn:
+    """Raise a ForcedResponse to redirect the user while preserving headers like cookies.
 
     This should be used over :class:`pydantic.responses.RedirectResponse`
-    because it avoids overwriting cookies set by middleware or dependencies.
+    because it avoids overwriting headers set by middleware and dependencies.
 
     """
     # Copied from RedirectResponse body
@@ -84,7 +86,7 @@ def cookie_safe_redirect(
         response.background = background
 
     response.headers["location"] = quote(str(url), safe=":/%#?=@[]!$&'()*+,;")
-    return response
+    raise ForcedResponse(response)
 
 
 @dataclass(kw_only=True, repr=False)
@@ -202,14 +204,14 @@ class OAuthCookieController:
         self.delete_flow()
         self.delete_tokens()
 
-    def redirect(
+    def force_redirect(
         self,
         url: str | URL,
         status_code: int = 307,
         *,
         headers: Mapping[str, str] | None = None,
         background: BackgroundTask | None = None,
-    ) -> Response:
+    ) -> NoReturn:
         return cookie_safe_redirect(
             self.response,
             url,

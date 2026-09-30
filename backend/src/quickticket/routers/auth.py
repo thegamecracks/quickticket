@@ -52,7 +52,7 @@ async def oauth_login(
 
     """
     if id_token is not None:
-        return cookies.redirect(redirect_uri)
+        return cookies.force_redirect(redirect_uri)
 
     # Proof Key for Code Exchange (PKCE)
     code_verifier = generate_token(48)
@@ -74,7 +74,7 @@ async def oauth_login(
     cookies.set_nonce(nonce, max_age=LOGIN_EXPIRY)
     cookies.set_state(state, max_age=LOGIN_EXPIRY)
     cookies.set_post_redirect(redirect_uri, max_age=LOGIN_EXPIRY)
-    return cookies.redirect(url)
+    return cookies.force_redirect(url)
 
 
 @router.get(
@@ -145,7 +145,7 @@ async def oauth_post_login(
         refresh_expires_in=tokens.refresh_expires_in,
         id_token=id_token,
     )
-    return registration.redirect(redirect_uri)
+    return registration.force_redirect(redirect_uri)
 
 
 @router.get("/validate")
@@ -172,7 +172,7 @@ async def oauth_logout(
 
     """
     if id_token_hint is None:
-        return cookies.redirect(redirect_uri)
+        return cookies.force_redirect(redirect_uri)
 
     url, state = client.create_logout_url(
         id_token_hint=id_token_hint,  # token can be expired/invalid
@@ -180,7 +180,7 @@ async def oauth_logout(
     )
     cookies.set_state(state, max_age=LOGOUT_EXPIRY)
     cookies.set_post_redirect(redirect_uri, max_age=LOGOUT_EXPIRY)
-    return cookies.redirect(url)
+    return cookies.force_redirect(url)
 
 
 @router.get(
@@ -212,4 +212,4 @@ async def oauth_post_logout(
         raise HTTPException(400, "Invalid or expired state")
 
     cookies.delete_all()
-    return cookies.redirect(redirect_uri)
+    return cookies.force_redirect(redirect_uri)

@@ -4,7 +4,7 @@ from datetime import timedelta
 from typing import Annotated, NoReturn, cast
 
 from authlib.integrations.base_client import OAuthError
-from fastapi import Depends, HTTPException, Query, Request, Response
+from fastapi import Depends, HTTPException, Query, Request
 from fastapi.datastructures import URL
 from joserfc import jwt
 from joserfc.errors import ExpiredTokenError, JoseError
@@ -332,8 +332,8 @@ class RegistrationController:
             refresh_expires_in=refresh_expires_in,
         )
 
-    def redirect(self, url: str | URL) -> Response:
-        return self.cookies.redirect(url)
+    def force_redirect(self, url: str | URL) -> NoReturn:
+        return self.cookies.force_redirect(url)
 
     def _update_user_with_claims(
         self,

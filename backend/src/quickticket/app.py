@@ -1,11 +1,12 @@
 from collections.abc import AsyncIterator
 from contextlib import AsyncExitStack, asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from quickticket.dependencies.auth import OptionalIdTokenDep
 from quickticket.dependencies.state import SettingsDep
+from quickticket.errors import ForcedResponse
 from quickticket.logging import setup_logging
 from quickticket.routers import auth
 from quickticket.settings import Settings
@@ -35,6 +36,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(ForcedResponse)
+def send_forced_response(request: Request, exc: ForcedResponse) -> Response:
+    # FIXME: cookies can still be lost if other exceptions are raised
+    return exc.response
 
 
 @app.get("/")
