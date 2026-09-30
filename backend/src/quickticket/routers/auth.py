@@ -146,7 +146,6 @@ async def oauth_post_login(
         refresh_expires_in=tokens.refresh_expires_in,
         id_token=id_token,
     )
-    await registration.session.commit()
     return registration.redirect(redirect_uri)
 
 

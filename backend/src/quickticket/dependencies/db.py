@@ -2,17 +2,23 @@ from collections.abc import AsyncIterator
 from typing import Annotated, cast
 
 from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from quickticket.dependencies.state import AsyncExitStackDep, SettingsDep, StateDep
 
 __all__ = (
     "AsyncEngineDep",
     "AsyncSessionDep",
+    "AsyncSessionMakerDep",
 )
 
 
-async def get_async_engine(
+def get_async_engine(
     settings: SettingsDep,
     stack: AsyncExitStackDep,
     state: StateDep,
@@ -27,10 +33,22 @@ async def get_async_engine(
     return state.engine
 
 
-async def get_async_session(engine: AsyncEngineDep) -> AsyncIterator[AsyncSession]:
-    async with AsyncSession(engine) as session:
+def get_async_sessionmaker(
+    engine: AsyncEngineDep,
+) -> async_sessionmaker[AsyncSession]:
+    return async_sessionmaker(engine, expire_on_commit=False)
+
+
+async def get_async_session(
+    make_session: AsyncSessionMakerDep,
+) -> AsyncIterator[AsyncSession]:
+    async with make_session.begin() as session:
         yield session
 
 
 AsyncEngineDep = Annotated[AsyncEngine, Depends(get_async_engine)]
-AsyncSessionDep = Annotated[AsyncSession, Depends(get_async_session)]
+AsyncSessionDep = Annotated[AsyncSession, Depends(get_async_session, scope="function")]
+AsyncSessionMakerDep = Annotated[
+    async_sessionmaker[AsyncSession],
+    Depends(get_async_sessionmaker),
+]

@@ -247,7 +247,6 @@ async def get_or_refresh_id_token(
         refresh_expires_in=tokens.refresh_expires_in,
         id_token=id_token,
     )
-    await registration.session.commit()
 
     return id_token
 
