@@ -202,6 +202,7 @@ async def get_or_refresh_id_token(
     client: OAuth2ClientDep,
     cookies: OAuthCookieControllerDep,
     registration: RegistrationControllerDep,
+    request: Request,
     # NOTE: below cookies can expire on browser
     id_token_cookie: Annotated[str | None, OAuthIdTokenCookie] = None,
     refresh_token_cookie: Annotated[str | None, OAuthRefreshTokenCookie] = None,
@@ -245,17 +246,16 @@ async def get_or_refresh_id_token(
         log.warning("OpenID returned invalid ID token", exc_info=e)
         return
 
-    # CAUTION: a route that returns a Response directly like RedirectResponse
-    #          will bypass these cookies! Blame FastAPI
-    await registration.register(
+    return await registration.register_and_redirect(
         access_token=tokens.access_token,
         expires_in=tokens.expires_in,
         refresh_token=tokens.refresh_token,
         refresh_expires_in=tokens.refresh_expires_in,
         id_token=id_token,
+        # Retry the current request
+        redirect_uri=request.url,
+        status_code=307,
     )
-
-    return id_token
 
 
 def get_valid_id_token(token: OptionalIdTokenDep) -> IdToken:
@@ -311,7 +311,7 @@ class RegistrationController:
         assert self.settings.openid is not None
         return self.settings.openid
 
-    async def register(
+    async def register_and_redirect(
         self,
         *,
         access_token: str,  # TODO: fetch userinfo with OAuth2Client?
@@ -319,7 +319,9 @@ class RegistrationController:
         refresh_token: str,
         refresh_expires_in: int,
         id_token: IdToken,
-    ) -> None:
+        redirect_uri: str | URL,
+        status_code: int,
+    ) -> NoReturn:
         claims = id_token.claims
         query = select(User).options(load_only(User.id))
         user = await self.session.scalar(query.where(User.openid_sub == claims.sub))
@@ -337,9 +339,13 @@ class RegistrationController:
             refresh_token=refresh_token,
             refresh_expires_in=refresh_expires_in,
         )
-
-    def force_redirect(self, url: str | URL, status_code: int) -> NoReturn:
-        return self.cookies.force_redirect(url, status_code)
+        # If an exception were to be raised after this method, FastAPI would replace
+        # our response object with a new response that is missing our token cookies.
+        # As such, we cannot let our route handling continue, and must force a redirect
+        # to ensure the user has our cookies stored.
+        #
+        # To retry a request, pass redirect_uri=request.url and status_code=307.
+        return self.cookies.force_redirect(redirect_uri, status_code)
 
     def _update_user_with_claims(self, user: User, claims: IdTokenClaims) -> None:
         # https://openid.net/specs/openid-connect-basic-1_0.html#rfc.section.2.5

@@ -138,14 +138,15 @@ async def oauth_post_login(
         )
         raise HTTPException(400, "OpenID returned invalid ID token")
 
-    await registration.register(
+    return await registration.register_and_redirect(
         access_token=tokens.access_token,
         expires_in=tokens.expires_in,
         refresh_token=tokens.refresh_token,
         refresh_expires_in=tokens.refresh_expires_in,
         id_token=id_token,
+        redirect_uri=redirect_uri,
+        status_code=303,
     )
-    return registration.force_redirect(redirect_uri, 303)
 
 
 @router.get("/validate")
