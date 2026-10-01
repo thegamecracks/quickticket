@@ -35,10 +35,9 @@ Run the following command to create and migrate it to the latest database schema
 /backend $ uv run alembic upgrade head
 ```
 
-Afterwards, you need an OAuth2 client from your OpenID provider. Using GitHub
-as an example, you can go to https://github.com/settings/developers and create
-an OAuth app. Once you have your OAuth2 application, make a [.env](/example.env)
-file containing the client ID, secret, and the provider's auto-discovery URL:
+Afterwards, you need an OAuth2 client from your OpenID provider.
+Make a [.env](/example.env) file containing the client ID, secret,
+and the provider's auto-discovery URL:
 
 ```ini
 BACKEND__OPENID__CLIENT_ID=qoBeV9VCmWs2plast4LX
