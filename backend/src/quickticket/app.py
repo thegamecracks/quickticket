@@ -2,7 +2,7 @@ import logging
 from collections.abc import AsyncIterator
 from contextlib import AsyncExitStack, asynccontextmanager
 
-from fastapi import FastAPI, Request, Response
+from fastapi import APIRouter, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -45,12 +45,14 @@ app = FastAPI(
     # set withCredentials to allow cross-origin cookies for OpenID
     swagger_ui_parameters={"withCredentials": True},
 )
-app.include_router(auth.router, prefix="/auth")
-app.include_router(events.router, prefix="/events")
-app.include_router(notifications.router, prefix="/notifications")
-app.include_router(organizations.router, prefix="/organizations")
-app.include_router(profile.router, prefix="/profile")
-app.include_router(venues.router, prefix="/venues")
+api = APIRouter()
+api.include_router(auth.router, prefix="/auth")
+api.include_router(events.router, prefix="/events")
+api.include_router(notifications.router, prefix="/notifications")
+api.include_router(organizations.router, prefix="/organizations")
+api.include_router(profile.router, prefix="/profile")
+api.include_router(venues.router, prefix="/venues")
+app.include_router(api, prefix="/api")
 
 # Middleware in LIFO order; bottom/outermost middleware runs first
 
