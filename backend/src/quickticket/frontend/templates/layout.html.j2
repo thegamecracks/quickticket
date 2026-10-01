@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    {#
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    #}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='main.css' ) }}" />
+
+    {# https://htmx.org/docs/ #}
+    {#
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.11/dist/htmx.min.js"
+        integrity="sha384-2OatzQy1H+Zd/IIrjr1TcuDGqLXeHhbooAyJY1KdQMKnr4LZ22k31GBLdYKHmVjg"
+        crossorigin="anonymous"></script>
+    #}
+
+    <title>{% if title %}Quickticket - {{ title }} {% else %} Quickticket {% endif %}</title>
+</head>
+
+<body>
+    <nav>
+        <h1><a href=" {{ url_for('frontend_root') }}">Quickticket</a></h1>
+        <a href=" {{ url_for('frontend_events') }}">Events</a>
+        <div class="spacer"></div>
+        <a href=" {{ url_for('openapi') }}">OpenAPI Schema</a>
+        <a href=" {{ url_for('swagger_ui_html') }}">Swagger Docs</a>
+        <a href=" {{ url_for('redoc_html') }}">ReDoc</a>
+        {% if profile %}
+        <form method="post" action="{{ url_for('oauth_logout').include_query_params(redirect_uri=request.url) }}">
+            <span>{{ profile.display_name }}</span>
+            <button type="submit">Logout</button>
+        </form>
+        {% else %}
+        <form method="post" action="{{ url_for('oauth_login').include_query_params(redirect_uri=request.url) }}">
+            <button type="submit">Login</button>
+        </form>
+        {% endif %}
+    </nav>
+    <main>
+        {% block content %}
+        {% endblock content %}
+    </main>
+    <footer>
+        QuickTicket · COMP231 Term Project
+    </footer>
+</body>
+
+</html>

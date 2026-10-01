@@ -51,6 +51,13 @@ class DatabaseSettings(BaseSettings):
 
 
 class FrontendSettings(BaseSettings):
+    builtin: bool = True
+    """If True, a minimal frontend will be served on root.
+
+    This is intended only for testing and should be disabled in production!
+    ``BACKEND__FRONTEND__BUILTIN=0``
+
+    """
     default_redirect_uri: HttpUrl | None = None
     """The default URL to redirect if no origin is specified.
 

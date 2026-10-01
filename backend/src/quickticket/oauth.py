@@ -119,7 +119,6 @@ class OAuth2Client:
         redirect_uri: str | URL,
     ) -> tuple[str, str]:
         """Create the authorization url and state."""
-        log.debug("Creating authorization URL")
         return self.client.create_authorization_url(
             str(self.discovery.authorization_endpoint),
             code_verifier=code_verifier,
@@ -154,7 +153,6 @@ class OAuth2Client:
         https://docs.authlib.org/en/latest/oauth2/client/web/starlette.html#rp-initiated-logout
 
         """
-        log.debug("Creating logout URL")
         if self.discovery.end_session_endpoint is None:
             raise ValueError("Front-channel logout not supported by provider")
 
