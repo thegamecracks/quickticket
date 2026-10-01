@@ -2,6 +2,7 @@ import logging
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Annotated, Any, NoReturn
+from urllib.parse import quote
 
 from authlib.integrations.base_client import OAuthError
 from fastapi import Depends, HTTPException, Query, Request
@@ -48,14 +49,24 @@ async def _cache_mark_failed(cache: CacheDep, key: str, message: str) -> NoRetur
     raise HTTPException(500, message)
 
 
+def get_discovery_cache_key(settings: SettingsDep) -> str:
+    # Prevents reusing cached responses when changing between providers
+    if settings.openid is None:
+        raise HTTPException(500, "OpenID is not configured")
+
+    discovery_url = quote(str(settings.openid.discovery_url), "")
+    return f"openid/{discovery_url}"
+
+
 async def get_openid_provider(
     http: HTTPClientDep,
     cache: CacheDep,
+    cache_key: _OpenIDCacheKeyDep,
     settings: SettingsDep,
 ) -> OpenIDProvider:
     async def fail(message: str = "") -> NoReturn:
         message = f"OpenID discovery is misconfigured ({message})"
-        await _cache_mark_failed(cache, cache_key, message)
+        await _cache_mark_failed(cache, discovery_key, message)
 
     async def parse_provider(data: str) -> OpenIDProvider:
         assert settings.openid is not None
@@ -71,8 +82,8 @@ async def get_openid_provider(
     if settings.openid is None:
         raise HTTPException(500, "OpenID is not configured")
 
-    cache_key = "openid-provider-discovery"
-    cached = await _cache_get_with_error(cache, cache_key)
+    discovery_key = f"{cache_key}/discovery"
+    cached = await _cache_get_with_error(cache, discovery_key)
     if cached is not None:
         return await parse_provider(cached)
 
@@ -82,18 +93,19 @@ async def get_openid_provider(
         await fail(f"HTTP {response.status_code}")
 
     provider = await parse_provider(response.text)
-    await cache.set(cache_key, response.text, expiry=timedelta(hours=1))
+    await cache.set(discovery_key, response.text, expiry=timedelta(hours=1))
     return provider
 
 
 async def get_openid_provider_jwks(
     cache: CacheDep,
+    cache_key: _OpenIDCacheKeyDep,
     http: HTTPClientDep,
     provider: OpenIDProviderDep,
 ) -> KeySet:
     async def fail(message: str = "") -> NoReturn:
         message = f"OpenID JWKs are misconfigured ({message})"
-        await _cache_mark_failed(cache, cache_key, message)
+        await _cache_mark_failed(cache, jwks_key, message)
 
     async def parse_key_set(data: str) -> KeySet:
         try:
@@ -102,8 +114,8 @@ async def get_openid_provider_jwks(
             log.error("Cannot parse JWKs", exc_info=e)
             await fail("malformed response")
 
-    cache_key = "openid-provider-jwks"
-    cached = await _cache_get_with_error(cache, cache_key)
+    jwks_key = f"{cache_key}/jwks"
+    cached = await _cache_get_with_error(cache, jwks_key)
     if cached is not None:
         return await parse_key_set(cached)
 
@@ -113,7 +125,7 @@ async def get_openid_provider_jwks(
         await fail(f"HTTP {response.status_code}")
 
     keys = await parse_key_set(response.text)
-    await cache.set(cache_key, response.text, expiry=timedelta(hours=1))
+    await cache.set(jwks_key, response.text, expiry=timedelta(hours=1))
     return keys
 
 
@@ -386,6 +398,7 @@ async def get_user_or_fail(
     return user
 
 
+_OpenIDCacheKeyDep = Annotated[str, Depends(get_discovery_cache_key)]
 JWTClaimsRegistryDep = Annotated[JWTClaimsRegistry, Depends(get_claims_registry)]
 OAuth2ClientDep = Annotated[OAuth2Client, Depends(get_oauth_client)]
 OpenIDProviderDep = Annotated[OpenIDProvider, Depends(get_openid_provider)]
