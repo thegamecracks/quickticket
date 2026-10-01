@@ -1,7 +1,7 @@
 import datetime
 from typing import Annotated
 
-from sqlalchemy import String, func, Integer, Text
+from sqlalchemy import String, func
 from sqlalchemy.orm import mapped_column
 
 # https://docs.sqlalchemy.org/en/21/orm/declarative_tables.html#mapping-whole-column-declarations-to-python-types-with-pep-593-annotated

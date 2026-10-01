@@ -81,9 +81,13 @@ class OAuth2Client:
         self.provider = provider
 
         if "S256" not in self.discovery.code_challenge_methods_supported:
-            log.warning("Provider discovery does not indicate support for 'S256' code challenge method")
+            log.warning(
+                "Provider discovery does not indicate support for 'S256' code challenge method"
+            )
         if "authorization_code" not in self.discovery.grant_types_supported:
-            log.warning("Provider discovery does not indicate support for 'authorization_code' grant type")
+            log.warning(
+                "Provider discovery does not indicate support for 'authorization_code' grant type"
+            )
         if "code" not in self.discovery.response_types_supported:
             log.warning("Provider discovery does not indicate support for 'code' response type")
 
