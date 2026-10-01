@@ -35,7 +35,7 @@ Run the following command to create and migrate it to the latest database schema
 /backend $ uv run alembic upgrade head
 ```
 
-Afterwards, you need an OAuth2 client from your OpenID provider such as
+Afterwards, you need an OAuth2 client from an OpenID provider such as
 [Google](https://developers.google.com/identity/openid-connect/openid-connect#appsetup),
 [Keycloak](https://www.keycloak.org/), or [Authentik](https://goauthentik.io/).
 Make a [.env](/example.env) file containing the client ID, secret,
