@@ -52,6 +52,13 @@ You can now start the webserver and use it from the frontend:
 /backend $ uv run fastapi dev
 ```
 
+## Running lints and formatting
+
+```sh
+/backend $ uv run ruff check --fix
+/backend $ uv run ruff format
+```
+
 ## Running tests
 
 ```sh
