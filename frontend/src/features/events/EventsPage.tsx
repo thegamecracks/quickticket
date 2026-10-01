@@ -19,6 +19,8 @@ type EventCategory = Exclude<(typeof categories)[number], 'All'>
 type CategorizedEvent = EventInfo & {
   category: EventCategory
 }
+// TODO: Change to Event type, using theme as the category
+// TODO: Move into /lib/mocks.ts
 
 // Temporary events until the backend is ready
 const events: CategorizedEvent[] = [
