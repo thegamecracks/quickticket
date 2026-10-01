@@ -2,10 +2,23 @@
 
 [![](https://img.shields.io/github/actions/workflow/status/thegamecracks/quickticket/backend-test.yml?style=flat-square&logo=fastapi&label=backend)](https://github.com/thegamecracks/quickticket/blob/main/backend)
 
-## Installation
+## Prerequisites
 
 This project requires Python 3.14+ and [uv](https://docs.astral.sh/uv/)
-for project management.
+for project management. To install uv:
+
+```sh
+# Linux:
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# Windows:
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+## Quickstart (API documentation only)
+
+Open a terminal and make sure you're in the backend directory. Even without any
+settings configured, you can start the webserver and view the API documentation
+at http://127.0.0.1:8000/docs (Swagger UI) or http://127.0.0.1:8000/redoc (ReDoc).
 
 ```sh
 /        $ cd backend
