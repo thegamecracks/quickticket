@@ -11,7 +11,7 @@
             {% if id_token %}
             ID token:
             <ul>
-                <li>Issued / Last renewed at {{ id_token_iat }}</li>
+                <li>Last renewed at {{ id_token_iat }}</li>
                 <li>Lifetime of {{ id_token_exp - id_token_iat }}, expires in {{ (id_token_exp - now).total_seconds() | int }} seconds</li>
             </ul>
             {% endif %}
