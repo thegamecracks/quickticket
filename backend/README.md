@@ -35,14 +35,16 @@ Run the following command to create and migrate it to the latest database schema
 /backend $ uv run alembic upgrade head
 ```
 
-Afterwards, you need an OAuth2 client from your OpenID provider.
+Afterwards, you need an OAuth2 client from your OpenID provider such as
+[Google](https://developers.google.com/identity/openid-connect/openid-connect#appsetup),
+[Keycloak](https://www.keycloak.org/), or [Authentik](https://goauthentik.io/).
 Make a [.env](/example.env) file containing the client ID, secret,
 and the provider's auto-discovery URL:
 
 ```ini
 BACKEND__OPENID__CLIENT_ID=qoBeV9VCmWs2plast4LX
 BACKEND__OPENID__CLIENT_SECRET=my-very-long-secret
-BACKEND__OPENID__DISCOVERY_URL=https://github.com/login/oauth/.well-known/openid-configuration
+BACKEND__OPENID__DISCOVERY_URL=https://accounts.google.com/.well-known/openid-configuration
 ```
 
 You can now start the webserver and use it from the frontend:
