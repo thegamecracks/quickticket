@@ -76,6 +76,14 @@ class TokenExchangeResponse(BaseModel):
     expires_at: int
 
 
+class FrontchannelLogoutUnsupported(Exception):
+    """Raised when the OpenID provider does not support front-channel logout.
+
+    https://docs.goauthentik.io/add-secure-apps/providers/single-logout/
+
+    """
+
+
 class OAuth2Client:
     def __init__(self, provider: OpenIDProvider) -> None:
         self.provider = provider
@@ -154,7 +162,7 @@ class OAuth2Client:
 
         """
         if self.discovery.end_session_endpoint is None:
-            raise ValueError("Front-channel logout not supported by provider")
+            raise FrontchannelLogoutUnsupported("Front-channel logout not supported by provider")
 
         state = generate_token()
         url = URL(self.discovery.end_session_endpoint.encoded_string())
