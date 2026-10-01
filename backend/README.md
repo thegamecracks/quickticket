@@ -22,7 +22,33 @@ at http://127.0.0.1:8000/docs (Swagger UI) or http://127.0.0.1:8000/redoc (ReDoc
 
 ```sh
 /        $ cd backend
-/backend $ uv run alembic upgrade head  # create/migrate database from .env
+/backend $ uv run fastapi dev
+```
+
+## Configuring an OpenID provider
+
+To actually use the backend, you must configure a database and OpenID provider
+for authentication. By default, a local quickticket.db file is used for the database.
+Run the following command to create and migrate it to the latest database schema:
+
+```sh
+/backend $ uv run alembic upgrade head
+```
+
+Afterwards, you need an OAuth2 client from your OpenID provider. Using GitHub
+as an example, you can go to https://github.com/settings/developers and create
+an OAuth app. Once you have your OAuth2 application, make a [.env](/example.env)
+file containing the client ID, secret, and the provider's auto-discovery URL:
+
+```ini
+BACKEND__OPENID__CLIENT_ID=qoBeV9VCmWs2plast4LX
+BACKEND__OPENID__CLIENT_SECRET=my-very-long-secret
+BACKEND__OPENID__DISCOVERY_URL=https://github.com/login/oauth/.well-known/openid-configuration
+```
+
+You can now start the webserver and use it from the frontend:
+
+```sh
 /backend $ uv run fastapi dev
 ```
 
