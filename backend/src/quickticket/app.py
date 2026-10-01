@@ -10,7 +10,7 @@ from securecookies import SecureCookiesMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 # from starlette_csrf.middleware import CSRFMiddleware
-from quickticket.dependencies.auth import OptionalIdTokenDep, OptionalUserDep
+from quickticket.dependencies.auth import OpenIDProviderDep, OptionalIdTokenDep, OptionalUserDep
 from quickticket.dependencies.state import SettingsDep
 from quickticket.errors import ForcedResponse
 from quickticket.logging import setup_logging
@@ -94,6 +94,7 @@ async def root(
     request: Request,
     settings: SettingsDep,
     token: OptionalIdTokenDep,
+    provider: OpenIDProviderDep,
     user: OptionalUserDep,
 ):
     redirect_uri = str(settings.frontend.default_redirect_uri or request.base_url)
@@ -103,6 +104,7 @@ async def root(
             "login_url": str(request.url_for("oauth_login")),
             "validate_url": str(request.url_for("oauth_validate")),
             "logout_url": str(request.url_for("oauth_logout")),
+            "provider": str(provider.discovery.issuer),
             "id_token": token,
         },
         "profile": user and await profile.profile_me(user),
