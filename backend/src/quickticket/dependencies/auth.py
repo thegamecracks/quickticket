@@ -121,9 +121,10 @@ def get_oauth_client(provider: OpenIDProviderDep) -> OAuth2Client:
     return OAuth2Client(provider)
 
 
-def get_claims_registry(provider: OpenIDProviderDep) -> JWTClaimsRegistry:
+def get_claims_registry(settings: SettingsDep, provider: OpenIDProviderDep) -> JWTClaimsRegistry:
     # https://jose.authlib.org/en/guide/jwt/#validate-claims
     registry = jwt.JWTClaimsRegistry(
+        leeway=settings.security.token_leeway,
         iss={"essential": True, "value": str(provider.discovery.issuer)},
         sub={"essential": True},
         aud={"essential": True, "value": provider.client_id.get_secret_value()},

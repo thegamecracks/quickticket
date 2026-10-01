@@ -167,6 +167,15 @@ class SecuritySettings(BaseSettings):
         BACKEND__SECURITY__COOKIE_ENCRYPTION_SECRETS=["my-new-base64-secret", "Qfw1bmzNtFba8qLxYZzxtEDfgd4P58LCDKiuMezO6lU="]
 
     """
+    token_leeway: int = 30
+    """The tolerance for time desync between the OpenID provider and the backend.
+
+    For example, given a newly minted ID token with ``"iat": 3600`` and a leeway
+    of 30 seconds, the server can be at most 30 seconds behind the provider's time.
+    If this is exceeded, :exc:`joserfc.errors.InvalidClaimError` will be raised
+    during validation.
+
+    """
 
 
 class SMTPSettings(BaseSettings):
