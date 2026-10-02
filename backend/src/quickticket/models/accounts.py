@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
@@ -9,11 +10,11 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from quickticket.models.base import Base
 from quickticket.models.types import (
     can_cascade_delete,
+    current_timestamp,
     str_128,
     str_256,
     str_1024,
     str_4096,
-    timestamp,
 )
 
 if TYPE_CHECKING:
@@ -31,7 +32,7 @@ class User(Base):
     __tablename__ = "account"
 
     id: Mapped[UUID] = mapped_column("account_id", primary_key=True, default=uuid4)
-    created_at: Mapped[timestamp]
+    created_at: Mapped[current_timestamp]
 
     # Fields derived from provider
     display_name: Mapped[str_128]
@@ -89,9 +90,9 @@ class Notification(Base):
         ForeignKey("account.account_id", ondelete="CASCADE"),
         index=True,
     )
-    created_at: Mapped[timestamp]
-    expires_at: Mapped[timestamp]
-    email_at: Mapped[timestamp]
+    created_at: Mapped[current_timestamp]
+    expires_at: Mapped[datetime]
+    email_at: Mapped[datetime | None]
     is_read: Mapped[bool]
     content_short: Mapped[str_1024]
     content_full: Mapped[str_4096]

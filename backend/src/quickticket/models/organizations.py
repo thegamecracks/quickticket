@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from quickticket.models.accounts import User
 from quickticket.models.base import Base
-from quickticket.models.types import str_128, timestamp
+from quickticket.models.types import current_timestamp, str_128
 
 __all__ = (
     "Organization",
@@ -19,7 +19,7 @@ class Organization(Base):
     __tablename__ = "organization"
 
     id: Mapped[UUID] = mapped_column("organization_id", primary_key=True)
-    created_at: Mapped[timestamp]
+    created_at: Mapped[current_timestamp]
     display_name: Mapped[str_128]
 
     members: Mapped[OrganizationMember] = relationship(back_populates="organization")
@@ -36,7 +36,7 @@ class OrganizationMember(Base):
         ForeignKey("account.account_id"),
         primary_key=True,
     )
-    joined_at: Mapped[timestamp]
+    joined_at: Mapped[current_timestamp]
     permissions: Mapped[int]  # TODO: OrganizationMemberPermissions(IntFlag)
 
     organization: Mapped[Organization] = relationship(back_populates="members")

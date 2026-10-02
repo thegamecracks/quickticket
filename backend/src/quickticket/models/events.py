@@ -9,7 +9,7 @@ from quickticket.models.accounts import User
 from quickticket.models.base import Base
 from quickticket.models.money import Money
 from quickticket.models.organizations import Organization
-from quickticket.models.types import Point, str_128, str_2000, str_4096, timestamp
+from quickticket.models.types import Point, current_timestamp, str_128, str_2000, str_4096
 
 __all__ = (
     "Event",
@@ -26,7 +26,7 @@ class Venue(Base):
         ForeignKey("organization.organization_id"),
         index=True,
     )
-    created_at: Mapped[timestamp]
+    created_at: Mapped[current_timestamp]
     display_name: Mapped[str_128]
     description: Mapped[str_4096]
     theme: Mapped[str_128]
@@ -47,14 +47,14 @@ class Event(Base):
         ForeignKey("venue.venue_id"),
         index=True,
     )
-    created_at: Mapped[timestamp]
+    created_at: Mapped[current_timestamp]
     display_name: Mapped[str_128]
     description: Mapped[str_4096]
     theme: Mapped[str_128]
     thumbnail_url: Mapped[str_2000]
     banner_url: Mapped[str_2000]
-    starts_at: Mapped[timestamp]
-    ends_at: Mapped[timestamp]
+    starts_at: Mapped[current_timestamp]  # requires user input
+    ends_at: Mapped[current_timestamp]  # requires user input
     ticket_price: Mapped[Money]
     max_attendees: Mapped[int]
 
@@ -74,7 +74,7 @@ class Ticket(Base):
         ForeignKey("account.account_id", ondelete="CASCADE"),
         index=True,
     )
-    created_at: Mapped[timestamp]
+    created_at: Mapped[current_timestamp]
     paid_cost: Mapped[Money]
 
     event: Mapped[Event] = relationship(back_populates="tickets")
