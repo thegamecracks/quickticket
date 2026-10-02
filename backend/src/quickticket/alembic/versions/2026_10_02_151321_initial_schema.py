@@ -5,6 +5,7 @@ Revises:
 Create Date: 2026-10-02 15:13:21.003847+00:00
 
 """
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -49,9 +50,7 @@ def upgrade() -> None:
     )
     op.create_table(
         "organization",
-        sa.Column(
-            "organization_id", sa.Uuid(), nullable=False
-        ),
+        sa.Column("organization_id", sa.Uuid(), nullable=False),
         sa.Column(
             "created_at",
             sa.DateTime(),
@@ -89,9 +88,7 @@ def upgrade() -> None:
 
     op.create_table(
         "notification",
-        sa.Column(
-            "notification_id", sa.Uuid(), nullable=False
-        ),
+        sa.Column("notification_id", sa.Uuid(), nullable=False),
         sa.Column("account_id", sa.Uuid(), nullable=False),
         sa.Column(
             "created_at",
