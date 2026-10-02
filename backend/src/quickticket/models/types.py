@@ -5,7 +5,7 @@ from typing import Annotated, Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel
-from sqlalchemy import Dialect, LargeBinary, String, TypeDecorator, func
+from sqlalchemy import Dialect, LargeBinary, String, TypeDecorator, func, text
 from sqlalchemy.orm import mapped_column
 
 __all__ = (
@@ -22,13 +22,16 @@ __all__ = (
 )
 
 # https://docs.sqlalchemy.org/en/21/orm/declarative_tables.html#mapping-whole-column-declarations-to-python-types-with-pep-593-annotated
-str_128 = Annotated[str, mapped_column(String(128))]
-str_256 = Annotated[str, mapped_column(String(256))]
-str_1024 = Annotated[str, mapped_column(String(1024))]
-str_2000 = Annotated[str, mapped_column(String(2000))]
-str_4096 = Annotated[str, mapped_column(String(4096))]
+str_128 = Annotated[str, mapped_column(String(128), server_default=text("''"))]
+str_256 = Annotated[str, mapped_column(String(256), server_default=text("''"))]
+str_1024 = Annotated[str, mapped_column(String(1024), server_default=text("''"))]
+str_2000 = Annotated[str, mapped_column(String(2000), server_default=text("''"))]
+str_4096 = Annotated[str, mapped_column(String(4096), server_default=text("''"))]
 
-pk_uuid = Annotated[UUID, mapped_column(primary_key=True, default=uuid4)]
+pk_uuid = Annotated[
+    UUID,
+    mapped_column(primary_key=True, default=uuid4, server_default=func.uuidv4()),
+]
 
 current_timestamp = Annotated[
     datetime.datetime,
