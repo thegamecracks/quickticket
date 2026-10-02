@@ -12,7 +12,7 @@ from quickticket.dependencies.auth import (
     OAuthCookieControllerDep,
     OAuthIdTokenCookie,
     OpenIDProviderJWKsDep,
-    OptionalIdTokenDep,
+    OptionalUserDep,
     PostRedirectUriDep,
     RedirectUriDep,
     RegistrationControllerDep,
@@ -38,7 +38,7 @@ log = logging.getLogger(__name__)
     status_code=303,
 )
 async def oauth_login(
-    id_token: OptionalIdTokenDep,
+    user: OptionalUserDep,
     redirect_uri: RedirectUriDep,
     request: Request,
     client: OAuth2ClientDep,
@@ -52,7 +52,7 @@ async def oauth_login(
     this redirects straight to ``redirect_uri``.
 
     """
-    if id_token is not None:
+    if user is not None:
         return cookies.force_redirect(redirect_uri, 303)
 
     # Proof Key for Code Exchange (PKCE)

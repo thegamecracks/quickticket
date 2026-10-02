@@ -13,7 +13,7 @@ from joserfc.jwk import KeySet
 from joserfc.jwt import JWTClaimsRegistry
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl
 from pydantic_core import from_json
-from sqlalchemy import select
+from sqlalchemy import Select, select
 from sqlalchemy.orm import load_only
 
 from quickticket.dependencies.cache import CacheDep, SettingsDep
@@ -26,6 +26,7 @@ from quickticket.dependencies.cookies import (
 )
 from quickticket.dependencies.db import AsyncSessionDep
 from quickticket.dependencies.state import HTTPClientDep
+from quickticket.errors import ForcedResponse
 from quickticket.models import User
 from quickticket.oauth import OAuth2Client, OpenIDProvider
 from quickticket.settings import OpenIDSettings
@@ -335,17 +336,7 @@ class RegistrationController:
         redirect_uri: str | URL,
         status_code: int,
     ) -> NoReturn:
-        claims = id_token.claims
-        query = select(User).options(load_only(User.id))
-        user = await self.session.scalar(query.where(User.openid_sub == claims.sub))
-        if user is None:
-            # FIXME: no guarantee two users don't share same email, prompt recommended
-            user = await self.session.scalar(query.where(User.email == claims.email))
-        if user is None:
-            user = User()
-
-        self._update_user_with_claims(user, claims)
-        self.session.add(user)
+        await self.get_user_by_id_token(id_token, register=True)
 
         self.cookies.set_tokens(
             id_token=id_token,
@@ -359,6 +350,62 @@ class RegistrationController:
         #
         # To retry a request, pass redirect_uri=request.url and status_code=307.
         return self.cookies.force_redirect(redirect_uri, status_code)
+
+    async def get_user_by_id_token(
+        self,
+        id_token: IdToken,
+        *,
+        query: Select[User] | None = None,
+        register: bool = False,
+    ) -> User:
+        """Get the user associated with an ID token.
+
+        :param id_token: The token linked to the user.
+        :param query: The base query to use for retrieving the user.
+        :param register:
+            If True, allow creating a new user in the current session and
+            flushing it, and allow upserting the user with new credentials.
+            If the user does not exist, HTTP 401 will be raised with their
+            ID token deleted to force re-authentication.
+        :returns: The newly created or existing user.
+
+        """
+        claims = id_token.claims
+        if query is None:
+            query = select(User).options(load_only(User.id))
+
+        user = await self.session.scalar(query.where(User.openid_sub == claims.sub))
+        if user is None:
+            # FIXME: allow linking multiple OpenID providers
+            # FIXME: no guarantee two users don't share same email, prompt recommended
+            user = await self.session.scalar(query.where(User.email == claims.email))
+
+        if user is not None:
+            # Found existing user
+            if register:
+                self._update_user_with_claims(user, claims)
+            return user
+
+        if not register:
+            # User is missing from database and account registration was not expected.
+            # Perhaps the backend has changed databases or a sysadmin deleted the user?
+            log.warning("Received valid ID token for non-existent user (sub: %s)", claims.sub)
+
+            # HACK: raise HTTPException(401, "Not authenticated") while deleting cookies
+            self.cookies.delete_all()
+            response = self.cookies.response
+            response.status_code = 401
+            response.headers["Content-Type"] = "application/json"
+            response.body = b'{"detail":"Not authenticated"}'
+            raise ForcedResponse(response)
+
+        log.debug("Creating new user from ID token (sub: %s)", claims.sub)
+        user = User()
+        self._update_user_with_claims(user, claims)
+        self.session.add(user)
+        await self.session.flush([user])  # Insert without commit
+        await self.session.refresh(user)  # Re-fetch attributes, including user ID
+        return user
 
     def _update_user_with_claims(self, user: User, claims: IdTokenClaims) -> None:
         # https://openid.net/specs/openid-connect-basic-1_0.html#rfc.section.2.5
@@ -378,11 +425,13 @@ class RegistrationController:
         # TODO: set admin flag or enum on user
 
 
-async def get_user(id_token: OptionalIdTokenDep, session: AsyncSessionDep) -> User | None:
-    if id_token is None:
-        return
-    query = select(User).where(User.openid_sub == id_token.claims.sub)
-    return await session.scalar(query)
+async def get_user(
+    id_token: OptionalIdTokenDep,
+    registration: RegistrationControllerDep,
+) -> User | None:
+    if id_token is not None:
+        # Query all User attributes
+        return await registration.get_user_by_id_token(id_token, query=select(User))
 
 
 async def get_user_or_fail(
