@@ -35,7 +35,7 @@ class Venue(Base):
     location_name: Mapped[str_128]
     location_coords: Mapped[Point | None]
 
-    event: Mapped[list[Event]] = relationship(back_populates="venue")
+    events: Mapped[list[Event]] = relationship(back_populates="venue")
     organization: Mapped[Organization] = relationship(back_populates="venues")
 
 

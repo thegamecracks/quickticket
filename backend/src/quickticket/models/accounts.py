@@ -19,7 +19,7 @@ from quickticket.models.types import (
 
 if TYPE_CHECKING:
     from quickticket.models.events import Ticket
-    from quickticket.models.organizations import Organization
+    from quickticket.models.organizations import Organization, OrganizationMember
 
 __all__ = (
     "Address",
@@ -57,6 +57,11 @@ class User(Base):
         **can_cascade_delete,
     )
     organizations: Mapped[list[Organization]] = relationship(
+        # back_populates="users",
+        secondary="organization_member",
+        viewonly=True,
+    )
+    organization_members: Mapped[list[OrganizationMember]] = relationship(
         back_populates="user",
     )
     tickets: Mapped[list[Ticket]] = relationship(

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import ForeignKey
@@ -8,6 +9,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from quickticket.models.accounts import User
 from quickticket.models.base import Base
 from quickticket.models.types import current_timestamp, str_128
+
+if TYPE_CHECKING:
+    from quickticket.models.events import Venue
 
 __all__ = (
     "Organization",
@@ -22,7 +26,8 @@ class Organization(Base):
     created_at: Mapped[current_timestamp]
     display_name: Mapped[str_128]
 
-    members: Mapped[OrganizationMember] = relationship(back_populates="organization")
+    members: Mapped[list[OrganizationMember]] = relationship(back_populates="organization")
+    venues: Mapped[list[Venue]] = relationship(back_populates="organization")
 
 
 class OrganizationMember(Base):
@@ -40,4 +45,4 @@ class OrganizationMember(Base):
     permissions: Mapped[int]  # TODO: OrganizationMemberPermissions(IntFlag)
 
     organization: Mapped[Organization] = relationship(back_populates="members")
-    user: Mapped[User] = relationship(back_populates="organizations")
+    user: Mapped[User] = relationship(back_populates="organization_members")
