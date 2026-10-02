@@ -1,11 +1,15 @@
 import datetime
+import struct
 from collections.abc import Mapping
 from typing import Annotated, Any
 
-from sqlalchemy import String, func
+from pydantic import BaseModel
+from sqlalchemy import BLOB, Dialect, String, TypeDecorator, func
 from sqlalchemy.orm import mapped_column
 
 __all__ = (
+    "Point",
+    "PointSerializer",
     "can_cascade_delete",
     "str_128",
     "str_256",
@@ -32,3 +36,26 @@ can_cascade_delete: Mapping[str, Any] = {
     "cascade": "save-update, delete, delete-orphan, merge, expunge",
     "passive_deletes": True,
 }
+
+
+class Point(BaseModel):
+    """A (latitiude, longitude) coordinate pair."""
+
+    lat: float
+    long: float
+
+
+class PointSerializer(TypeDecorator):
+    """De/serialize the Point class to and from the database."""
+
+    impl = BLOB
+    cache_ok = True
+
+    def process_bind_param(self, value: Point | None, dialect: Dialect):
+        if value is not None:
+            return struct.pack("<dd", value.lat, value.long)
+
+    def process_result_value(self, value: bytes | None, dialect: Dialect):
+        if value is not None:
+            lat, long = struct.unpack("<dd", value)
+            return Point(lat=lat, long=long)

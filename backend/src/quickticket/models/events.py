@@ -9,7 +9,7 @@ from quickticket.models.accounts import User
 from quickticket.models.base import Base
 from quickticket.models.money import Money
 from quickticket.models.organizations import Organization
-from quickticket.models.types import str_128, str_2000, str_4096, timestamp
+from quickticket.models.types import Point, str_128, str_2000, str_4096, timestamp
 
 __all__ = (
     "Event",
@@ -33,7 +33,7 @@ class Venue(Base):
     thumbnail_url: Mapped[str_2000]
     banner_url: Mapped[str_2000]
     location_name: Mapped[str_128]
-    # location_coords: insert point type here??
+    location_coords: Mapped[Point | None]
 
     event: Mapped[list[Event]] = relationship(back_populates="venue")
     organization: Mapped[Organization] = relationship(back_populates="venues")
