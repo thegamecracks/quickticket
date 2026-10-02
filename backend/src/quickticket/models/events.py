@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from quickticket.models.accounts import User
 from quickticket.models.base import Base
+from quickticket.models.money import Money
 from quickticket.models.organizations import Organization
 from quickticket.models.types import str_128, str_2000, str_4096, timestamp
 
@@ -54,7 +55,7 @@ class Event(Base):
     banner_url: Mapped[str_2000]
     starts_at: Mapped[timestamp]
     ends_at: Mapped[timestamp]
-    ticket_price: Mapped[int]  # in cents for stripe/db cross compat
+    ticket_price: Mapped[Money]
     max_attendees: Mapped[int]
 
     tickets: Mapped[list[Ticket]] = relationship(back_populates="event")
@@ -74,7 +75,7 @@ class Ticket(Base):
         index=True,
     )
     created_at: Mapped[timestamp]
-    paid_cost: Mapped[int]  # in cents for stripe/db cross compat
+    paid_cost: Mapped[Money]
 
     event: Mapped[Event] = relationship(back_populates="tickets")
     user: Mapped[User] = relationship(back_populates="tickets")
