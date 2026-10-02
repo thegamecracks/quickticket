@@ -28,10 +28,7 @@ str_1024 = Annotated[str, mapped_column(String(1024), server_default=text("''"))
 str_2000 = Annotated[str, mapped_column(String(2000), server_default=text("''"))]
 str_4096 = Annotated[str, mapped_column(String(4096), server_default=text("''"))]
 
-pk_uuid = Annotated[
-    UUID,
-    mapped_column(primary_key=True, default=uuid4, server_default=func.uuidv4()),
-]
+pk_uuid = Annotated[UUID, mapped_column(primary_key=True, default=uuid4)]
 
 current_timestamp = Annotated[
     datetime.datetime,
