@@ -5,7 +5,18 @@ from typing import Annotated, Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel
-from sqlalchemy import Dialect, LargeBinary, String, TypeDecorator, func, text
+from sqlalchemy import (
+    Column,
+    DefaultClause,
+    Dialect,
+    LargeBinary,
+    String,
+    TypeDecorator,
+    Uuid,
+    func,
+    text,
+)
+from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import mapped_column
 
 __all__ = (
@@ -63,3 +74,13 @@ class PointSerializer(TypeDecorator):
         if value is not None:
             lat, long = struct.unpack("<dd", value)
             return Point(lat=lat, long=long)
+
+
+# https://gist.github.com/alexa-infra/1a2488e4980e4e3c239aaf962eab06b6
+# Set uuidv4() default function for non-foreign key UUID columns
+@compiles(Uuid, "postgresql")
+def compile_uuid_postgresql(element, compiler, **kw):
+    expr: Column | None = kw.get("type_expression")
+    if expr is not None and not expr.server_default and not expr.foreign_keys:
+        expr.server_default = DefaultClause(func.uuidv4())
+    return compiler.visit_UUID(element, **kw)
