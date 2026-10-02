@@ -13,6 +13,7 @@
             <ul>
                 <li>Last renewed at {{ id_token_iat }}</li>
                 <li>Lifetime of {{ id_token_exp - id_token_iat }}, expires in {{ (id_token_exp - now).total_seconds() | int }} seconds</li>
+                <li><a href="{{ url_for('oauth_validate') }}">View decrypted ID token</a></li>
             </ul>
             {% endif %}
         </ul>
