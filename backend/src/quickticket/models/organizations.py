@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from quickticket.models.accounts import User
 from quickticket.models.base import Base
-from quickticket.models.types import current_timestamp, str_128
+from quickticket.models.types import current_timestamp, pk_uuid, str_128
 
 if TYPE_CHECKING:
     from quickticket.models.events import Venue
@@ -22,7 +22,7 @@ __all__ = (
 class Organization(Base):
     __tablename__ = "organization"
 
-    id: Mapped[UUID] = mapped_column("organization_id", primary_key=True)
+    id: Mapped[pk_uuid] = mapped_column("organization_id")
     created_at: Mapped[current_timestamp]
     display_name: Mapped[str_128]
 

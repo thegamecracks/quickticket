@@ -2,6 +2,7 @@ import datetime
 import struct
 from collections.abc import Mapping
 from typing import Annotated, Any
+from uuid import UUID, uuid4
 
 from pydantic import BaseModel
 from sqlalchemy import Dialect, LargeBinary, String, TypeDecorator, func
@@ -12,6 +13,7 @@ __all__ = (
     "PointSerializer",
     "can_cascade_delete",
     "current_timestamp",
+    "pk_uuid",
     "str_128",
     "str_256",
     "str_1024",
@@ -25,6 +27,8 @@ str_256 = Annotated[str, mapped_column(String(256))]
 str_1024 = Annotated[str, mapped_column(String(1024))]
 str_2000 = Annotated[str, mapped_column(String(2000))]
 str_4096 = Annotated[str, mapped_column(String(4096))]
+
+pk_uuid = Annotated[UUID, mapped_column(primary_key=True, default=uuid4)]
 
 current_timestamp = Annotated[
     datetime.datetime,

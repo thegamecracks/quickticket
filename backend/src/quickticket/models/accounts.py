@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import TYPE_CHECKING
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -11,6 +11,7 @@ from quickticket.models.base import Base
 from quickticket.models.types import (
     can_cascade_delete,
     current_timestamp,
+    pk_uuid,
     str_128,
     str_256,
     str_1024,
@@ -31,7 +32,7 @@ __all__ = (
 class User(Base):
     __tablename__ = "account"
 
-    id: Mapped[UUID] = mapped_column("account_id", primary_key=True, default=uuid4)
+    id: Mapped[pk_uuid] = mapped_column("account_id")
     created_at: Mapped[current_timestamp]
 
     # Fields derived from provider
@@ -73,7 +74,7 @@ class User(Base):
 class Address(Base):
     __tablename__ = "address"
 
-    id: Mapped[UUID] = mapped_column("address_id", primary_key=True, default=uuid4)
+    id: Mapped[pk_uuid] = mapped_column("address_id")
     account_id: Mapped[UUID] = mapped_column(
         ForeignKey("account.account_id", ondelete="CASCADE"),
         index=True,
@@ -90,7 +91,7 @@ class Address(Base):
 class Notification(Base):
     __tablename__ = "notification"
 
-    id: Mapped[UUID] = mapped_column("notification_id", primary_key=True)
+    id: Mapped[pk_uuid] = mapped_column("notification_id")
     account_id: Mapped[UUID] = mapped_column(
         ForeignKey("account.account_id", ondelete="CASCADE"),
         index=True,

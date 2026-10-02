@@ -9,7 +9,7 @@ from quickticket.models.accounts import User
 from quickticket.models.base import Base
 from quickticket.models.money import Money
 from quickticket.models.organizations import Organization
-from quickticket.models.types import Point, current_timestamp, str_128, str_2000, str_4096
+from quickticket.models.types import Point, current_timestamp, pk_uuid, str_128, str_2000, str_4096
 
 __all__ = (
     "Event",
@@ -21,7 +21,7 @@ __all__ = (
 class Venue(Base):
     __tablename__ = "venue"
 
-    id: Mapped[UUID] = mapped_column("venue_id", primary_key=True)
+    id: Mapped[pk_uuid] = mapped_column("venue_id")
     organization_id: Mapped[UUID] = mapped_column(
         ForeignKey("organization.organization_id"),
         index=True,
@@ -42,7 +42,7 @@ class Venue(Base):
 class Event(Base):
     __tablename__ = "event"
 
-    id: Mapped[UUID] = mapped_column("event_id", primary_key=True)
+    id: Mapped[pk_uuid] = mapped_column("event_id")
     venue_id: Mapped[UUID] = mapped_column(
         ForeignKey("venue.venue_id"),
         index=True,
@@ -65,7 +65,7 @@ class Event(Base):
 class Ticket(Base):
     __tablename__ = "ticket"
 
-    id: Mapped[UUID] = mapped_column("ticket_id", primary_key=True)
+    id: Mapped[pk_uuid] = mapped_column("ticket_id")
     event_id: Mapped[UUID] = mapped_column(
         ForeignKey("event.event_id"),
         index=True,
