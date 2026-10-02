@@ -1,12 +1,30 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from quickticket.models.base import Base
-from quickticket.models.types import str_128, str_256, str_1024, str_4096, timestamp
+from quickticket.models.types import (
+    can_cascade_delete,
+    str_128,
+    str_256,
+    str_1024,
+    str_4096,
+    timestamp,
+)
+
+if TYPE_CHECKING:
+    from quickticket.models.events import Ticket
+    from quickticket.models.organizations import Organization
+
+__all__ = (
+    "Address",
+    "Notification",
+    "User",
+)
 
 
 class User(Base):
@@ -29,14 +47,31 @@ class User(Base):
 
     """
 
-    addresses: Mapped[list[Address]] = relationship(back_populates="user")
+    addresses: Mapped[list[Address]] = relationship(
+        back_populates="user",
+        **can_cascade_delete,
+    )
+    notifications: Mapped[list[Notification]] = relationship(
+        back_populates="user",
+        **can_cascade_delete,
+    )
+    organizations: Mapped[list[Organization]] = relationship(
+        back_populates="user",
+    )
+    tickets: Mapped[list[Ticket]] = relationship(
+        back_populates="user",
+        **can_cascade_delete,
+    )
 
 
 class Address(Base):
     __tablename__ = "address"
 
     id: Mapped[UUID] = mapped_column("address_id", primary_key=True, default=uuid4)
-    account_id: Mapped[UUID] = mapped_column(ForeignKey("account.account_id"))
+    account_id: Mapped[UUID] = mapped_column(
+        ForeignKey("account.account_id", ondelete="CASCADE"),
+        index=True,
+    )
     line_1: Mapped[str_128]
     line_2: Mapped[str_128]
     city: Mapped[str_128]
@@ -50,10 +85,15 @@ class Notification(Base):
     __tablename__ = "notification"
 
     id: Mapped[UUID] = mapped_column("notification_id", primary_key=True)
-    account_id: Mapped[UUID] = mapped_column(ForeignKey("account.account_id"))
+    account_id: Mapped[UUID] = mapped_column(
+        ForeignKey("account.account_id", ondelete="CASCADE"),
+        index=True,
+    )
     created_at: Mapped[timestamp]
     expires_at: Mapped[timestamp]
     email_at: Mapped[timestamp]
     is_read: Mapped[bool]
     content_short: Mapped[str_1024]
     content_full: Mapped[str_4096]
+
+    user: Mapped[User] = relationship(back_populates="notifications")
