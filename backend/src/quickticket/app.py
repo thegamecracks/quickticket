@@ -56,8 +56,7 @@ if _settings.frontend.builtin:
     from quickticket import frontend
 
     log.warning(
-        "Serving minimal frontend. Disable in production with: "
-        "BACKEND__FRONTEND__BUILTIN=0"
+        "Serving minimal frontend. Disable in production with: BACKEND__FRONTEND__BUILTIN=0"
     )
     app.mount("/static", frontend.static, name="static")
     app.include_router(frontend.router)
