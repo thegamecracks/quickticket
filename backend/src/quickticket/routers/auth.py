@@ -22,7 +22,7 @@ from quickticket.dependencies.cookies import (
     OAuthStateCookie,
 )
 from quickticket.dependencies.state import SettingsDep
-from quickticket.oauth import FrontchannelLogoutUnsupported
+from quickticket.oauth import RPLogoutUnsupported
 
 LOGIN_EXPIRY = 1800
 LOGOUT_EXPIRY = 1800
@@ -175,7 +175,7 @@ async def oauth_logout(
     """Redirect the user to logout at the OpenID provider.
 
     If no ID token is provided, this redirects straight to ``redirect_uri``.
-    If the provider does not support front-channel logout, this clears your
+    If the provider does not support RP-initiated logout, this clears your
     login cookies immediately and then redirects to ``redirect_uri``.
 
     """
@@ -188,7 +188,7 @@ async def oauth_logout(
             id_token_hint=None,
             post_logout_redirect_uri=str(request.url_for("oauth_post_logout")),
         )
-    except FrontchannelLogoutUnsupported:
+    except RPLogoutUnsupported:
         # Can't ask user to logout on the OpenID provider
         cookies.delete_all()
         return cookies.force_redirect(redirect_uri, 307)
