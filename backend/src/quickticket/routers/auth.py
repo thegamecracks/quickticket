@@ -7,20 +7,21 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from joserfc.errors import JoseError
 
 from quickticket.dependencies.auth import (
-    JWTClaimsRegistryDep,
     OAuth2ClientDep,
-    OAuthCookieControllerDep,
-    OAuthIdTokenCookie,
-    OpenIDProviderJWKsDep,
     OptionalUserDep,
     PostRedirectUriDep,
     RedirectUriDep,
     RegistrationControllerDep,
-    RequiredIdTokenDep,
-    parse_id_token,
+    RequiredTokensDep,
+    TokenValidatorDep,
 )
 from quickticket.dependencies.cache import CacheDep
-from quickticket.dependencies.cookies import OAuthNonceCookie, OAuthStateCookie
+from quickticket.dependencies.cookies import (
+    OAuthCookieControllerDep,
+    OAuthIdTokenCookie,
+    OAuthNonceCookie,
+    OAuthStateCookie,
+)
 from quickticket.dependencies.state import SettingsDep
 from quickticket.oauth import FrontchannelLogoutUnsupported
 
@@ -48,8 +49,7 @@ async def oauth_login(
 ):
     """Redirect the user to login at the OpenID provider.
 
-    The ID and refresh token cookies are optional.
-    If a valid ID token is provided or the ID token can be refreshed,
+    The token cookies are optional. If valid tokens are provided or can be refreshed,
     this redirects straight to ``redirect_uri``.
 
     """
@@ -102,8 +102,7 @@ async def oauth_post_login(
     cache: CacheDep,
     client: OAuth2ClientDep,
     request: Request,
-    keys: OpenIDProviderJWKsDep,
-    registry: JWTClaimsRegistryDep,
+    validator: TokenValidatorDep,
     registration: RegistrationControllerDep,
     # Optional
     redirect_uri: PostRedirectUriDep,
@@ -125,38 +124,37 @@ async def oauth_post_login(
         redirect_uri=request.url_for("oauth_post_login"),
     )
 
-    # Verify ID token validity + nonce
     try:
-        id_token = parse_id_token(tokens.id_token, keys, registry)
+        parsed = validator.parse_tokens(access_token=tokens.access_token, id_token=tokens.id_token)
     except JoseError as e:
-        log.debug("OpenID returned invalid ID token", exc_info=e)
-        raise HTTPException(400, "OpenID returned invalid ID token") from e
+        log.debug("OpenID returned invalid tokens", exc_info=e)
+        raise HTTPException(400, "OpenID returned invalid tokens") from e
 
-    if id_token.claims.nonce != nonce_cookie:
+    if parsed.id_token.claims.nonce != nonce_cookie:
         log.debug(
             "ID token nonce does not match nonce cookie (%r != %r)",
-            id_token.claims.nonce,
+            parsed.id_token.claims.nonce,
             nonce_cookie,
         )
-        raise HTTPException(400, "OpenID returned invalid ID token")
+        raise HTTPException(400, "OpenID returned invalid tokens")
 
     return await registration.register_and_redirect(
-        access_token=tokens.access_token,
+        access_token=parsed.access_token,
         expires_in=tokens.expires_in,
         refresh_token=tokens.refresh_token,
         refresh_expires_in=tokens.refresh_expires_in,
-        id_token=id_token,
+        id_token=parsed.id_token,
         redirect_uri=redirect_uri,
         status_code=303,
     )
 
 
 @router.get("/validate", deprecated=True)
-async def oauth_validate(settings: SettingsDep, token: RequiredIdTokenDep):
-    """Verify authentication and return the ID token's header and claims."""
+async def oauth_validate(settings: SettingsDep, tokens: RequiredTokensDep):
+    """Verify authentication and return decoded access and ID tokens."""
     if not settings.frontend.builtin:
         raise HTTPException(404)
-    return token
+    return {"access_token": tokens.access_token, "id_token": tokens.id_token}
 
 
 @router.post(

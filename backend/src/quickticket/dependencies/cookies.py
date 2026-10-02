@@ -3,22 +3,20 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 from functools import cached_property
-from typing import TYPE_CHECKING, Annotated, NoReturn
+from typing import Annotated, NoReturn
 from urllib.parse import quote
 
 from fastapi import Cookie, Depends, FastAPI, Request, Response
 from fastapi.datastructures import URL
 from starlette.background import BackgroundTask
 
+from quickticket.dependencies.auth.tokens import AccessToken, IdToken
 from quickticket.errors import ForcedResponse
-
-if TYPE_CHECKING:
-    from quickticket.dependencies.auth import IdToken
 
 COOKIE_OAUTH_NONCE = "oauth-nonce"
 COOKIE_OAUTH_STATE = "oauth-state"
 COOKIE_OAUTH_POST_REDIRECT = "oauth-post-redirect"
-# COOKIE_OAUTH_ACCESS_TOKEN = "oauth-access-token"
+COOKIE_OAUTH_ACCESS_TOKEN = "oauth-access-token"
 COOKIE_OAUTH_REFRESH_TOKEN = "oauth-refresh-token"
 COOKIE_OAUTH_ID_TOKEN = "oauth-id-token"
 
@@ -34,19 +32,13 @@ OAuthPostRedirectCookie = Cookie(
     alias=COOKIE_OAUTH_POST_REDIRECT,
     description="The URL to redirect after a successful login/logout.",
 )
-# OAuthAccessTokenCookie = Cookie(
-#     alias=COOKIE_OAUTH_ACCESS_TOKEN,
-#     description=(
-#         "The access token received after authentication. "
-#         "This token is used to make requests to the OpenID provider's API."
-#         # To my understanding, access tokens can be opaque strings so we can't
-#         # validate its authenticity from our client unless we sent a request
-#         # to the provider each time.
-#         # The ID token on the other hand is signed by a publicly available key
-#         # in the JWKs URL (JSON Web Keys), so we can cache the keys and verify
-#         # ID tokens client-side.
-#     ),
-# )
+OAuthAccessTokenCookie = Cookie(
+    alias=COOKIE_OAUTH_ACCESS_TOKEN,
+    description=(
+        "The access token received after authentication. "
+        "This token is used to make requests to the API."
+    ),
+)
 OAuthRefreshTokenCookie = Cookie(
     alias=COOKIE_OAUTH_REFRESH_TOKEN,
     description=(
@@ -116,9 +108,21 @@ class OAuthCookieController:
             path=self.auth_path,
         )
 
-    def set_tokens(self, *, id_token: IdToken, refresh_token: str, refresh_expires_in: int) -> None:
+    def set_tokens(
+        self,
+        *,
+        id_token: IdToken,
+        access_token: AccessToken,
+        expires_in: int,
+        refresh_token: str,
+        refresh_expires_in: int,
+    ) -> None:
         self.delete_flow()
-        # self.response.set_cookie(COOKIE_OAUTH_ACCESS_TOKEN, access_token, max_age=expires_in)
+        self.response.set_cookie(
+            COOKIE_OAUTH_ACCESS_TOKEN,
+            access_token.raw,
+            max_age=expires_in,
+        )
         self.response.set_cookie(
             COOKIE_OAUTH_REFRESH_TOKEN,
             refresh_token,
@@ -136,7 +140,7 @@ class OAuthCookieController:
         self.response.delete_cookie(COOKIE_OAUTH_POST_REDIRECT, path=self.auth_path)
 
     def delete_tokens(self) -> None:
-        # self.response.delete_cookie(COOKIE_OAUTH_ACCESS_TOKEN)
+        self.response.delete_cookie(COOKIE_OAUTH_ACCESS_TOKEN)
         self.response.delete_cookie(COOKIE_OAUTH_REFRESH_TOKEN)
         self.response.delete_cookie(COOKIE_OAUTH_ID_TOKEN)
 

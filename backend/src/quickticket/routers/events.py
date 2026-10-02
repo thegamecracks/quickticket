@@ -3,12 +3,15 @@ from uuid import UUID
 
 from fastapi import APIRouter
 
+from quickticket.dependencies.auth import OptionalUserDep
+from quickticket.dependencies.db import AsyncSessionDep
+
 router = APIRouter(tags=["Events"])
 log = logging.getLogger(__name__)
 
 
 @router.get("")
-async def get_events() -> None:
+async def get_events(user: OptionalUserDep, session: AsyncSessionDep) -> None:
     """Get a list of events."""
     # TODO: sort by newest events, most tickets?
     # TODO: support pagination
