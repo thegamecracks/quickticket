@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from quickticket.models.accounts import User
@@ -55,8 +55,11 @@ class Event(Base):
     banner_url: Mapped[str_2000]
     starts_at: Mapped[current_timestamp]  # requires user input
     ends_at: Mapped[current_timestamp]  # requires user input
-    ticket_price: Mapped[Money]
-    max_attendees: Mapped[int]
+    ticket_price: Mapped[Money] = mapped_column(
+        default=0,
+        server_default=text("""'{"amount": 0, "currency": "CAD"}'"""),
+    )
+    max_attendees: Mapped[int] = mapped_column(default=0, server_default=text("0"))
 
     tickets: Mapped[list[Ticket]] = relationship(back_populates="event")
     venue: Mapped[Venue] = relationship(back_populates="events")
