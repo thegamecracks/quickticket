@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from typing import Annotated, Any
 
 from pydantic import BaseModel
-from sqlalchemy import BLOB, Dialect, String, TypeDecorator, func
+from sqlalchemy import Dialect, LargeBinary, String, TypeDecorator, func
 from sqlalchemy.orm import mapped_column
 
 __all__ = (
@@ -48,7 +48,7 @@ class Point(BaseModel):
 class PointSerializer(TypeDecorator):
     """De/serialize the Point class to and from the database."""
 
-    impl = BLOB
+    impl = LargeBinary
     cache_ok = True
 
     def process_bind_param(self, value: Point | None, dialect: Dialect):
