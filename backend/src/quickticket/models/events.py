@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from quickticket.models import User
+from quickticket.models.accounts import User
 from quickticket.models.base import Base
 from quickticket.models.organizations import Organization
 from quickticket.models.types import str_128, str_2000, str_4096, timestamp
