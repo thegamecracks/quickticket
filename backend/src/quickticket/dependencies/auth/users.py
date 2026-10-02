@@ -13,15 +13,12 @@ from quickticket.dependencies.auth.provider import OAuth2ClientDep
 from quickticket.dependencies.auth.tokens import (
     AccessToken,
     IdToken,
-    IdTokenClaims,
     TokenValidatorDep,
-    ValidTokens,
 )
 from quickticket.dependencies.cache import SettingsDep
 from quickticket.dependencies.cookies import (
     OAuthAccessTokenCookie,
     OAuthCookieControllerDep,
-    OAuthIdTokenCookie,
     OAuthRefreshTokenCookie,
 )
 from quickticket.dependencies.db import AsyncSessionDep
@@ -30,16 +27,16 @@ from quickticket.models import User
 from quickticket.settings import OpenIDSettings
 
 __all__ = (
-    "OptionalTokensDep",
+    "OptionalAccessTokenDep",
     "OptionalUserDep",
     "RegistrationController",
     "RegistrationControllerDep",
-    "RequiredTokensDep",
+    "RequiredAccessTokenDep",
     "RequiredUserDep",
-    "get_or_refresh_tokens",
+    "get_or_refresh_access_token",
     "get_user",
     "get_user_or_fail",
-    "get_valid_tokens",
+    "get_valid_access_token",
 )
 
 log = logging.getLogger(__name__)
@@ -71,10 +68,10 @@ class RegistrationController:
         redirect_uri: str | URL,
         status_code: int,
     ) -> NoReturn:
-        await self.get_user_by_id_token(id_token, register=True)
+        await self._get_user_by_id_token(id_token, register=True)
 
         self.cookies.set_tokens(
-            id_token=id_token,
+            # id_token=id_token,
             access_token=access_token,
             expires_in=expires_in,
             refresh_token=refresh_token,
@@ -88,7 +85,7 @@ class RegistrationController:
         # To retry a request, pass redirect_uri=request.url and status_code=307.
         return self.cookies.force_redirect(redirect_uri, status_code)
 
-    async def get_user_by_id_token(
+    async def _get_user_by_id_token(
         self,
         id_token: IdToken,
         *,
@@ -120,7 +117,7 @@ class RegistrationController:
         if user is not None:
             # Found existing user
             if register:
-                self._update_user_with_claims(user, claims)
+                self._update_user_with_id_token(user, id_token)
             return user
 
         if not register:
@@ -138,16 +135,18 @@ class RegistrationController:
 
         log.debug("Creating new user from ID token (sub: %s)", claims.sub)
         user = User()
-        self._update_user_with_claims(user, claims)
+        self._update_user_with_id_token(user, id_token)
         self.session.add(user)
         await self.session.flush([user])  # Insert without commit
         await self.session.refresh(user)  # Re-fetch attributes, including user ID
         return user
 
-    def _update_user_with_claims(self, user: User, claims: IdTokenClaims) -> None:
+    def _update_user_with_id_token(self, user: User, id_token: IdToken) -> None:
         # https://openid.net/specs/openid-connect-basic-1_0.html#rfc.section.2.5
         # Consider retrieving claims from userinfo endpoint with access token
         # "picture", "gender", "birthdate", "zoneinfo", "locale", "phone_number", "address"
+        # TODO: set optional claims like locale and address
+        claims = id_token.claims
         user.display_name = claims.preferred_username or claims.name
         user.first_name = claims.given_name
         user.last_name = claims.family_name
@@ -162,7 +161,7 @@ class RegistrationController:
         # TODO: set admin flag or enum on user
 
 
-async def get_or_refresh_tokens(
+async def get_or_refresh_access_token(
     validator: TokenValidatorDep,
     client: OAuth2ClientDep,
     cookies: OAuthCookieControllerDep,
@@ -170,49 +169,42 @@ async def get_or_refresh_tokens(
     request: Request,
     # NOTE: below cookies can expire on browser
     access_token_cookie: Annotated[str | None, OAuthAccessTokenCookie] = None,
-    id_token_cookie: Annotated[str | None, OAuthIdTokenCookie] = None,
+    # id_token_cookie: Annotated[str | None, OAuthIdTokenCookie] = None,
     refresh_token_cookie: Annotated[str | None, OAuthRefreshTokenCookie] = None,
-) -> ValidTokens | None:
-    """Attempt to return valid tokens from the user's cookies.
+) -> AccessToken | None:
+    """Attempt to return a valid access token from the user's cookies.
 
-    If the tokens are invalid and a refresh token is present,
+    If the access token is invalid and a refresh token is present,
     the server will attempt to fetch new tokens from the OpenID provider.
     If this fails, the token cookies will be marked for deletion.
 
     """
-    if access_token_cookie is not None and id_token_cookie is not None:
+    if access_token_cookie is not None:
         try:
-            parsed = validator.parse_tokens(
-                access_token=access_token_cookie,
-                id_token=id_token_cookie,
-            )
+            return validator.parse_access_token(access_token_cookie)
         except ExpiredTokenError:
-            log.debug("Ignoring expired tokens")
+            log.debug("Ignoring expired access token")
         except JoseError as e:
-            log.debug("Ignoring invalid tokens", exc_info=e)
-        else:
-            return parsed
+            log.debug("Ignoring invalid access token", exc_info=e)
 
     if refresh_token_cookie is None:
-        cookies.delete_tokens()  # flush out invalid tokens if present
+        cookies.delete_tokens()  # flush out invalid access token if present
         return
 
-    log.debug("Refreshing tokens")
+    log.debug("Refreshing access token")
     try:
         tokens = await client.refresh_token(refresh_token_cookie)
     except OAuthError as e:
         if e.error == "invalid_grant":  # provider refused grant_type=refresh_token
             log.debug("OpenID session expired, re-authentication required")
         else:
-            log.debug("Failed to refresh tokens", exc_info=e)
+            log.debug("Failed to refresh access token", exc_info=e)
         cookies.delete_tokens()
         return
 
     try:
-        parsed = validator.parse_tokens(
-            access_token=tokens.access_token,
-            id_token=tokens.id_token,
-        )
+        access_token = validator.parse_access_token(tokens.access_token)
+        id_token = validator.parse_id_token(tokens.id_token)
     except JoseError as e:
         # This suggests conflicting configuration,
         # perhaps incorrect system time or outdated JWKs?
@@ -220,30 +212,26 @@ async def get_or_refresh_tokens(
         return
 
     return await registration.register_and_redirect(
-        access_token=parsed.access_token,
+        access_token=access_token,
         expires_in=tokens.expires_in,
         refresh_token=tokens.refresh_token,
         refresh_expires_in=tokens.refresh_expires_in,
-        id_token=parsed.id_token,
+        id_token=id_token,
         # Retry the current request
         redirect_uri=request.url,
         status_code=307,
     )
 
 
-def get_valid_tokens(tokens: OptionalTokensDep) -> ValidTokens:
-    if tokens is None:
+def get_valid_access_token(access_token: OptionalAccessTokenDep) -> AccessToken:
+    if access_token is None:
         raise HTTPException(401, "Not authenticated")
-    return tokens
+    return access_token
 
 
-async def get_user(
-    tokens: OptionalTokensDep,
-    registration: RegistrationControllerDep,
-) -> User | None:
-    if tokens is not None:
-        # Query all User attributes
-        return await registration.get_user_by_id_token(tokens.id_token, query=select(User))
+async def get_user(access_token: OptionalAccessTokenDep, session: AsyncSessionDep) -> User | None:
+    if access_token is not None:
+        return await session.scalar(select(User).where(User.openid_sub == access_token.claims.sub))
 
 
 async def get_user_or_fail(
@@ -259,8 +247,8 @@ async def get_user_or_fail(
     return user
 
 
-OptionalTokensDep = Annotated[ValidTokens | None, Depends(get_or_refresh_tokens)]
+OptionalAccessTokenDep = Annotated[AccessToken | None, Depends(get_or_refresh_access_token)]
 OptionalUserDep = Annotated[User | None, Depends(get_user)]
 RegistrationControllerDep = Annotated[RegistrationController, Depends(RegistrationController)]
-RequiredTokensDep = Annotated[ValidTokens, Depends(get_valid_tokens)]
+RequiredAccessTokenDep = Annotated[AccessToken, Depends(get_valid_access_token)]
 RequiredUserDep = Annotated[User, Depends(get_user_or_fail)]

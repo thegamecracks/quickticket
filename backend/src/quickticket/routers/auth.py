@@ -12,13 +12,12 @@ from quickticket.dependencies.auth import (
     PostRedirectUriDep,
     RedirectUriDep,
     RegistrationControllerDep,
-    RequiredTokensDep,
+    RequiredAccessTokenDep,
     TokenValidatorDep,
 )
 from quickticket.dependencies.cache import CacheDep
 from quickticket.dependencies.cookies import (
     OAuthCookieControllerDep,
-    OAuthIdTokenCookie,
     OAuthNonceCookie,
     OAuthStateCookie,
 )
@@ -49,7 +48,8 @@ async def oauth_login(
 ):
     """Redirect the user to login at the OpenID provider.
 
-    The token cookies are optional. If valid tokens are provided or can be refreshed,
+    The access and refresh token cookies are optional.
+    If a valid access token is provided or the access token can be refreshed,
     this redirects straight to ``redirect_uri``.
 
     """
@@ -125,36 +125,39 @@ async def oauth_post_login(
     )
 
     try:
-        parsed = validator.parse_tokens(access_token=tokens.access_token, id_token=tokens.id_token)
+        access_token = validator.parse_access_token(tokens.access_token)
+        id_token = validator.parse_id_token(tokens.id_token)
     except JoseError as e:
         log.debug("OpenID returned invalid tokens", exc_info=e)
         raise HTTPException(400, "OpenID returned invalid tokens") from e
 
-    if parsed.id_token.claims.nonce != nonce_cookie:
+    if id_token.claims.nonce != nonce_cookie:
         log.debug(
             "ID token nonce does not match nonce cookie (%r != %r)",
-            parsed.id_token.claims.nonce,
+            id_token.claims.nonce,
             nonce_cookie,
         )
         raise HTTPException(400, "OpenID returned invalid tokens")
 
+    # log.debug("Logging in user with ID token: %s", id_token.model_dump_json())
+
     return await registration.register_and_redirect(
-        access_token=parsed.access_token,
+        access_token=access_token,
         expires_in=tokens.expires_in,
         refresh_token=tokens.refresh_token,
         refresh_expires_in=tokens.refresh_expires_in,
-        id_token=parsed.id_token,
+        id_token=id_token,
         redirect_uri=redirect_uri,
         status_code=303,
     )
 
 
 @router.get("/validate", deprecated=True)
-async def oauth_validate(settings: SettingsDep, tokens: RequiredTokensDep):
-    """Verify authentication and return decoded access and ID tokens."""
+async def oauth_validate(settings: SettingsDep, access_token: RequiredAccessTokenDep):
+    """Verify authentication and return the decoded access token."""
     if not settings.frontend.builtin:
         raise HTTPException(404)
-    return {"access_token": tokens.access_token, "id_token": tokens.id_token}
+    return {"access_token": access_token}
 
 
 @router.post(
@@ -167,7 +170,7 @@ async def oauth_logout(
     redirect_uri: RedirectUriDep,
     client: OAuth2ClientDep,
     request: Request,
-    id_token_hint: Annotated[str | None, OAuthIdTokenCookie] = None,
+    # id_token_hint: Annotated[str | None, OAuthIdTokenCookie] = None,
 ):
     """Redirect the user to logout at the OpenID provider.
 
@@ -176,12 +179,13 @@ async def oauth_logout(
     login cookies immediately and then redirects to ``redirect_uri``.
 
     """
-    if id_token_hint is None:
-        return cookies.force_redirect(redirect_uri, 303)
+    # if id_token_hint is None:
+    #     return cookies.force_redirect(redirect_uri, 303)
 
     try:
         url, state = client.create_logout_url(
-            id_token_hint=id_token_hint,  # token can be expired/invalid
+            # id_token_hint=id_token_hint,  # token can be expired/invalid
+            id_token_hint=None,
             post_logout_redirect_uri=str(request.url_for("oauth_post_logout")),
         )
     except FrontchannelLogoutUnsupported:

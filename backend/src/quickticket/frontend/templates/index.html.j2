@@ -8,12 +8,12 @@
         <ul>
             <li>Identity provider: <a href="{{ discovery.issuer }}">{{ discovery.issuer }}</a></li>
             <li>Discovery URL: <a href="{{ discovery_url }}">{{ discovery_url }}</a></li>
-            {% if id_token %}
-            ID token:
+            {% if access_token %}
+            Access token:
             <ul>
-                <li>Last renewed at {{ id_token_iat }}</li>
-                <li>Lifetime of {{ id_token_exp - id_token_iat }}, expires in {{ (id_token_exp - now).total_seconds() | int }} seconds</li>
-                <li><a href="{{ url_for('oauth_validate') }}">View decrypted ID token</a></li>
+                <li>Last renewed at {{ access_token_iat }}</li>
+                <li>Lifetime of {{ access_token_exp - access_token_iat }}, expires in {{ (access_token_exp - now).total_seconds() | int }} seconds</li>
+                <li><a href="{{ url_for('oauth_validate') }}">View decrypted access token</a></li>
             </ul>
             {% endif %}
         </ul>

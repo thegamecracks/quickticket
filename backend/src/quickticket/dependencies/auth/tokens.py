@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from datetime import date
 from typing import Annotated, Any
 from zoneinfo import ZoneInfo
 
@@ -19,7 +20,6 @@ __all__ = (
     "TokenHeader",
     "TokenValidator",
     "TokenValidatorDep",
-    "ValidTokens",
     "get_access_claims_registry",
     "get_id_claims_registry",
 )
@@ -34,11 +34,12 @@ def get_access_claims_registry(
     # https://jose.authlib.org/en/guide/jwt/#validate-claims
     registry = jwt.JWTClaimsRegistry(
         leeway=settings.security.token_leeway,
-        iss={"essential": True, "value": str(provider.discovery.issuer)},
-        sub={"essential": True},
-        aud={"essential": True, "value": provider.client_id.get_secret_value()},
         exp={"essential": True},
         iat={"essential": True},
+        iss={"essential": True, "value": str(provider.discovery.issuer)},
+        sub={"essential": True},
+        typ={"essential": True},
+        azp={"essential": True, "value": provider.client_id.get_secret_value()},
     )
     return registry
 
@@ -55,6 +56,7 @@ def get_id_claims_registry(
         aud={"essential": True, "value": provider.client_id.get_secret_value()},
         exp={"essential": True},
         iat={"essential": True},
+        typ={"essential": True},
         # Identity
         email={"essential": True},
         email_verified={"essential": True, "value": True},
@@ -80,14 +82,10 @@ class TokenClaims(BaseModel):
 
     exp: int
     iat: int
-    auth_time: int
-    jti: str
     iss: str
-    aud: str
-    sub: str
+    sub: str  # for Keycloak's lightweight access tokens, this must be enabled in basic scope
     typ: str
     azp: str
-    sid: str
 
 
 class AccessTokenClaims(TokenClaims):
@@ -116,6 +114,10 @@ class IdTokenClaims(TokenClaims):
     model_config = ConfigDict(extra="allow")
 
     # FIXME: likely needs looser validation to support other providers
+    jti: str
+    sid: str
+    auth_time: int
+    aud: str
     at_hash: str
     acr: str
     email_verified: bool
@@ -137,6 +139,7 @@ class IdTokenClaims(TokenClaims):
     upn: str | None = None
     realm_access: dict[str, Any] = Field(default_factory=dict)
     organization: list[str] = Field(default_factory=list)
+    birthdate: date | None = None
 
 
 class IdToken(BaseModel):
@@ -151,24 +154,13 @@ def _parse_token(raw: str, keys: KeySet, registry: JWTClaimsRegistry) -> _JoseTo
     return token
 
 
-class ValidTokens(BaseModel):
-    access_token: AccessToken
-    id_token: IdToken
-
-
 @dataclass(kw_only=True, repr=False)
 class TokenValidator:
     access_registry: _AccessRegistryDep
     id_registry: _IdRegistryDep
     keys: OpenIDProviderJWKsDep
 
-    def parse_tokens(self, *, access_token: str, id_token: str) -> ValidTokens:
-        return ValidTokens(
-            access_token=self._parse_access_token(access_token),
-            id_token=self._parse_id_token(id_token),
-        )
-
-    def _parse_access_token(self, raw: str) -> AccessToken:
+    def parse_access_token(self, raw: str) -> AccessToken:
         # Can raise JoseError exceptions:
         # - BadSignatureError
         # - InvalidPayloadError
@@ -182,7 +174,7 @@ class TokenValidator:
             raw=raw,
         )
 
-    def _parse_id_token(self, raw: str) -> IdToken:
+    def parse_id_token(self, raw: str) -> IdToken:
         id_token = jwt.decode(raw, self.keys)
         self.id_registry.validate(id_token.claims)
         return IdToken(

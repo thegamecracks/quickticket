@@ -13,7 +13,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from quickticket.dependencies.auth import OpenIDProviderDep, OptionalTokensDep, OptionalUserDep
+from quickticket.dependencies.auth import OpenIDProviderDep, OptionalAccessTokenDep, OptionalUserDep
 from quickticket.dependencies.state import SettingsDep
 from quickticket.routers.profile import profile_me
 
@@ -29,20 +29,19 @@ log = logging.getLogger(__name__)
 async def frontend_root(
     request: Request,
     settings: SettingsDep,
-    tokens: OptionalTokensDep,
+    access_token: OptionalAccessTokenDep,
     provider: OpenIDProviderDep,
     user: OptionalUserDep,
 ) -> HTMLResponse:
     redirect_uri = str(settings.frontend.default_redirect_uri or request.base_url)
     context = {
-        "now": tokens and datetime.now(UTC),
+        "now": datetime.now(UTC),
         # Authentication
         "discovery": provider.discovery,
         "discovery_url": settings.openid and settings.openid.discovery_url,
-        "access_token": tokens and tokens.access_token.claims,
-        "id_token": tokens and tokens.id_token.claims,
-        "id_token_iat": tokens and datetime.fromtimestamp(tokens.id_token.claims.iat, UTC),
-        "id_token_exp": tokens and datetime.fromtimestamp(tokens.id_token.claims.exp, UTC),
+        "access_token": access_token and access_token.claims,
+        "access_token_iat": access_token and datetime.fromtimestamp(access_token.claims.iat, UTC),
+        "access_token_exp": access_token and datetime.fromtimestamp(access_token.claims.exp, UTC),
         # Frontend
         "cors_origins": settings.frontend.origins,
         "default_redirect_uri": redirect_uri,

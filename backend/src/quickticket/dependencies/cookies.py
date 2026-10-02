@@ -10,7 +10,7 @@ from fastapi import Cookie, Depends, FastAPI, Request, Response
 from fastapi.datastructures import URL
 from starlette.background import BackgroundTask
 
-from quickticket.dependencies.auth.tokens import AccessToken, IdToken
+from quickticket.dependencies.auth.tokens import AccessToken
 from quickticket.errors import ForcedResponse
 
 COOKIE_OAUTH_NONCE = "oauth-nonce"
@@ -18,7 +18,7 @@ COOKIE_OAUTH_STATE = "oauth-state"
 COOKIE_OAUTH_POST_REDIRECT = "oauth-post-redirect"
 COOKIE_OAUTH_ACCESS_TOKEN = "oauth-access-token"
 COOKIE_OAUTH_REFRESH_TOKEN = "oauth-refresh-token"
-COOKIE_OAUTH_ID_TOKEN = "oauth-id-token"
+# COOKIE_OAUTH_ID_TOKEN = "oauth-id-token"
 
 OAuthNonceCookie = Cookie(
     alias=COOKIE_OAUTH_NONCE,
@@ -46,12 +46,12 @@ OAuthRefreshTokenCookie = Cookie(
         "This token is automatically used by the API to refresh your ID token."
     ),
 )
-OAuthIdTokenCookie = Cookie(
-    alias=COOKIE_OAUTH_ID_TOKEN,
-    description=(
-        "The ID token received after authentication. This token is used to prove your identity."
-    ),
-)
+# OAuthIdTokenCookie = Cookie(
+#     alias=COOKIE_OAUTH_ID_TOKEN,
+#     description=(
+#         "The ID token received after authentication. This token is used to prove your identity."
+#     ),
+# )
 
 
 def cookie_safe_redirect(
@@ -111,7 +111,7 @@ class OAuthCookieController:
     def set_tokens(
         self,
         *,
-        id_token: IdToken,
+        # id_token: IdToken,
         access_token: AccessToken,
         expires_in: int,
         refresh_token: str,
@@ -128,11 +128,11 @@ class OAuthCookieController:
             refresh_token,
             max_age=refresh_expires_in,
         )
-        self.response.set_cookie(
-            COOKIE_OAUTH_ID_TOKEN,
-            id_token.raw,
-            max_age=id_token.claims.exp - id_token.claims.iat,
-        )
+        # self.response.set_cookie(
+        #     COOKIE_OAUTH_ID_TOKEN,
+        #     id_token.raw,
+        #     max_age=id_token.claims.exp - id_token.claims.iat,
+        # )
 
     def delete_flow(self) -> None:
         self.response.delete_cookie(COOKIE_OAUTH_NONCE, path=self.auth_path)
@@ -142,7 +142,7 @@ class OAuthCookieController:
     def delete_tokens(self) -> None:
         self.response.delete_cookie(COOKIE_OAUTH_ACCESS_TOKEN)
         self.response.delete_cookie(COOKIE_OAUTH_REFRESH_TOKEN)
-        self.response.delete_cookie(COOKIE_OAUTH_ID_TOKEN)
+        # self.response.delete_cookie(COOKIE_OAUTH_ID_TOKEN)
 
     def delete_all(self) -> None:
         self.delete_flow()

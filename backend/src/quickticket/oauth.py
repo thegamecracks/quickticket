@@ -152,7 +152,7 @@ class OAuth2Client:
     def create_logout_url(
         self,
         *,
-        id_token_hint: str,
+        id_token_hint: str | None,
         post_logout_redirect_uri: str | URL,
     ) -> tuple[str, str]:
         """
@@ -167,11 +167,13 @@ class OAuth2Client:
         state = generate_token()
         url = URL(self.discovery.end_session_endpoint.encoded_string())
         url = url.include_query_params(
-            id_token_hint=id_token_hint,
             client_id=self.provider.client_id.get_secret_value(),
             post_logout_redirect_uri=post_logout_redirect_uri,
             state=state,
         )
+        if id_token_hint is not None:
+            url = url.include_query_params(id_token_hint=id_token_hint)
+
         return str(url), state
 
     async def refresh_token(self, refresh_token: str) -> TokenExchangeResponse:
