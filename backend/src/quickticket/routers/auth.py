@@ -21,6 +21,7 @@ from quickticket.dependencies.auth import (
 )
 from quickticket.dependencies.cache import CacheDep
 from quickticket.dependencies.cookies import OAuthNonceCookie, OAuthStateCookie
+from quickticket.dependencies.state import SettingsDep
 from quickticket.oauth import FrontchannelLogoutUnsupported
 
 LOGIN_EXPIRY = 1800
@@ -150,9 +151,11 @@ async def oauth_post_login(
     )
 
 
-@router.get("/validate")
-async def oauth_validate(token: RequiredIdTokenDep):
+@router.get("/validate", deprecated=True)
+async def oauth_validate(settings: SettingsDep, token: RequiredIdTokenDep):
     """Verify authentication and return the ID token's header and claims."""
+    if not settings.frontend.builtin:
+        raise HTTPException(404)
     return token
 
 
