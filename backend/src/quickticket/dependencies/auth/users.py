@@ -82,7 +82,10 @@ class RegistrationController:
         # To retry a request, pass redirect_uri=request.url and status_code=307.
         return self.cookies.force_redirect(redirect_uri, status_code)
 
-    async def select_user_by_token(self, token: AccessToken | IdToken) -> tuple[User, OpenIDAccount]:
+    async def select_user_by_token(
+        self,
+        token: AccessToken | IdToken,
+    ) -> tuple[User, OpenIDAccount]:
         """Get the user associated with an ID or access token along with the
         OpenID account they used to login.
 
