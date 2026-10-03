@@ -8,6 +8,7 @@ from joserfc.errors import JoseError
 
 from quickticket.dependencies.auth import (
     OAuth2ClientDep,
+    OptionalOpenIDAccountDep,
     OptionalUserDep,
     PostRedirectUriDep,
     RedirectUriDep,
@@ -170,22 +171,22 @@ async def oauth_logout(
     redirect_uri: RedirectUriDep,
     client: OAuth2ClientDep,
     request: Request,
-    # id_token_hint: Annotated[str | None, OAuthIdTokenCookie] = None,
+    openid_account: OptionalOpenIDAccountDep,
 ):
     """Redirect the user to logout at the OpenID provider.
 
-    If no ID token is provided, this redirects straight to ``redirect_uri``.
+    If no access token is provided, this redirects straight to ``redirect_uri``.
     If the provider does not support RP-initiated logout, this clears your
     login cookies immediately and then redirects to ``redirect_uri``.
 
     """
-    # if id_token_hint is None:
-    #     return cookies.force_redirect(redirect_uri, 303)
+    id_token_hint = None
+    if openid_account is not None:  # Token can be expired/invalid
+        id_token_hint = await openid_account.awaitable_attrs.id_token
 
     try:
         url, state = client.create_logout_url(
-            # id_token_hint=id_token_hint,  # token can be expired/invalid
-            id_token_hint=None,
+            id_token_hint=id_token_hint,
             post_logout_redirect_uri=str(request.url_for("oauth_post_logout")),
         )
     except RPLogoutUnsupported:

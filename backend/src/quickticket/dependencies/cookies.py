@@ -43,7 +43,7 @@ OAuthRefreshTokenCookie = Cookie(
     alias=COOKIE_OAUTH_REFRESH_TOKEN,
     description=(
         "The refresh token received after authentication. "
-        "This token is automatically used by the API to refresh your ID token."
+        "This token is automatically used by the API to refresh your access token."
     ),
 )
 # OAuthIdTokenCookie = Cookie(
