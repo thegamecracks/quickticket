@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from quickticket.models.base import Base
@@ -25,6 +25,7 @@ if TYPE_CHECKING:
 __all__ = (
     "Address",
     "Notification",
+    "OpenIDAccount",
     "User",
 )
 
@@ -40,20 +41,16 @@ class User(Base):
     first_name: Mapped[str_128]
     last_name: Mapped[str_128]
     email: Mapped[str_256] = mapped_column(unique=True)
-    openid_sub: Mapped[str | None] = mapped_column(unique=True)
-    """The provider's unique identifier for this account.
-
-    When a user logs in via OpenID Connect, the ``sub`` claim maps to this column.
-    This will impose lock-in between providers due to complications in migrating
-    between provider account IDs.
-
-    """
 
     addresses: Mapped[list[Address]] = relationship(
         back_populates="user",
         **can_cascade_delete,
     )
     notifications: Mapped[list[Notification]] = relationship(
+        back_populates="user",
+        **can_cascade_delete,
+    )
+    openid_accounts: Mapped[list[OpenIDAccount]] = relationship(
         back_populates="user",
         **can_cascade_delete,
     )
@@ -69,6 +66,29 @@ class User(Base):
         back_populates="user",
         **can_cascade_delete,
     )
+
+
+class OpenIDAccount(Base):
+    __tablename__ = "account_openid"
+
+    issuer: Mapped[str] = mapped_column(String(2000), primary_key=True)
+    """The OpenID provider that issued this account."""
+    sub: Mapped[str] = mapped_column(String(2000), primary_key=True)
+    """The provider's unique identifier for this account."""
+    account_id: Mapped[UUID] = mapped_column(
+        ForeignKey("account.account_id", ondelete="CASCADE"),
+        index=True,
+    )
+    """The account that linked this provider's identity."""
+    id_token: Mapped[str | None]
+    """The last known ID token received from this provider.
+
+    This is used to perform RP-initiated logouts.
+    https://openid.net/specs/openid-connect-rpinitiated-1_0.html
+
+    """
+
+    user: Mapped[User] = relationship(back_populates="openid_accounts")
 
 
 class Address(Base):

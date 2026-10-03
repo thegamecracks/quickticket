@@ -8,6 +8,7 @@ from fastapi.datastructures import URL
 from joserfc.errors import ExpiredTokenError, JoseError
 from sqlalchemy import Select, select
 from sqlalchemy.orm import load_only
+from sqlalchemy.sql.elements import SQLCoreOperations
 
 from quickticket.dependencies.auth.provider import OAuth2ClientDep
 from quickticket.dependencies.auth.tokens import (
@@ -23,7 +24,7 @@ from quickticket.dependencies.cookies import (
 )
 from quickticket.dependencies.db import AsyncSessionDep
 from quickticket.errors import ForcedResponse
-from quickticket.models import User
+from quickticket.models import OpenIDAccount, User
 from quickticket.settings import OpenIDSettings
 
 __all__ = (
@@ -40,6 +41,15 @@ __all__ = (
 )
 
 log = logging.getLogger(__name__)
+
+
+def _matches_token(token: AccessToken | IdToken) -> SQLCoreOperations[bool]:
+    claims = token.claims
+    condition = User.openid_accounts.issuer == claims.iss and User.openid_accounts.sub == claims.sub
+    if (email := getattr(claims, "email", None)) is not None:
+        # FIXME: no guarantee two users don't share same email, prompt recommended
+        condition = condition or User.email == email
+    return condition
 
 
 @dataclass
@@ -108,16 +118,13 @@ class RegistrationController:
         if query is None:
             query = select(User).options(load_only(User.id))
 
-        user = await self.session.scalar(query.where(User.openid_sub == claims.sub))
+        user = await self.session.scalar(query.where(_matches_token(id_token)))
         if user is None:
-            # FIXME: allow linking multiple OpenID providers
-            # FIXME: no guarantee two users don't share same email, prompt recommended
-            user = await self.session.scalar(query.where(User.email == claims.email))
-
-        if user is not None:
-            # Found existing user
-            if register:
-                self._update_user_with_id_token(user, id_token)
+            pass
+        elif register:
+            await self._update_user_with_id_token(user, id_token)
+            return user
+        else:
             return user
 
         if not register:
@@ -135,13 +142,13 @@ class RegistrationController:
 
         log.debug("Creating new user from ID token (sub: %s)", claims.sub)
         user = User()
-        self._update_user_with_id_token(user, id_token)
+        await self._update_user_with_id_token(user, id_token)
         self.session.add(user)
         await self.session.flush([user])  # Insert without commit
         await self.session.refresh(user)  # Re-fetch attributes, including user ID
         return user
 
-    def _update_user_with_id_token(self, user: User, id_token: IdToken) -> None:
+    async def _update_user_with_id_token(self, user: User, id_token: IdToken) -> None:
         # https://openid.net/specs/openid-connect-basic-1_0.html#rfc.section.2.5
         # Consider retrieving claims from userinfo endpoint with access token
         # "picture", "gender", "birthdate", "zoneinfo", "locale", "phone_number", "address"
@@ -151,7 +158,6 @@ class RegistrationController:
         user.first_name = claims.given_name
         user.last_name = claims.family_name
         user.email = claims.email
-        user.openid_sub = claims.sub
 
         groups = claims.groups
         if self.admin_group is not None:
@@ -159,6 +165,24 @@ class RegistrationController:
         else:
             is_admin = None  # noqa: F841
         # TODO: set admin flag or enum on user
+
+        openid_account = await self.session.get(
+            OpenIDAccount,
+            (claims.iss, claims.sub),
+            with_for_update=True,
+        )
+        if openid_account is None:
+            log.debug("Linking new OpenID account")
+            user.openid_accounts.append(
+                OpenIDAccount(
+                    issuer=claims.iss,
+                    sub=claims.sub,
+                    account_id=user.id,
+                    id_token=id_token.raw,
+                )
+            )
+        else:
+            openid_account.id_token = id_token.raw
 
 
 async def get_or_refresh_access_token(
@@ -231,7 +255,7 @@ def get_valid_access_token(access_token: OptionalAccessTokenDep) -> AccessToken:
 
 async def get_user(access_token: OptionalAccessTokenDep, session: AsyncSessionDep) -> User | None:
     if access_token is not None:
-        return await session.scalar(select(User).where(User.openid_sub == access_token.claims.sub))
+        return await session.scalar(select(User).where(_matches_token(access_token)))
 
 
 async def get_user_or_fail(
