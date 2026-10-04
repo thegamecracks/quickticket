@@ -99,10 +99,15 @@ class OAuth2Client:
         if "code" not in self.discovery.response_types_supported:
             log.warning("Provider discovery does not indicate support for 'code' response type")
 
+        # offline_access may be needed for refresh token, e.g. Authentik
+        # https://docs.goauthentik.io/add-secure-apps/providers/oauth2/#authorization-code
+        scope = {"openid", "email", "profile", "offline_access"}
+        scope = scope & set(self.discovery.scopes_supported)
+
         self._client = AsyncOAuth2Client(
             client_id=provider.client_id.get_secret_value(),
             client_secret=provider.client_secret.get_secret_value(),
-            scope="openid email profile",
+            scope=" ".join(scope),
             # Passed to underyling OAuth2Client
             code_challenge_method="S256",
             grant_type="authorization_code",
