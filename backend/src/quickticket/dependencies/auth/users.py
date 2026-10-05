@@ -227,7 +227,8 @@ async def get_or_refresh_access_token(
             log.debug("Ignoring invalid access token", exc_info=e)
 
     if refresh_token_cookie is None:
-        cookies.delete_tokens()  # flush out invalid access token if present
+        if access_token_cookie is not None:
+            cookies.delete_tokens()  # flush out invalid access token
         return
 
     log.debug("Refreshing access token")
