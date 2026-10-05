@@ -154,7 +154,9 @@ class RegistrationController:
                 account_id=user.id,
                 id_token=id_token_raw,
             )
-            user.openid_accounts.append(openid_account)
+            self.session.add(openid_account)
+            await self.session.flush([openid_account])
+            await self.session.refresh(openid_account)
             return user, openid_account
 
         if isinstance(token, AccessToken):
