@@ -99,6 +99,7 @@ class RegistrationController:
         :returns: The newly created or existing user.
 
         """
+        user: User | None = None
         claims = token.claims
 
         # get openid account
