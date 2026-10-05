@@ -2,12 +2,14 @@ import logging
 from collections.abc import AsyncIterator
 from contextlib import AsyncExitStack, asynccontextmanager
 
-from fastapi import APIRouter, FastAPI, Request, Response
+from fastapi import APIRouter, Depends, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from securecookies import SecureCookiesMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+
+from quickticket.dependencies.ratelimits import apply_request_limit
 
 # from starlette_csrf.middleware import CSRFMiddleware
 from quickticket.errors import ForcedResponse
@@ -36,6 +38,10 @@ app = FastAPI(
     lifespan=lifespan,
     title="QuickTicket",
     description="",
+    dependencies=[
+        # FIXME: replace with middleware, FastAPI routes and exception handlers override headers
+        Depends(apply_request_limit),
+    ],
     openapi_url=_settings.openapi.url,
     docs_url=_settings.openapi.swagger_url,
     redoc_url=_settings.openapi.redoc_url,
