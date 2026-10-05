@@ -18,7 +18,6 @@ from quickticket.dependencies.cookies import (
     OAuthRefreshTokenCookie,
 )
 from quickticket.dependencies.db import AsyncSessionDep
-from quickticket.errors import ForcedResponse
 from quickticket.models import OpenIDAccount, User
 from quickticket.settings import OpenIDSettings
 
@@ -163,14 +162,8 @@ class RegistrationController:
             # User is missing from database and account registration was not expected.
             # Perhaps the backend has changed databases or a sysadmin deleted the user?
             log.warning("Received access token for non-existent user (sub: %s)", claims.sub)
-
-            # HACK: raise HTTPException(401, "Not authenticated") while deleting cookies
             self.cookies.delete_all()
-            response = self.cookies.response
-            response.status_code = 401
-            response.headers["Content-Type"] = "application/json"
-            response.body = b'{"detail":"Not authenticated"}'
-            raise ForcedResponse(response)
+            raise HTTPException(401, "Not authenticated")
 
         log.debug("Registering new user from ID token (sub: %s)", claims.sub)
         user = User()

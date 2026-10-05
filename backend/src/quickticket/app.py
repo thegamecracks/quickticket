@@ -1,6 +1,7 @@
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import AsyncExitStack, asynccontextmanager
+from typing import cast
 
 from fastapi import APIRouter, Depends, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -35,6 +36,18 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
             del _app.state.stack
 
 
+async def store_response_object(request: Request, response: Response) -> None:
+    # HACK:
+    # FastAPI creates a temporary response object we can use to set headers,
+    # however this response is overwritten if an exception is raised or a
+    # Response object is returned. To restore our headers, we need to recover
+    # this response object and transfer the headers over to the actual response.
+    #
+    # We'll use a global dependency to store FastAPI's temporary response in
+    # the request, and then extract it further down at the ASGI middleware level.
+    request.state.temp_response = response
+
+
 app = FastAPI(
     lifespan=lifespan,
     title="QuickTicket",
@@ -42,6 +55,7 @@ app = FastAPI(
     dependencies=[
         # FIXME: replace with middleware, FastAPI routes and exception handlers override headers
         Depends(apply_request_limit),
+        Depends(store_response_object),
     ],
     debug=_settings.log.debug,
     openapi_url=_settings.openapi.url,
@@ -130,7 +144,25 @@ if _settings.log.profiling:
     add_profiling_middleware()
 
 
+@app.middleware("http")
+async def preserve_headers(request: Request, call_next: Callable[[Request], Awaitable[Response]]):
+    response = await call_next(request)
+
+    temp_response = cast(Response | None, getattr(request.state, "temp_response", None))
+    if temp_response is None:
+        # Likely 404 Not Found, FastAPI routing returned before running dependencies
+        return response
+
+    if response is temp_response:
+        return response
+
+    for k, v in temp_response.headers.items():
+        response.headers.append(k, v)
+        # log.debug("Adding %s header #%s: %s", k, len(response.headers.getlist(k)), v)
+
+    return response
+
+
 @app.exception_handler(ForcedResponse)
 def send_forced_response(request: Request, exc: ForcedResponse) -> Response:
-    # FIXME: cookies can still be lost if other exceptions are raised
     return exc.response
