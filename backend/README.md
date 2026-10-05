@@ -109,6 +109,7 @@ If this fails, you can delete the database and regenerate it with
 ## Resources
 
 Python libraries:
+- [aioaws](https://github.com/samuelcolvin/aioaws)
 - [alembic](https://alembic.sqlalchemy.org/en/latest/index.html) (database migrations)
 - [authlib](https://docs.authlib.org/en/latest/index.html)
 - [fastapi](https://fastapi.tiangolo.com/)
