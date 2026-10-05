@@ -131,8 +131,8 @@ class RegistrationController:
                 self._update_user_with_id_token(user, token)
             return user, openid_account
 
-        if (email := getattr(token, "email", None)) is not None and getattr(
-            token, "email_verified", False
+        if (email := getattr(claims, "email", None)) is not None and getattr(
+            claims, "email_verified", False
         ) is True:
             # Link email claim from either access or ID token if present
             # FIXME: no guarantee two users don't share same email, prompt recommended
