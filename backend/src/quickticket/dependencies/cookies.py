@@ -5,10 +5,10 @@ from dataclasses import dataclass
 from datetime import datetime
 from functools import cached_property
 from typing import Annotated, Literal, NoReturn
-from urllib.parse import quote
 
 from fastapi import Cookie, Depends, FastAPI, Request, Response
 from fastapi.datastructures import URL
+from fastapi.responses import RedirectResponse
 from starlette.background import BackgroundTask
 
 from quickticket.dependencies.auth.tokens import AccessToken
@@ -55,32 +55,6 @@ OAuthRefreshTokenCookie = Cookie(
 # )
 
 
-def cookie_safe_redirect(
-    response: Response,
-    url: str | URL,
-    status_code: int,
-    *,
-    headers: Mapping[str, str] | None = None,
-    background: BackgroundTask | None = None,
-) -> NoReturn:
-    """Raise a ForcedResponse to redirect the user while preserving headers like cookies.
-
-    This should be used over :class:`pydantic.responses.RedirectResponse`
-    because it avoids overwriting headers set by middleware and dependencies.
-
-    """
-    # Copied from RedirectResponse body
-    response.body = b""
-    response.status_code = status_code
-    if headers is not None:
-        response.headers.update(headers)
-    if background is not None:
-        response.background = background
-
-    response.headers["location"] = quote(str(url), safe=":/%#?=@[]!$&'()*+,;")
-    raise ForcedResponse(response)
-
-
 @dataclass(kw_only=True, repr=False)
 class OAuthCookieController:
     request: Request
@@ -118,7 +92,7 @@ class OAuthCookieController:
         refresh_token: str,
         refresh_expires_in: int,
     ) -> None:
-        self.delete_flow()
+        self.delete_flow()  # redundant if called after refresh token
         self._set_cookie(
             COOKIE_OAUTH_ACCESS_TOKEN,
             access_token.raw,
@@ -157,13 +131,8 @@ class OAuthCookieController:
         headers: Mapping[str, str] | None = None,
         background: BackgroundTask | None = None,
     ) -> NoReturn:
-        return cookie_safe_redirect(
-            self.response,
-            url,
-            status_code,
-            headers=headers,
-            background=background,
-        )
+        response = RedirectResponse(url, status_code, headers=headers, background=background)
+        raise ForcedResponse(response)
 
     def _set_cookie(
         self,

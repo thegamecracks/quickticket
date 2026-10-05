@@ -1,10 +1,9 @@
 import logging
 from dataclasses import dataclass
-from typing import Annotated, NoReturn
+from typing import Annotated
 
 from authlib.integrations.base_client import OAuthError
 from fastapi import Depends, HTTPException, Request
-from fastapi.datastructures import URL
 from joserfc.errors import ExpiredTokenError, JoseError
 from sqlalchemy import select
 from sqlalchemy.orm import load_only, selectinload
@@ -53,7 +52,7 @@ class RegistrationController:
         assert self.settings.openid is not None
         return self.settings.openid
 
-    async def register_and_redirect(
+    async def register(
         self,
         *,
         access_token: AccessToken,  # TODO: fetch userinfo with OAuth2Client?
@@ -61,11 +60,8 @@ class RegistrationController:
         refresh_token: str,
         refresh_expires_in: int,
         id_token: IdToken,
-        redirect_uri: str | URL,
-        status_code: int,
-    ) -> NoReturn:
-        await self.select_user_by_token(id_token)
-
+    ) -> tuple[User, OpenIDAccount]:
+        user, openid_account = await self.select_user_by_token(id_token)
         self.cookies.set_tokens(
             # id_token=id_token,
             access_token=access_token,
@@ -73,13 +69,15 @@ class RegistrationController:
             refresh_token=refresh_token,
             refresh_expires_in=refresh_expires_in,
         )
+
         # If an exception were to be raised after this method, FastAPI would replace
         # our response object with a new response that is missing our token cookies.
-        # As such, we cannot let our route handling continue, and must force a redirect
-        # to ensure the user has our cookies stored.
         #
-        # To retry a request, pass redirect_uri=request.url and status_code=307.
-        return self.cookies.force_redirect(redirect_uri, status_code)
+        # However, we're using middleware to restore our headers on whichever
+        # response object is actually given to the ASGI server.
+        # As such, redirecting here is not necessary.
+        # return self.cookies.force_redirect(redirect_uri, status_code)
+        return user, openid_account
 
     async def select_user_by_token(
         self,
@@ -251,16 +249,14 @@ async def get_or_refresh_access_token(
         log.warning("OpenID returned invalid tokens", exc_info=e)
         return
 
-    return await registration.register_and_redirect(
+    await registration.register(
         access_token=access_token,
         expires_in=tokens.expires_in,
         refresh_token=tokens.refresh_token,
         refresh_expires_in=tokens.refresh_expires_in,
         id_token=id_token,
-        # Retry the current request
-        redirect_uri=request.url,
-        status_code=307,
     )
+    return access_token
 
 
 def get_valid_access_token(access_token: OptionalAccessTokenDep) -> AccessToken:
@@ -274,6 +270,7 @@ async def get_user(
     registration: RegistrationControllerDep,
 ) -> User | None:
     if access_token is not None:
+        # This may fetch the user twice if their access token had to be refreshed.
         user, _ = await registration.select_user_by_token(access_token)
         return user
 

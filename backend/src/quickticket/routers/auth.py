@@ -4,6 +4,7 @@ from typing import Annotated
 
 from authlib.common.security import generate_token
 from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi.responses import RedirectResponse
 from joserfc.errors import JoseError
 
 from quickticket.dependencies.auth import (
@@ -142,15 +143,14 @@ async def oauth_post_login(
 
     # log.debug("Logging in user with ID token: %s", id_token.model_dump_json())
 
-    return await registration.register_and_redirect(
+    await registration.register(
         access_token=access_token,
         expires_in=tokens.expires_in,
         refresh_token=tokens.refresh_token,
         refresh_expires_in=tokens.refresh_expires_in,
         id_token=id_token,
-        redirect_uri=redirect_uri,
-        status_code=303,
     )
+    return RedirectResponse(redirect_uri, 303)
 
 
 @router.get("/validate", deprecated=True)
