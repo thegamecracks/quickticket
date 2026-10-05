@@ -42,6 +42,7 @@ app = FastAPI(
         # FIXME: replace with middleware, FastAPI routes and exception handlers override headers
         Depends(apply_request_limit),
     ],
+    debug=_settings.log.debug,
     openapi_url=_settings.openapi.url,
     docs_url=_settings.openapi.swagger_url,
     redoc_url=_settings.openapi.redoc_url,

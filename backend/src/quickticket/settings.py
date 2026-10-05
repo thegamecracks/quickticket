@@ -104,6 +104,13 @@ class FrontendSettings(BaseSettings):
 
 
 class LogSettings(BaseSettings):
+    debug: bool = True
+    """Enable Starlette's debug mode, which includes tracebacks in error responses.
+
+    This is intended only for testing and should be disabled in production!
+    ``BACKEND__LOG__DEBUG=0``
+
+    """
     verbosity: LogVerbosity = LogVerbosity.PROJECT_DEBUG
     """The logging verbosity starting from 0, where larger numbers mean greater verbosity."""
 
