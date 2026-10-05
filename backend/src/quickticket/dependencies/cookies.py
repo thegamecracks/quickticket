@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from datetime import datetime
 from functools import cached_property
-from typing import Annotated, Literal, NoReturn
+from typing import Annotated, NoReturn
 
 from fastapi import Cookie, Depends, FastAPI, Request, Response
 from fastapi.datastructures import URL
@@ -70,13 +69,13 @@ class OAuthCookieController:
         return self.request.app
 
     def set_nonce(self, nonce: str, *, max_age: int) -> None:
-        self._set_cookie(COOKIE_OAUTH_NONCE, nonce, max_age=max_age, path=self.auth_path)
+        self.response.set_cookie(COOKIE_OAUTH_NONCE, nonce, max_age=max_age, path=self.auth_path)
 
     def set_state(self, state: str, *, max_age: int) -> None:
-        self._set_cookie(COOKIE_OAUTH_STATE, state, max_age=max_age, path=self.auth_path)
+        self.response.set_cookie(COOKIE_OAUTH_STATE, state, max_age=max_age, path=self.auth_path)
 
     def set_post_redirect(self, url: str | URL, *, max_age: int) -> None:
-        self._set_cookie(
+        self.response.set_cookie(
             COOKIE_OAUTH_POST_REDIRECT,
             str(url),
             max_age=max_age,
@@ -93,31 +92,31 @@ class OAuthCookieController:
         refresh_expires_in: int,
     ) -> None:
         self.delete_flow()  # redundant if called after refresh token
-        self._set_cookie(
+        self.response.set_cookie(
             COOKIE_OAUTH_ACCESS_TOKEN,
             access_token.raw,
             max_age=expires_in,
         )
-        self._set_cookie(
+        self.response.set_cookie(
             COOKIE_OAUTH_REFRESH_TOKEN,
             refresh_token,
             max_age=refresh_expires_in,
         )
-        # self._set_cookie(
+        # self.response.set_cookie(
         #     COOKIE_OAUTH_ID_TOKEN,
         #     id_token.raw,
         #     max_age=id_token.claims.exp - id_token.claims.iat,
         # )
 
     def delete_flow(self) -> None:
-        self._delete_cookie(COOKIE_OAUTH_NONCE, path=self.auth_path)
-        self._delete_cookie(COOKIE_OAUTH_STATE, path=self.auth_path)
-        self._delete_cookie(COOKIE_OAUTH_POST_REDIRECT, path=self.auth_path)
+        self.response.delete_cookie(COOKIE_OAUTH_NONCE, path=self.auth_path)
+        self.response.delete_cookie(COOKIE_OAUTH_STATE, path=self.auth_path)
+        self.response.delete_cookie(COOKIE_OAUTH_POST_REDIRECT, path=self.auth_path)
 
     def delete_tokens(self) -> None:
-        self._delete_cookie(COOKIE_OAUTH_ACCESS_TOKEN)
-        self._delete_cookie(COOKIE_OAUTH_REFRESH_TOKEN)
-        # self._delete_cookie(COOKIE_OAUTH_ID_TOKEN)
+        self.response.delete_cookie(COOKIE_OAUTH_ACCESS_TOKEN)
+        self.response.delete_cookie(COOKIE_OAUTH_REFRESH_TOKEN)
+        # self.response.delete_cookie(COOKIE_OAUTH_ID_TOKEN)
 
     def delete_all(self) -> None:
         self.delete_flow()
@@ -133,52 +132,6 @@ class OAuthCookieController:
     ) -> NoReturn:
         response = RedirectResponse(url, status_code, headers=headers, background=background)
         raise ForcedResponse(response)
-
-    def _set_cookie(
-        self,
-        key: str,
-        value: str = "",
-        max_age: int | None = None,
-        expires: datetime | str | int | None = None,
-        path: str | None = "/",
-        domain: str | None = None,
-        secure: bool = True,  # on by default
-        httponly: bool = True,  # on by default
-        samesite: Literal["lax", "strict", "none"] | None = "lax",
-        partitioned: bool = False,
-    ) -> None:
-        self.response.set_cookie(
-            key=key,
-            value=value,
-            max_age=max_age,
-            expires=expires,
-            path=path,
-            domain=domain,
-            secure=secure,
-            httponly=httponly,
-            samesite=samesite,
-            partitioned=partitioned,
-        )
-
-    def _delete_cookie(
-        self,
-        key: str,
-        path: str = "/",
-        domain: str | None = None,
-        secure: bool = True,  # on by default
-        httponly: bool = True,  # on by default
-        samesite: Literal["lax", "strict", "none"] | None = "lax",
-        partitioned: bool = False,
-    ) -> None:
-        self.response.delete_cookie(
-            key=key,
-            path=path,
-            domain=domain,
-            secure=secure,
-            httponly=httponly,
-            samesite=samesite,
-            partitioned=partitioned,
-        )
 
 
 OAuthCookieControllerDep = Annotated[OAuthCookieController, Depends(OAuthCookieController)]

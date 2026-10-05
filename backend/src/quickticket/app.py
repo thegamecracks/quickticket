@@ -114,8 +114,6 @@ if cookie_secrets and cookie_secrets[0] == "Qfw1bmzNtFba8qLxYZzxtEDfgd4P58LCDKiu
 app.add_middleware(
     SecureCookiesMiddleware,
     secrets=cookie_secrets,
-    # CAUTION: these options don't seem to apply correctly...
-    # Always set httponly=True and secure=True explicitly in set_cookie() calls.
     cookie_httponly=True,
     cookie_secure=True,
 )
