@@ -109,7 +109,8 @@ If this fails, you can delete the database and regenerate it with
 ## Resources
 
 Python libraries:
-- [aioaws](https://github.com/samuelcolvin/aioaws)
+- [aioaws](https://github.com/samuelcolvin/aioaws) (light AWS API wrapper)
+- [aiosqlite](https://aiosqlite.omnilib.dev/en/stable/) (SQLite driver)
 - [alembic](https://alembic.sqlalchemy.org/en/latest/index.html) (database migrations)
 - [authlib](https://docs.authlib.org/en/latest/index.html)
 - [fastapi](https://fastapi.tiangolo.com/)
@@ -119,10 +120,13 @@ Python libraries:
 - [pillow](https://pillow.readthedocs.io/en/stable/) (image library)
 - [psycopg](https://www.psycopg.org/psycopg3/docs/) (PostgreSQL driver)
 - [pydantic](https://pydantic.dev/docs/validation/latest/get-started/)
+- [pydantic-extra-types](https://github.com/pydantic/pydantic-extra-types)
 - [pydantic-settings](https://pydantic.dev/docs/validation/latest/concepts/pydantic_settings/)
 - [pytest](https://docs.pytest.org/en/stable/)
+- [pytest-asyncio](https://pytest-asyncio.readthedocs.io/en/stable/)
 - [redis](https://redis.io/docs/latest/develop/clients/redis-py/)
-- [sqlalchemy](https://docs.sqlalchemy.org/en/21/)
+- [ruff](https://docs.astral.sh/ruff/) (linter and formatter)
+- [sqlalchemy](https://docs.sqlalchemy.org/en/21/) (database engine and ORM)
 - [uvicorn](https://uvicorn.dev/) (ASGI webserver)
 - [whenever](https://whenever.readthedocs.io/en/latest/) (type-safe datetimes)
 
