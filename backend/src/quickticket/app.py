@@ -85,7 +85,29 @@ if _settings.frontend.builtin:
 
 # Middleware in LIFO order; bottom/outermost middleware runs first
 
+
+@app.middleware("http")
+async def preserve_headers(request: Request, call_next: Callable[[Request], Awaitable[Response]]):
+    response = await call_next(request)
+
+    temp_response = cast(Response | None, getattr(request.state, "temp_response", None))
+    if temp_response is None:
+        # Likely 404 Not Found, FastAPI routing returned before running dependencies
+        return response
+
+    if response is temp_response:
+        return response
+
+    for k, v in temp_response.headers.items():
+        response.headers.append(k, v)
+        # log.debug("Adding %s header #%s: %s", k, len(response.headers.getlist(k)), v)
+
+    return response
+
+
+# https://securecookies.thearchitector.dev/securecookies.html
 # Cookie encryption must be innermost middleware, after other middlewares add their cookies
+# ...except our own preserve_headers() middleware must run above it to apply correctly???
 cookie_secrets = [s.get_secret_value() for s in _settings.security.cookie_encryption_secrets]
 if cookie_secrets and cookie_secrets[0] == "Qfw1bmzNtFba8qLxYZzxtEDfgd4P58LCDKiuMezO6lU=":
     log.warning("cookie_encryption_secrets not set, using insecure hardcoded value")
@@ -144,25 +166,6 @@ def add_profiling_middleware() -> None:
 
 if _settings.log.profiling:
     add_profiling_middleware()
-
-
-@app.middleware("http")
-async def preserve_headers(request: Request, call_next: Callable[[Request], Awaitable[Response]]):
-    response = await call_next(request)
-
-    temp_response = cast(Response | None, getattr(request.state, "temp_response", None))
-    if temp_response is None:
-        # Likely 404 Not Found, FastAPI routing returned before running dependencies
-        return response
-
-    if response is temp_response:
-        return response
-
-    for k, v in temp_response.headers.items():
-        response.headers.append(k, v)
-        # log.debug("Adding %s header #%s: %s", k, len(response.headers.getlist(k)), v)
-
-    return response
 
 
 @app.exception_handler(ForcedResponse)
