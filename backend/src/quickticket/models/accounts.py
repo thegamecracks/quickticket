@@ -44,26 +44,32 @@ class User(Base):
 
     addresses: Mapped[list[Address]] = relationship(
         back_populates="user",
+        lazy="raise_on_sql",
         **can_cascade_delete,
     )
     notifications: Mapped[list[Notification]] = relationship(
         back_populates="user",
+        lazy="raise_on_sql",
         **can_cascade_delete,
     )
     openid_accounts: Mapped[list[OpenIDAccount]] = relationship(
         back_populates="user",
+        lazy="raise_on_sql",
         **can_cascade_delete,
     )
     organizations: Mapped[list[Organization]] = relationship(
         # back_populates="users",
+        lazy="raise_on_sql",
         secondary="organization_member",
         viewonly=True,
     )
     organization_members: Mapped[list[OrganizationMember]] = relationship(
         back_populates="user",
+        lazy="raise_on_sql",
     )
     tickets: Mapped[list[Ticket]] = relationship(
         back_populates="user",
+        lazy="raise_on_sql",
         **can_cascade_delete,
     )
 
@@ -88,7 +94,7 @@ class OpenIDAccount(Base):
 
     """
 
-    user: Mapped[User] = relationship(back_populates="openid_accounts")
+    user: Mapped[User] = relationship(back_populates="openid_accounts", lazy="raise_on_sql")
 
 
 class Address(Base):
@@ -105,7 +111,7 @@ class Address(Base):
     province: Mapped[str_128]
     postal_code: Mapped[str_128]
 
-    user: Mapped[User] = relationship(back_populates="addresses")
+    user: Mapped[User] = relationship(back_populates="addresses", lazy="raise_on_sql")
 
 
 class Notification(Base):
@@ -123,4 +129,4 @@ class Notification(Base):
     content_short: Mapped[str_1024]
     content_full: Mapped[str_4096]
 
-    user: Mapped[User] = relationship(back_populates="notifications")
+    user: Mapped[User] = relationship(back_populates="notifications", lazy="raise_on_sql")
