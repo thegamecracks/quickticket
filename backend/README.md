@@ -122,6 +122,7 @@ Python libraries:
 - [pydantic](https://pydantic.dev/docs/validation/latest/get-started/)
 - [pydantic-extra-types](https://github.com/pydantic/pydantic-extra-types)
 - [pydantic-settings](https://pydantic.dev/docs/validation/latest/concepts/pydantic_settings/)
+- [pyinstrument](https://pyinstrument.readthedocs.io/en/latest/guide.html#profile-a-web-request-in-fastapi)
 - [pytest](https://docs.pytest.org/en/stable/)
 - [pytest-asyncio](https://pytest-asyncio.readthedocs.io/en/stable/)
 - [redis](https://redis.io/docs/latest/develop/clients/redis-py/)

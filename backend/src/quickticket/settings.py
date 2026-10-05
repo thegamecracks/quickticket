@@ -111,6 +111,13 @@ class LogSettings(BaseSettings):
     ``BACKEND__LOG__DEBUG=0``
 
     """
+    profiling: bool = True
+    """Enable profiling the application by specifying ``?profile=1`` in requests.
+
+    This is intended only for testing and should be disabled in production!
+    ``BACKEND__LOG__PROFILING=0``
+
+    """
     verbosity: LogVerbosity = LogVerbosity.PROJECT_DEBUG
     """The logging verbosity starting from 0, where larger numbers mean greater verbosity."""
 

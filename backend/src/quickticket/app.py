@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import HTMLResponse
 from securecookies import SecureCookiesMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
@@ -97,6 +98,36 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=_settings.security.allow
 # if csrf_secret.startswith("insecure"):
 #     log.warning("csrf_secret not set, using insecure hardcoded value")
 # app.add_middleware(CSRFMiddleware, secret=csrf_secret)
+
+
+def add_profiling_middleware() -> None:
+    try:
+        from pyinstrument import Profiler
+    except ModuleNotFoundError:
+        log.warning("pyinstrument not found, cannot enable request profiling")
+        return
+
+    log.warning(
+        "Enabling request profiling with ?profile=1. "
+        "Disable in production with: BACKEND__LOG__PROFILING=0"
+    )
+
+    # https://pyinstrument.readthedocs.io/en/latest/guide.html
+    @app.middleware("http")
+    async def profile_request(request: Request, call_next):
+        profiling = request.query_params.get("profile", False)
+        if not profiling:
+            return await call_next(request)
+
+        profiler = Profiler()
+        profiler.start()
+        await call_next(request)
+        profiler.stop()
+        return HTMLResponse(profiler.output_html())
+
+
+if _settings.log.profiling:
+    add_profiling_middleware()
 
 
 @app.exception_handler(ForcedResponse)
