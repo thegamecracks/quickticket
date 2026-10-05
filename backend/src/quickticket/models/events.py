@@ -35,8 +35,8 @@ class Venue(Base):
     location_name: Mapped[str_128]
     location_coords: Mapped[Point | None]
 
-    events: Mapped[list[Event]] = relationship(back_populates="venue", lazy="raise_on_sql")
-    organization: Mapped[Organization] = relationship(back_populates="venues", lazy="raise_on_sql")
+    events: Mapped[list[Event]] = relationship(back_populates="venue")
+    organization: Mapped[Organization] = relationship(back_populates="venues")
 
 
 class Event(Base):
@@ -61,8 +61,8 @@ class Event(Base):
     )
     max_attendees: Mapped[int] = mapped_column(default=0, server_default=text("0"))
 
-    tickets: Mapped[list[Ticket]] = relationship(back_populates="event", lazy="raise_on_sql")
-    venue: Mapped[Venue] = relationship(back_populates="events", lazy="raise_on_sql")
+    tickets: Mapped[list[Ticket]] = relationship(back_populates="event")
+    venue: Mapped[Venue] = relationship(back_populates="events")
 
 
 class Ticket(Base):
@@ -80,5 +80,5 @@ class Ticket(Base):
     created_at: Mapped[current_timestamp]
     paid_cost: Mapped[Money]
 
-    event: Mapped[Event] = relationship(back_populates="tickets", lazy="raise_on_sql")
-    user: Mapped[User] = relationship(back_populates="tickets", lazy="raise_on_sql")
+    event: Mapped[Event] = relationship(back_populates="tickets")
+    user: Mapped[User] = relationship(back_populates="tickets")

@@ -26,11 +26,8 @@ class Organization(Base):
     created_at: Mapped[current_timestamp]
     display_name: Mapped[str_128]
 
-    members: Mapped[list[OrganizationMember]] = relationship(
-        back_populates="organization",
-        lazy="raise_on_sql",
-    )
-    venues: Mapped[list[Venue]] = relationship(back_populates="organization", lazy="raise_on_sql")
+    members: Mapped[list[OrganizationMember]] = relationship(back_populates="organization")
+    venues: Mapped[list[Venue]] = relationship(back_populates="organization")
 
 
 class OrganizationMember(Base):
@@ -47,5 +44,5 @@ class OrganizationMember(Base):
     joined_at: Mapped[current_timestamp]
     permissions: Mapped[int]  # TODO: OrganizationMemberPermissions(IntFlag)
 
-    organization: Mapped[Organization] = relationship(back_populates="members", lazy="raise_on_sql")
-    user: Mapped[User] = relationship(back_populates="organization_members", lazy="raise_on_sql")
+    organization: Mapped[Organization] = relationship(back_populates="members")
+    user: Mapped[User] = relationship(back_populates="organization_members")
