@@ -23,7 +23,7 @@ class Venue(Base):
 
     id: Mapped[pk_uuid] = mapped_column("venue_id")
     organization_id: Mapped[UUID] = mapped_column(
-        ForeignKey("organization.organization_id"),
+        ForeignKey("organization.organization_id", ondelete="CASCADE"),
         index=True,
     )
     created_at: Mapped[current_timestamp]
@@ -44,7 +44,7 @@ class Event(Base):
 
     id: Mapped[pk_uuid] = mapped_column("event_id")
     venue_id: Mapped[UUID] = mapped_column(
-        ForeignKey("venue.venue_id"),
+        ForeignKey("venue.venue_id", ondelete="CASCADE"),
         index=True,
     )
     created_at: Mapped[current_timestamp]
@@ -70,7 +70,7 @@ class Ticket(Base):
 
     id: Mapped[pk_uuid] = mapped_column("ticket_id")
     event_id: Mapped[UUID] = mapped_column(
-        ForeignKey("event.event_id"),
+        ForeignKey("event.event_id", ondelete="CASCADE"),
         index=True,
     )
     account_id: Mapped[UUID] = mapped_column(
