@@ -91,7 +91,6 @@ class OAuthCookieController:
         refresh_token: str,
         refresh_expires_in: int,
     ) -> None:
-        self.delete_flow()  # redundant if called after refresh token
         self.response.set_cookie(
             COOKIE_OAUTH_ACCESS_TOKEN,
             access_token.raw,

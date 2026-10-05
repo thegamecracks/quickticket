@@ -150,6 +150,7 @@ async def oauth_post_login(
         refresh_expires_in=tokens.refresh_expires_in,
         id_token=id_token,
     )
+    registration.cookies.delete_flow()  # cleanup state, nonce, and post-redirect
     return RedirectResponse(redirect_uri, 303)
 
 
