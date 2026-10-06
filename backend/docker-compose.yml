@@ -62,10 +62,7 @@ services:
     image: docker.io/library/redis:8-alpine
     command:
       - 'redis-server'
-      - '--appendonly'
-      - 'yes'
-      - '--loglevel'
-      - 'warning'
+      - '/usr/local/etc/redis/redis.conf'
       - '--requirepass'
       - '${REDIS_PASSWORD:-abc123}'
     ports:
@@ -80,6 +77,7 @@ services:
     restart: always
     volumes:
       - cache-data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
 
   db:
     # https://hub.docker.com/_/postgres/
