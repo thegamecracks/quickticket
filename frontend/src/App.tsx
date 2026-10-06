@@ -10,6 +10,7 @@ import AccountSettingsPage from './features/account/AccountSettingsPage'
 import { AuthProvider } from './lib/auth'
 import MyEventsPage from './features/host/MyEventsPage'
 import MyTicketsPage from './features/tickets/MyTicketsPage'
+import TicketDetailPage from './features/tickets/TicketDetailPage'
 import EventCreationPage from './features/host/EventCreationPage'
 
 export default function App() {
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="myEvents" element={<MyEventsPage />} />
           <Route path="createEvent" element={<EventCreationPage />} />
           <Route path="myTickets" element={<MyTicketsPage />} />
+          <Route path="myTickets/:id" element={<TicketDetailPage />} />
           <Route path="settings" element={<AccountSettingsPage />} />
         </Route>
       </Routes>
