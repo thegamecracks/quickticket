@@ -90,40 +90,6 @@ if _settings.frontend.builtin:
     app.include_router(frontend.router)
 
 # Middleware in LIFO order; bottom/outermost middleware runs first
-
-
-@app.middleware("http")
-async def preserve_headers(request: Request, call_next: Callable[[Request], Awaitable[Response]]):
-    response = await call_next(request)
-
-    temp_response = cast(Response | None, getattr(request.state, "temp_response", None))
-    if temp_response is None:
-        # Likely 404 Not Found, FastAPI routing returned before running dependencies
-        return response
-
-    if response is temp_response:
-        return response
-
-    for k, v in temp_response.headers.items():
-        response.headers.append(k, v)
-        # log.debug("Adding %s header #%s: %s", k, len(response.headers.getlist(k)), v)
-
-    return response
-
-
-# https://securecookies.thearchitector.dev/securecookies.html
-# Cookie encryption must be innermost middleware, after other middlewares add their cookies
-# ...except our own preserve_headers() middleware must run above it to apply correctly???
-cookie_secrets = [s.get_secret_value() for s in _settings.security.cookie_encryption_secrets]
-if cookie_secrets and cookie_secrets[0] == "Qfw1bmzNtFba8qLxYZzxtEDfgd4P58LCDKiuMezO6lU=":
-    log.warning("cookie_encryption_secrets not set, using insecure hardcoded value")
-app.add_middleware(
-    SecureCookiesMiddleware,
-    secrets=cookie_secrets,
-    cookie_httponly=True,
-    cookie_secure=True,
-)
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_settings.frontend.origins,
@@ -173,6 +139,42 @@ def add_profiling_middleware() -> None:
 
 if _settings.log.profiling:
     add_profiling_middleware()
+
+
+# This preserves headers from FastAPI's temporary response object by transferring
+# them to the current response object. For this to work, it must wrap all other middleware
+# that may return its own response object, like the profiling response above.
+@app.middleware("http")
+async def preserve_headers(request: Request, call_next: Callable[[Request], Awaitable[Response]]):
+    response = await call_next(request)
+
+    temp_response = cast(Response | None, getattr(request.state, "temp_response", None))
+    if temp_response is None:
+        # Likely 404 Not Found, FastAPI routing returned before running dependencies
+        return response
+
+    if response is temp_response:
+        return response
+
+    for k, v in temp_response.headers.items():
+        response.headers.append(k, v)
+        # log.debug("Adding %s header #%s: %s", k, len(response.headers.getlist(k)), v)
+
+    return response
+
+
+# https://securecookies.thearchitector.dev/securecookies.html
+# Cookie encryption must be outermost middleware, after other middlewares add their cookies
+cookie_secrets = [s.get_secret_value() for s in _settings.security.cookie_encryption_secrets]
+if cookie_secrets and cookie_secrets[0] == "Qfw1bmzNtFba8qLxYZzxtEDfgd4P58LCDKiuMezO6lU=":
+    log.warning("cookie_encryption_secrets not set, using insecure hardcoded value")
+
+app.add_middleware(
+    SecureCookiesMiddleware,
+    secrets=cookie_secrets,
+    cookie_httponly=True,
+    cookie_secure=True,
+)
 
 
 @app.exception_handler(ForcedResponse)
