@@ -58,7 +58,6 @@ app = FastAPI(
     title="QuickTicket",
     description="",
     dependencies=[
-        # FIXME: replace with middleware, FastAPI routes and exception handlers override headers
         Depends(apply_request_limit),
         Depends(store_response_object),
     ],
