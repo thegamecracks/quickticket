@@ -26,6 +26,7 @@ dependencies = [
     "pydantic>=2.13.5",
     "pydantic-extra-types>=2.11.1",
     "pydantic-settings>=2.15.0",
+    "pyinstrument>=5.1.3",
     "redis[hiredis]>=8.1.0",
     "sqlalchemy[asyncio]>=2.1.1",
     "starlette-securecookies>=1.1.1",
@@ -38,7 +39,6 @@ quickticket = "fastapi_cli.cli:main"
 
 [dependency-groups]
 dev = [
-    "pyinstrument>=5.1.3",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "ruff>=0.16.9",
