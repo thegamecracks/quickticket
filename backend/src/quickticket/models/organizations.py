@@ -23,7 +23,7 @@ class Organization(Base):
     __tablename__ = "organization"
 
     id: Mapped[pk_uuid] = mapped_column("organization_id")
-    created_at: Mapped[current_timestamp]
+    created_at: Mapped[current_timestamp] = mapped_column(index=True)
     display_name: Mapped[str_128]
 
     members: Mapped[list[OrganizationMember]] = relationship(back_populates="organization")

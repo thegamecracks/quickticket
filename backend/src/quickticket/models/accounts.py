@@ -34,7 +34,7 @@ class User(Base):
     __tablename__ = "account"
 
     id: Mapped[pk_uuid] = mapped_column("account_id")
-    created_at: Mapped[current_timestamp]
+    created_at: Mapped[current_timestamp] = mapped_column(index=True)
 
     # Fields derived from provider
     display_name: Mapped[str_128]

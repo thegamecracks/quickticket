@@ -26,7 +26,7 @@ class Venue(Base):
         ForeignKey("organization.organization_id", ondelete="CASCADE"),
         index=True,
     )
-    created_at: Mapped[current_timestamp]
+    created_at: Mapped[current_timestamp] = mapped_column(index=True)
     display_name: Mapped[str_128]
     description: Mapped[str_4096]
     theme: Mapped[str_128]
@@ -47,7 +47,7 @@ class Event(Base):
         ForeignKey("venue.venue_id", ondelete="CASCADE"),
         index=True,
     )
-    created_at: Mapped[current_timestamp]
+    created_at: Mapped[current_timestamp] = mapped_column(index=True)
     display_name: Mapped[str_128]
     description: Mapped[str_4096]
     theme: Mapped[str_128]
@@ -77,7 +77,7 @@ class Ticket(Base):
         ForeignKey("account.account_id", ondelete="CASCADE"),
         index=True,
     )
-    created_at: Mapped[current_timestamp]
+    created_at: Mapped[current_timestamp] = mapped_column(index=True)
     paid_cost: Mapped[Money]
 
     event: Mapped[Event] = relationship(back_populates="tickets")
