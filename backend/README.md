@@ -5,7 +5,10 @@
 ## Prerequisites
 
 This project requires Python 3.14+ and [uv](https://docs.astral.sh/uv/)
-for project management. To install uv:
+for local development, or [Docker](https://docs.docker.com/get-started/) / [Podman](https://podman.io/)
+if you only need to host the backend.
+
+To install uv:
 
 ```sh
 # Linux:
@@ -51,6 +54,18 @@ You can now start the webserver and use it from the frontend:
 
 ```sh
 /backend $ uv run fastapi dev
+```
+
+## Docker
+
+Using Docker or Podman, you can run the backend with additional services including
+Redis and PostgreSQL. To do this, create a [.env](/example.env) file if you haven't
+already, and adjust any passwords in [docker-compose.yml](/docker-compose.yml) if desired.
+
+```sh
+/backend $ docker compose up
+# With Podman:
+/backend $ podman compose up
 ```
 
 ## Running lints and formatting
