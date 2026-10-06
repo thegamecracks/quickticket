@@ -22,6 +22,11 @@ class CacheSettings(BaseSettings):
 
     This supports ``sqlite://``, ``redis://``, and  ``rediss://`` (SSL) schemes.
 
+    Examples:
+    - sqlite:///quickticket-cache.db
+    - redis://default:password@localhost:6379
+    - rediss://default:password@localhost:6379
+
     .. note::
 
        For sqlite, the supported URL syntax is simplified and does **not**

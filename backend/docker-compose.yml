@@ -6,9 +6,8 @@ services:
     env_file: .env
     environment:
       # BACKEND__ROOT_PATH: '/backend'
-      BACKEND__CACHE__URL: 'sqlite:///data/quickticket-cache.db'
-      # BACKEND__DB__URL: 'sqlite+aiosqlite:///data/quickticket.db'
-      BACKEND__DB__URL: 'postgresql+psycopg://quickticket:abc123@db:5432/quickticket?sslmode=prefer'
+      BACKEND__CACHE__URL: 'redis://default:abc123@cache:6379'  # 'sqlite:///data/quickticket-cache.db'
+      BACKEND__DB__URL: 'postgresql+psycopg://quickticket:abc123@db:5432/quickticket?sslmode=prefer'  # 'sqlite+aiosqlite:///data/quickticket.db'
       # BACKEND__FRONTEND__BUILTIN: '0'
       # BACKEND__FRONTEND__DEFAULT_REDIRECT_URI: 'http://127.0.0.1:5173/'
       # BACKEND__FRONTEND__REDIRECT_URIS: '["http://127.0.0.1:5173/*", "http://localhost:5173/*"]'
@@ -36,10 +35,13 @@ services:
       # BACKEND__SMTP__PASSWORD: 'abc123'
       # BACKEND__SMTP__FROM_EMAIL: 'User Name <user@example.com>'
       FORCE_COLOR: '1'
+    restart: always
     volumes:
       # Use this volume if either the cache or database are backed by SQLite.
       - backend-data:/app/data
     depends_on:
+      cache:
+        condition: service_healthy
       db:
         condition: service_healthy
     pre_start:
@@ -55,10 +57,35 @@ services:
         - action: rebuild
           path: uv.lock
 
+  cache:
+    # https://hub.docker.com/_/redis/
+    image: docker.io/library/redis:8-alpine
+    command:
+      - 'redis-server'
+      - '--appendonly'
+      - 'yes'
+      - '--loglevel'
+      - 'warning'
+      - '--requirepass'
+      - '${REDIS_PASSWORD:-abc123}'
+    ports:
+      - 127.0.0.1:6379:6379
+    environment:
+      REDIS_ARGS: 'abc123'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    restart: always
+    volumes:
+      - cache-data:/data
+
   db:
+    # https://hub.docker.com/_/postgres/
     image: docker.io/library/postgres:18-alpine
-    # ports:
-    #   - 5432:5432
+    ports:
+      - 127.0.0.1:5432:5432
     environment:
       POSTGRES_USER: 'quickticket'
       POSTGRES_DB: 'quickticket'
@@ -68,18 +95,18 @@ services:
       PGUSER: 'quickticket'
       PGDATABASE: 'quickticket'
       PGPASSWORD: 'abc123'
-    volumes:
-      - db-data:/var/lib/postgresql
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready']
       interval: 1s
       timeout: 5s
       retries: 10
     restart: always
+    volumes:
+      - db-data:/var/lib/postgresql
 
-  # TODO: add redis (https://hub.docker.com/_/redis/)
   # TODO: add S3 (https://hub.docker.com/r/dxflrs/garage)
 
 volumes:
   backend-data:
+  cache-data:
   db-data:
