@@ -1,4 +1,4 @@
-import { MockTickets } from "../../lib/mocks"
+import { getMockEvent, MockTickets } from "../../lib/mocks"
 import { useAuth } from "../../lib/auth";
 import { useEffect, useState } from "react";
 import type { User } from "../account/types";
@@ -35,11 +35,11 @@ export default function MyTicketsPage() {
         <ul className="list mx-auto space-y-2">
           {
             tickets.map((t: Ticket) => (
-              <li className="list-row rounded-2xl bg-neutral shadow-md" key={t.id}>
+              <li className="list-row items-center rounded-2xl bg-primary/10 shadow-md" key={t.id}>
                 <div className="text-xl align-middle"><span className="text-secondary">Ticket</span>
                 </div>
                 <div>
-                  <span className="text-xs">Ticket id: {t.id} | <span className="text-secondary">Event id:</span> {t.event_id}</span>
+                  {getMockEvent(t.event_id)?.display_name}
                 </div>
                 <div>
                   <button className="btn btn-primary" onClick={() => goToTicketDetail(t.id)}>View</button>
