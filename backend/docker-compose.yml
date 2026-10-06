@@ -42,6 +42,16 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./src
+          target: /app/src
+          initial_sync: true
+        - action: rebuild
+          path: pyproject.toml
+        - action: rebuild
+          path: uv.lock
 
   db:
     image: docker.io/library/postgres:18-alpine
