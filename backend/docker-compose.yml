@@ -23,6 +23,9 @@ services:
       # BACKEND__OPENID__DISCOVERY_URL: 'https://example.com/.well-known/openid-configuration'
       # # Admin group is optional if your provider adds a "groups" claim in its ID tokens
       # BACKEND__OPENID__ADMIN_GROUP: 'admins'
+      # BACKEND__S3__URL: 'https://s3.dualstack.ca-central-1.amazonaws.com'
+      # BACKEND__S3__ACCESS_KEY: ''
+      # BACKEND__S3__SECRET_KEY: ''
       # BACKEND__SECURITY__ALLOWED_HOSTS: '["127.0.0.1", "localhost"]'
       # BACKEND__SECURITY__TRUSTED_PROXIES: '["127.0.0.1"]'
       # BACKEND__SECURITY__CSRF_SECRET: 'insecure_qt9u0SCF3DuSJ69ZrqvzlJGTWxx7C5wh'

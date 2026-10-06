@@ -160,6 +160,23 @@ class OpenIDSettings(BaseSettings):
     """
 
 
+class S3Settings(BaseSettings):
+    url: Secret[str]
+    """The endpoint to connect to S3 storage.
+
+    Examples:
+    - http://s3:3900
+    - https://s3.dualstack.ca-central-1.amazonaws.com
+
+    See also: https://docs.aws.amazon.com/general/latest/gr/s3.html
+
+    """
+    access_key: Secret[str]
+    """The access key used for authentication."""
+    secret_key: Secret[str]
+    """The secret key used for authentication."""
+
+
 class SecuritySettings(BaseSettings):
     # TODO: validate host / host:port / [ipv6]:port
     allowed_hosts: list[str] = ["127.0.0.1", "localhost"]
@@ -264,6 +281,7 @@ class Settings(BaseSettings):
     log: LogSettings = Field(default_factory=LogSettings)
     openapi: OpenAPISettings = Field(default_factory=OpenAPISettings)
     openid: OpenIDSettings | None = None
+    s3: S3Settings | None = None
     security: SecuritySettings = Field(default_factory=SecuritySettings)
     smtp: SMTPSettings | None = None
 
