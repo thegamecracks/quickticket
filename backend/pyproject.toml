@@ -34,7 +34,7 @@ dependencies = [
 ]
 
 [project.scripts]
-quickticket = "quickticket.manage:main"
+quickticket = "fastapi_cli.cli:main"
 
 [dependency-groups]
 dev = [
