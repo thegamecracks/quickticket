@@ -1,3 +1,4 @@
+import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 
 interface PaginationProps {
   currentPage: number;
@@ -27,7 +28,7 @@ export function Pagination(props: PaginationProps) {
               disabled={currentPage === 1}
               onClick={() => onChangePage(currentPage - 1)}
             >
-              Previous
+              <ChevronLeftIcon className="size-6" />
             </button>
 
             <span className="text-sm">
@@ -40,7 +41,7 @@ export function Pagination(props: PaginationProps) {
               disabled={currentPage === totalPages}
               onClick={() => onChangePage(currentPage + 1)}
             >
-              Next
+              <ChevronRightIcon className="size-6" />
             </button>
 
           </div>
