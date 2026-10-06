@@ -1,7 +1,6 @@
 services:
   backend:
     build: .
-    command: run
     ports:
       - 8000:8000
     env_file: .env
@@ -43,6 +42,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    pre_start:
+      - command: ['alembic', 'upgrade', 'head']  # run migrations on startup
     develop:
       watch:
         - action: sync+restart
@@ -70,7 +71,7 @@ services:
     volumes:
       - db-data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
+      test: ['CMD-SHELL', 'pg_isready']
       interval: 1s
       timeout: 5s
       retries: 10

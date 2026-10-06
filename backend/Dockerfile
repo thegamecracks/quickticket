@@ -11,8 +11,7 @@ ENV UV_PYTHON=3.14
 WORKDIR /app
 COPY --link pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --no-install-project
-# COPY --link LICENSE README.md ./
-COPY --link README.md ./
+COPY --link alembic.ini README.md ./
 COPY --link src/ src/
 RUN --mount=type=cache,target=/root/.cache/uv uv sync
 
@@ -20,4 +19,5 @@ ENV PATH=/app/.venv/bin:${PATH}
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 STOPSIGNAL SIGINT
-ENTRYPOINT ["quickticket"]
+ENTRYPOINT ["uv", "run"]
+CMD ["quickticket", "run"]
