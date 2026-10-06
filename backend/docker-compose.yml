@@ -103,6 +103,7 @@ services:
     restart: always
     volumes:
       - db-data:/var/lib/postgresql
+      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
 
   # TODO: add S3 (https://hub.docker.com/r/dxflrs/garage)
 
