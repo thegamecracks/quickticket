@@ -1096,6 +1096,7 @@ dependencies = [
     { name = "redis", extra = ["hiredis"] },
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "starlette-securecookies" },
+    { name = "tzdata" },
     { name = "uvicorn" },
     { name = "whenever" },
 ]
@@ -1127,6 +1128,7 @@ requires-dist = [
     { name = "redis", extras = ["hiredis"], specifier = ">=8.1.0" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.1.1" },
     { name = "starlette-securecookies", specifier = ">=1.1.1" },
+    { name = "tzdata", specifier = ">=2026.4" },
     { name = "uvicorn", specifier = ">=0.54.0" },
     { name = "whenever", specifier = ">=0.10.5" },
 ]
