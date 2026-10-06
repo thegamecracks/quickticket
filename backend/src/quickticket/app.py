@@ -57,6 +57,7 @@ app = FastAPI(
         Depends(apply_request_limit),
         Depends(store_response_object),
     ],
+    root_path=_settings.root_path,
     debug=_settings.log.debug,
     openapi_url=_settings.openapi.url,
     docs_url=_settings.openapi.swagger_url,

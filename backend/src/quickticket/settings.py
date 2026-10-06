@@ -244,6 +244,15 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    root_path: str = ""
+    """The path prefix to prepend when returning URLs for the application,
+    for example, ``/backend``.
+
+    This is needed when running behind a reverse proxy that serves
+    the application under a subpath.
+
+    """
+
     cache: CacheSettings = Field(default_factory=CacheSettings)
     db: DatabaseSettings = Field(default_factory=DatabaseSettings)
     frontend: FrontendSettings = Field(default_factory=FrontendSettings)
