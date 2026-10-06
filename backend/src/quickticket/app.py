@@ -48,6 +48,11 @@ async def store_response_object(request: Request, response: Response) -> None:
     request.state.temp_response = response
 
 
+if _settings.log.debug:
+    log.warning(
+        "Starlette's debug mode is enabled. Disable in production with: BACKEND__LOG__DEBUG=0"
+    )
+
 app = FastAPI(
     lifespan=lifespan,
     title="QuickTicket",
