@@ -19,8 +19,8 @@ export default function App() {
         <Route element={<RootLayout />}>
           <Route index element={<HomePage />} />
           <Route path="events" element={<EventsPage />} />
-          <Route path="events/:slug" element={<EventDetailPage />} />
-          <Route path="events/:slug/checkout" element={<CheckoutPage />} />
+          <Route path="events/:id" element={<EventDetailPage />} />
+          <Route path="events/:id/checkout" element={<CheckoutPage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="myEvents" element={<MyEventsPage />} />
           <Route path="createEvent" element={<EventCreationPage />} />
