@@ -146,7 +146,10 @@ def add_profiling_middleware() -> None:
     try:
         from pyinstrument import Profiler
     except ModuleNotFoundError:
-        log.warning("pyinstrument not found, cannot enable request profiling")
+        log.warning(
+            "Request profiling is unavailable due to pyinstrument not being installed. "
+            "Disable in production with: BACKEND__LOG__PROFILING=0"
+        )
         return
 
     log.warning(
