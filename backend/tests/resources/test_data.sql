@@ -1,6 +1,22 @@
 -- Date: 2026-10-05
 -- Description: Fake data for use in testing. AI-generated.
 
+-- FIXME:
+-- Replace this file with ORM queries? SQLAlchemy renders UUIDs without hyphens in SQLite.
+-- To correct this, run the following after this script:
+-- PRAGMA foreign_keys = off;
+-- BEGIN;
+-- UPDATE account SET account_id = REPLACE(account_id, '-', '');
+-- UPDATE address SET address_id = REPLACE(address_id, '-', ''), account_id = REPLACE(account_id, '-', '');
+-- UPDATE organization SET organization_id = REPLACE(organization_id, '-', '');
+-- UPDATE organization_member SET organization_id = REPLACE(organization_id, '-', ''), acccount_id = REPLACE(acccount_id, '-', '');
+-- UPDATE venue SET venue_id = REPLACE(venue_id, '-', ''), organization_id = REPLACE(organization_id, '-', '');
+-- UPDATE event SET event_id = REPLACE(event_id, '-', ''), venue_id = REPLACE(venue_id, '-', '');
+-- UPDATE ticket SET ticket_id = REPLACE(ticket_id, '-', ''), event_id = REPLACE(event_id, '-', ''), account_id = REPLACE(account_id, '-', '');
+-- PRAGMA foreign_key_check; -- Make sure this returns no rows!
+-- COMMIT;
+-- PRAGMA foreign_keys = on;
+
 -- Insert 50 accounts.
 INSERT INTO account (account_id, display_name, first_name, last_name, email) VALUES
 ('eec50538-0edc-469b-b441-01b95b2f86c1', 'James Smith', 'James', 'Smith', 'james.smith0@example.com'),
