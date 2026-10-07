@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
@@ -11,27 +11,28 @@ from sqlalchemy.orm import selectinload
 from quickticket.dependencies.auth import OptionalUserDep
 from quickticket.dependencies.db import AsyncSessionDep
 from quickticket.models import Event, Point, Ticket, Venue
+from quickticket.models.money import Money
 
 router = APIRouter(tags=["Venues"])
 log = logging.getLogger(__name__)
 
 
-class VenueReadTicket(BaseModel):
+class PartialTicket(BaseModel):
     id: UUID
 
 
-class VenueReadEvent(BaseModel):
+class PartialEvent(BaseModel):
     id: UUID
-    tickets: list[VenueReadTicket]
+    tickets: list[PartialTicket]
 
 
-class VenueReadOrganization(BaseModel):
+class PartialOrganization(BaseModel):
     id: UUID
     created_at: datetime
     display_name: str
 
 
-class VenueRead(BaseModel):
+class PartialVenue(BaseModel):
     id: UUID
     created_at: datetime
     display_name: str
@@ -42,12 +43,12 @@ class VenueRead(BaseModel):
     location_name: str
     location_coords: Point | None
 
-    events: list[VenueReadEvent]
-    organization: VenueReadOrganization
+    events: list[PartialEvent]
+    organization: PartialOrganization
 
 
 class VenuesRead(BaseModel):
-    venues: list[VenueRead]
+    venues: list[PartialVenue]
 
 
 @router.get("", response_model=VenuesRead)
@@ -78,12 +79,59 @@ async def get_venues(user: OptionalUserDep, session: AsyncSessionDep) -> Any:
     return {"venues": venues.all()}
 
 
-@router.get("/{venue_id}")
-async def get_venue(venue_id: UUID) -> None:
+class VenueReadEvent(BaseModel):
+    id: UUID
+    created_at: datetime
+    display_name: str
+    description: str
+    theme: str
+    thumbnail_url: str
+    banner_url: str
+    starts_at: datetime
+    ends_at: datetime
+    ticket_price: Money
+    max_attendees: int
+
+    tickets: list[PartialTicket]
+
+
+class VenueRead(BaseModel):
+    id: UUID
+    created_at: datetime
+    display_name: str
+    description: str
+    theme: str
+    thumbnail_url: str
+    banner_url: str
+    location_name: str
+    location_coords: Point | None
+
+    events: list[VenueReadEvent]
+    organization: PartialOrganization
+
+
+@router.get("/{venue_id}", response_model=VenueRead)
+async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: UUID) -> Any:
     """Get a venue by ID."""
-    # TODO: load events
-    # TODO: load organization
-    # TODO: load user's tickets for venue if logged in
+    venue = await session.scalar(
+        select(Venue)
+        .where(Venue.id == venue_id)
+        .options(
+            # Venue => Events => Tickets
+            selectinload(Venue.events)
+            .selectinload(
+                # TODO: return all tickets if user has permission from organization
+                Event.tickets.and_(Ticket.account_id == user.id if user is not None else false())
+            )
+            .load_only(Ticket.id),
+            # Venue => Organization
+            selectinload(Venue.organization),
+        )
+    )
+    if venue is None:
+        raise HTTPException(404, "Not found")
+
+    return venue
 
 
 @router.post("")
