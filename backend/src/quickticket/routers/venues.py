@@ -4,7 +4,7 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
 
@@ -47,8 +47,6 @@ class VenueRead(BaseModel):
 
 
 class VenuesRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
     venues: list[VenueRead]
 
 
