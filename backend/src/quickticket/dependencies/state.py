@@ -1,5 +1,5 @@
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import AsyncExitStack
 from functools import cache
 from typing import Annotated, cast
@@ -26,7 +26,7 @@ def get_async_exit_stack(state: StateDep) -> AsyncExitStack:
     return cast(AsyncExitStack, state.stack)  # set in lifespan function
 
 
-async def get_http_client() -> AsyncIterator[httpx2.AsyncClient]:
+async def get_http_client() -> AsyncGenerator[httpx2.AsyncClient]:
     async with httpx2.AsyncClient() as client:
         yield client
 

@@ -1,5 +1,5 @@
 import logging
-from collections.abc import AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import AsyncExitStack, asynccontextmanager
 from typing import cast
 
@@ -27,7 +27,7 @@ log = logging.getLogger(__name__)
 
 # https://github.com/fastapi/fastapi/discussions/8054#discussioncomment-11346542
 @asynccontextmanager
-async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
     async with AsyncExitStack() as stack:
         _app.state.stack = stack
         try:

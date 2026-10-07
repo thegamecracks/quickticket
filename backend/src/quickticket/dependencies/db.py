@@ -1,5 +1,5 @@
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from typing import Annotated, cast
 
 from fastapi import Depends
@@ -39,7 +39,7 @@ def get_async_sessionmaker(
 
 async def get_async_session(
     make_session: AsyncSessionMakerDep,
-) -> AsyncIterator[AsyncSession]:
+) -> AsyncGenerator[AsyncSession]:
     async with make_session.begin() as session:
         try:
             yield session
