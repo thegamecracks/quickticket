@@ -9,7 +9,7 @@
 -- UPDATE account SET account_id = REPLACE(account_id, '-', '');
 -- UPDATE address SET address_id = REPLACE(address_id, '-', ''), account_id = REPLACE(account_id, '-', '');
 -- UPDATE organization SET organization_id = REPLACE(organization_id, '-', '');
--- UPDATE organization_member SET organization_id = REPLACE(organization_id, '-', ''), acccount_id = REPLACE(acccount_id, '-', '');
+-- UPDATE organization_member SET organization_id = REPLACE(organization_id, '-', ''), account_id = REPLACE(account_id, '-', '');
 -- UPDATE venue SET venue_id = REPLACE(venue_id, '-', ''), organization_id = REPLACE(organization_id, '-', '');
 -- UPDATE event SET event_id = REPLACE(event_id, '-', ''), venue_id = REPLACE(venue_id, '-', '');
 -- UPDATE ticket SET ticket_id = REPLACE(ticket_id, '-', ''), event_id = REPLACE(event_id, '-', ''), account_id = REPLACE(account_id, '-', '');
@@ -132,7 +132,7 @@ INSERT INTO organization (organization_id, display_name) VALUES
 ('dbdf610b-3e5e-4565-b12a-707eb57b8b35', 'Evergreen Celebrations Ltd.');
 
 -- Insert members (1-2 accounts per organization).
-INSERT INTO organization_member (organization_id, acccount_id, permissions) VALUES
+INSERT INTO organization_member (organization_id, account_id, permissions) VALUES
 ('2cbd7222-4fd3-4cef-9500-79746e76da89', '2911b7f6-3d3f-4d03-a09e-0bfe013ef161', 0),
 ('8e21c0af-d7a0-4f06-940c-b23728ae59e1', '0daec970-3840-4aad-b2fb-05c1e4fa635d', 0),
 ('7092b056-4bec-4f3e-aec4-7f7e8f37b13d', 'cd1e919c-78ac-4222-96c1-6bea98f57281', 0),
