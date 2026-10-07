@@ -18,10 +18,13 @@ export default function Navbar() {
         </Link>
       </div>
       <nav className="navbar-center hidden gap-2 md:flex">
-        <NavLink className="btn btn-ghost btn-sm" to="/events">
+        <NavLink className="btn btn-ghost btn-md" to="/events">
           Events
         </NavLink>
-        <NavLink className="btn btn-ghost btn-sm" to="/about">
+        <NavLink className="btn btn-ghost btn-md" to="/createEvent">
+          Host
+        </NavLink>
+        <NavLink className="btn btn-ghost btn-md" to="/about">
           About
         </NavLink>
       </nav>

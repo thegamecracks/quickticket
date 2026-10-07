@@ -1,16 +1,10 @@
-
-export type EventInfo = {
-  id: number
-  title: string
-  date: string
-  location: string
-  price: number
-  imageUrl?: string
-  available?: boolean
-}
+import type { Event } from "../features/events/types"
+import { getMockTicketCount, getMockVenue } from "../lib/mocks"
+import SkeletonImage from "./SkeletonImage"
+import { calcDateLongTimeMediumRange } from "../lib/general"
 
 type EventCardProps = {
-  event: EventInfo
+  event: Event
 }
 
 export default function EventCard({ event }: EventCardProps) {
@@ -19,31 +13,30 @@ export default function EventCard({ event }: EventCardProps) {
 
       {/* Event image */}
       <figure>
-        <img
-          src={event.imageUrl ?? 'https://placehold.co/800x450/272c35/ffffff?text=QuickTicket+Event'}
-          alt={event.title}
+        <SkeletonImage
+          src={event.thumbnail_url ?? 'https://placehold.co/800x450/272c35/ffffff?text=QuickTicket+Event'}
+          alt={event.display_name}
           className="h-48 w-full object-cover"
-          loading="lazy"
         />
       </figure>
 
       <div className="card-body">
 
         {/* Event name */}
-        <h2 className="card-title">{event.title}</h2>
+        <h2 className="card-title">{event.display_name}</h2>
 
         {/* Event information */}
-        <p>📅 {event.date}</p>
-        <p>📍 {event.location}</p>
+        <p>📅 {calcDateLongTimeMediumRange(event.starts_at, event.ends_at)}</p>
+        <p>📍 {getMockVenue(event.venue_id)?.display_name}</p>
 
         {/* Price and availability */}
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
 
           <span className="badge badge-primary">
-            ${event.price}
+            ${event.ticket_price.amount} {event.ticket_price.currency}
           </span>
 
-          {event.available !== false ? (
+          {event.max_attendees >= getMockTicketCount(event.id) !== false ? (
             <span className="badge badge-success">
               Available
             </span>
