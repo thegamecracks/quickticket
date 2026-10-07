@@ -1,4 +1,4 @@
-"""Add missing index on venue.venue_id
+"""Index created_at columns
 
 Revision ID: d8f0a832401c
 Revises: 6f01e38de460
