@@ -1,16 +1,37 @@
 import logging
+from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter
+from pydantic import BaseModel
+from sqlalchemy import select
+
+from quickticket.dependencies.db import AsyncSessionDep
+from quickticket.models import Organization
 
 router = APIRouter(tags=["Organizations"])
 log = logging.getLogger(__name__)
 
 
-@router.get("")
-async def get_organizations() -> None:
+class PartialOrganization(BaseModel):
+    id: UUID
+    created_at: datetime
+    display_name: str
+
+
+class OrganizationsRead(BaseModel):
+    organizations: list[PartialOrganization]
+
+
+@router.get("", response_model=OrganizationsRead)
+async def get_organizations(session: AsyncSessionDep) -> Any:
     """Get a list of organizations."""
     # TODO: support pagination
+    organizations = await session.scalars(
+        select(Organization).order_by(Organization.created_at.desc())
+    )
+    return {"organizations": organizations.all()}
 
 
 @router.get("/{organization_id}")
