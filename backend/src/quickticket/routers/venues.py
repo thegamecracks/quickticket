@@ -10,8 +10,7 @@ from sqlalchemy.orm import selectinload
 
 from quickticket.dependencies.auth import OptionalUserDep
 from quickticket.dependencies.db import AsyncSessionDep
-from quickticket.models import Event, Point, Ticket, Venue
-from quickticket.models.money import Money
+from quickticket.models import Event, Money, Point, Ticket, Venue
 
 router = APIRouter(tags=["Venues"])
 log = logging.getLogger(__name__)

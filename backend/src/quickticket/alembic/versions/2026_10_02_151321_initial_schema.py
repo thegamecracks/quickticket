@@ -11,8 +11,7 @@ from collections.abc import Sequence
 import sqlalchemy as sa
 from alembic import op
 
-from quickticket.models import PointSerializer
-from quickticket.models.money import MoneySerializer
+from quickticket.models import MoneySerializer, PointSerializer
 
 # revision identifiers, used by Alembic.
 revision: str = "42673771958f"
