@@ -123,8 +123,8 @@ If this fails, you can delete the database and regenerate it with
 
 ## Resources
 
-| Library | Description |
-|--:|---|
+| Libraries | Descriptions |
+|--:|:--|
 | [aiosqlite](https://aiosqlite.omnilib.dev/en/stable/) | SQLite driver |
 | [alembic](https://alembic.sqlalchemy.org/en/latest/index.html) | Database migrations |
 | [authlib](https://docs.authlib.org/en/latest/index.html) | OAuth2 client |
@@ -148,8 +148,8 @@ If this fails, you can delete the database and regenerate it with
 | [tzdata](https://tzdata.python.org/) | IANA timezones |
 | [uvicorn](https://uvicorn.dev/) | ASGI webserver |
 
-| Service | Description |
-|--:|---|
+| Services | Descriptions |
+|--:|:--|
 | [Garage S3](https://garagehq.deuxfleurs.fr/) | Self-hosted S3 |
 | [Keycloak](https://www.keycloak.org/guides) | OpenID provider |
 | [Redis](https://redis.io/docs/latest/develop/) | Key-value store |
