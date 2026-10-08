@@ -147,7 +147,6 @@ If this fails, you can delete the database and regenerate it with
 | [sqlalchemy](https://docs.sqlalchemy.org/en/21/) | Database engine and ORM |
 | [tzdata](https://tzdata.python.org/) | IANA timezones |
 | [uvicorn](https://uvicorn.dev/) | ASGI webserver |
-| [whenever](https://whenever.readthedocs.io/en/latest/) | Type-safe datetimes |
 
 | Service | Description |
 |--:|---|
