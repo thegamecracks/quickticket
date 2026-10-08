@@ -5,6 +5,7 @@ services:
       - 8000:8000
     env_file: .env  # copy from example.env
     environment:
+      # Point the backend to our cache and database containers, taking precedence over .env.
       BACKEND__CACHE__URL: 'redis://default:abc123@cache:6379'  # 'sqlite:///data/quickticket-cache.db'
       BACKEND__DB__URL: 'postgresql+psycopg://quickticket:abc123@db:5432/quickticket?sslmode=prefer'  # 'sqlite+aiosqlite:///data/quickticket.db'
       FORCE_COLOR: '1'
