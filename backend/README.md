@@ -152,5 +152,5 @@ If this fails, you can delete the database and regenerate it with
 |--:|:--|
 | [Garage S3](https://garagehq.deuxfleurs.fr/) | Self-hosted S3 |
 | [Keycloak](https://www.keycloak.org/guides) | OpenID provider |
-| [Redis](https://redis.io/docs/latest/develop/) | Key-value store |
 | [PostgreSQL](https://www.postgresql.org/docs/current/index.html) | Relational database |
+| [Redis](https://redis.io/docs/latest/develop/) | Key-value store |
