@@ -124,7 +124,6 @@ If this fails, you can delete the database and regenerate it with
 ## Resources
 
 Python libraries:
-- [aioaws](https://github.com/samuelcolvin/aioaws) (light AWS API wrapper)
 - [aiosqlite](https://aiosqlite.omnilib.dev/en/stable/) (SQLite driver)
 - [alembic](https://alembic.sqlalchemy.org/en/latest/index.html) (database migrations)
 - [authlib](https://docs.authlib.org/en/latest/index.html)
