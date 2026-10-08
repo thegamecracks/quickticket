@@ -123,29 +123,35 @@ If this fails, you can delete the database and regenerate it with
 
 ## Resources
 
-Python libraries:
-- [aiosqlite](https://aiosqlite.omnilib.dev/en/stable/) (SQLite driver)
-- [alembic](https://alembic.sqlalchemy.org/en/latest/index.html) (database migrations)
-- [authlib](https://docs.authlib.org/en/latest/index.html)
-- [fastapi](https://fastapi.tiangolo.com/)
-- [httpx2](https://pydantic.dev/docs/httpx2/get-started/)
-- [joserfc](https://jose.authlib.org/en/guide/jwt/) (JWT parsing and validation)
-- [obstore](https://developmentseed.org/obstore/latest/) (S3 client)
-- [pillow](https://pillow.readthedocs.io/en/stable/) (image library)
-- [psycopg](https://www.psycopg.org/psycopg3/docs/) (PostgreSQL driver)
-- [pydantic](https://pydantic.dev/docs/validation/latest/get-started/)
-- [pydantic-extra-types](https://github.com/pydantic/pydantic-extra-types)
-- [pydantic-settings](https://pydantic.dev/docs/validation/latest/concepts/pydantic_settings/)
-- [pyinstrument](https://pyinstrument.readthedocs.io/en/latest/guide.html#profile-a-web-request-in-fastapi)
-- [pytest](https://docs.pytest.org/en/stable/)
-- [pytest-asyncio](https://pytest-asyncio.readthedocs.io/en/stable/)
-- [redis](https://redis.io/docs/latest/develop/clients/redis-py/)
-- [ruff](https://docs.astral.sh/ruff/) (linter and formatter)
-- [sqlalchemy](https://docs.sqlalchemy.org/en/21/) (database engine and ORM)
-- [uvicorn](https://uvicorn.dev/) (ASGI webserver)
-- [whenever](https://whenever.readthedocs.io/en/latest/) (type-safe datetimes)
+| Library | Description |
+|--:|---|
+| [aiosqlite](https://aiosqlite.omnilib.dev/en/stable/) | SQLite driver |
+| [alembic](https://alembic.sqlalchemy.org/en/latest/index.html) | Database migrations |
+| [authlib](https://docs.authlib.org/en/latest/index.html) | OAuth2 client |
+| [fastapi](https://fastapi.tiangolo.com/) | HTTP API framework |
+| [httpx2](https://pydantic.dev/docs/httpx2/get-started/) | HTTP client |
+| [joserfc](https://jose.authlib.org/en/guide/jwt/) | JWT parsing and validation |
+| [limits](https://limits.readthedocs.io/en/stable/) | ratelimiter |
+| [obstore](https://developmentseed.org/obstore/latest/) | S3 client |
+| [pillow](https://pillow.readthedocs.io/en/stable/) | Image manipulation |
+| [psycopg](https://www.psycopg.org/psycopg3/docs/) | PostgreSQL driver |
+| [pydantic](https://pydantic.dev/docs/validation/latest/get-started/) | Data validation and serialization |
+| [pydantic-extra-types](https://github.com/pydantic/pydantic-extra-types) | Extra validation |
+| [pydantic-settings](https://pydantic.dev/docs/validation/latest/concepts/pydantic_settings/) | Settings management |
+| [pyinstrument](https://pyinstrument.readthedocs.io/en/latest/guide.html#profile-a-web-request-in-fastapi) | Sampling profiler |
+| [pytest](https://docs.pytest.org/en/stable/) | Test framework |
+| [pytest-asyncio](https://pytest-asyncio.readthedocs.io/en/stable/) | Async tests |
+| [redis](https://redis.io/docs/latest/develop/clients/redis-py/) | Redis client |
+| [ruff](https://docs.astral.sh/ruff/) | Lint and format |
+| [starlette-securecookies](https://github.com/thearchitector/starlette-securecookies) | Cookie encryption |
+| [sqlalchemy](https://docs.sqlalchemy.org/en/21/) | Database engine and ORM |
+| [tzdata](https://tzdata.python.org/) | IANA timezones |
+| [uvicorn](https://uvicorn.dev/) | ASGI webserver |
+| [whenever](https://whenever.readthedocs.io/en/latest/) | Type-safe datetimes |
 
-External services:
-- [Garage S3](https://garagehq.deuxfleurs.fr/)
-- [Keycloak](https://www.keycloak.org/guides) (OpenID provider)
-- [PostgreSQL](https://www.postgresql.org/docs/current/index.html)
+| Service | Description |
+|--:|---|
+| [Garage S3](https://garagehq.deuxfleurs.fr/) | Self-hosted S3 |
+| [Keycloak](https://www.keycloak.org/guides) | OpenID provider |
+| [Redis](https://redis.io/docs/latest/develop/) | Key-value store |
+| [PostgreSQL](https://www.postgresql.org/docs/current/index.html) | Relational database |
