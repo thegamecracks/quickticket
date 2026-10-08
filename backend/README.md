@@ -41,7 +41,7 @@ Run the following command to create and migrate it to the latest database schema
 Afterwards, you need an OAuth2 client from an OpenID provider such as
 [Google](https://developers.google.com/identity/openid-connect/openid-connect#appsetup),
 [Keycloak](https://www.keycloak.org/), or [Authentik](https://goauthentik.io/).
-Make a [.env](/example.env) file containing the client ID, secret,
+Make a [.env](example.env) file containing the client ID, secret,
 and the provider's auto-discovery URL:
 
 ```ini
@@ -59,8 +59,8 @@ You can now start the webserver and use it from the frontend:
 ## Docker
 
 Using Docker or Podman, you can run the backend with additional services including
-Redis and PostgreSQL. To do this, create a [.env](/example.env) file if you haven't
-already, and adjust any passwords in [docker-compose.yml](/docker-compose.yml) if desired.
+Redis and PostgreSQL. To do this, create a [.env](example.env) file if you haven't
+already, and adjust any passwords in [docker-compose.yml](docker-compose.yml) if desired.
 
 ```sh
 /backend $ docker compose up
