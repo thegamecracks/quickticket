@@ -68,19 +68,6 @@ already, and adjust any passwords in [docker-compose.yml](docker-compose.yml) if
 /backend $ podman compose up
 ```
 
-## Running lints and formatting
-
-```sh
-/backend $ uv run ruff check --fix
-/backend $ uv run ruff format
-```
-
-## Running tests
-
-```sh
-/backend $ uv run pytest
-```
-
 ## Creating migrations
 
 When updating SQLAlchemy models, you can auto-generate a new migration with Alembic
@@ -120,6 +107,19 @@ If you need to revert this migration, run `uv run alembic downgrade -1` to downg
 the database schema, and then remove your old migration script.
 If this fails, you can delete the database and regenerate it with
 `uv run alembic upgrade head`.
+
+## Running lints and formatting
+
+```sh
+/backend $ uv run ruff check --fix
+/backend $ uv run ruff format
+```
+
+## Running tests
+
+```sh
+/backend $ uv run pytest
+```
 
 ## Resources
 
