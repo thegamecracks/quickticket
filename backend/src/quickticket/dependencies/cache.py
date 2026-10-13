@@ -28,22 +28,26 @@ async def get_cache(
     url = settings.cache.url.get_secret_value()
     if url.scheme == "sqlite":
         assert url.path is not None
-        conn = await aiosqlite.connect(
-            url.path[1:],
-            autocommit=True,
-            uri=True,
+        conn = await stack.enter_async_context(
+            aiosqlite.connect(
+                url.path[1:],
+                autocommit=True,
+                uri=True,
+            )
         )
         state.cache = await stack.enter_async_context(SQLiteCache(conn))
     elif url.scheme in ("redis", "rediss"):
         assert url.host is not None
         assert url.port is not None
-        client = Redis(
-            host=url.host,
-            port=url.port,
-            username=url.username,
-            password=url.password,
-            ssl=url.scheme == "rediss",
-            decode_responses=True,  # without this, bytes are returned instead of str
+        client = await stack.enter_async_context(
+            Redis(
+                host=url.host,
+                port=url.port,
+                username=url.username,
+                password=url.password,
+                ssl=url.scheme == "rediss",
+                decode_responses=True,  # without this, bytes are returned instead of str
+            )
         )
         state.cache = await stack.enter_async_context(RedisCache(client))
     else:

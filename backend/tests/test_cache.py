@@ -4,6 +4,7 @@ from datetime import timedelta
 import pytest
 from fastapi.datastructures import State
 
+from quickticket.cache import SQLiteCache
 from quickticket.dependencies.cache import get_cache
 from quickticket.settings import CacheSettings, Settings
 
@@ -28,3 +29,7 @@ async def test_sqlite_cache() -> None:
             await cache.set("a", "Hello world!")
             assert await cache.pop("a") == "Hello world!"
             assert await cache.get("a") is None
+
+    assert isinstance(cache, SQLiteCache)
+    with pytest.raises(ValueError, match="no active connection"):
+        await cache.client.rollback()

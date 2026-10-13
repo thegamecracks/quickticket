@@ -28,7 +28,7 @@ class RedisCache(Cache):
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         log.debug("Closing %s", type(self).__name__)
-        await self.client.aclose()
+        # await self.client.aclose()  # caller's repsonsibility
 
     async def get(self, key: str) -> Any | None:
         log.debug("cache.get(%r)", key)
@@ -57,20 +57,17 @@ class RedisCache(Cache):
 class SQLiteCache(Cache):
     def __init__(self, client: aiosqlite.Connection) -> None:
         self.client = client
-        self._created_schema = False
 
     async def __aenter__(self) -> Self:
         log.debug("Entering %s", type(self).__name__)
+        await self._create_schema()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         log.debug("Closing %s", type(self).__name__)
-        await self.client.close()
+        # await self.client.close()  # caller's responsibility
 
     async def _create_schema(self) -> None:
-        if self._created_schema:
-            return
-
         log.debug("Creating %s schema", type(self).__name__)
         await self.client.execute(
             """
@@ -86,11 +83,9 @@ class SQLiteCache(Cache):
             (datetime.now(UTC).timestamp(),),
         )
         await self.client.commit()
-        self._created_schema = True
 
     async def get(self, key: str) -> Any | None:
         log.debug("cache.get(%r)", key)
-        await self._create_schema()
 
         c = await self.client.execute(
             "SELECT value FROM kv_cache WHERE key = ?1 AND (expires_at IS NULL OR expires_at > ?2)",
@@ -108,7 +103,6 @@ class SQLiteCache(Cache):
         expiry: timedelta | None = None,
     ) -> None:
         log.debug("cache.set(%r)", key)
-        await self._create_schema()
 
         expires_at: float | None = None
         if expiry is not None:
@@ -123,7 +117,6 @@ class SQLiteCache(Cache):
 
     async def delete(self, key: str) -> bool:
         log.debug("cache.delete(%r)", key)
-        await self._create_schema()
 
         c = await self.client.execute("DELETE FROM kv_cache WHERE key = ?1", (key,))
         await self.client.commit()
@@ -131,7 +124,6 @@ class SQLiteCache(Cache):
 
     async def pop(self, key: str) -> Any | None:
         log.debug("cache.pop(%r)", key)
-        await self._create_schema()
 
         c = await self.client.execute(
             "DELETE FROM kv_cache WHERE key = ?1 RETURNING value",
