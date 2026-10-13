@@ -8,6 +8,11 @@ from redis.asyncio import Redis
 from quickticket.cache import Cache, RedisCache, SQLiteCache
 from quickticket.dependencies.state import AsyncExitStackDep, SettingsDep, StateDep
 
+__all__ = (
+    "CacheDep",
+    "get_cache",
+)
+
 log = logging.getLogger(__name__)
 
 
