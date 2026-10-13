@@ -1,6 +1,6 @@
 import logging
 from collections.abc import AsyncGenerator
-from typing import Annotated, cast
+from typing import Annotated, Any, cast
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import (
@@ -35,7 +35,13 @@ def get_async_engine(
         return engine
 
     url = str(settings.db.url.get_secret_value())
-    state.engine = create_async_engine(url)
+
+    connect_args: dict[str, Any] = {}
+    if url.startswith("sqlite"):
+        # https://docs.sqlalchemy.org/en/21/dialects/sqlite.html#enabling-non-legacy-sqlite-transactional-modes-with-the-sqlite3-or-aiosqlite-driver
+        connect_args["autocommit"] = False
+
+    state.engine = create_async_engine(url, connect_args=connect_args)
     stack.push_async_callback(state.engine.dispose)
     return state.engine
 
