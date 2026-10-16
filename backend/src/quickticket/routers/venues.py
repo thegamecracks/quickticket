@@ -133,7 +133,7 @@ async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: U
     return venue
 
 
-@router.post("")
+@router.post("", deprecated=True)
 async def create_venue() -> None:
     """Create a new venue in an organization."""
     # TODO: check authorization by organization
@@ -141,14 +141,14 @@ async def create_venue() -> None:
     # TODO: allow venue drafts?
 
 
-@router.patch("/{venue_id}")
+@router.patch("/{venue_id}", deprecated=True)
 async def edit_venue(venue_id: UUID) -> None:
     """Edit a venue's details."""
     # TODO: check authorization by organization
     # TODO: allow venue drafts?
 
 
-@router.delete("/{venue_id}")
+@router.delete("/{venue_id}", deprecated=True)
 async def delete_venue(venue_id: UUID) -> None:
     """Delete a venue."""
     # TODO: check authorization by organization

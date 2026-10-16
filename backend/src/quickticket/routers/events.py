@@ -115,7 +115,7 @@ async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: U
     return event
 
 
-@router.post("")
+@router.post("", deprecated=True)
 async def create_event() -> None:
     """Create a new event for a venue."""
     # TODO: check authorization by organization
@@ -123,7 +123,7 @@ async def create_event() -> None:
     # TODO: allow event drafts?
 
 
-@router.patch("/{event_id}")
+@router.patch("/{event_id}", deprecated=True)
 async def edit_event(event_id: UUID) -> None:
     """Edit an event's details."""
     # TODO: check authorization by organization
@@ -131,7 +131,7 @@ async def edit_event(event_id: UUID) -> None:
     # TODO: allow event drafts?
 
 
-@router.delete("/{event_id}")
+@router.delete("/{event_id}", deprecated=True)
 async def delete_event(event_id: UUID) -> None:
     """Delete an event."""
     # TODO: check authorization by organization
