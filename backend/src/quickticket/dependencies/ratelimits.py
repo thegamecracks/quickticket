@@ -37,7 +37,7 @@ RATELIMIT_ROUTES: dict[Pattern, RateLimitItem] = {
 log = logging.getLogger(__name__)
 
 
-def get_limits_storage(state: StateDep) -> Storage:
+async def get_limits_storage(state: StateDep) -> Storage:
     # TODO: create a quickticket Cache-compatible adapter to act as storage
     storage = cast(Storage | None, getattr(state, "limits_storage", None))
     if storage is not None:
@@ -47,7 +47,7 @@ def get_limits_storage(state: StateDep) -> Storage:
     return state.limits_storage
 
 
-def get_limits_strategy(state: StateDep, storage: LimitsStorageDep) -> RateLimiter:
+async def get_limits_strategy(state: StateDep, storage: LimitsStorageDep) -> RateLimiter:
     strategy = cast(RateLimiter | None, getattr(state, "limits_strategy", None))
     if strategy is not None:
         return strategy
@@ -56,7 +56,7 @@ def get_limits_strategy(state: StateDep, storage: LimitsStorageDep) -> RateLimit
     return state.strategy
 
 
-def get_request_identifier(request: Request, user: OptionalUserDep) -> tuple[str, ...]:
+async def get_request_identifier(request: Request, user: OptionalUserDep) -> tuple[str, ...]:
     # Maybe key the limit by account type, "user" vs. "admin" vs. "bot"
     if user is not None:
         return (str(user.id),)
@@ -69,7 +69,7 @@ def get_request_identifier(request: Request, user: OptionalUserDep) -> tuple[str
     return (address.host,)
 
 
-def get_request_limits(request: Request, user: OptionalUserDep) -> Sequence[RateLimitItem]:
+async def get_request_limits(request: Request, user: OptionalUserDep) -> Sequence[RateLimitItem]:
     # Optionally adjust limit by account type
     # log.debug(
     #     "%s buckets: %s",

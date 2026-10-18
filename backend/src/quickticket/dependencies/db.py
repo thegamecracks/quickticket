@@ -25,7 +25,7 @@ __all__ = (
 log = logging.getLogger(__name__)
 
 
-def get_async_engine(
+async def get_async_engine(
     settings: SettingsDep,
     stack: AsyncExitStackDep,
     state: StateDep,
@@ -46,7 +46,7 @@ def get_async_engine(
     return state.engine
 
 
-def get_async_sessionmaker(
+async def get_async_sessionmaker(
     engine: AsyncEngineDep,
 ) -> async_sessionmaker[AsyncSession]:
     return async_sessionmaker(engine, expire_on_commit=False)

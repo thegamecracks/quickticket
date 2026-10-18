@@ -18,7 +18,7 @@ __all__ = (
 log = logging.getLogger(__name__)
 
 
-def get_allowed_redirect_uri(
+async def get_allowed_redirect_uri(
     settings: SettingsDep,
     request: Request,
     redirect_uri: Annotated[
@@ -38,7 +38,7 @@ def get_allowed_redirect_uri(
     return URL(str(redirect_uri))
 
 
-def get_post_redirect_uri(
+async def get_post_redirect_uri(
     settings: SettingsDep,
     request: Request,
     redirect_cookie: Annotated[HttpUrl | None, OAuthPostRedirectCookie] = None,

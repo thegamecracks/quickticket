@@ -259,7 +259,7 @@ async def get_or_refresh_access_token(
     return access_token
 
 
-def get_valid_access_token(access_token: OptionalAccessTokenDep) -> AccessToken:
+async def get_valid_access_token(access_token: OptionalAccessTokenDep) -> AccessToken:
     if access_token is None:
         raise HTTPException(401, "Not authenticated")
     return access_token

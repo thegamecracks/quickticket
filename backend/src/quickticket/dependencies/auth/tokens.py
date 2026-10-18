@@ -27,7 +27,7 @@ __all__ = (
 log = logging.getLogger(__name__)
 
 
-def get_access_claims_registry(
+async def get_access_claims_registry(
     settings: SettingsDep,
     provider: OpenIDProviderDep,
 ) -> JWTClaimsRegistry:
@@ -44,7 +44,7 @@ def get_access_claims_registry(
     return registry
 
 
-def get_id_claims_registry(
+async def get_id_claims_registry(
     settings: SettingsDep,
     provider: OpenIDProviderDep,
 ) -> JWTClaimsRegistry:

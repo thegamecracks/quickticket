@@ -1,7 +1,6 @@
 import logging
 from collections.abc import AsyncGenerator
 from contextlib import AsyncExitStack
-from functools import cache
 from typing import Annotated, cast
 
 import httpx2
@@ -24,16 +23,20 @@ __all__ = (
 log = logging.getLogger(__name__)
 
 
-@cache
-def get_settings() -> Settings:
-    return Settings()
-
-
-def get_state(request: Request) -> State:
+async def get_state(request: Request) -> State:
     return cast(FastAPI, request.app).state
 
 
-def get_async_exit_stack(state: StateDep) -> AsyncExitStack:
+async def get_settings(state: StateDep) -> Settings:
+    settings = cast(Settings | None, getattr(state, "settings", None))
+    if settings is not None:
+        return settings
+
+    state.settings = Settings()
+    return state.settings
+
+
+async def get_async_exit_stack(state: StateDep) -> AsyncExitStack:
     return cast(AsyncExitStack, state.stack)  # set in lifespan function
 
 
