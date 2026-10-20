@@ -171,6 +171,8 @@ class S3Settings(BaseSettings):
     See also: https://docs.aws.amazon.com/general/latest/gr/s3.html
 
     """
+    region: Secret[str]
+    """The region used for authentication."""
     access_key: Secret[str]
     """The access key used for authentication."""
     secret_key: Secret[str]
