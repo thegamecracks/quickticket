@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import ForeignKey, text
@@ -9,7 +10,10 @@ from quickticket.models.accounts import User
 from quickticket.models.base import Base
 from quickticket.models.money import Money
 from quickticket.models.organizations import Organization
-from quickticket.models.types import Point, current_timestamp, pk_uuid, str_128, str_2000, str_4096
+from quickticket.models.types import Point, current_timestamp, pk_uuid, str_128, str_4096
+
+if TYPE_CHECKING:
+    from quickticket.models.storage import StorageObject
 
 __all__ = (
     "Event",
@@ -30,13 +34,25 @@ class Venue(Base):
     display_name: Mapped[str_128]
     description: Mapped[str_4096]
     theme: Mapped[str_128]
-    thumbnail_url: Mapped[str_2000]
-    banner_url: Mapped[str_2000]
+    thumbnail_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("storage_object.storage_object_id", ondelete="SET NULL"),
+    )
+    banner_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("storage_object.storage_object_id", ondelete="SET NULL"),
+    )
     location_name: Mapped[str_128]
     location_coords: Mapped[Point | None]
 
+    banner: Mapped[StorageObject | None] = relationship(
+        foreign_keys=[banner_id],
+        passive_deletes=True,
+    )
     events: Mapped[list[Event]] = relationship(back_populates="venue")
     organization: Mapped[Organization] = relationship(back_populates="venues")
+    thumbnail: Mapped[StorageObject | None] = relationship(
+        foreign_keys=[thumbnail_id],
+        passive_deletes=True,
+    )
 
 
 class Event(Base):
@@ -51,8 +67,12 @@ class Event(Base):
     display_name: Mapped[str_128]
     description: Mapped[str_4096]
     theme: Mapped[str_128]
-    thumbnail_url: Mapped[str_2000]
-    banner_url: Mapped[str_2000]
+    thumbnail_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("storage_object.storage_object_id", ondelete="SET NULL"),
+    )
+    banner_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("storage_object.storage_object_id", ondelete="SET NULL"),
+    )
     starts_at: Mapped[current_timestamp]  # requires user input
     ends_at: Mapped[current_timestamp]  # requires user input
     ticket_price: Mapped[Money] = mapped_column(
@@ -61,6 +81,14 @@ class Event(Base):
     )
     max_attendees: Mapped[int] = mapped_column(default=0, server_default=text("0"))
 
+    banner: Mapped[StorageObject | None] = relationship(
+        foreign_keys=[banner_id],
+        passive_deletes=True,
+    )
+    thumbnail: Mapped[StorageObject | None] = relationship(
+        foreign_keys=[thumbnail_id],
+        passive_deletes=True,
+    )
     tickets: Mapped[list[Ticket]] = relationship(back_populates="event")
     venue: Mapped[Venue] = relationship(back_populates="events")
 

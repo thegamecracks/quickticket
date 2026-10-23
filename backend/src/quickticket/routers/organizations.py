@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 
 from quickticket.dependencies.auth import OptionalUserDep
 from quickticket.dependencies.db import AsyncSessionDep
-from quickticket.models import Event, Organization, OrganizationMember, Ticket, Venue
+from quickticket.models import Event, Organization, OrganizationMember, StorageObject, Ticket, Venue
 
 router = APIRouter(tags=["Organizations"])
 log = logging.getLogger(__name__)
@@ -36,14 +36,18 @@ async def get_organizations(session: AsyncSessionDep) -> Any:
     return {"organizations": organizations.all()}
 
 
+class PartialStorageObject(BaseModel):
+    id: UUID
+
+
 class PartialEvent(BaseModel):
     id: UUID
     created_at: datetime
     display_name: str
     description: str
     theme: str
-    thumbnail_url: str
-    # banner_url: str
+    thumbnail: PartialStorageObject | None
+    # banner: PartialStorageObject | None
     # starts_at: datetime
     # ends_at: datetime
     # ticket_price: Money
@@ -56,8 +60,8 @@ class PartialVenue(BaseModel):
     display_name: str
     description: str
     theme: str
-    thumbnail_url: str
-    # banner_url: str
+    thumbnail: PartialStorageObject | None
+    # banner: PartialStorageObject | None
     # location_name: str
     # location_coords: Point | None
 
@@ -96,7 +100,6 @@ async def get_organization(
                 Venue.display_name,
                 Venue.description,
                 Venue.theme,
-                Venue.thumbnail_url,
             )
             .selectinload(Venue.events)
             .load_only(
@@ -105,13 +108,16 @@ async def get_organization(
                 Event.display_name,
                 Event.description,
                 Event.theme,
-                Event.thumbnail_url,
             )
             .selectinload(
                 # TODO: return all tickets if user has permission from organization
                 Event.tickets.and_(Ticket.account_id == user.id if user is not None else false())
             )
             .load_only(Ticket.id),
+            selectinload(Organization.venues, Venue.thumbnail).load_only(StorageObject.id),
+            selectinload(Organization.venues, Venue.events, Event.thumbnail).load_only(
+                StorageObject.id
+            ),
             # Organization => OrganizationMembers
             selectinload(Organization.members).load_only(OrganizationMember.account_id),
         )

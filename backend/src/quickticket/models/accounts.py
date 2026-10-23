@@ -21,6 +21,7 @@ from quickticket.models.types import (
 if TYPE_CHECKING:
     from quickticket.models.events import Ticket
     from quickticket.models.organizations import Organization, OrganizationMember
+    from quickticket.models.storage import StorageObject
 
 __all__ = (
     "Address",
@@ -61,6 +62,9 @@ class User(Base):
     )
     organization_members: Mapped[list[OrganizationMember]] = relationship(
         back_populates="user",
+    )
+    storage_objects: Mapped[list[StorageObject]] = relationship(
+        passive_deletes=True,
     )
     tickets: Mapped[list[Ticket]] = relationship(
         back_populates="user",

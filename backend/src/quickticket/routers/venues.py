@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 
 from quickticket.dependencies.auth import OptionalUserDep
 from quickticket.dependencies.db import AsyncSessionDep
-from quickticket.models import Event, Money, Point, Ticket, Venue
+from quickticket.models import Event, Money, Point, StorageObject, Ticket, Venue
 
 router = APIRouter(tags=["Venues"])
 log = logging.getLogger(__name__)
@@ -31,14 +31,18 @@ class PartialOrganization(BaseModel):
     display_name: str
 
 
+class PartialStorageObject(BaseModel):
+    id: UUID
+
+
 class PartialVenue(BaseModel):
     id: UUID
     created_at: datetime
     display_name: str
     description: str
     theme: str
-    thumbnail_url: str
-    banner_url: str
+    thumbnail: PartialStorageObject | None
+    banner: PartialStorageObject | None
     location_name: str
     location_coords: Point | None
 
@@ -63,6 +67,8 @@ async def get_venues(user: OptionalUserDep, session: AsyncSessionDep) -> Any:
         # .join(Organization, Venue.organization)
         .order_by(Venue.created_at.desc())
         .options(
+            selectinload(Venue.banner).load_only(StorageObject.id),
+            selectinload(Venue.thumbnail).load_only(StorageObject.id),
             # Venue => Events => Tickets
             selectinload(Venue.events)
             .load_only(Event.id)
@@ -84,8 +90,8 @@ class VenueReadEvent(BaseModel):
     display_name: str
     description: str
     theme: str
-    thumbnail_url: str
-    banner_url: str
+    thumbnail: PartialStorageObject | None
+    banner: PartialStorageObject | None
     starts_at: datetime
     ends_at: datetime
     ticket_price: Money
@@ -100,8 +106,8 @@ class VenueRead(BaseModel):
     display_name: str
     description: str
     theme: str
-    thumbnail_url: str
-    banner_url: str
+    thumbnail: PartialStorageObject | None
+    banner: PartialStorageObject | None
     location_name: str
     location_coords: Point | None
 
@@ -116,6 +122,8 @@ async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: U
         select(Venue)
         .where(Venue.id == venue_id)
         .options(
+            selectinload(Venue.banner).load_only(StorageObject.id),
+            selectinload(Venue.thumbnail).load_only(StorageObject.id),
             # Venue => Events => Tickets
             selectinload(Venue.events)
             .selectinload(

@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 
 from quickticket.dependencies.auth import OptionalUserDep
 from quickticket.dependencies.db import AsyncSessionDep
-from quickticket.models import Event, Money, Point, Ticket, Venue
+from quickticket.models import Event, Money, Point, StorageObject, Ticket, Venue
 
 router = APIRouter(tags=["Events"])
 log = logging.getLogger(__name__)
@@ -26,14 +26,18 @@ class PartialOrganization(BaseModel):
     display_name: str
 
 
+class PartialStorageObject(BaseModel):
+    id: UUID
+
+
 class PartialVenue(BaseModel):
     id: UUID
     created_at: datetime
     display_name: str
     description: str
     theme: str
-    thumbnail_url: str
-    banner_url: str
+    thumbnail: PartialStorageObject | None
+    banner: PartialStorageObject | None
     location_name: str
     location_coords: Point | None
 
@@ -46,8 +50,8 @@ class EventRead(BaseModel):
     display_name: str
     description: str
     theme: str
-    thumbnail_url: str
-    banner_url: str
+    thumbnail: PartialStorageObject | None
+    banner: PartialStorageObject | None
     starts_at: datetime
     ends_at: datetime
     ticket_price: Money
@@ -72,19 +76,20 @@ async def get_events(user: OptionalUserDep, session: AsyncSessionDep) -> Any:
         select(Event)
         .order_by(Event.created_at.desc())
         .options(
-            selectinload(Event.venue)
-            .load_only(
+            selectinload(Event.banner).load_only(StorageObject.id),
+            selectinload(Event.thumbnail).load_only(StorageObject.id),
+            selectinload(Event.venue).load_only(
                 Venue.id,
                 Venue.created_at,
                 Venue.display_name,
                 Venue.description,
                 Venue.theme,
-                Venue.thumbnail_url,
-                Venue.banner_url,
                 Venue.location_name,
                 Venue.location_coords,
-            )
-            .selectinload(Venue.organization),
+            ),
+            selectinload(Event.venue, Venue.banner).load_only(StorageObject.id),
+            selectinload(Event.venue, Venue.thumbnail).load_only(StorageObject.id),
+            selectinload(Event.venue, Venue.organization),
             selectinload(
                 # TODO: return all tickets if user has permission from organization
                 Event.tickets.and_(Ticket.account_id == user.id if user is not None else false())
