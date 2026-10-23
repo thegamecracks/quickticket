@@ -77,10 +77,26 @@ class PointSerializer(TypeDecorator):
 
 
 # https://gist.github.com/alexa-infra/1a2488e4980e4e3c239aaf962eab06b6
-# Set uuidv4() default function for non-foreign key UUID columns
+# Implicitly set uuidv4() default function for UUID columns
 @compiles(Uuid, "postgresql")
 def compile_uuid_postgresql(element, compiler, **kw):
     expr: Column | None = kw.get("type_expression")
-    if expr is not None and not expr.server_default and not expr.foreign_keys:
-        expr.server_default = DefaultClause(func.uuidv4())
+    if expr is None:
+        return compiler.visit_UUID(element, **kw)
+    elif expr.server_default is not None:
+        # Don't override server default if it's defined.
+        return compiler.visit_UUID(element, **kw)
+    elif expr.nullable:
+        # For nullable columns, assume a UUID default isn't required.
+        return compiler.visit_UUID(element, **kw)
+    elif expr.foreign_keys or not expr.primary_key:
+        # Don't generate UUIDs for foreign keys.
+        #
+        # In practice, `expr.foreign_keys` doesn't work with Alembic since ForeignKey()
+        # constraints are added after the column is created.
+        #
+        # As a workaround, we'll only apply the default UUID for primary keys.
+        return compiler.visit_UUID(element, **kw)
+
+    expr.server_default = DefaultClause(func.uuidv4())
     return compiler.visit_UUID(element, **kw)
