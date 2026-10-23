@@ -47,7 +47,7 @@ class PartialEvent(BaseModel):
     description: str
     theme: str
     thumbnail: PartialStorageObject | None
-    # banner: PartialStorageObject | None
+    banner: PartialStorageObject | None
     # starts_at: datetime
     # ends_at: datetime
     # ticket_price: Money
@@ -61,7 +61,7 @@ class PartialVenue(BaseModel):
     description: str
     theme: str
     thumbnail: PartialStorageObject | None
-    # banner: PartialStorageObject | None
+    banner: PartialStorageObject | None
     # location_name: str
     # location_coords: Point | None
 
@@ -114,7 +114,11 @@ async def get_organization(
                 Event.tickets.and_(Ticket.account_id == user.id if user is not None else false())
             )
             .load_only(Ticket.id),
+            selectinload(Organization.venues, Venue.banner).load_only(StorageObject.id),
             selectinload(Organization.venues, Venue.thumbnail).load_only(StorageObject.id),
+            selectinload(Organization.venues, Venue.events, Event.banner).load_only(
+                StorageObject.id
+            ),
             selectinload(Organization.venues, Venue.events, Event.thumbnail).load_only(
                 StorageObject.id
             ),
