@@ -4,7 +4,7 @@ import EventCard from '../../components/EventCard'
 import { useEffect, useState } from 'react'
 import { Pagination, safePage } from '../../components/Pagination'
 import type { Event } from './types.ts'
-import { MockEvents } from '../../lib/mocks'
+import { getMockAllEvents } from '../../lib/mocks'
 
 //  TODO: figure out how to bring back categories
 // Available event categories
@@ -35,7 +35,7 @@ export default function EventsPage() {
   useEffect(() => {
     // eventual const res = api.get("/events");
     const getEvents = (): void => {
-      const res = MockEvents;
+      const res = getMockAllEvents();
       setEvents(res);
     }
 
