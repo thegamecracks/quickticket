@@ -107,23 +107,27 @@ export default function EventCreationPage({
     const finalTheme =
       theme === 'Other' ? otherTheme.trim() : theme
 
-    const mockEvent = {
+    const mockEvent: Omit<Event, 'id' | 'created_at'> = {
       venue_id: venueId,
       display_name: displayName,
       description,
       theme: finalTheme,
-      thumbnail_url: thumbnailUrl,
+      // Fall back to the shared placeholder so cards never render a broken image.
+      thumbnail_url:
+        thumbnailUrl ||
+        'https://placehold.co/800x450/272c35/ffffff?text=QuickTicket+Event',
       banner_url: bannerUrl,
-      starts_at: startsAt,
-      ends_at: endsAt,
+      starts_at: new Date(startsAt).toISOString(),
+      ends_at: new Date(endsAt).toISOString(),
       ticket_price: {
-        amount: Number(ticketPrice),
+        amount: isFree ? 0 : Math.round(Number(ticketPrice) * 100),
         currency: 'CAD',
       },
       max_attendees: Number(maxAttendees),
     }
 
-    console.log('Mock event submission:', mockEvent)
+    const created = createMockEvent(mockEvent)
+    console.log('Mock event submission:', created)
 
     setIsError(false)
     setMessage('Event information submitted successfully.')
@@ -508,9 +512,8 @@ export default function EventCreationPage({
         {/* Form message */}
         {message && (
           <div
-            className={`alert ${
-              isError ? 'alert-error' : 'alert-success'
-            }`}
+            className={`alert ${isError ? 'alert-error' : 'alert-success'
+              }`}
           >
             <span>{message}</span>
           </div>
