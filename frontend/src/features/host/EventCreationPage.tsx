@@ -1,4 +1,11 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type ChangeEvent, type SubmitEvent } from 'react'
+import type { Event } from '../events/types'
+import {
+  MockUser,
+  createMockEvent,
+  getMockOrganizationsForAccount,
+  getMockVenuesForOrganization,
+} from '../../lib/mocks'
 
 const themes = [
   'Music',
@@ -11,27 +18,35 @@ const themes = [
   'Other',
 ]
 
-const mockVenues = [
-  {
-    id: '11111111-1111-1111-1111-111111111111',
-    name: 'Downtown Event Hall',
-  },
-  {
-    id: '22222222-2222-2222-2222-222222222222',
-    name: 'City Convention Centre',
-  },
-  {
-    id: '33333333-3333-3333-3333-333333333333',
-    name: 'Community Arts Centre',
-  },
-]
+interface EventCreationPageProps {
+  /**
+   * Organization the event is created under. Eventually supplied by the
+   * wizard flow (after org + venue creation); falls back to the mock
+   * user's first organization for now.
+   */
+  organizationId?: string
+  /** Preselected venue, e.g. the one just created in the wizard. */
+  venueId?: string
+}
 
-export default function EventCreationPage() {
+export default function EventCreationPage({
+  organizationId: wizardOrganizationId,
+  venueId: wizardVenueId,
+}: EventCreationPageProps) {
+  // replace mock lookup with real wizard/router values later
+  const organizations = getMockOrganizationsForAccount(MockUser.id)
+  const organization = wizardOrganizationId
+    ? organizations.find((o) => o.id === wizardOrganizationId)
+    : organizations[0]
+
+  const orgVenues = organization
+    ? getMockVenuesForOrganization(organization.id)
+    : []
   const [displayName, setDisplayName] = useState('')
   const [description, setDescription] = useState('')
   const [theme, setTheme] = useState('')
   const [otherTheme, setOtherTheme] = useState('')
-  const [venueId, setVenueId] = useState('')
+  const [venueId, setVenueId] = useState(wizardVenueId ?? '')
   const [startsAt, setStartsAt] = useState('')
   const [endsAt, setEndsAt] = useState('')
   const [ticketPrice, setTicketPrice] = useState('')
@@ -46,7 +61,7 @@ export default function EventCreationPage() {
     setDescription('')
     setTheme('')
     setOtherTheme('')
-    setVenueId('')
+    setVenueId(wizardVenueId ?? '')
     setStartsAt('')
     setEndsAt('')
     setTicketPrice('')
@@ -219,9 +234,9 @@ export default function EventCreationPage() {
                     Select a venue
                   </option>
 
-                  {mockVenues.map((venue) => (
+                  {orgVenues.map((venue) => (
                     <option key={venue.id} value={venue.id}>
-                      {venue.name}
+                      {venue.display_name}
                     </option>
                   ))}
                 </select>
