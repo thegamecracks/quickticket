@@ -74,7 +74,7 @@ export default function EventCreationPage({
     setIsError(false)
   }
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     if (theme === 'Other' && !otherTheme.trim()) {
