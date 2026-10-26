@@ -50,6 +50,7 @@ export default function EventCreationPage({
   const [startsAt, setStartsAt] = useState('')
   const [endsAt, setEndsAt] = useState('')
   const [ticketPrice, setTicketPrice] = useState('')
+  const [isFree, setIsFree] = useState(false)
   const [maxAttendees, setMaxAttendees] = useState('')
   const [thumbnailUrl, setThumbnailUrl] = useState('')
   const [bannerUrl, setBannerUrl] = useState('')
@@ -65,6 +66,7 @@ export default function EventCreationPage({
     setStartsAt('')
     setEndsAt('')
     setTicketPrice('')
+    setIsFree(false)
     setMaxAttendees('')
     setThumbnailUrl('')
     setBannerUrl('')
@@ -347,15 +349,27 @@ export default function EventCreationPage({
                   placeholder="0.00"
                   min="0"
                   step="0.01"
-                  value={ticketPrice}
+                  value={isFree ? '' : ticketPrice}
                   onChange={(e) => setTicketPrice(e.target.value)}
-                  required
+                  disabled={isFree}
+                  required={!isFree}
                 />
 
                 <span className="flex items-center rounded-r-lg border border-l-0 border-base-300 bg-base-200 px-3 text-xs">
                   CAD
                 </span>
               </div>
+
+              <label className="mt-2 flex cursor-pointer items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="checkbox checkbox-sm"
+                  checked={isFree}
+                  onChange={(e) => setIsFree(e.target.checked)}
+                />
+
+                This is a free event
+              </label>
             </div>
 
             <div>
