@@ -1,10 +1,14 @@
-import { Link, NavLink } from 'react-router'
+import { Link, NavLink, useLocation } from 'react-router'
 import { MockUser } from '../lib/mocks'
 import { useAuth } from '../lib/auth'
 
 export default function Navbar() {
-  const { login, logout, user } = useAuth();
+  const { login, mockLogin, logout, user } = useAuth();
+  const location = useLocation();
 
+  const handleLogin = () => {
+    login(`${window.location.origin}${location.pathname}`);
+  }
 
 
   return (
@@ -26,8 +30,8 @@ export default function Navbar() {
         </NavLink>
       </nav>
       <div className="navbar-end">
-        {user ? (
-          <div className="dropdown dropdown-end">
+        {user === undefined ? null : user ? (
+          < div className="dropdown dropdown-end">
             <div tabIndex={0} role="button" className="avatar">
               <div className="w-10 rounded-full">
                 <img alt='avatar' src={'https://ui-avatars.com/api/?name=' + user?.first_name + "+" + user?.last_name} />
@@ -44,7 +48,7 @@ export default function Navbar() {
         ) : (
           <button
             className="btn btn-primary btn-sm"
-            onClick={() => login(MockUser)}
+            onClick={() => handleLogin()}
           >
             Sign in
           </button>
