@@ -57,6 +57,21 @@ export default function EventCreationPage({
   const [message, setMessage] = useState('')
   const [isError, setIsError] = useState(false)
 
+  const thumbnailInputRef = useRef<HTMLInputElement>(null)
+  const bannerInputRef = useRef<HTMLInputElement>(null)
+
+  const readImage = (
+    e: ChangeEvent<HTMLInputElement>,
+    setUrl: (url: string) => void,
+  ) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => setUrl(reader.result as string)
+    reader.readAsDataURL(file)
+  }
+
   const clearForm = () => {
     setDisplayName('')
     setDescription('')
@@ -405,23 +420,41 @@ export default function EventCreationPage({
 
           <div className="space-y-6">
             <div>
-              <label
-                htmlFor="thumbnailUrl"
-                className="mb-2 block text-sm font-medium"
-              >
-                Thumbnail Image URL
-              </label>
+              <div className="mb-2 flex items-center justify-between">
+                <span className="block text-sm font-medium">
+                  Thumbnail Image
+                </span>
 
-              <input
-                id="thumbnailUrl"
-                type="url"
-                className="input input-bordered w-full"
-                placeholder="https://example.com/thumbnail.jpg"
-                value={thumbnailUrl}
-                onChange={(e) => setThumbnailUrl(e.target.value)}
-                maxLength={2000}
-                required
-              />
+                <input
+                  ref={thumbnailInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => readImage(e, setThumbnailUrl)}
+                />
+
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() => thumbnailInputRef.current?.click()}
+                >
+                  Upload Image
+                </button>
+              </div>
+
+              <div className="flex min-h-32 items-center justify-center overflow-hidden rounded-lg border border-dashed border-base-300 bg-base-200">
+                {thumbnailUrl ? (
+                  <img
+                    src={thumbnailUrl}
+                    alt="Thumbnail preview"
+                    className="max-h-40 w-full object-contain"
+                  />
+                ) : (
+                  <span className="text-sm text-base-content/50">
+                    image preview
+                  </span>
+                )}
+              </div>
 
               <p className="mt-2 block text-xs text-base-content/50">
                 Used on event cards and search results.
@@ -429,23 +462,41 @@ export default function EventCreationPage({
             </div>
 
             <div>
-              <label
-                htmlFor="bannerUrl"
-                className="mb-2 block text-sm font-medium"
-              >
-                Banner Image URL
-              </label>
+              <div className="mb-2 flex items-center justify-between">
+                <span className="block text-sm font-medium">
+                  Banner Image
+                </span>
 
-              <input
-                id="bannerUrl"
-                type="url"
-                className="input input-bordered w-full"
-                placeholder="https://example.com/banner.jpg"
-                value={bannerUrl}
-                onChange={(e) => setBannerUrl(e.target.value)}
-                maxLength={2000}
-                required
-              />
+                <input
+                  ref={bannerInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => readImage(e, setBannerUrl)}
+                />
+
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() => bannerInputRef.current?.click()}
+                >
+                  Upload Image
+                </button>
+              </div>
+
+              <div className="flex min-h-32 items-center justify-center overflow-hidden rounded-lg border border-dashed border-base-300 bg-base-200">
+                {bannerUrl ? (
+                  <img
+                    src={bannerUrl}
+                    alt="Banner preview"
+                    className="max-h-40 w-full object-contain"
+                  />
+                ) : (
+                  <span className="text-sm text-base-content/50">
+                    image preview
+                  </span>
+                )}
+              </div>
 
               <p className="mt-2 block text-xs text-base-content/50">
                 Used as the large image on the event detail page.
