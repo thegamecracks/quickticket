@@ -101,7 +101,7 @@ export const MockOrganizations: MockOrganization[] = [
     id: '2cbd7222-4fd3-4cef-9500-79746e76da89',
     created_at: '2026-08-01T12:00:00.000Z',
     display_name: 'Classy Affairs',
-    member_ids: ['2911b7f6-3d3f-4d03-a09e-0bfe013ef161'],
+    member_ids: ['2911b7f6-3d3f-4d03-a09e-0bfe013ef161', MockUser.id],
   },
   {
     id: '8e21c0af-d7a0-4f06-940c-b23728ae59e1',
@@ -522,12 +522,41 @@ export const MockNotifications: Notification[] = [
 ]
 
 // ---------------------------------------------------------------------------
+// Created-event store (runtime; events created through the host flow)
+// ---------------------------------------------------------------------------
+
+/** Events created at runtime via createMockEvent (newest first at consumers). */
+export const MockCreatedEvents: Event[] = []
+
+/** All events a browser page should list: created-at-runtime ones plus seeded. */
+export const getMockAllEvents = (): Event[] => [...MockCreatedEvents, ...MockEvents]
+
+/** Persist a created event. Caller passes everything except id/created_at. */
+export const createMockEvent = (input: Omit<Event, 'id' | 'created_at'>): Event => {
+  const event: Event = {
+    ...input,
+    id: crypto.randomUUID(),
+    created_at: new Date().toISOString(),
+  }
+  MockCreatedEvents.push(event)
+  return event
+}
+
+// ---------------------------------------------------------------------------
 // Lookup helpers
 // ---------------------------------------------------------------------------
 
 export const getMockEvent = (id: string) => MockEvents.find((e) => e.id === id)
 
 export const getMockVenue = (id: string) => MockVenues.find((v) => v.id === id)
+
+/** Organizations an account is a member of. */
+export const getMockOrganizationsForAccount = (accountId: string) =>
+  MockOrganizations.filter((o) => o.member_ids.includes(accountId))
+
+/** Venues owned by an organization. */
+export const getMockVenuesForOrganization = (organizationId: string) =>
+  MockVenues.filter((v) => v.organization_id === organizationId)
 
 /** Tickets sold for an event (for availability = sold out vs max_attendees). */
 export const getMockTicketCount = (eventId: string) =>
