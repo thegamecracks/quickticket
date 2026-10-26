@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // get user profile!
   useEffect(() => {
-    api.get(`${API_URL}/profile/@me`)
+    api.get(`/profile/@me`)
       .then((res) => { console.log(res.data); setUser(res.data) })
       .catch(() => setUser(null));
   }, [])
