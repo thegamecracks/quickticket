@@ -1,0 +1,219 @@
+# AGENTS.md — QuickTicket
+
+Guidelines for coding agents working in the `quickticket` repository.
+
+QuickTicket is a web application for creating/discovering physical and virtual
+events and purchasing tickets. The repository is a monorepo:
+
+- `backend/` — a Python HTTP API serving JSON to the frontend, with
+  authentication delegated to an external OpenID provider (Keycloak in
+  production). **Agents currently work only in `backend/`** — this is not a
+  permanent restriction; the team will eventually support agents working in
+  the frontend, but not until instructions for doing so are added here.
+- `frontend/` — the real user-facing frontend, built with React.js.
+
+> **Note:** The `backend/src/quickticket/frontend/` package is a minimal
+> in-Python test frontend used to verify authentication; it is not the real
+> frontend and must not be extended.
+
+## Frontend
+
+**Agents must not touch `frontend/`.** Do not read, modify, or create files there.
+If work seems to require frontend changes, stop and wait for the user to provide
+specific instructions (including any updates to this file) before proceeding.
+
+This restriction is **not permanent** — the team plans to enable agent work
+in the frontend later, by adding instructions to this file. Until then,
+frontend changes are out of scope for agents.
+
+## Backend
+
+### Prerequisites
+
+- **Python 3.14+** (see `backend/.python-version`)
+- **uv** for dependency and environment management — always run project tools
+  through `uv run …`, never with a system/global Python
+- **Docker/Podman** (optional) for the full stack: PostgreSQL, Redis, Garage S3
+
+### Common commands
+
+All commands are run from the `backend/` directory (within the repository
+root):
+
+```sh
+# Install/sync dependencies
+uv sync
+
+# Start the dev webserver (hot reload; API docs at /docs and /redoc)
+uv run fastapi dev
+
+# Lint (auto-fix) and format
+uv run ruff check --fix
+uv run ruff format
+
+# Type check (ty from Astral; no config in pyproject.toml yet)
+uvx ty check
+
+# Run tests
+uv run pytest
+
+# Database migrations (Alembic)
+uv run alembic upgrade head                       # apply all migrations
+uv run alembic downgrade -1                       # revert the latest migration
+uv run alembic revision --autogenerate -m "…"     # generate a new migration
+
+# Full stack with Docker (backend + Redis + PostgreSQL)
+docker compose up
+```
+
+CI runs the same checks: `uv run -m pytest`, `uvx ty check`,
+`uv run ruff check`, and `uv run ruff format` (as a check, not a fixer).
+Run all four locally before finishing a change.
+
+### Configuration
+
+- Settings are defined in `backend/src/quickticket/settings.py` using
+  `pydantic-settings` and read from a `.env` file (see `backend/example.env`
+  for all available variables; never commit a real `.env` or secrets).
+- Environment variables use a **double-underscore nesting scheme**:
+  `BACKEND__SECTION__FIELD`, e.g.
+  - `BACKEND__OPENID__CLIENT_ID` / `CLIENT_SECRET` / `DISCOVERY_URL`
+  - `BACKEND__DB__URL` (SQLAlchemy URL; defaults to local SQLite via aiosqlite)
+  - `BACKEND__CACHE__URL` (supports `sqlite://`, `redis://`, `rediss://`)
+  - `BACKEND__SMTP__*`, `BACKEND__S3__*`, `BACKEND__SECURITY__*`, `BACKEND__LOG__*`
+- Local development defaults to SQLite (`quickticket.db`); the Docker compose
+  stack uses PostgreSQL and Redis. Migrations must work on both.
+- A `.env` with OpenID settings (client ID/secret/discovery URL) is required for
+  any authenticated flow; the app starts fine without it, but only for
+  unauthenticated use and API docs browsing.
+
+### Project structure
+
+```
+backend/
+├── src/quickticket/
+│   ├── app.py               # FastAPI app factory/instance, middleware, lifespan
+│   ├── settings.py          # pydantic-settings configuration (BACKEND__* vars)
+│   ├── oauth.py             # OpenID/OAuth2 client integration (authlib)
+│   ├── cache.py             # cache abstraction (SQLite / Redis backends)
+│   ├── logging.py           # logging setup and verbosity levels
+│   ├── errors.py            # shared error types (e.g. ForcedResponse)
+│   ├── models/              # SQLAlchemy ORM models (accounts, events,
+│   │                        #   organizations, venues, storage, money types)
+│   ├── routers/             # FastAPI API routers: auth, events, notifications,
+│   │                        #   organizations, profile, venues
+│   ├── dependencies/        # FastAPI dependencies: db, cache, cookies,
+│   │                        #   ratelimits, state, and auth/* (provider,
+│   │                        #   tokens, users, redirects)
+│   ├── frontend/            # minimal builtin frontend (testing only)
+│   └── alembic/             # Alembic setup + versioned migrations
+├── tests/                   # pytest tests (pytest-asyncio for async tests)
+├── config/                  # postgresql.conf, redis.conf for Docker services
+├── docker-compose.yml       # backend + Redis + PostgreSQL (Garage S3 TODO)
+├── example.env              # template of all BACKEND__* settings
+└── pyproject.toml           # project metadata, deps, ruff config
+```
+
+### Conventions and gotchas
+
+- **Ruff** is the only linter/formatter (line length 100,
+  `combine-as-imports = true` for isort). Run `uv run ruff check --fix` and
+  `uv run ruff format` before finishing a change.
+- The codebase is **fully async**: use async SQLAlchemy sessions, `httpx2`/
+  async clients, and `pytest-asyncio` for tests. Avoid blocking calls in
+  request handlers.
+- Settings are instantiated at module import time in `app.py`
+  (`_settings = Settings()`); changing settings requires restarting the dev
+  server.
+- **Authentication is external.** Never implement password storage, login
+  forms, or credential checks in this backend — identity comes from the OpenID
+  provider's ID token via `quickticket.oauth` and `dependencies/auth/`. The
+  optional `BACKEND__OPENID__ADMIN_GROUP` setting gates admin privileges via a
+  `groups` claim.
+- **OpenID provider requirements** (relevant when configuring or debugging
+  `BACKEND__OPENID__*`):
+  - Required ID token claims are defined in
+    `src/quickticket/dependencies/auth/tokens.py` as Pydantic models and as
+    essential claims in the `JWTClaimsRegistry` validators — required
+    parameters there imply required claims. This includes
+    `email`, `email_verified: true`, `name`, `given_name`, `family_name`,
+    `preferred_username`, and `groups`.
+  - Requested scopes are defined in `src/quickticket/oauth.py`:
+    `openid`, `email`, `profile`, `offline_access` (intersected with the
+    provider's advertised `scopes_supported`).
+  - Not every authorization server satisfies these requirements even when
+    configured correctly — Google, GitHub OAuth, and Authentik each behave
+    differently. Assume provider-specific gaps are a real possibility rather
+    than a misconfiguration on our side.
+- Cookies are handled by `starlette-securecookies` (encrypted cookies); token
+  and CSRF secrets come from `BACKEND__SECURITY__*` settings.
+
+#### Database migrations
+
+- When changing SQLAlchemy models, always generate an Alembic migration in the
+  same change; never edit `alembic/versions/` history destructively once
+  migrations may have been applied elsewhere.
+- **Review auto-generated migrations carefully** — autogenerate diffs the live
+  database and can produce unwanted objects or miss ambiguities. For a clean
+  diff, recreate the SQLite database first:
+  ```sh
+  unset BACKEND__DB__URL
+  rm quickticket.db
+  uv run alembic upgrade head
+  uv run alembic revision --autogenerate -m "Describe the change"
+  ```
+- New migrations must be reversible where possible (implement `downgrade()`),
+  and must not assume PostgreSQL-only or SQLite-only features unless handled
+  explicitly (e.g. via dialect checks).
+- Docker compose runs `alembic upgrade head` on startup, so migrations should
+  be safe to run non-interactively.
+
+#### Tests
+
+- Test files are named `test_*.py`, where `*` usually corresponds to the
+  package or module under test (e.g. tests for `cache.py` live in
+  `tests/test_cache.py`).
+- Fixtures and test functions follow standard PEP 8 naming (snake_case for
+  functions/fixtures, PascalCase for classes).
+- Do **not** require containers for tests. Prefer self-contained, in-memory
+  configurations for external dependencies:
+  - Database: SQLAlchemy with an in-memory SQLite database
+    (`sqlite+aiosqlite:///:memory:` or the shared-cache in-memory variant).
+  - Cache: `quickticket.cache.SQLiteCache` with an in-memory connection
+    (`sqlite:///:memory:`).
+- `tests/resources/test_data.sql` is example data for the team to work with,
+  **not** test fixtures — do not load it in tests.
+- If a test is more readable implemented as a long standalone artifact (e.g. a
+  long SQL script), place that file in `tests/resources/` and load it from the
+  test.
+- Use `pytest-asyncio` (`@pytest.mark.asyncio`) for async tests.
+
+### Notes for agents
+
+- Don't commit generated or local artifacts: `quickticket.db`, `*.pyc`,
+  `.venv/`, `.env`, cache directories (`.pytest_cache/`, `.ruff_cache/`).
+- Use `uv` exclusively for Python tooling (`uv run …`); do not `pip install`
+  or create virtualenvs manually.
+- When touching `routers/`, keep handlers thin: business logic in dedicated
+  modules or dependencies, request/response shapes via Pydantic models.
+- Rate limiting (`dependencies/ratelimits.py`) and cache behavior depend on the
+  configured cache backend — be aware tests may use SQLite in-memory while
+  production uses Redis.
+- Python 3.14 features are available; the project is fully typed and ships
+  `py.typed`. Type checking with `uvx ty check` must pass — keep annotations
+  accurate when editing existing code.
+- Respect the monorepo boundary: work only within `backend/` unless the user
+  explicitly asks for otherwise. Never modify `frontend/` (see the Frontend
+  section above).
+
+## Git conventions
+
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/)
+for the whole repository:
+
+- Backend-only changes use the `backend` scope, e.g. `feat(backend): add
+  feature x`, `fix(backend): …`, `refactor(backend): …`.
+- Changes outside the backend may use the `frontend` scope (e.g.
+  `feat(frontend): …`) or no scope at all, as appropriate.
+- Do not mix frontend or shared-repo changes into backend commits.
+- Branch names use the pattern `username/my-feature`.
