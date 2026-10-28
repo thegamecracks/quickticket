@@ -1,7 +1,7 @@
 """Index created_at columns
 
 Revision ID: d8f0a832401c
-Revises: 6f01e38de460
+Revises: 0d37fa1087da
 Create Date: 2026-10-06 23:59:42.773665+00:00
 
 """
@@ -12,7 +12,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "d8f0a832401c"
-down_revision: str | Sequence[str] | None = "6f01e38de460"
+down_revision: str | Sequence[str] | None = "0d37fa1087da"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
