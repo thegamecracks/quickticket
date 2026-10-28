@@ -76,7 +76,7 @@ class Event(Base):
     starts_at: Mapped[current_timestamp]  # requires user input
     ends_at: Mapped[current_timestamp]  # requires user input
     ticket_price: Mapped[Money] = mapped_column(
-        default=0,
+        default=Money(amount=0, currency="CAD"),
         server_default=text("""'{"amount": 0, "currency": "CAD"}'"""),
     )
     max_attendees: Mapped[int] = mapped_column(default=0, server_default=text("0"))
