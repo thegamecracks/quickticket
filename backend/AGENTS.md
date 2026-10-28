@@ -181,8 +181,6 @@ backend/
     (`sqlite+aiosqlite:///:memory:` or the shared-cache in-memory variant).
   - Cache: `quickticket.cache.SQLiteCache` with an in-memory connection
     (`sqlite:///:memory:`).
-- `tests/resources/test_data.sql` is example data for the team to work with,
-  **not** test fixtures — do not load it in tests.
 - If a test is more readable implemented as a long standalone artifact (e.g. a
   long SQL script), place that file in `tests/resources/` and load it from the
   test.
