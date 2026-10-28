@@ -164,7 +164,7 @@ class RegistrationController:
             raise HTTPException(401, "Not authenticated")
 
         log.debug("Registering new user from ID token (sub: %s)", claims.sub)
-        user = User()
+        user = User(display_name="", first_name="", last_name="", email="")
         openid_account = OpenIDAccount(issuer=claims.iss, sub=claims.sub)
         user.openid_accounts.append(openid_account)
         self._update_openid_account(openid_account, token)

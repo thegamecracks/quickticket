@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -405,6 +406,7 @@ def create_test_models() -> Dataset:
             id=UUID("fdb0140f-fee0-4ffc-a0ca-1cbaaff1294e"),
             account_id=UUID("eec50538-0edc-469b-b441-01b95b2f86c1"),
             line_1="200 Bloor St. E.",
+            line_2="",
             city="Whitehorse",
             province="Yukon",
             postal_code="A4K 3G1",
@@ -413,6 +415,7 @@ def create_test_models() -> Dataset:
             id=UUID("2abc62b5-8df0-4a1f-8355-f774be347fa4"),
             account_id=UUID("cd1e919c-78ac-4222-96c1-6bea98f57281"),
             line_1="1550 Market Ave.",
+            line_2="",
             city="Whitehorse",
             province="Yukon",
             postal_code="Y6B 0C3",
@@ -421,6 +424,7 @@ def create_test_models() -> Dataset:
             id=UUID("d944e742-faca-49e5-b28c-ae506a5e95cb"),
             account_id=UUID("63363a5a-f35b-4b76-84b0-aa354843e426"),
             line_1="12 Harbourfront Rd.",
+            line_2="",
             city="Winnipeg",
             province="Manitoba",
             postal_code="X3X 6K7",
@@ -429,6 +433,7 @@ def create_test_models() -> Dataset:
             id=UUID("145433e4-79ef-4bdd-9985-d5f21aecad25"),
             account_id=UUID("75e4418a-1216-4988-afd0-74db0f4d121f"),
             line_1="888 Robson St.",
+            line_2="",
             city="St. John's",
             province="Newfoundland and Labrador",
             postal_code="A2S 5L2",
@@ -437,6 +442,7 @@ def create_test_models() -> Dataset:
             id=UUID("40040d00-1975-4af5-8197-1b8e722945f3"),
             account_id=UUID("bb355aea-9041-4fc3-b0ff-cd55a8fb6a46"),
             line_1="350 Rue Saint-Paul O.",
+            line_2="",
             city="Winnipeg",
             province="Manitoba",
             postal_code="E1R 1P5",
@@ -445,6 +451,7 @@ def create_test_models() -> Dataset:
             id=UUID("8679ba64-4472-42d4-b7e8-9cf8a53ee093"),
             account_id=UUID("521df1bc-8a74-40c7-a768-c41dcf49e02b"),
             line_1="250 Rue Saint-Paul O.",
+            line_2="",
             city="St. John's",
             province="Newfoundland and Labrador",
             postal_code="B7X 1R1",
@@ -453,6 +460,7 @@ def create_test_models() -> Dataset:
             id=UUID("2ac9edaf-d154-4024-9386-ff4ef924d2be"),
             account_id=UUID("e9706931-6932-4a7c-9a48-0c81728b4ee0"),
             line_1="15 Rue Sainte-Anne",
+            line_2="",
             city="Charlottetown",
             province="Prince Edward Island",
             postal_code="Z5Y 3C0",
@@ -461,6 +469,7 @@ def create_test_models() -> Dataset:
             id=UUID("a14c2e1d-cbb7-4af5-8005-e36dbb77ab10"),
             account_id=UUID("3f7b69d9-8908-4350-b7f4-eb3bcb303455"),
             line_1="77 Rue du Marché Champlain",
+            line_2="",
             city="Whitehorse",
             province="Yukon",
             postal_code="M1K 1R4",
@@ -469,6 +478,7 @@ def create_test_models() -> Dataset:
             id=UUID("7c076012-5ddc-4173-9c1b-59a8b27d33e3"),
             account_id=UUID("7094965f-be3d-49db-8a3d-c8e1bc8b3f99"),
             line_1="Cedar Ridge Dr.",
+            line_2="",
             city="Halifax",
             province="Nova Scotia",
             postal_code="H5P 3L1",
@@ -477,6 +487,7 @@ def create_test_models() -> Dataset:
             id=UUID("b9fa5862-bf7d-405a-be3e-94c3d40b95b7"),
             account_id=UUID("6f04f89b-e24a-43ac-8bb4-4b692db482ba"),
             line_1="33 Portage Ave.",
+            line_2="",
             city="St. John's",
             province="Newfoundland and Labrador",
             postal_code="X3H 7R4",
@@ -485,6 +496,7 @@ def create_test_models() -> Dataset:
             id=UUID("ab662ec2-7a54-415a-ba08-d6b92c1fa2e5"),
             account_id=UUID("94f35ca2-5e50-4cde-b814-37c8169c0614"),
             line_1="77 Rue du Marché Champlain",
+            line_2="",
             city="Whitehorse",
             province="Yukon",
             postal_code="N0K 0N6",
@@ -493,6 +505,7 @@ def create_test_models() -> Dataset:
             id=UUID("9b1554f1-e8fe-40f6-977d-6f7fef50efa9"),
             account_id=UUID("0daec970-3840-4aad-b2fb-05c1e4fa635d"),
             line_1="4201 Bank St.",
+            line_2="",
             city="Toronto",
             province="Ontario",
             postal_code="J9N 3V6",
@@ -501,6 +514,7 @@ def create_test_models() -> Dataset:
             id=UUID("0db92c9e-8cec-44f7-be04-2019923db5f1"),
             account_id=UUID("bf90f3a5-e204-4373-acd1-dd24e1eb58f3"),
             line_1="Aspen Grove",
+            line_2="",
             city="Whitehorse",
             province="Yukon",
             postal_code="G4G 3X8",
@@ -509,6 +523,7 @@ def create_test_models() -> Dataset:
             id=UUID("de4a2b73-3328-4a0f-9541-7f114e4b3a31"),
             account_id=UUID("bfd9708f-d51b-4fe1-bfcc-ca8cb2830a7d"),
             line_1="Pinecrest Way",
+            line_2="",
             city="Toronto",
             province="Ontario",
             postal_code="Y6P 3G8",
@@ -517,6 +532,7 @@ def create_test_models() -> Dataset:
             id=UUID("fd090913-d917-467d-b3a5-5e9b9e3e48e5"),
             account_id=UUID("c3ed02b5-b175-4ab8-b153-640c4e8dbfa6"),
             line_1="1550 Market Ave.",
+            line_2="",
             city="Halifax",
             province="Nova Scotia",
             postal_code="B1G 2S9",
@@ -525,6 +541,7 @@ def create_test_models() -> Dataset:
             id=UUID("a0f86108-9b88-4da8-8d83-ac171b63dd3a"),
             account_id=UUID("2911b7f6-3d3f-4d03-a09e-0bfe013ef161"),
             line_1="Willowbrook Ct.",
+            line_2="",
             city="Edmonton",
             province="Alberta",
             postal_code="R9T 8L8",
@@ -533,6 +550,7 @@ def create_test_models() -> Dataset:
             id=UUID("deed70ce-32c8-4bdf-b3a5-3722615ef91d"),
             account_id=UUID("3529c963-84c7-4e26-8017-b1805d0a4280"),
             line_1="200 Bloor St. E.",
+            line_2="",
             city="Victoria",
             province="British Columbia",
             postal_code="X4N 1M6",
@@ -541,6 +559,7 @@ def create_test_models() -> Dataset:
             id=UUID("9d3608f3-2737-425c-b93a-cf3a183cd372"),
             account_id=UUID("54839cd2-c8fb-47ca-a9f0-fbfd73046582"),
             line_1="Aspen Grove",
+            line_2="",
             city="Regina",
             province="Saskatchewan",
             postal_code="A4W 2W1",
@@ -549,6 +568,7 @@ def create_test_models() -> Dataset:
             id=UUID("c50328f8-3d16-4ea2-9b10-e19b310a4ffa"),
             account_id=UUID("55391432-b85d-4479-8b03-71029cc4a76a"),
             line_1="600 Rue Saint-Jean",
+            line_2="",
             city="Whitehorse",
             province="Yukon",
             postal_code="W9J 2P2",
@@ -557,6 +577,7 @@ def create_test_models() -> Dataset:
             id=UUID("7f9c2dd5-d057-41e8-8896-ae767a59f46e"),
             account_id=UUID("9a9c45d7-1891-48c3-aad8-a328c0eca705"),
             line_1="941 Progress Ave.",
+            line_2="",
             city="Charlottetown",
             province="Prince Edward Island",
             postal_code="Z5V 0E5",
@@ -565,6 +586,7 @@ def create_test_models() -> Dataset:
             id=UUID("f3b4b480-0812-419e-9b15-788ccf9ab871"),
             account_id=UUID("c12f41cd-8bd2-4c1d-896d-16e33d0df389"),
             line_1="600 Rue Saint-Jean",
+            line_2="",
             city="Iqaluit",
             province="Nunavut",
             postal_code="K0K 9C1",
@@ -573,6 +595,7 @@ def create_test_models() -> Dataset:
             id=UUID("6d210d3c-9282-4a3f-9e5c-6651d010e6e5"),
             account_id=UUID("d43f9db4-b2bd-477c-98ba-07de383d867a"),
             line_1="Lakeshore Blvd.",
+            line_2="",
             city="Yellowknife",
             province="Northwest Territories",
             postal_code="C8G 2V8",
@@ -581,6 +604,7 @@ def create_test_models() -> Dataset:
             id=UUID("f10c945b-7f0f-4602-9898-5c8ad65b8c52"),
             account_id=UUID("21658b93-8b33-4921-9b7b-715b34a1461a"),
             line_1="250 Rue Saint-Paul O.",
+            line_2="",
             city="Regina",
             province="Saskatchewan",
             postal_code="W9S 3X3",
@@ -589,6 +613,7 @@ def create_test_models() -> Dataset:
             id=UUID("1b00e985-9886-4677-9f57-04f8e6645378"),
             account_id=UUID("f9a12ff2-21ca-4ad5-b3ea-80911709726c"),
             line_1="600 Rue Saint-Jean",
+            line_2="",
             city="Yellowknife",
             province="Northwest Territories",
             postal_code="R5T 8T1",
@@ -597,6 +622,7 @@ def create_test_models() -> Dataset:
             id=UUID("94ee5a16-0376-4564-a5ac-153cb0594df8"),
             account_id=UUID("35c42278-c7ee-4680-b67b-65658e2438e6"),
             line_1="77 Rue du Marché Champlain",
+            line_2="",
             city="Winnipeg",
             province="Manitoba",
             postal_code="C5A 9X3",
@@ -605,6 +631,7 @@ def create_test_models() -> Dataset:
             id=UUID("e87f3127-d7f5-4662-9f94-904a8fd725bb"),
             account_id=UUID("0837cf2f-c000-4d8c-8ec1-7aa38af5e236"),
             line_1="77 Rue du Marché Champlain",
+            line_2="",
             city="St. John's",
             province="Newfoundland and Labrador",
             postal_code="A1B 3C0",
@@ -613,6 +640,7 @@ def create_test_models() -> Dataset:
             id=UUID("5dcca33c-2912-4112-b8d5-066352c7d5a2"),
             account_id=UUID("7ca2be93-1698-419a-9d8e-066dc81deb7c"),
             line_1="4201 Bank St.",
+            line_2="",
             city="Quebec City",
             province="Quebec",
             postal_code="W3L 7J8",
@@ -621,6 +649,7 @@ def create_test_models() -> Dataset:
             id=UUID("0a17ec86-f797-4f62-bf35-5ed555982f81"),
             account_id=UUID("685cb5b2-2a60-4951-840a-114e6db46905"),
             line_1="Sycamore Cres.",
+            line_2="",
             city="Regina",
             province="Saskatchewan",
             postal_code="K7S 3E1",
@@ -629,6 +658,7 @@ def create_test_models() -> Dataset:
             id=UUID("8e900b21-7a8d-4aaf-a414-2c33050af742"),
             account_id=UUID("a99a2fba-9fad-4650-82a7-5dfd4398b0b0"),
             line_1="Pinecrest Way",
+            line_2="",
             city="Whitehorse",
             province="Yukon",
             postal_code="P6S 7B1",
@@ -637,6 +667,7 @@ def create_test_models() -> Dataset:
             id=UUID("570fd1ca-724f-4466-ba20-373650655d97"),
             account_id=UUID("bbd27b45-b5f3-4aa9-b21a-b07f5d9de9f7"),
             line_1="Oakwood Ave.",
+            line_2="",
             city="Victoria",
             province="British Columbia",
             postal_code="N1K 3J8",
@@ -645,6 +676,7 @@ def create_test_models() -> Dataset:
             id=UUID("299828c0-0370-4fbd-b388-92e0710d81a2"),
             account_id=UUID("2fdc08c9-0264-4e1f-80ff-0625bf2e8cfe"),
             line_1="61 O'Connell St.",
+            line_2="",
             city="Halifax",
             province="Nova Scotia",
             postal_code="S2L 7K1",
@@ -653,6 +685,7 @@ def create_test_models() -> Dataset:
             id=UUID("eeb1f7e9-1814-4dca-9bfa-6e4d4808564d"),
             account_id=UUID("f52711be-8b3e-4757-b856-de1aa74acb5f"),
             line_1="88 Granville St.",
+            line_2="",
             city="Halifax",
             province="Nova Scotia",
             postal_code="B8A 1K2",
@@ -661,6 +694,7 @@ def create_test_models() -> Dataset:
             id=UUID("25a3f6a4-d6ae-4c7e-85d2-7d892d904628"),
             account_id=UUID("346e81a4-9470-4230-ab97-452e9dec447d"),
             line_1="Lakeshore Blvd.",
+            line_2="",
             city="Fredericton",
             province="New Brunswick",
             postal_code="V3R 0H6",
@@ -669,6 +703,7 @@ def create_test_models() -> Dataset:
             id=UUID("66f20ef3-e69a-495c-b443-7866146d59fa"),
             account_id=UUID("5e2891be-eaec-4ce1-a817-72613c5c167e"),
             line_1="Willowbrook Ct.",
+            line_2="",
             city="Victoria",
             province="British Columbia",
             postal_code="L7M 6X7",
@@ -677,6 +712,7 @@ def create_test_models() -> Dataset:
             id=UUID("c8c4a646-62ac-4027-9582-2d3ad422a5ca"),
             account_id=UUID("bad3c6c0-e362-4461-9d00-e4f30126a1e6"),
             line_1="505 Rue Laurier O.",
+            line_2="",
             city="Regina",
             province="Saskatchewan",
             postal_code="M3B 9X0",
@@ -685,6 +721,7 @@ def create_test_models() -> Dataset:
             id=UUID("7c33612b-a93b-413c-ba9f-2291780e77c5"),
             account_id=UUID("eb29e535-9e86-4b79-af06-baf174990004"),
             line_1="12 Rue du Carrefour",
+            line_2="",
             city="Yellowknife",
             province="Northwest Territories",
             postal_code="B0Y 7W8",
@@ -693,6 +730,7 @@ def create_test_models() -> Dataset:
             id=UUID("ad0aed80-135d-4945-8463-086596f76595"),
             account_id=UUID("af378101-2a61-43d7-8aec-5479b2ac4a03"),
             line_1="78 King St. W.",
+            line_2="",
             city="Regina",
             province="Saskatchewan",
             postal_code="W1H 1Z1",
@@ -701,6 +739,7 @@ def create_test_models() -> Dataset:
             id=UUID("cb95a3ac-ae57-43dd-8245-31471b6782fb"),
             account_id=UUID("e7eb73ec-c6ac-48ca-b781-6492307a5eb2"),
             line_1="40 Wellington St.",
+            line_2="",
             city="Whitehorse",
             province="Yukon",
             postal_code="R1Y 3Y9",
@@ -709,6 +748,7 @@ def create_test_models() -> Dataset:
             id=UUID("41a84593-3188-45c7-9c0b-31ad9b8a4641"),
             account_id=UUID("cf43748d-f2fa-4763-8d7a-82c93b45c23f"),
             line_1="1550 Market Ave.",
+            line_2="",
             city="Victoria",
             province="British Columbia",
             postal_code="S9Y 8N4",
@@ -717,6 +757,7 @@ def create_test_models() -> Dataset:
             id=UUID("bbfe8e40-e14f-4e6a-ab0e-675306c76a68"),
             account_id=UUID("ee409a63-ea67-4026-8b67-cbe3155f6f15"),
             line_1="12 Rue du Carrefour",
+            line_2="",
             city="Winnipeg",
             province="Manitoba",
             postal_code="K4R 2M7",
@@ -725,6 +766,7 @@ def create_test_models() -> Dataset:
             id=UUID("eaca8cba-101e-4042-8805-3258d1ff7d36"),
             account_id=UUID("ef27f0e0-8ff7-49a5-ad6d-92f97257849a"),
             line_1="4201 Bank St.",
+            line_2="",
             city="Quebec City",
             province="Quebec",
             postal_code="A7Z 9E1",
@@ -733,6 +775,7 @@ def create_test_models() -> Dataset:
             id=UUID("2eaa5a10-d3a4-4e0a-815f-1c2df118caae"),
             account_id=UUID("532e5da4-0fde-4c4f-b8a9-21af37513a90"),
             line_1="1234 8th Ave. SW",
+            line_2="",
             city="Charlottetown",
             province="Prince Edward Island",
             postal_code="W4G 5C3",
@@ -741,6 +784,7 @@ def create_test_models() -> Dataset:
             id=UUID("0c976513-19c1-45db-9632-32128b2621f6"),
             account_id=UUID("aba1901e-ae2e-4515-9402-b25b84dcb482"),
             line_1="15 Rue Sainte-Anne",
+            line_2="",
             city="Quebec City",
             province="Quebec",
             postal_code="H7X 4Z8",
@@ -749,6 +793,7 @@ def create_test_models() -> Dataset:
             id=UUID("ac76a5ad-7dd6-4f45-b245-0741ebdf5620"),
             account_id=UUID("886ec931-d5d4-4c66-893b-373fe5ad5a93"),
             line_1="600 Rue Saint-Jean",
+            line_2="",
             city="Victoria",
             province="British Columbia",
             postal_code="E2L 1E8",
@@ -757,6 +802,7 @@ def create_test_models() -> Dataset:
             id=UUID("64bbdc4d-405f-4243-8425-c2715676e11b"),
             account_id=UUID("14bcf231-2818-4ff9-8222-6f63f7e65809"),
             line_1="888 Robson St.",
+            line_2="",
             city="Regina",
             province="Saskatchewan",
             postal_code="M9J 5J4",
@@ -765,6 +811,7 @@ def create_test_models() -> Dataset:
             id=UUID("5c24ff74-b6da-4075-aba2-5cf97cbb79f6"),
             account_id=UUID("947c2e18-c1e1-4d34-937f-ff62c375229a"),
             line_1="Lakeshore Blvd.",
+            line_2="",
             city="Charlottetown",
             province="Prince Edward Island",
             postal_code="L0C 6L0",
@@ -773,6 +820,7 @@ def create_test_models() -> Dataset:
             id=UUID("124244e3-9aaa-498c-8f1e-52fc3aedf3e1"),
             account_id=UUID("2d63f888-8b83-4c38-9953-15f61347732e"),
             line_1="350 Rue Saint-Paul O.",
+            line_2="",
             city="Victoria",
             province="British Columbia",
             postal_code="G4H 7X6",
@@ -781,6 +829,7 @@ def create_test_models() -> Dataset:
             id=UUID("3c8914a3-ea8f-4e33-83d6-0c258599e6d5"),
             account_id=UUID("5ecbfff1-c5ba-491b-a0aa-de881b0349cb"),
             line_1="941 Progress Ave.",
+            line_2="",
             city="Charlottetown",
             province="Prince Edward Island",
             postal_code="E1G 8B5",
@@ -789,6 +838,7 @@ def create_test_models() -> Dataset:
             id=UUID("3a68343c-1224-44aa-85cd-b6876e1d96b7"),
             account_id=UUID("f99e9128-e51e-4b1d-b8f2-ea83f2d4b90b"),
             line_1="901 Barrington St.",
+            line_2="",
             city="St. John's",
             province="Newfoundland and Labrador",
             postal_code="S2B 4P0",
@@ -797,6 +847,7 @@ def create_test_models() -> Dataset:
             id=UUID("20b5d406-32b8-4c91-aa19-2c52c9c615a6"),
             account_id=UUID("426875ac-13f2-4d1c-b0ea-fe34b2a8c959"),
             line_1="1234 8th Ave. SW",
+            line_2="",
             city="Quebec City",
             province="Quebec",
             postal_code="K1P 8S9",
@@ -879,6 +930,7 @@ A beautiful event space featuring **floor-to-ceiling windows** and modern amenit
 
 ## Ideal for
 Weddings, corporate events, and private parties.""",
+            theme="",
             location_name="88 Granville St.",
         ),
         Venue(
@@ -895,6 +947,7 @@ A charming rustic venue with exposed brick walls and **warm lighting**.
 
 ## Ideal for
 Intimate weddings, birthday celebrations, and small conferences.""",
+            theme="",
             location_name="Sycamore Cres.",
         ),
         Venue(
@@ -911,6 +964,7 @@ A state-of-the-art conference center with **flexible seating** and cutting-edge 
 
 ## Ideal for
 Conferences, product launches, and large corporate gatherings.""",
+            theme="",
             location_name="505 Rue Laurier O.",
         ),
         Venue(
@@ -927,6 +981,7 @@ A stunning waterfront venue offering **panoramic views** and elegant décor.
 
 ## Ideal for
 Weddings, anniversary parties, and upscale dinners.""",
+            theme="",
             location_name="600 Rue Saint-Jean",
         ),
         Venue(
@@ -943,6 +998,7 @@ A versatile community hall with **customizable layouts** and affordable pricing.
 
 ## Ideal for
 Community events, workshops, and birthday parties.""",
+            theme="",
             location_name="77 Rue du Marché Champlain",
         ),
         Venue(
@@ -959,6 +1015,7 @@ A beautiful event space featuring **floor-to-ceiling windows** and modern amenit
 
 ## Ideal for
 Weddings, corporate events, and private parties.""",
+            theme="",
             location_name="505 Rue Laurier O.",
         ),
         Venue(
@@ -975,6 +1032,7 @@ A charming rustic venue with exposed brick walls and **warm lighting**.
 
 ## Ideal for
 Intimate weddings, birthday celebrations, and small conferences.""",
+            theme="",
             location_name="888 Robson St.",
         ),
         Venue(
@@ -991,6 +1049,7 @@ A state-of-the-art conference center with **flexible seating** and cutting-edge 
 
 ## Ideal for
 Conferences, product launches, and large corporate gatherings.""",
+            theme="",
             location_name="888 Robson St.",
         ),
     ]
@@ -1010,6 +1069,9 @@ Join us for an **elegant evening** of dinner, dancing, and live entertainment.
 ## Tickets
 - General Admission: $75
 - VIP Table: $500 (seats 8)""",
+            theme="",
+            starts_at=datetime.now().astimezone(),
+            ends_at=datetime.now().astimezone(),
         ),
         Event(
             id=UUID("ad1d67bd-d92c-41e8-8494-c943eaaac05a"),
@@ -1026,6 +1088,9 @@ A full-day conference featuring **industry leaders** and networking opportunitie
 - Digital Transformation
 - Sustainable Business
 - Leadership in Uncertain Times""",
+            theme="",
+            starts_at=datetime.now().astimezone(),
+            ends_at=datetime.now().astimezone(),
         ),
         Event(
             id=UUID("0e161235-9c40-45e6-b4cd-022fd852f6e6"),
@@ -1042,6 +1107,9 @@ Discover the latest trends in **wedding planning**, décor, and catering.
 - Live demonstrations
 - Vendor booths
 - Fashion show""",
+            theme="",
+            starts_at=datetime.now().astimezone(),
+            ends_at=datetime.now().astimezone(),
         ),
         Event(
             id=UUID("21afa1a9-a4ed-4d2f-8908-93b743027fec"),
@@ -1058,6 +1126,9 @@ An evening dedicated to supporting **local causes** through fine dining and auct
 - Children''s Hospital
 - Local Food Bank
 - Environmental Fund""",
+            theme="",
+            starts_at=datetime.now().astimezone(),
+            ends_at=datetime.now().astimezone(),
         ),
         Event(
             id=UUID("0c1ed79b-e063-45de-bfce-7283f5247bc3"),
@@ -1074,6 +1145,9 @@ Ring in the new year with **champagne, fireworks**, and dancing until midnight.
 - Open bar
 - Live DJ
 - Midnight toast""",
+            theme="",
+            starts_at=datetime.now().astimezone(),
+            ends_at=datetime.now().astimezone(),
         ),
         Event(
             id=UUID("ecca0ef6-390c-4b3e-9ec5-d7c307b642c5"),
@@ -1089,6 +1163,9 @@ Join us for an **elegant evening** of dinner, dancing, and live entertainment.
 ## Tickets
 - General Admission: $75
 - VIP Table: $500 (seats 8)""",
+            theme="",
+            starts_at=datetime.now().astimezone(),
+            ends_at=datetime.now().astimezone(),
         ),
         Event(
             id=UUID("5a1231e3-8e9a-4e87-9835-6db515975d7c"),
@@ -1105,6 +1182,9 @@ A full-day conference featuring **industry leaders** and networking opportunitie
 - Digital Transformation
 - Sustainable Business
 - Leadership in Uncertain Times""",
+            theme="",
+            starts_at=datetime.now().astimezone(),
+            ends_at=datetime.now().astimezone(),
         ),
         Event(
             id=UUID("697102d3-6f53-4c93-b65b-f87a36a9b301"),
@@ -1121,6 +1201,9 @@ Discover the latest trends in **wedding planning**, décor, and catering.
 - Live demonstrations
 - Vendor booths
 - Fashion show""",
+            theme="",
+            starts_at=datetime.now().astimezone(),
+            ends_at=datetime.now().astimezone(),
         ),
         Event(
             id=UUID("df8af935-6315-4a0f-9723-e4b031458a4d"),
@@ -1137,6 +1220,9 @@ An evening dedicated to supporting **local causes** through fine dining and auct
 - Children''s Hospital
 - Local Food Bank
 - Environmental Fund""",
+            theme="",
+            starts_at=datetime.now().astimezone(),
+            ends_at=datetime.now().astimezone(),
         ),
         Event(
             id=UUID("8f691e68-a0b5-452e-9e27-4b0161dcc62a"),
@@ -1153,6 +1239,9 @@ Ring in the new year with **champagne, fireworks**, and dancing until midnight.
 - Open bar
 - Live DJ
 - Midnight toast""",
+            theme="",
+            starts_at=datetime.now().astimezone(),
+            ends_at=datetime.now().astimezone(),
         ),
         Event(
             id=UUID("97067d2e-7a1c-4451-ac3a-a8e974e1c6e3"),
@@ -1168,6 +1257,9 @@ Join us for an **elegant evening** of dinner, dancing, and live entertainment.
 ## Tickets
 - General Admission: $75
 - VIP Table: $500 (seats 8)""",
+            theme="",
+            starts_at=datetime.now().astimezone(),
+            ends_at=datetime.now().astimezone(),
         ),
         Event(
             id=UUID("ec2eb2b0-22d7-40c0-96f0-6f799227eba4"),
@@ -1184,6 +1276,9 @@ A full-day conference featuring **industry leaders** and networking opportunitie
 - Digital Transformation
 - Sustainable Business
 - Leadership in Uncertain Times""",
+            theme="",
+            starts_at=datetime.now().astimezone(),
+            ends_at=datetime.now().astimezone(),
         ),
     ]
 

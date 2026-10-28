@@ -31,60 +31,74 @@ __all__ = (
 )
 
 
-class User(Base):
+class User(Base, kw_only=True, repr=False):
     __tablename__ = "account"
 
-    id: Mapped[pk_uuid] = mapped_column("account_id")
-    created_at: Mapped[current_timestamp] = mapped_column(index=True)
+    id: Mapped[pk_uuid] = mapped_column("account_id", default=None)
 
-    # Fields derived from provider
+    # Required
     display_name: Mapped[str_128]
     first_name: Mapped[str_128]
     last_name: Mapped[str_128]
     email: Mapped[str_256] = mapped_column(unique=True)
 
+    # Optional
+    created_at: Mapped[current_timestamp] = mapped_column(default=None, index=True)
+
+    # Relationships
     addresses: Mapped[list[Address]] = relationship(
+        default_factory=list,
         back_populates="user",
         **can_cascade_delete,
     )
     notifications: Mapped[list[Notification]] = relationship(
+        default_factory=list,
         back_populates="user",
         **can_cascade_delete,
     )
     openid_accounts: Mapped[list[OpenIDAccount]] = relationship(
+        default_factory=list,
         back_populates="user",
         **can_cascade_delete,
     )
     organizations: Mapped[list[Organization]] = relationship(
+        default_factory=list,
         # back_populates="users",
         secondary="organization_member",
         viewonly=True,
     )
     organization_members: Mapped[list[OrganizationMember]] = relationship(
+        default_factory=list,
         back_populates="user",
     )
     storage_objects: Mapped[list[StorageObject]] = relationship(
+        default_factory=list,
         passive_deletes=True,
     )
     tickets: Mapped[list[Ticket]] = relationship(
+        default_factory=list,
         back_populates="user",
         **can_cascade_delete,
     )
 
 
-class OpenIDAccount(Base):
+class OpenIDAccount(Base, kw_only=True, repr=False):
     __tablename__ = "account_openid"
 
+    # Required
     issuer: Mapped[str] = mapped_column(String(2000), primary_key=True)
     """The OpenID provider that issued this account."""
     sub: Mapped[str] = mapped_column(String(2000), primary_key=True)
     """The provider's unique identifier for this account."""
     account_id: Mapped[UUID] = mapped_column(
         ForeignKey("account.account_id", ondelete="CASCADE"),
+        default=None,
         index=True,
     )
     """The account that linked this provider's identity."""
-    id_token: Mapped[str | None]
+
+    # Optional
+    id_token: Mapped[str | None] = mapped_column(default=None)
     """The last known ID token received from this provider.
 
     This is used to perform RP-initiated logouts.
@@ -92,15 +106,22 @@ class OpenIDAccount(Base):
 
     """
 
-    user: Mapped[User] = relationship(back_populates="openid_accounts")
+    # Relationships
+    user: Mapped[User] = relationship(
+        default=None,
+        back_populates="openid_accounts",
+    )
 
 
-class Address(Base):
+class Address(Base, kw_only=True, repr=False):
     __tablename__ = "address"
 
-    id: Mapped[pk_uuid] = mapped_column("address_id")
+    id: Mapped[pk_uuid] = mapped_column("address_id", default=None)
+
+    # Required
     account_id: Mapped[UUID] = mapped_column(
         ForeignKey("account.account_id", ondelete="CASCADE"),
+        default=None,
         index=True,
     )
     line_1: Mapped[str_128]
@@ -109,22 +130,35 @@ class Address(Base):
     province: Mapped[str_128]
     postal_code: Mapped[str_128]
 
-    user: Mapped[User] = relationship(back_populates="addresses")
+    # Relationships
+    user: Mapped[User] = relationship(
+        default=None,
+        back_populates="addresses",
+    )
 
 
-class Notification(Base):
+class Notification(Base, kw_only=True, repr=False):
     __tablename__ = "notification"
 
-    id: Mapped[pk_uuid] = mapped_column("notification_id")
+    id: Mapped[pk_uuid] = mapped_column("notification_id", default=None)
+
+    # Required
     account_id: Mapped[UUID] = mapped_column(
         ForeignKey("account.account_id", ondelete="CASCADE"),
+        default=None,
         index=True,
     )
-    created_at: Mapped[current_timestamp]
     expires_at: Mapped[datetime]
-    email_at: Mapped[datetime | None]
     is_read: Mapped[bool]
     content_short: Mapped[str_1024]
     content_full: Mapped[str_4096]
 
-    user: Mapped[User] = relationship(back_populates="notifications")
+    # Optional
+    created_at: Mapped[current_timestamp] = mapped_column(default=None)
+    email_at: Mapped[datetime | None] = mapped_column(default=None)
+
+    # Relationships
+    user: Mapped[User] = relationship(
+        default=None,
+        back_populates="notifications",
+    )

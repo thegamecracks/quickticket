@@ -19,30 +19,53 @@ __all__ = (
 )
 
 
-class Organization(Base):
+class Organization(Base, kw_only=True, repr=False):
     __tablename__ = "organization"
 
-    id: Mapped[pk_uuid] = mapped_column("organization_id")
-    created_at: Mapped[current_timestamp] = mapped_column(index=True)
+    id: Mapped[pk_uuid] = mapped_column("organization_id", default=None)
+
+    # Required
     display_name: Mapped[str_128]
 
-    members: Mapped[list[OrganizationMember]] = relationship(back_populates="organization")
-    venues: Mapped[list[Venue]] = relationship(back_populates="organization")
+    # Optional
+    created_at: Mapped[current_timestamp] = mapped_column(default=None, index=True)
+
+    # Relationships
+    members: Mapped[list[OrganizationMember]] = relationship(
+        default_factory=list,
+        back_populates="organization",
+    )
+    venues: Mapped[list[Venue]] = relationship(
+        default_factory=list,
+        back_populates="organization",
+    )
 
 
-class OrganizationMember(Base):
+class OrganizationMember(Base, kw_only=True, repr=False):
     __tablename__ = "organization_member"
 
+    # Required
     organization_id: Mapped[UUID] = mapped_column(
         ForeignKey("organization.organization_id"),
+        default=None,
         primary_key=True,
     )
     account_id: Mapped[UUID] = mapped_column(
         ForeignKey("account.account_id", ondelete="CASCADE"),
+        default=None,
         primary_key=True,
     )
-    joined_at: Mapped[current_timestamp]
     permissions: Mapped[int]  # TODO: OrganizationMemberPermissions(IntFlag)
 
-    organization: Mapped[Organization] = relationship(back_populates="members")
-    user: Mapped[User] = relationship(back_populates="organization_members")
+    # Optional
+    joined_at: Mapped[current_timestamp] = mapped_column(default=None)
+
+    # Relationships
+    organization: Mapped[Organization] = relationship(
+        default=None,
+        back_populates="members",
+    )
+    user: Mapped[User] = relationship(
+        default=None,
+        back_populates="organization_members",
+    )
