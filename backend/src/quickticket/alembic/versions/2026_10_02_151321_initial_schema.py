@@ -11,8 +11,6 @@ from collections.abc import Sequence
 import sqlalchemy as sa
 from alembic import op
 
-from quickticket.models import MoneySerializer, PointSerializer
-
 # revision identifiers, used by Alembic.
 revision: str = "42673771958f"
 down_revision: str | Sequence[str] | None = None
@@ -168,7 +166,7 @@ def upgrade() -> None:
         sa.Column(
             "location_name", sa.String(length=128), server_default=sa.text("('')"), nullable=False
         ),
-        sa.Column("location_coords", PointSerializer(), nullable=True),
+        sa.Column("location_coords", sa.JSON(), nullable=True),
         sa.ForeignKeyConstraint(
             ["organization_id"],
             ["organization.organization_id"],
@@ -213,7 +211,7 @@ def upgrade() -> None:
         sa.Column(
             "ends_at", sa.DateTime(), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=False
         ),
-        sa.Column("ticket_price", MoneySerializer(), nullable=False),
+        sa.Column("ticket_price", sa.JSON(), nullable=False),
         sa.Column("max_attendees", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
             ["venue_id"], ["venue.venue_id"], name=op.f("fk_event_venue_id_venue")
@@ -234,7 +232,7 @@ def upgrade() -> None:
             server_default=sa.text("(CURRENT_TIMESTAMP)"),
             nullable=False,
         ),
-        sa.Column("paid_cost", MoneySerializer(), nullable=False),
+        sa.Column("paid_cost", sa.JSON(), nullable=False),
         sa.ForeignKeyConstraint(
             ["account_id"],
             ["account.account_id"],
