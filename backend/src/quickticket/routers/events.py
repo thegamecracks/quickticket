@@ -1,9 +1,9 @@
 import logging
 from datetime import datetime
-from typing import Any
+from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
@@ -66,36 +66,54 @@ class EventsRead(BaseModel):
 
 
 @router.get("", response_model=EventsRead)
-async def get_events(user: OptionalUserDep, session: AsyncSessionDep) -> Any:
+async def get_events(
+    user: OptionalUserDep,
+    session: AsyncSessionDep,
+    before: Annotated[
+        datetime | None,
+        Query(
+            description="Return events before the given datetime, exclusive.",
+        ),
+    ] = None,
+    limit: Annotated[
+        int,
+        Query(
+            description="Limit the number of events returned.",
+            gt=0,
+            le=10,
+        ),
+    ] = 10,
+) -> Any:
     """Get a list of events."""
     # TODO: sort by location?
     # TODO: sort by most tickets?
-    # TODO: support pagination
     # TODO: maybe support FTS search?
-    events = await session.scalars(
-        select(Event)
-        .order_by(Event.created_at.desc())
-        .options(
-            selectinload(Event.banner).load_only(StorageObject.id),
-            selectinload(Event.thumbnail).load_only(StorageObject.id),
-            selectinload(Event.venue).load_only(
-                Venue.id,
-                Venue.created_at,
-                Venue.display_name,
-                Venue.description,
-                Venue.theme,
-                Venue.location_name,
-                Venue.location_coords,
-            ),
-            selectinload(Event.venue, Venue.banner).load_only(StorageObject.id),
-            selectinload(Event.venue, Venue.thumbnail).load_only(StorageObject.id),
-            selectinload(Event.venue, Venue.organization),
-            selectinload(
-                # TODO: return all tickets if user has permission from organization
-                Event.tickets.and_(Ticket.account_id == user.id if user is not None else false())
-            ).load_only(Ticket.id),
-        )
+    query = select(Event).order_by(Event.created_at.desc()).limit(limit)
+    if before is not None:
+        query = query.where(Event.created_at < before)
+
+    query = query.options(
+        selectinload(Event.banner).load_only(StorageObject.id),
+        selectinload(Event.thumbnail).load_only(StorageObject.id),
+        selectinload(Event.venue).load_only(
+            Venue.id,
+            Venue.created_at,
+            Venue.display_name,
+            Venue.description,
+            Venue.theme,
+            Venue.location_name,
+            Venue.location_coords,
+        ),
+        selectinload(Event.venue, Venue.banner).load_only(StorageObject.id),
+        selectinload(Event.venue, Venue.thumbnail).load_only(StorageObject.id),
+        selectinload(Event.venue, Venue.organization),
+        selectinload(
+            # TODO: return all tickets if user has permission from organization
+            Event.tickets.and_(Ticket.account_id == user.id if user is not None else false())
+        ).load_only(Ticket.id),
     )
+
+    events = await session.scalars(query)
     return {"events": events.all()}
 
 

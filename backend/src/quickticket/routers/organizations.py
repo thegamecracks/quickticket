@@ -1,9 +1,9 @@
 import logging
 from datetime import datetime
-from typing import Any
+from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
@@ -27,12 +27,29 @@ class OrganizationsRead(BaseModel):
 
 
 @router.get("", response_model=OrganizationsRead)
-async def get_organizations(session: AsyncSessionDep) -> Any:
+async def get_organizations(
+    session: AsyncSessionDep,
+    before: Annotated[
+        datetime | None,
+        Query(
+            description="Return events before the given datetime, exclusive.",
+        ),
+    ] = None,
+    limit: Annotated[
+        int,
+        Query(
+            description="Limit the number of events returned.",
+            gt=0,
+            le=10,
+        ),
+    ] = 10,
+) -> Any:
     """Get a list of organizations."""
-    # TODO: support pagination
-    organizations = await session.scalars(
-        select(Organization).order_by(Organization.created_at.desc())
-    )
+    query = select(Organization).order_by(Organization.created_at.desc()).limit(limit)
+    if before is not None:
+        query = query.where(Organization.created_at < before)
+
+    organizations = await session.scalars(query)
     return {"organizations": organizations.all()}
 
 

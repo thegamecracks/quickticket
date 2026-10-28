@@ -1,9 +1,9 @@
 import logging
 from datetime import datetime
-from typing import Any
+from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
@@ -55,32 +55,47 @@ class VenuesRead(BaseModel):
 
 
 @router.get("", response_model=VenuesRead)
-async def get_venues(user: OptionalUserDep, session: AsyncSessionDep) -> Any:
+async def get_venues(
+    user: OptionalUserDep,
+    session: AsyncSessionDep,
+    before: Annotated[
+        datetime | None,
+        Query(
+            description="Return venues before the given datetime, exclusive.",
+        ),
+    ] = None,
+    limit: Annotated[
+        int,
+        Query(
+            description="Limit the number of venues returned.",
+            gt=0,
+            le=10,
+        ),
+    ] = 10,
+) -> Any:
     """Get a list of venues."""
     # TODO: sort by location proximity in latitude/longitude
-    # TODO: support pagination
     # TODO: maybe support FTS search?
-    venues = await session.scalars(
-        select(Venue)
-        # .join(Event, Venue.events)
-        # .join(Ticket, Event.tickets)
-        # .join(Organization, Venue.organization)
-        .order_by(Venue.created_at.desc())
-        .options(
-            selectinload(Venue.banner).load_only(StorageObject.id),
-            selectinload(Venue.thumbnail).load_only(StorageObject.id),
-            # Venue => Events => Tickets
-            selectinload(Venue.events)
-            .load_only(Event.id)
-            .selectinload(
-                # TODO: return all tickets if user has permission from organization
-                Event.tickets.and_(Ticket.account_id == user.id if user is not None else false())
-            )
-            .load_only(Ticket.id),
-            # Venue => Organization
-            selectinload(Venue.organization),
+    query = select(Venue).order_by(Venue.created_at.desc()).limit(limit)
+    if before is not None:
+        query = query.where(Venue.created_at < before)
+
+    query = query.options(
+        selectinload(Venue.banner).load_only(StorageObject.id),
+        selectinload(Venue.thumbnail).load_only(StorageObject.id),
+        # Venue => Events => Tickets
+        selectinload(Venue.events)
+        .load_only(Event.id)
+        .selectinload(
+            # TODO: return all tickets if user has permission from organization
+            Event.tickets.and_(Ticket.account_id == user.id if user is not None else false())
         )
+        .load_only(Ticket.id),
+        # Venue => Organization
+        selectinload(Venue.organization),
     )
+
+    venues = await session.scalars(query)
     return {"venues": venues.all()}
 
 
