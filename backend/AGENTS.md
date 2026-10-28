@@ -1,44 +1,26 @@
-# AGENTS.md — QuickTicket
-
-Guidelines for coding agents working in the `quickticket` repository.
+# AGENTS.md — QuickTicket Backend
 
 QuickTicket is a web application for creating/discovering physical and virtual
-events and purchasing tickets. The repository is a monorepo:
+events and purchasing tickets. This directory is part of a monorepo:
 
-- `backend/` — a Python HTTP API serving JSON to the frontend, with
-  authentication delegated to an external OpenID provider (Keycloak in
-  production). **Agents currently work only in `backend/`** — this is not a
-  permanent restriction; the team will eventually support agents working in
-  the frontend, but not until instructions for doing so are added here.
-- `frontend/` — the real user-facing frontend, built with React.js.
+- `backend/` — a Python HTTP API serving JSON to the frontend.
+- `frontend/` — the user-facing frontend, built with React.js.
 
-> **Note:** The `backend/src/quickticket/frontend/` package is a minimal
-> in-Python test frontend used to verify authentication; it is not the real
-> frontend and must not be extended.
+The frontend lives outside of this directory. If your workspace is limited to
+this backend directory and your work appears to require frontend changes,
+stop and wait for the user to provide specific instructions before proceeding.
 
-## Frontend
+> **Note:** `src/quickticket/frontend/` is a minimal in-Python test frontend used
+> to verify authentication; it is not the real frontend and must not be extended.
 
-**Agents must not touch `frontend/`.** Do not read, modify, or create files there.
-If work seems to require frontend changes, stop and wait for the user to provide
-specific instructions (including any updates to this file) before proceeding.
+## Prerequisites
 
-This restriction is **not permanent** — the team plans to enable agent work
-in the frontend later, by adding instructions to this file. Until then,
-frontend changes are out of scope for agents.
-
-## Backend
-
-### Prerequisites
-
-- **Python 3.14+** (see `backend/.python-version`)
+- **Python 3.14+** (see `.python-version`)
 - **uv** for dependency and environment management — always run project tools
   through `uv run …`, never with a system/global Python
 - **Docker/Podman** (optional) for the full stack: PostgreSQL, Redis, Garage S3
 
-### Common commands
-
-All commands are run from the `backend/` directory (within the repository
-root):
+## Common commands
 
 ```sh
 # Install/sync dependencies
@@ -70,10 +52,10 @@ CI runs the same checks: `uv run -m pytest`, `uvx ty check`,
 `uv run ruff check`, and `uv run ruff format` (as a check, not a fixer).
 Run all four locally before finishing a change.
 
-### Configuration
+## Configuration
 
-- Settings are defined in `backend/src/quickticket/settings.py` using
-  `pydantic-settings` and read from a `.env` file (see `backend/example.env`
+- Settings are defined in `.src/quickticket/settings.py` using
+  `pydantic-settings` and read from a `.env` file (see `.example.env`
   for all available variables; never commit a real `.env` or secrets).
 - Environment variables use a **double-underscore nesting scheme**:
   `BACKEND__SECTION__FIELD`, e.g.
@@ -87,10 +69,10 @@ Run all four locally before finishing a change.
   any authenticated flow; the app starts fine without it, but only for
   unauthenticated use and API docs browsing.
 
-### Project structure
+## Project structure
 
 ```
-backend/
+.
 ├── src/quickticket/
 │   ├── app.py               # FastAPI app factory/instance, middleware, lifespan
 │   ├── settings.py          # pydantic-settings configuration (BACKEND__* vars)
@@ -114,7 +96,7 @@ backend/
 └── pyproject.toml           # project metadata, deps, ruff config
 ```
 
-### Conventions and gotchas
+## Conventions and gotchas
 
 - **Ruff** is the only linter/formatter (line length 100,
   `combine-as-imports = true` for isort). Run `uv run ruff check --fix` and
@@ -148,7 +130,7 @@ backend/
 - Cookies are handled by `starlette-securecookies` (encrypted cookies); token
   and CSRF secrets come from `BACKEND__SECURITY__*` settings.
 
-#### Database migrations
+### Database migrations
 
 - When changing SQLAlchemy models, always generate an Alembic migration in the
   same change; never edit `alembic/versions/` history destructively once
@@ -168,7 +150,7 @@ backend/
 - Docker compose runs `alembic upgrade head` on startup, so migrations should
   be safe to run non-interactively.
 
-#### Tests
+### Tests
 
 - Test files are named `test_*.py`, where `*` usually corresponds to the
   package or module under test (e.g. tests for `cache.py` live in
@@ -186,7 +168,7 @@ backend/
   test.
 - Use `pytest-asyncio` (`@pytest.mark.asyncio`) for async tests.
 
-### Notes for agents
+## Notes for agents
 
 - Don't commit generated or local artifacts: `quickticket.db`, `*.pyc`,
   `.venv/`, `.env`, cache directories (`.pytest_cache/`, `.ruff_cache/`).
@@ -201,8 +183,7 @@ backend/
   `py.typed`. Type checking with `uvx ty check` must pass — keep annotations
   accurate when editing existing code.
 - Respect the monorepo boundary: work only within `backend/` unless the user
-  explicitly asks for otherwise. Never modify `frontend/` (see the Frontend
-  section above).
+  explicitly asks for otherwise.
 
 ## Git conventions
 
