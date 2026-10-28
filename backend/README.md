@@ -119,6 +119,10 @@ If this fails, you can delete the database and regenerate it with
 
 ```sh
 /backend $ uv run pytest
+# Measure code coverage:
+/backend $ uv run coverage run -m pytest
+/backend $ uv run coverage report
+/backend $ uv run coverage html  # produces htmlcov/index.html
 ```
 
 ## Resources
@@ -128,6 +132,7 @@ If this fails, you can delete the database and regenerate it with
 | [aiosqlite](https://aiosqlite.omnilib.dev/en/stable/) | SQLite driver |
 | [alembic](https://alembic.sqlalchemy.org/en/latest/index.html) | Database migrations |
 | [authlib](https://docs.authlib.org/en/latest/index.html) | OAuth2 client |
+| [coverage](https://coverage.readthedocs.io/en/latest/) | Code coverage |
 | [fastapi](https://fastapi.tiangolo.com/) | HTTP API framework |
 | [httpx2](https://pydantic.dev/docs/httpx2/get-started/) | HTTP client |
 | [joserfc](https://jose.authlib.org/en/guide/jwt/) | JWT parsing and validation |

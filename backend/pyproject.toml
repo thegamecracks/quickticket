@@ -37,7 +37,16 @@ dependencies = [
 quickticket = "fastapi_cli.cli:main"
 
 [dependency-groups]
-dev = ["pytest>=9.1.1", "pytest-asyncio>=1.4.0", "ruff>=0.17.1"]
+dev = [
+    "coverage>=7.17.0",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.17.1",
+]
+
+[tool.coverage.run]
+source = ["src/"]
+omit = ["src/quickticket/alembic/*"]
 
 [tool.fastapi]
 entrypoint = "quickticket.app:app"

@@ -37,7 +37,10 @@ uv run ruff format
 uvx ty check
 
 # Run tests
-uv run pytest
+uv run coverage run -m pytest
+
+# Measure code coverage after tests, including line numbers of missed coverage
+uv run coverage report --skip-covered --skip-empty --show-missing
 
 # Database migrations (Alembic)
 uv run alembic upgrade head                       # apply all migrations
