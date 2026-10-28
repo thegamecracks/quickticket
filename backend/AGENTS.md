@@ -60,12 +60,8 @@ Run all four locally before finishing a change.
 - Settings are defined in `.src/quickticket/settings.py` using
   `pydantic-settings` and read from a `.env` file (see `.example.env`
   for all available variables; never commit a real `.env` or secrets).
-- Environment variables use a **double-underscore nesting scheme**:
-  `BACKEND__SECTION__FIELD`, e.g.
-  - `BACKEND__OPENID__CLIENT_ID` / `CLIENT_SECRET` / `DISCOVERY_URL`
-  - `BACKEND__DB__URL` (SQLAlchemy URL; defaults to local SQLite via aiosqlite)
-  - `BACKEND__CACHE__URL` (supports `sqlite://`, `redis://`, `rediss://`)
-  - `BACKEND__SMTP__*`, `BACKEND__S3__*`, `BACKEND__SECURITY__*`, `BACKEND__LOG__*`
+- Environment variables use a **double-underscore nesting scheme**,
+  e.g. `BACKEND__SECTION__FIELD`.
 - Local development defaults to SQLite (`quickticket.db`); the Docker compose
   stack uses PostgreSQL and Redis. Migrations must work on both.
 - A `.env` with OpenID settings (client ID/secret/discovery URL) is required for
@@ -101,8 +97,7 @@ Run all four locally before finishing a change.
 
 ## Conventions and gotchas
 
-- **Ruff** is the only linter/formatter (line length 100,
-  `combine-as-imports = true` for isort). Run `uv run ruff check --fix` and
+- **Ruff** is the only linter/formatter. Run `uv run ruff check --fix` and
   `uv run ruff format` before finishing a change.
 - The codebase is **fully async**: use async SQLAlchemy sessions, `httpx2`/
   async clients, and `pytest-asyncio` for tests. Avoid blocking calls in
@@ -112,26 +107,7 @@ Run all four locally before finishing a change.
   server.
 - **Authentication is external.** Never implement password storage, login
   forms, or credential checks in this backend — identity comes from the OpenID
-  provider's ID token via `quickticket.oauth` and `dependencies/auth/`. The
-  optional `BACKEND__OPENID__ADMIN_GROUP` setting gates admin privileges via a
-  `groups` claim.
-- **OpenID provider requirements** (relevant when configuring or debugging
-  `BACKEND__OPENID__*`):
-  - Required ID token claims are defined in
-    `src/quickticket/dependencies/auth/tokens.py` as Pydantic models and as
-    essential claims in the `JWTClaimsRegistry` validators — required
-    parameters there imply required claims. This includes
-    `email`, `email_verified: true`, `name`, `given_name`, `family_name`,
-    `preferred_username`, and `groups`.
-  - Requested scopes are defined in `src/quickticket/oauth.py`:
-    `openid`, `email`, `profile`, `offline_access` (intersected with the
-    provider's advertised `scopes_supported`).
-  - Not every authorization server satisfies these requirements even when
-    configured correctly — Google, GitHub OAuth, and Authentik each behave
-    differently. Assume provider-specific gaps are a real possibility rather
-    than a misconfiguration on our side.
-- Cookies are handled by `starlette-securecookies` (encrypted cookies); token
-  and CSRF secrets come from `BACKEND__SECURITY__*` settings.
+  provider's ID token via `quickticket.oauth` and `dependencies/auth/`.
 
 ### Database migrations
 
@@ -150,16 +126,12 @@ Run all four locally before finishing a change.
 - New migrations must be reversible where possible (implement `downgrade()`),
   and must not assume PostgreSQL-only or SQLite-only features unless handled
   explicitly (e.g. via dialect checks).
-- Docker compose runs `alembic upgrade head` on startup, so migrations should
-  be safe to run non-interactively.
 
 ### Tests
 
 - Test files are named `test_*.py`, where `*` usually corresponds to the
   package or module under test (e.g. tests for `cache.py` live in
   `tests/test_cache.py`).
-- Fixtures and test functions follow standard PEP 8 naming (snake_case for
-  functions/fixtures, PascalCase for classes).
 - Do **not** require containers for tests. Prefer self-contained, in-memory
   configurations for external dependencies:
   - Database: SQLAlchemy with an in-memory SQLite database
@@ -173,15 +145,10 @@ Run all four locally before finishing a change.
 
 ## Notes for agents
 
-- Don't commit generated or local artifacts: `quickticket.db`, `*.pyc`,
-  `.venv/`, `.env`, cache directories (`.pytest_cache/`, `.ruff_cache/`).
 - Use `uv` exclusively for Python tooling (`uv run …`); do not `pip install`
   or create virtualenvs manually.
 - When touching `routers/`, keep handlers thin: business logic in dedicated
   modules or dependencies, request/response shapes via Pydantic models.
-- Rate limiting (`dependencies/ratelimits.py`) and cache behavior depend on the
-  configured cache backend — be aware tests may use SQLite in-memory while
-  production uses Redis.
 - Python 3.14 features are available; the project is fully typed and ships
   `py.typed`. Type checking with `uvx ty check` must pass — keep annotations
   accurate when editing existing code.
