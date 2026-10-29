@@ -1,17 +1,6 @@
-# AGENTS.md — QuickTicket Backend
+# QuickTicket Backend
 
-QuickTicket is a web application for creating/discovering physical and virtual
-events and purchasing tickets. This directory is part of a monorepo:
-
-- `backend/` — a Python HTTP API serving JSON to the frontend.
-- `frontend/` — the user-facing frontend, built with React.js.
-
-The frontend lives outside of this directory. If your workspace is limited to
-this backend directory and your work appears to require frontend changes,
-stop and wait for the user to provide specific instructions before proceeding.
-
-> **Note:** `src/quickticket/frontend/` is a minimal in-Python test frontend used
-> to verify authentication; it is not the real frontend and must not be extended.
+This is the backend project for QuickTicket.
 
 ## Prerequisites
 
@@ -112,6 +101,8 @@ Run all four locally before finishing a change.
   `MappedAsDataclass`, `kw_only=True`). Their constructors are type-checked,
   so instantiate them with keyword arguments matching the `Mapped[...]`
   annotations; columns without a Python-side `default` are required.
+- `src/quickticket/frontend/` is a minimal in-Python test frontend used
+  to verify authentication; it is not the real frontend and must not be extended.
 
 ### Database migrations
 
@@ -160,15 +151,3 @@ Run all four locally before finishing a change.
   accurate when editing existing code.
 - Respect the monorepo boundary: work only within `backend/` unless the user
   explicitly asks for otherwise.
-
-## Git conventions
-
-Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/)
-for the whole repository:
-
-- Backend-only changes use the `backend` scope, e.g. `feat(backend): add
-  feature x`, `fix(backend): …`, `refactor(backend): …`.
-- Changes outside the backend may use the `frontend` scope (e.g.
-  `feat(frontend): …`) or no scope at all, as appropriate.
-- Do not mix frontend or shared-repo changes into backend commits.
-- Branch names use the pattern `username/my-feature`.
