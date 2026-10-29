@@ -108,6 +108,10 @@ Run all four locally before finishing a change.
 - **Authentication is external.** Never implement password storage, login
   forms, or credential checks in this backend — identity comes from the OpenID
   provider's ID token via `quickticket.oauth` and `dependencies/auth/`.
+- Models are **SQLAlchemy dataclasses** (`Base` derives from
+  `MappedAsDataclass`, `kw_only=True`). Their constructors are type-checked,
+  so instantiate them with keyword arguments matching the `Mapped[...]`
+  annotations; columns without a Python-side `default` are required.
 
 ### Database migrations
 
@@ -141,6 +145,8 @@ Run all four locally before finishing a change.
 - If a test is more readable implemented as a long standalone artifact (e.g. a
   long SQL script), place that file in `tests/resources/` and load it from the
   test.
+- Store and use common fixtures in `tests/conftest.py` when they need to be
+  shared across test files.
 - Use `pytest-asyncio` (`@pytest.mark.asyncio`) for async tests.
 
 ## Notes for agents
