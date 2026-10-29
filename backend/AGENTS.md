@@ -4,9 +4,8 @@ This is the backend project for QuickTicket.
 
 ## Prerequisites
 
-- **Python 3.14+** (see `.python-version`)
-- **uv** for dependency and environment management — always run project tools
-  through `uv run …`, never with a system/global Python
+- **Python 3.14+**
+- **uv** for project management
 - **Docker/Podman** (optional) for the full stack: PostgreSQL, Redis, Garage S3
 
 ## Common commands
@@ -133,9 +132,8 @@ Run all four locally before finishing a change.
     (`sqlite+aiosqlite:///:memory:` or the shared-cache in-memory variant).
   - Cache: `quickticket.cache.SQLiteCache` with an in-memory connection
     (`sqlite:///:memory:`).
-- If a test is more readable implemented as a long standalone artifact (e.g. a
-  long SQL script), place that file in `tests/resources/` and load it from the
-  test.
+- If a test requires a long artifact (e.g. a JSON payload or SQL script),
+  place the file in `tests/resources/` and load it from the test.
 - Store and use common fixtures in `tests/conftest.py` when they need to be
   shared across test files.
 - Use `pytest-asyncio` (`@pytest.mark.asyncio`) for async tests.
@@ -146,8 +144,5 @@ Run all four locally before finishing a change.
   or create virtualenvs manually.
 - When touching `routers/`, keep handlers thin: business logic in dedicated
   modules or dependencies, request/response shapes via Pydantic models.
-- Python 3.14 features are available; the project is fully typed and ships
-  `py.typed`. Type checking with `uvx ty check` must pass — keep annotations
-  accurate when editing existing code.
-- Respect the monorepo boundary: work only within `backend/` unless the user
-  explicitly asks for otherwise.
+- Type checking with `uvx ty check` must pass — keep annotations accurate
+  when editing existing code.
