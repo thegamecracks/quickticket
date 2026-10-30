@@ -147,6 +147,7 @@ async def create_event(
     # TODO: check authorization by organization
     # TODO: schedule notifications
     # TODO: allow event drafts?
+    raise HTTPException(501)
 
 
 @router.patch("/{event_id}", deprecated=True)
@@ -159,6 +160,7 @@ async def edit_event(
     # TODO: check authorization by organization
     # TODO: schedule notifications
     # TODO: allow event drafts?
+    raise HTTPException(501)
 
 
 @router.delete("/{event_id}", deprecated=True)
@@ -170,3 +172,4 @@ async def delete_event(
     """Delete an event."""
     # TODO: check authorization by organization
     # TODO: block event deletion if any tickets are issued
+    raise HTTPException(501)

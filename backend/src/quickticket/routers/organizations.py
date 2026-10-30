@@ -211,6 +211,7 @@ async def edit_organization(
     # TODO: check authorization by organization_member
     # TODO: schedule notifications
     # TODO: allow organization drafts?
+    raise HTTPException(501)
 
 
 @router.delete("/{organization_id}", deprecated=True)
@@ -222,6 +223,7 @@ async def delete_organization(
     """Delete an organization."""
     # TODO: check authorization by organization_member
     # TODO: block organization deletion if any events are active
+    raise HTTPException(501)
 
 
 @router.patch("/{organization_id}/{account_id}", deprecated=True)
@@ -235,6 +237,7 @@ async def edit_organization_member(
     # TODO: check authorization by organization_member
     # TODO: schedule notifications
     # TODO: allow organization drafts?
+    raise HTTPException(501)
 
 
 @router.delete("/{organization_id}/{account_id}", deprecated=True)
@@ -246,6 +249,7 @@ async def delete_organization_member(
 ) -> None:
     """Remove an account from an organization."""
     # TODO: check authorization by organization_member
+    raise HTTPException(501)
 
 
 @router.post("/{organization_id}/{account_id}", deprecated=True)
@@ -261,6 +265,7 @@ async def invite_organization_member(
     # TODO: specify permissions of accepted invite
     # TODO: send notification to recipient
     # TODO: prevent invite spamming? perhaps require recipient to opt-in to invites?
+    raise HTTPException(501)
 
 
 @router.get("/invites/{invite_id}", deprecated=True)
@@ -273,6 +278,7 @@ async def get_organization_member_invite(
     """Get an invite for an organization."""
     # TODO: check authorization by invite recipient
     # TODO: send notification to sender
+    raise HTTPException(501)
 
 
 @router.post("/invites/{invite_id}/accept", deprecated=True)
@@ -285,6 +291,7 @@ async def accept_organization_member_invite(
     """Accept an invite for an organization."""
     # TODO: check authorization by invite recipient
     # TODO: send notification to sender
+    raise HTTPException(501)
 
 
 @router.post("/invites/{invite_id}/reject", deprecated=True)
@@ -297,3 +304,4 @@ async def reject_organization_member_invite(
     """Reject an invite for an organization."""
     # TODO: check authorization by invite recipient
     # TODO: send notification to sender
+    raise HTTPException(501)

@@ -165,6 +165,7 @@ async def create_venue(
     # TODO: check authorization by organization
     # TODO: cap venues to five per organization?
     # TODO: allow venue drafts?
+    raise HTTPException(501)
 
 
 @router.patch("/{venue_id}", deprecated=True)
@@ -176,6 +177,7 @@ async def edit_venue(
     """Edit a venue's details."""
     # TODO: check authorization by organization
     # TODO: allow venue drafts?
+    raise HTTPException(501)
 
 
 @router.delete("/{venue_id}", deprecated=True)
@@ -187,3 +189,4 @@ async def delete_venue(
     """Delete a venue."""
     # TODO: check authorization by organization
     # TODO: block venue deletion if any tickets are issued
+    raise HTTPException(501)
