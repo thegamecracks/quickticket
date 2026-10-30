@@ -3,12 +3,13 @@ from datetime import datetime
 from typing import Annotated, Any
 from uuid import UUID
 
-from backend.src.quickticket.dependencies.organizations import get_organization_controller
+from quickticket.dependencies.organizations import get_organization_controller
 
-from backend.src.quickticket.errors import ORMEntityNotFound
-from backend.src.quickticket.models.organizations import OrganizationMemberPermissions
+from quickticket.errors import ORMEntityNotFound
+from quickticket.models.organizations import OrganizationMemberPermissions
+
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
 
