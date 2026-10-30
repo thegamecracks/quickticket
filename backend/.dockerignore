@@ -3,5 +3,4 @@ __pycache__
 tests
 quickticket-cache.db
 docker-compose.yml
-README.md
 .env
