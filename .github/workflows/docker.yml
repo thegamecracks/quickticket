@@ -73,11 +73,12 @@ jobs:
           cache-from: type=gha,scope=web
           cache-to: type=gha,scope=web,mode=max
 
-  # dev auto-deploy: only on main pushes, skipped (not failing) until the
-  # QT_DEV_KUBECONFIG secret exists
+  # dev auto-deploy: only on main pushes. The kubectl step is skipped
+  # (silently, without failing the job) until the QT_DEV_KUBECONFIG secret
+  # exists — secrets context is only legal in step-level if:, not job-level
   restart-dev:
     needs: [api, web]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.QT_DEV_KUBECONFIG != ''
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions: {}
     steps:
@@ -85,6 +86,7 @@ jobs:
         with:
           version: v1.31.0
       - name: rollout restart quickticket dev
+        if: secrets.QT_DEV_KUBECONFIG != ''
         run: |
           mkdir -p ~/.kube
           echo "${{ secrets.QT_DEV_KUBECONFIG }}" > ~/.kube/config
