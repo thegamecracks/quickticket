@@ -18,6 +18,7 @@ from quickticket.models import (
     Money,
     Organization,
     OrganizationMember,
+    OrganizationMemberPermissions,
     Ticket,
     User,
     Venue,
@@ -881,37 +882,37 @@ def create_test_models() -> Dataset:
         OrganizationMember(
             organization_id=UUID("2cbd7222-4fd3-4cef-9500-79746e76da89"),
             account_id=UUID("2911b7f6-3d3f-4d03-a09e-0bfe013ef161"),
-            permissions=0,
+            permissions=OrganizationMemberPermissions.ADMINISTRATOR,
         ),
         OrganizationMember(
             organization_id=UUID("8e21c0af-d7a0-4f06-940c-b23728ae59e1"),
             account_id=UUID("0daec970-3840-4aad-b2fb-05c1e4fa635d"),
-            permissions=0,
+            permissions=OrganizationMemberPermissions.ADMINISTRATOR,
         ),
         OrganizationMember(
             organization_id=UUID("7092b056-4bec-4f3e-aec4-7f7e8f37b13d"),
             account_id=UUID("cd1e919c-78ac-4222-96c1-6bea98f57281"),
-            permissions=0,
+            permissions=OrganizationMemberPermissions.ADMINISTRATOR,
         ),
         OrganizationMember(
             organization_id=UUID("7092b056-4bec-4f3e-aec4-7f7e8f37b13d"),
             account_id=UUID("5ecbfff1-c5ba-491b-a0aa-de881b0349cb"),
-            permissions=0,
+            permissions=OrganizationMemberPermissions.ADMINISTRATOR,
         ),
         OrganizationMember(
             organization_id=UUID("f729f07d-833d-48e3-97e3-61d360b18e2e"),
             account_id=UUID("7ca2be93-1698-419a-9d8e-066dc81deb7c"),
-            permissions=0,
+            permissions=OrganizationMemberPermissions.ADMINISTRATOR,
         ),
         OrganizationMember(
             organization_id=UUID("f729f07d-833d-48e3-97e3-61d360b18e2e"),
             account_id=UUID("aba1901e-ae2e-4515-9402-b25b84dcb482"),
-            permissions=0,
+            permissions=OrganizationMemberPermissions.ADMINISTRATOR,
         ),
         OrganizationMember(
             organization_id=UUID("dbdf610b-3e5e-4565-b12a-707eb57b8b35"),
             account_id=UUID("54839cd2-c8fb-47ca-a9f0-fbfd73046582"),
-            permissions=0,
+            permissions=OrganizationMemberPermissions.ADMINISTRATOR,
         ),
     ]
 
