@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 import pytest
 import pytest_asyncio
+from fastapi import FastAPI
 from fastapi.datastructures import State
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -11,9 +12,17 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
 )
 
+from quickticket.app import create_app_from_settings
 from quickticket.dependencies.db import get_async_engine, get_async_sessionmaker
 from quickticket.models import Base
-from quickticket.settings import DatabaseSettings, Settings
+from quickticket.settings import (
+    CacheSettings,
+    DatabaseSettings,
+    FrontendSettings,
+    LogSettings,
+    OpenAPISettings,
+    Settings,
+)
 from tests.resources import Dataset, create_test_models
 
 
@@ -79,3 +88,16 @@ def dataset_loader(
     make_session: async_sessionmaker[AsyncSession],
 ) -> DatasetLoader:
     return DatasetLoader(dataset=dataset, make_session=make_session)
+
+
+@pytest.fixture
+def app() -> FastAPI:
+    settings = Settings(
+        _env_file=None,
+        cache=CacheSettings(url="sqlite:///:memory:"),
+        db=DatabaseSettings(url="sqlite+aiosqlite:///:memory:"),
+        frontend=FrontendSettings(builtin=False),
+        log=LogSettings(debug=False, profiling=False),
+        openapi=OpenAPISettings(url=None),
+    )
+    return create_app_from_settings(settings)
