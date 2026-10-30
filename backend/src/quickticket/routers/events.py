@@ -65,6 +65,7 @@ class EventRead(BaseModel):
     tickets: list[PartialTicket]
     venue: PartialVenue
 
+
 class EventsRead(BaseModel):
     events: list[EventRead]
 
@@ -141,14 +142,15 @@ async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: U
 
     return event
 
+
 class EventCreate(BaseModel):
     display_name: str
     description: str
-    theme: str 
+    theme: str
 
     # ! TODO: implement thumbnails & banner support
-    #thumbnail: PartialStorageObject | None
-    #banner: PartialStorageObject | None 
+    # thumbnail: PartialStorageObject | None
+    # banner: PartialStorageObject | None
     starts_at: datetime
     ends_at: datetime
     ticket_price: Money
@@ -157,11 +159,10 @@ class EventCreate(BaseModel):
     tickets: list[PartialTicket]
     venue: PartialVenue
 
+
 @router.post("", response_model=EventRead)
 async def create_event(
-    user: RequiredUserDep,
-    session: AsyncSessionDep,
-    event: EventCreate
+    user: RequiredUserDep, session: AsyncSessionDep, event: EventCreate
 ) -> Event:
     """Create a new event for a venue."""
     # TODO: check authorization by organization
@@ -170,14 +171,12 @@ async def create_event(
 
     # get venue from event object to validate permissions in controller
     nestedVenue = await session.scalar(
-        select(Venue)
-        .where(Venue.id == event.venue_id)
-        .options(selectinload(Venue.organization))
+        select(Venue).where(Venue.id == event.venue_id).options(selectinload(Venue.organization))
     )
     if nestedVenue is None:
         raise ORMEntityNotFound(Venue, event.venue_id)
-    
-    controller = await get_organization_controller(session, user, nestedVenue.organization)
+
+    controller = await get_organization_controller(session, user, nestedVenue.organization_id)
     controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
 
     # ! TODO: add banner, thumbnail
@@ -189,13 +188,13 @@ async def create_event(
         theme=event.theme,
         ticket_price=event.ticket_price,
         max_attendees=event.max_attendees,
-        venue=nestedVenue
+        venue=nestedVenue,
     )
     session.add(event_orm)
     await session.flush()
     await session.refresh(event_orm, ["tickets", "venue"])
     return event_orm
- 
+
 
 @router.patch("/{event_id}", deprecated=True)
 async def edit_event(
