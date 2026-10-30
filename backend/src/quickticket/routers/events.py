@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
 
-from quickticket.dependencies.auth import OptionalUserDep
+from quickticket.dependencies.auth import OptionalUserDep, RequiredUserDep
 from quickticket.dependencies.db import AsyncSessionDep
 from quickticket.models import Event, Money, Point, StorageObject, Ticket, Venue
 
@@ -139,7 +139,10 @@ async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: U
 
 
 @router.post("", deprecated=True)
-async def create_event() -> None:
+async def create_event(
+    user: RequiredUserDep,
+    session: AsyncSessionDep,
+) -> None:
     """Create a new event for a venue."""
     # TODO: check authorization by organization
     # TODO: schedule notifications
@@ -147,7 +150,11 @@ async def create_event() -> None:
 
 
 @router.patch("/{event_id}", deprecated=True)
-async def edit_event(event_id: UUID) -> None:
+async def edit_event(
+    user: RequiredUserDep,
+    session: AsyncSessionDep,
+    event_id: UUID,
+) -> None:
     """Edit an event's details."""
     # TODO: check authorization by organization
     # TODO: schedule notifications
@@ -155,7 +162,11 @@ async def edit_event(event_id: UUID) -> None:
 
 
 @router.delete("/{event_id}", deprecated=True)
-async def delete_event(event_id: UUID) -> None:
+async def delete_event(
+    user: RequiredUserDep,
+    session: AsyncSessionDep,
+    event_id: UUID,
+) -> None:
     """Delete an event."""
     # TODO: check authorization by organization
     # TODO: block event deletion if any tickets are issued

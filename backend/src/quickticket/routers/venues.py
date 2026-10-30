@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
 
-from quickticket.dependencies.auth import OptionalUserDep
+from quickticket.dependencies.auth import OptionalUserDep, RequiredUserDep
 from quickticket.dependencies.db import AsyncSessionDep
 from quickticket.models import Event, Money, Point, StorageObject, Ticket, Venue
 
@@ -157,7 +157,10 @@ async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: U
 
 
 @router.post("", deprecated=True)
-async def create_venue() -> None:
+async def create_venue(
+    user: RequiredUserDep,
+    session: AsyncSessionDep,
+) -> None:
     """Create a new venue in an organization."""
     # TODO: check authorization by organization
     # TODO: cap venues to five per organization?
@@ -165,14 +168,22 @@ async def create_venue() -> None:
 
 
 @router.patch("/{venue_id}", deprecated=True)
-async def edit_venue(venue_id: UUID) -> None:
+async def edit_venue(
+    user: RequiredUserDep,
+    session: AsyncSessionDep,
+    venue_id: UUID,
+) -> None:
     """Edit a venue's details."""
     # TODO: check authorization by organization
     # TODO: allow venue drafts?
 
 
 @router.delete("/{venue_id}", deprecated=True)
-async def delete_venue(venue_id: UUID) -> None:
+async def delete_venue(
+    user: RequiredUserDep,
+    session: AsyncSessionDep,
+    venue_id: UUID,
+) -> None:
     """Delete a venue."""
     # TODO: check authorization by organization
     # TODO: block venue deletion if any tickets are issued

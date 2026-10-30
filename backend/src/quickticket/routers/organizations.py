@@ -202,7 +202,11 @@ async def create_organization(
 
 
 @router.patch("/{organization_id}", deprecated=True)
-async def edit_organization(organization_id: UUID) -> None:
+async def edit_organization(
+    user: RequiredUserDep,
+    session: AsyncSessionDep,
+    organization_id: UUID,
+) -> None:
     """Edit an organization's details."""
     # TODO: check authorization by organization_member
     # TODO: schedule notifications
@@ -210,14 +214,23 @@ async def edit_organization(organization_id: UUID) -> None:
 
 
 @router.delete("/{organization_id}", deprecated=True)
-async def delete_organization(organization_id: UUID) -> None:
+async def delete_organization(
+    user: RequiredUserDep,
+    session: AsyncSessionDep,
+    organization_id: UUID,
+) -> None:
     """Delete an organization."""
     # TODO: check authorization by organization_member
     # TODO: block organization deletion if any events are active
 
 
 @router.patch("/{organization_id}/{account_id}", deprecated=True)
-async def edit_organization_member(organization_id: UUID, account_id: UUID) -> None:
+async def edit_organization_member(
+    user: RequiredUserDep,
+    session: AsyncSessionDep,
+    organization_id: UUID,
+    account_id: UUID,
+) -> None:
     """Edit an organization member."""
     # TODO: check authorization by organization_member
     # TODO: schedule notifications
@@ -225,13 +238,23 @@ async def edit_organization_member(organization_id: UUID, account_id: UUID) -> N
 
 
 @router.delete("/{organization_id}/{account_id}", deprecated=True)
-async def delete_organization_member(organization_id: UUID, account_id: UUID) -> None:
+async def delete_organization_member(
+    user: RequiredUserDep,
+    session: AsyncSessionDep,
+    organization_id: UUID,
+    account_id: UUID,
+) -> None:
     """Remove an account from an organization."""
     # TODO: check authorization by organization_member
 
 
 @router.post("/{organization_id}/{account_id}", deprecated=True)
-async def invite_organization_member(organization_id: UUID, account_id: UUID) -> None:
+async def invite_organization_member(
+    user: RequiredUserDep,
+    session: AsyncSessionDep,
+    organization_id: UUID,
+    account_id: UUID,
+) -> None:
     """Invite an account to an organization."""
     # TODO: check authorization by organization_member
     # TODO: fail if member already exists
@@ -241,21 +264,36 @@ async def invite_organization_member(organization_id: UUID, account_id: UUID) ->
 
 
 @router.get("/invites/{invite_id}", deprecated=True)
-async def get_organization_member_invite(organization_id: UUID, invite_id: UUID) -> None:
+async def get_organization_member_invite(
+    user: RequiredUserDep,
+    session: AsyncSessionDep,
+    organization_id: UUID,
+    invite_id: UUID,
+) -> None:
     """Get an invite for an organization."""
     # TODO: check authorization by invite recipient
     # TODO: send notification to sender
 
 
 @router.post("/invites/{invite_id}/accept", deprecated=True)
-async def accept_organization_member_invite(organization_id: UUID, invite_id: UUID) -> None:
+async def accept_organization_member_invite(
+    user: RequiredUserDep,
+    session: AsyncSessionDep,
+    organization_id: UUID,
+    invite_id: UUID,
+) -> None:
     """Accept an invite for an organization."""
     # TODO: check authorization by invite recipient
     # TODO: send notification to sender
 
 
 @router.post("/invites/{invite_id}/reject", deprecated=True)
-async def reject_organization_member_invite(organization_id: UUID, invite_id: UUID) -> None:
+async def reject_organization_member_invite(
+    user: RequiredUserDep,
+    session: AsyncSessionDep,
+    organization_id: UUID,
+    invite_id: UUID,
+) -> None:
     """Reject an invite for an organization."""
     # TODO: check authorization by invite recipient
     # TODO: send notification to sender
