@@ -60,6 +60,7 @@ class OrganizationMember(Base, kw_only=True, repr=False):
         ForeignKey("account.account_id", ondelete="CASCADE"),
         default=None,
         primary_key=True,
+        index=True,
     )
     permissions: Mapped[OrganizationMemberPermissions] = mapped_column(
         BigInteger,
