@@ -45,7 +45,7 @@ Run all four locally before finishing a change.
 
 ## Configuration
 
-- Settings are defined in `.src/quickticket/settings.py` using
+- Settings are defined in `src/quickticket/settings.py` using
   `pydantic-settings` and read from a `.env` file (see `.example.env`
   for all available variables; never commit a real `.env` or secrets).
 - Environment variables use a **double-underscore nesting scheme**,
