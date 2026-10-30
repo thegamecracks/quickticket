@@ -4,13 +4,21 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
-from sqlalchemy import false, select
+from pydantic import BaseModel, Field
+from sqlalchemy import exists, false, select
 from sqlalchemy.orm import selectinload
 
-from quickticket.dependencies.auth import OptionalUserDep
+from quickticket.dependencies.auth import OptionalUserDep, RequiredUserDep
 from quickticket.dependencies.db import AsyncSessionDep
-from quickticket.models import Event, Organization, OrganizationMember, StorageObject, Ticket, Venue
+from quickticket.models import (
+    Event,
+    Organization,
+    OrganizationMember,
+    OrganizationMemberPermissions,
+    StorageObject,
+    Ticket,
+    Venue,
+)
 
 router = APIRouter(tags=["Organizations"])
 log = logging.getLogger(__name__)
@@ -149,10 +157,48 @@ async def get_organization(
     return organization
 
 
-@router.post("", deprecated=True)
-async def create_organization() -> None:
+class OrganizationCreate(BaseModel):
+    display_name: Annotated[str, Field(min_length=1, max_length=128)]
+
+
+@router.post("", response_model=OrganizationRead)
+async def create_organization(
+    user: RequiredUserDep,
+    session: AsyncSessionDep,
+    organization: OrganizationCreate,
+) -> Any:
     """Create a new organization."""
-    # TODO: only allow one organization per user
+
+    # HACK: in a future release an organization might allow multiple administrators.
+    #       perhaps the flag should be renamed to OWNER?
+    owns_organization = await session.scalar(
+        select(
+            exists().where(
+                OrganizationMember.account_id == user.id,
+                OrganizationMember.permissions.bitwise_and(
+                    OrganizationMemberPermissions.ADMINISTRATOR
+                ),
+            )
+        )
+    )
+    if owns_organization:
+        raise HTTPException(400, "Already owns an organization")
+
+    created = Organization(
+        display_name=organization.display_name,
+        members=[
+            OrganizationMember(
+                user=user,
+                permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+            ),
+        ],
+    )
+
+    session.add(created)
+    await session.flush()
+    await session.refresh(created, ["members", "venues"])
+
+    return created
 
 
 @router.patch("/{organization_id}", deprecated=True)
