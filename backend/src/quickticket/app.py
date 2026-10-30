@@ -3,7 +3,15 @@ from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import AsyncExitStack, asynccontextmanager
 from typing import cast
 
-from fastapi import APIRouter, Depends, FastAPI, Request, Response
+from fastapi import (
+    APIRouter,
+    Depends,
+    FastAPI,
+    HTTPException,
+    Request,
+    Response,
+)
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -14,7 +22,7 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from quickticket.dependencies.ratelimits import apply_request_limit
 
 # from starlette_csrf.middleware import CSRFMiddleware
-from quickticket.errors import ForcedResponse
+from quickticket.errors import EntityNotFound, ForcedResponse, UnauthorizedError
 from quickticket.logging import setup_logging
 from quickticket.routers import auth, events, notifications, organizations, profile, venues
 from quickticket.settings import Settings
@@ -179,3 +187,16 @@ app.add_middleware(
 @app.exception_handler(ForcedResponse)
 def send_forced_response(request: Request, exc: ForcedResponse) -> Response:
     return exc.response
+
+
+# https://fastapi.tiangolo.com/tutorial/handling-errors/#reuse-fastapis-exception-handlers
+@app.exception_handler(EntityNotFound)
+async def send_entity_not_found(request: Request, exc: EntityNotFound) -> Response:
+    http_exception = HTTPException(status_code=400, detail=str(exc))
+    return await http_exception_handler(request, http_exception)
+
+
+@app.exception_handler(UnauthorizedError)
+async def send_unauthorized_error(request: Request, exc: UnauthorizedError) -> Response:
+    http_exception = HTTPException(status_code=400, detail=str(exc))
+    return await http_exception_handler(request, http_exception)
