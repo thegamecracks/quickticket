@@ -3,16 +3,14 @@ from datetime import datetime
 from typing import Annotated, Any
 from uuid import UUID
 
-from quickticket.dependencies.organizations import get_organization_controller
-
-from quickticket.errors import ORMEntityNotFound
-from quickticket.models.organizations import OrganizationMemberPermissions
-
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
 
+from quickticket.dependencies.organizations import get_organization_controller
+from quickticket.errors import ORMEntityNotFound
+from quickticket.models.organizations import OrganizationMemberPermissions
 from quickticket.dependencies.auth import OptionalUserDep, RequiredUserDep
 from quickticket.dependencies.db import AsyncSessionDep
 from quickticket.models import Event, Money, Point, StorageObject, Ticket, Venue
@@ -171,10 +169,10 @@ async def create_event(
 
     # get venue from event object to validate permissions in controller
     nestedVenue = await session.scalar(
-        select(Venue).where(Venue.id == event.venue_id).options(selectinload(Venue.organization))
+        select(Venue).where(Venue.id == event.venue.id).options(selectinload(Venue.organization))
     )
     if nestedVenue is None:
-        raise ORMEntityNotFound(Venue, event.venue_id)
+        raise ORMEntityNotFound(Venue, event.venue.id)
 
     controller = await get_organization_controller(session, user, nestedVenue.organization_id)
     controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
