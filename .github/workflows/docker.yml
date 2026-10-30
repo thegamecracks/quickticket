@@ -75,21 +75,40 @@ jobs:
 
   # dev auto-deploy: only on main pushes. The kubectl step is skipped
   # (silently, without failing the job) until the QT_DEV_KUBECONFIG secret
-  # exists — secrets context is only legal in step-level if:, not job-level
+  # exists. The secrets context is unavailable inside if: conditionals at
+  # ANY level, hence the env: indirection.
   restart-dev:
     needs: [api, web]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions: {}
+    env:
+      QT_DEV_KUBECONFIG: ${{ secrets.QT_DEV_KUBECONFIG }}
+      TS_AUTHKEY: ${{ secrets.TS_AUTHKEY }}
     steps:
       - uses: azure/setup-kubectl@bda439f5f36b99b262ebdcd3613869bddb064c8e # v5.2.0
         with:
           version: v1.31.0
+      # the k3s API (192.168.10.150:6443) is LAN-only; join the tailnet as an
+      # ephemeral node and reach it through dell-pve-1's approved subnet route
+      # for 192.168.10.0/24. The kubeconfig's server URL and CA stay untouched
+      # (192.168.10.150 is in the API cert's SANs). --accept-routes is required
+      # on Linux to learn the subnet route; the node deregisters itself when
+      # the job ends (ephemeral).
+      - name: join tailnet (headscale)
+        if: env.TS_AUTHKEY != ''
+        run: |
+          curl -fsSL https://tailscale.com/install.sh | sh
+          sudo tailscale up \
+            --login-server=https://headscale.vanderloch.com:2459 \
+            --authkey="$TS_AUTHKEY" \
+            --hostname="gh-qt-${{ github.run_id }}" \
+            --ephemeral --accept-routes
       - name: rollout restart quickticket dev
-        if: secrets.QT_DEV_KUBECONFIG != ''
+        if: env.QT_DEV_KUBECONFIG != ''
         run: |
           mkdir -p ~/.kube
-          echo "${{ secrets.QT_DEV_KUBECONFIG }}" > ~/.kube/config
+          printf '%s' "$QT_DEV_KUBECONFIG" > ~/.kube/config
           chmod 600 ~/.kube/config
           kubectl -n quickticket rollout restart deploy/quickticket-dev deploy/quickticket-dev-web
           kubectl -n quickticket rollout status deploy/quickticket-dev --timeout=180s
