@@ -234,9 +234,10 @@ async def edit_organization_member(
     account_id: UUID,
 ) -> None:
     """Edit an organization member."""
-    # TODO: check authorization by organization_member
-    # TODO: schedule notifications
-    # TODO: allow organization drafts?
+    # NOTE: not planned for release, leave empty!
+    # - check authorization by organization_member
+    # - schedule notifications
+    # - allow organization drafts?
     raise HTTPException(501)
 
 
@@ -248,7 +249,8 @@ async def delete_organization_member(
     account_id: UUID,
 ) -> None:
     """Remove an account from an organization."""
-    # TODO: check authorization by organization_member
+    # NOTE: not planned for release, leave empty!
+    # - check authorization by organization_member
     raise HTTPException(501)
 
 
@@ -260,11 +262,12 @@ async def invite_organization_member(
     account_id: UUID,
 ) -> None:
     """Invite an account to an organization."""
-    # TODO: check authorization by organization_member
-    # TODO: fail if member already exists
-    # TODO: specify permissions of accepted invite
-    # TODO: send notification to recipient
-    # TODO: prevent invite spamming? perhaps require recipient to opt-in to invites?
+    # NOTE: not planned for release, leave empty!
+    # - check authorization by organization_member
+    # - fail if member already exists
+    # - specify permissions of accepted invite
+    # - send notification to recipient
+    # - prevent invite spamming? perhaps require recipient to opt-in to invites?
     raise HTTPException(501)
 
 
@@ -276,8 +279,9 @@ async def get_organization_member_invite(
     invite_id: UUID,
 ) -> None:
     """Get an invite for an organization."""
-    # TODO: check authorization by invite recipient
-    # TODO: send notification to sender
+    # NOTE: not planned for release, leave empty!
+    # - check authorization by invite recipient
+    # - send notification to sender
     raise HTTPException(501)
 
 
@@ -289,8 +293,9 @@ async def accept_organization_member_invite(
     invite_id: UUID,
 ) -> None:
     """Accept an invite for an organization."""
-    # TODO: check authorization by invite recipient
-    # TODO: send notification to sender
+    # NOTE: not planned for release, leave empty!
+    # - check authorization by invite recipient
+    # - send notification to sender
     raise HTTPException(501)
 
 
@@ -302,6 +307,7 @@ async def reject_organization_member_invite(
     invite_id: UUID,
 ) -> None:
     """Reject an invite for an organization."""
-    # TODO: check authorization by invite recipient
-    # TODO: send notification to sender
+    # NOTE: not planned for release, leave empty!
+    # - check authorization by invite recipient
+    # - send notification to sender
     raise HTTPException(501)
