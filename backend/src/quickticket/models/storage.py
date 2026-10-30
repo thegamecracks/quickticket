@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import BigInteger, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -22,7 +22,7 @@ class StorageProvider(Base, kw_only=True, repr=False):
     __tablename__ = "storage_provider"
     __table_args__ = (UniqueConstraint("endpoint", "region"),)
 
-    id: Mapped[pk_uuid] = mapped_column("storage_provider_id", default=None)
+    id: Mapped[pk_uuid] = mapped_column("storage_provider_id", default_factory=uuid4)
 
     # Required
     endpoint: Mapped[str_2000]
@@ -43,7 +43,7 @@ class StorageProvider(Base, kw_only=True, repr=False):
 class StorageObject(Base, kw_only=True, repr=False):
     __tablename__ = "storage_object"
 
-    id: Mapped[pk_uuid] = mapped_column("storage_object_id", default=None)
+    id: Mapped[pk_uuid] = mapped_column("storage_object_id", default_factory=uuid4)
 
     # Required
     storage_provider_id: Mapped[UUID] = mapped_column(

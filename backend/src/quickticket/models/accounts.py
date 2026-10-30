@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import TYPE_CHECKING
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -34,7 +34,7 @@ __all__ = (
 class User(Base, kw_only=True, repr=False):
     __tablename__ = "account"
 
-    id: Mapped[pk_uuid] = mapped_column("account_id", default=None)
+    id: Mapped[pk_uuid] = mapped_column("account_id", default_factory=uuid4)
 
     # Required
     display_name: Mapped[str_128]
@@ -116,7 +116,7 @@ class OpenIDAccount(Base, kw_only=True, repr=False):
 class Address(Base, kw_only=True, repr=False):
     __tablename__ = "address"
 
-    id: Mapped[pk_uuid] = mapped_column("address_id", default=None)
+    id: Mapped[pk_uuid] = mapped_column("address_id", default_factory=uuid4)
 
     # Required
     account_id: Mapped[UUID] = mapped_column(
@@ -140,7 +140,7 @@ class Address(Base, kw_only=True, repr=False):
 class Notification(Base, kw_only=True, repr=False):
     __tablename__ = "notification"
 
-    id: Mapped[pk_uuid] = mapped_column("notification_id", default=None)
+    id: Mapped[pk_uuid] = mapped_column("notification_id", default_factory=uuid4)
 
     # Required
     account_id: Mapped[UUID] = mapped_column(
