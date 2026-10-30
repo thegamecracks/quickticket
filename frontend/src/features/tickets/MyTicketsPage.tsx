@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import type { User } from "../account/types";
 import type { Ticket } from "./types";
 import { useNavigate } from "react-router";
-import { calcDateLongTimeMediumRange, formatDateLongAndTimeShort } from "../../lib/general";
+import { calcDateLongTimeMediumRange } from "../../lib/general";
 
 
 export default function MyTicketsPage() {
@@ -16,12 +16,12 @@ export default function MyTicketsPage() {
     // eventual const res = api.get("/tickets");
     const getTickets = (user: User | null): void => {
       if (user) {
-        const filteredTickets = MockTickets.filter((ticket: Ticket) => ticket.account_id === user.id)
+        const filteredTickets = MockTickets.filter((ticket: Ticket) => ticket.account_id === user.account_id)
         setTickets(filteredTickets);
       }
     }
 
-    getTickets(user);
+    if (user) getTickets(user);
   }, [user])
 
 

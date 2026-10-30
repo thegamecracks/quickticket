@@ -5,7 +5,7 @@ import type { Money } from "../../lib/types";
 export type Ticket = {
   id: string; // UUID (ticket_id)
   event_id: Event["id"];
-  account_id: User["id"];
+  account_id: User["account_id"];
   created_at: string; // ISO 8601 datetime
   paid_cost: Money;
 }
