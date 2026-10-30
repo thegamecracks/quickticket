@@ -117,7 +117,7 @@ jobs:
             --login-server=https://headscale.vanderloch.com:2459 \
             --authkey="$TS_AUTHKEY" \
             --hostname="gh-qt-${{ github.run_id }}" \
-            --ephemeral --accept-routes
+           --accept-routes
       - name: rollout restart quickticket dev
         if: env.QT_DEV_KUBECONFIG != ''
         run: |
