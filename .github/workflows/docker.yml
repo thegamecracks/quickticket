@@ -32,7 +32,13 @@ jobs:
         with:
           persist-credentials: false
       - id: version
-        run: echo "tag=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          tag="dev"
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then tag="${GITHUB_REF_NAME#v}"; fi
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then tag="pr-$PR_NUMBER"; fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
@@ -44,7 +50,7 @@ jobs:
           context: backend
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            ${{ env.API_IMAGE }}:${{ steps.version.outputs.tag || 'dev' }}
+            ${{ env.API_IMAGE }}:${{ steps.version.outputs.tag }}
             ${{ env.API_IMAGE }}:${{ github.sha }}
           cache-from: type=gha,scope=api
           cache-to: type=gha,scope=api,mode=max
@@ -58,7 +64,13 @@ jobs:
         with:
           persist-credentials: false
       - id: version
-        run: echo "tag=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          tag="dev"
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then tag="${GITHUB_REF_NAME#v}"; fi
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then tag="pr-$PR_NUMBER"; fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
@@ -70,7 +82,7 @@ jobs:
           context: frontend
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            ${{ env.WEB_IMAGE }}:${{ steps.version.outputs.tag || 'dev' }}
+            ${{ env.WEB_IMAGE }}:${{ steps.version.outputs.tag }}
             ${{ env.WEB_IMAGE }}:${{ github.sha }}
           cache-from: type=gha,scope=web
           cache-to: type=gha,scope=web,mode=max
