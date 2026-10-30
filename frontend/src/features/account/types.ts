@@ -1,7 +1,7 @@
 // Mirrors quickticket.models.accounts.
 
 export interface User {
-  id: string; // UUID (account_id)
+  account_id: string; // UUID (account_id)
   created_at: string; // ISO 8601 datetime
   display_name: string;
   first_name: string;
