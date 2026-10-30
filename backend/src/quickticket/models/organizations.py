@@ -52,7 +52,7 @@ class OrganizationMember(Base, kw_only=True, repr=False):
 
     # Required
     organization_id: Mapped[UUID] = mapped_column(
-        ForeignKey("organization.organization_id"),
+        ForeignKey("organization.organization_id", ondelete="CASCADE"),
         default=None,
         primary_key=True,
     )
