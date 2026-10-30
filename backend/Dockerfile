@@ -9,6 +9,9 @@ ENV UV_NO_DEV=1
 ENV UV_PYTHON=3.15
 
 WORKDIR /app
+# pyinstrument/pyyaml have no musl wheels for CPython 3.15 and build from
+# source — alpine's uv image ships no compiler by default
+RUN apk add --no-cache build-base
 COPY --link pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --no-install-project
 COPY --link alembic.ini README.md ./

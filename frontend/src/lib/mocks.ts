@@ -52,7 +52,7 @@ export const MockAddresses: Address[] = [
 
 /** Primary mock user: James Smith, the first account in mockdata.sql. */
 export const MockUser: User = {
-  id: 'eec50538-0edc-469b-b441-01b95b2f86c1',
+  account_id: 'eec50538-0edc-469b-b441-01b95b2f86c1',
   created_at: '2026-09-01T12:00:00.000Z',
   display_name: 'James Smith',
   first_name: 'James',
@@ -65,7 +65,7 @@ export const MockUser: User = {
 export const MockUsers: User[] = [
   MockUser,
   {
-    id: '0daec970-3840-4aad-b2fb-05c1e4fa635d',
+    account_id: '0daec970-3840-4aad-b2fb-05c1e4fa635d',
     created_at: '2026-09-02T12:00:00.000Z',
     display_name: 'Julia Lopez',
     first_name: 'Julia',
@@ -74,7 +74,7 @@ export const MockUsers: User[] = [
     addresses: [MockAddresses[1]],
   },
   {
-    id: '3529c963-84c7-4e26-8017-b1805d0a4280',
+    account_id: '3529c963-84c7-4e26-8017-b1805d0a4280',
     created_at: '2026-09-03T12:00:00.000Z',
     display_name: 'Elijah Taylor',
     first_name: 'Elijah',
@@ -101,7 +101,7 @@ export const MockOrganizations: MockOrganization[] = [
     id: '2cbd7222-4fd3-4cef-9500-79746e76da89',
     created_at: '2026-08-01T12:00:00.000Z',
     display_name: 'Classy Affairs',
-    member_ids: ['2911b7f6-3d3f-4d03-a09e-0bfe013ef161', MockUser.id],
+    member_ids: ['2911b7f6-3d3f-4d03-a09e-0bfe013ef161', MockUser.account_id],
   },
   {
     id: '8e21c0af-d7a0-4f06-940c-b23728ae59e1',

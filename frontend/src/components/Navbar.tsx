@@ -1,9 +1,8 @@
 import { Link, NavLink, useLocation } from 'react-router'
-import { MockUser } from '../lib/mocks'
 import { useAuth } from '../lib/auth'
 
 export default function Navbar() {
-  const { login, mockLogin, logout, user } = useAuth();
+  const { login, logout, user } = useAuth();
   const location = useLocation();
 
   const handleLogin = () => {
