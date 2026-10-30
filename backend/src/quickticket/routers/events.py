@@ -3,8 +3,12 @@ from datetime import datetime
 from typing import Annotated, Any
 from uuid import UUID
 
+from backend.src.quickticket.dependencies.organizations import get_organization_controller
+
+from backend.src.quickticket.errors import ORMEntityNotFound
+from backend.src.quickticket.models.organizations import OrganizationMemberPermissions
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
 
@@ -59,7 +63,6 @@ class EventRead(BaseModel):
 
     tickets: list[PartialTicket]
     venue: PartialVenue
-
 
 class EventsRead(BaseModel):
     events: list[EventRead]
@@ -137,18 +140,61 @@ async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: U
 
     return event
 
+class EventCreate(BaseModel):
+    display_name: str
+    description: str
+    theme: str 
 
-@router.post("", deprecated=True)
+    # ! TODO: implement thumbnails & banner support
+    #thumbnail: PartialStorageObject | None
+    #banner: PartialStorageObject | None 
+    starts_at: datetime
+    ends_at: datetime
+    ticket_price: Money
+    max_attendees: int
+
+    tickets: list[PartialTicket]
+    venue: PartialVenue
+
+@router.post("", response_model=EventRead)
 async def create_event(
     user: RequiredUserDep,
     session: AsyncSessionDep,
-) -> None:
+    event: EventCreate
+) -> Event:
     """Create a new event for a venue."""
     # TODO: check authorization by organization
     # TODO: schedule notifications
     # TODO: allow event drafts?
-    raise HTTPException(501)
 
+    # get venue from event object to validate permissions in controller
+    nestedVenue = await session.scalar(
+        select(Venue)
+        .where(Venue.id == event.venue_id)
+        .options(selectinload(Venue.organization))
+    )
+    if nestedVenue is None:
+        raise ORMEntityNotFound(Venue, event.venue_id)
+    
+    controller = await get_organization_controller(session, user, nestedVenue.organization)
+    controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
+
+    # ! TODO: add banner, thumbnail
+    event_orm = Event(
+        display_name=event.display_name,
+        description=event.description,
+        starts_at=event.starts_at,
+        ends_at=event.ends_at,
+        theme=event.theme,
+        ticket_price=event.ticket_price,
+        max_attendees=event.max_attendees,
+        venue=nestedVenue
+    )
+    session.add(event_orm)
+    await session.flush()
+    await session.refresh(event_orm, ["tickets", "venue"])
+    return event_orm
+ 
 
 @router.patch("/{event_id}", deprecated=True)
 async def edit_event(
