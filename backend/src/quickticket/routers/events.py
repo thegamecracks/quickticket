@@ -8,12 +8,12 @@ from pydantic import BaseModel
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
 
-from quickticket.dependencies.organizations import get_organization_controller
-from quickticket.errors import ORMEntityNotFound
-from quickticket.models.organizations import OrganizationMemberPermissions
 from quickticket.dependencies.auth import OptionalUserDep, RequiredUserDep
 from quickticket.dependencies.db import AsyncSessionDep
+from quickticket.dependencies.organizations import get_organization_controller
+from quickticket.errors import ORMEntityNotFound
 from quickticket.models import Event, Money, Point, StorageObject, Ticket, Venue
+from quickticket.models.organizations import OrganizationMemberPermissions
 
 router = APIRouter(tags=["Events"])
 log = logging.getLogger(__name__)
