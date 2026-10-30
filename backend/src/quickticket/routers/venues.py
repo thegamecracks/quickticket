@@ -4,13 +4,25 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql.functions import count
 
 from quickticket.dependencies.auth import OptionalUserDep, RequiredUserDep
 from quickticket.dependencies.db import AsyncSessionDep
-from quickticket.models import Event, Money, Point, StorageObject, Ticket, Venue
+from quickticket.dependencies.organizations import get_organization_controller
+from quickticket.models import (
+    Event,
+    Money,
+    OrganizationMemberPermissions,
+    Point,
+    StorageObject,
+    Ticket,
+    Venue,
+)
+
+VENUE_LIMIT = 5
 
 router = APIRouter(tags=["Venues"])
 log = logging.getLogger(__name__)
@@ -156,16 +168,50 @@ async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: U
     return venue
 
 
-@router.post("", deprecated=True)
+class VenueCreate(BaseModel):
+    organization_id: UUID
+    display_name: Annotated[str, Field(max_length=128)]
+    description: Annotated[str, Field(max_length=4096)]
+    theme: Annotated[str, Field(max_length=128)]
+    location_name: Annotated[str, Field(max_length=128)]
+
+    location_coords: Point | None = None
+    # banner_id: UUID | None = None
+    # thumbnail_id: UUID | None = None
+
+
+@router.post("", response_model=VenueRead)
 async def create_venue(
     user: RequiredUserDep,
     session: AsyncSessionDep,
-) -> None:
+    venue: VenueCreate,
+) -> Venue:
     """Create a new venue in an organization."""
-    # TODO: check authorization by organization
-    # TODO: cap venues to five per organization?
+    controller = await get_organization_controller(session, user, venue.organization_id)
+    controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
+
+    venue_count = await session.scalar(
+        select(count()).where(Venue.organization_id == controller.organization.id)
+    )
+    assert venue_count is not None
+    if venue_count >= VENUE_LIMIT:
+        raise HTTPException(400, f"Reached maximum venue limit: {VENUE_LIMIT}")
+
     # TODO: allow venue drafts?
-    raise HTTPException(501)
+    venue_orm = Venue(
+        organization_id=controller.organization.id,
+        display_name=venue.display_name,
+        description=venue.description,
+        theme=venue.theme,
+        location_name=venue.location_name,
+        location_coords=venue.location_coords,
+    )
+    session.add(venue_orm)
+    await session.flush()
+    # Eagerly load relationships to prevent lazy read on VenueRead validation
+    await session.refresh(venue_orm, ["events", "organization"])
+
+    return venue_orm
 
 
 @router.patch("/{venue_id}", deprecated=True)
