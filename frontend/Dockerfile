@@ -7,6 +7,9 @@ WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 COPY . .
+# same-origin API prefix: backend mounts routes under /api, Traefik splits
+# /api -> api service, everything else -> this nginx
+ENV VITE_API_URL=/api
 RUN bun run build
 
 FROM nginx:1.29-alpine
