@@ -21,7 +21,7 @@ async def test_uuid_default() -> None:
 async def test_current_timestamp_server_default(
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
-    async with make_session() as session:
+    async with make_session() as session, session.begin():
         user = User(
             display_name="Display Name",
             first_name="First",

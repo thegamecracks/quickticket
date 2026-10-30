@@ -14,7 +14,7 @@ async def test_get_events(
 ) -> None:
     await dataset_loader.load()
 
-    async with make_session() as session:
+    async with make_session() as session, session.begin():
         response = await get_events(user=None, session=session)
         response = EventsRead.model_validate(response, from_attributes=True)
 

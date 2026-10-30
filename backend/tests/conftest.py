@@ -49,7 +49,7 @@ async def make_session(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
     return await get_async_sessionmaker(engine)
 
 
-# Prefer explicit transactions with make_session()
+# Prefer explicit transactions with `make_session() as session, session.begin()`
 # @pytest_asyncio.fixture
 # async def session(
 #     make_session: async_sessionmaker[AsyncSession],
@@ -64,9 +64,8 @@ class DatasetLoader:
     make_session: async_sessionmaker[AsyncSession]
 
     async def load(self) -> None:
-        async with self.make_session() as session:
+        async with self.make_session() as session, session.begin():
             self.dataset.add_all(session)
-            await session.commit()
 
 
 @pytest.fixture
