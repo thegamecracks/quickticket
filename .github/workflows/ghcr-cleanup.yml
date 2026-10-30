@@ -1,0 +1,24 @@
+name: Cleanup ghcr.io images
+
+on:
+  schedule:
+    - cron: "0 0 * * 1"  # every monday
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Dry run
+        type: boolean
+        required: true
+        default: true
+
+permissions: {}
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
+        with:
+          dry-run: ${{ inputs.dry_run }}
