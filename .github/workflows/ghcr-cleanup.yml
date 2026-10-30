@@ -2,7 +2,7 @@ name: Cleanup ghcr.io images
 
 on:
   schedule:
-    - cron: "0 0 * * 1"  # every monday
+    - cron: "0 0 * * *"  # every day at midnight
   workflow_dispatch:
     inputs:
       dry_run:
