@@ -5,15 +5,16 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from quickticket.errors import ORMEntityNotFound, UnauthorizedOrganizationMember
-from quickticket.models.accounts import User
-from quickticket.models.events import Event, Venue
-from quickticket.models.money import Money
-from quickticket.models.organizations import (
+from quickticket.models import (
+    Event,
+    Money,
     Organization,
     OrganizationMember,
     OrganizationMemberPermissions,
+    Point,
+    User,
+    Venue,
 )
-from quickticket.models.types import Point
 from quickticket.routers.events import EventCreate, EventRead, EventsRead, create_event, get_events
 from tests.conftest import DatasetLoader
 
