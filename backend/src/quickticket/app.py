@@ -18,6 +18,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import HTMLResponse
 from securecookies import SecureCookiesMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from quickticket.dependencies.ratelimits import apply_request_limit
@@ -28,31 +29,15 @@ from quickticket.logging import setup_logging
 from quickticket.routers import auth, events, notifications, organizations, profile, venues
 from quickticket.settings import Settings
 
+__all__ = (
+    "app",
+    "create_app_from_settings",
+)
+
 log = logging.getLogger(__name__)
 
 
 def create_app_from_settings(settings: Settings) -> FastAPI:
-    # https://github.com/fastapi/fastapi/discussions/8054#discussioncomment-11346542
-    @asynccontextmanager
-    async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
-        async with AsyncExitStack() as stack:
-            _app.state.stack = stack
-            try:
-                yield
-            finally:
-                del _app.state.stack
-
-    async def store_response_object(request: Request, response: Response) -> None:
-        # HACK:
-        # FastAPI creates a temporary response object we can use to set headers,
-        # however this response is overwritten if an exception is raised or a
-        # Response object is returned. To restore our headers, we need to recover
-        # this response object and transfer the headers over to the actual response.
-        #
-        # We'll use a global dependency to store FastAPI's temporary response in
-        # the request, and then extract it further down at the ASGI middleware level.
-        request.state.temp_response = response
-
     if settings.log.debug:
         log.warning(
             "Starlette's debug mode is enabled. Disable in production with: BACKEND__LOG__DEBUG=0"
@@ -113,59 +98,13 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
     #     log.warning("csrf_secret not set, using insecure hardcoded value")
     # app.add_middleware(CSRFMiddleware, secret=csrf_secret)
 
-    def add_profiling_middleware() -> None:
-        try:
-            from pyinstrument import Profiler
-        except ModuleNotFoundError:
-            log.warning(
-                "Request profiling is unavailable due to pyinstrument not being installed. "
-                "Disable in production with: BACKEND__LOG__PROFILING=0"
-            )
-            return
-
-        log.warning(
-            "Enabling request profiling with ?profile=1. "
-            "Disable in production with: BACKEND__LOG__PROFILING=0"
-        )
-
-        # https://pyinstrument.readthedocs.io/en/latest/guide.html
-        @app.middleware("http")
-        async def profile_request(request: Request, call_next):
-            profiling = request.query_params.get("profile", False)
-            if not profiling:
-                return await call_next(request)
-
-            profiler = Profiler()
-            profiler.start()
-            await call_next(request)
-            profiler.stop()
-            return HTMLResponse(profiler.output_html())
-
     if settings.log.profiling:
-        add_profiling_middleware()
+        add_profiling_middleware(app)
 
     # This preserves headers from FastAPI's temporary response object by transferring
     # them to the current response object. For this to work, it must wrap all other middleware
     # that may return its own response object, like the profiling response above.
-    @app.middleware("http")
-    async def preserve_headers(
-        request: Request, call_next: Callable[[Request], Awaitable[Response]]
-    ):
-        response = await call_next(request)
-
-        temp_response = cast(Response | None, getattr(request.state, "temp_response", None))
-        if temp_response is None:
-            # Likely 404 Not Found, FastAPI routing returned before running dependencies
-            return response
-
-        if response is temp_response:
-            return response
-
-        for k, v in temp_response.headers.items():
-            response.headers.append(k, v)
-            # log.debug("Adding %s header #%s: %s", k, len(response.headers.getlist(k)), v)
-
-        return response
+    app.add_middleware(BaseHTTPMiddleware, dispatch=preserve_headers)
 
     # https://securecookies.thearchitector.dev/securecookies.html
     # Cookie encryption must be outermost middleware, after other middlewares add their cookies
@@ -180,20 +119,9 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
         cookie_secure=True,
     )
 
-    @app.exception_handler(ForcedResponse)
-    def send_forced_response(request: Request, exc: ForcedResponse) -> Response:
-        return exc.response
-
-    # https://fastapi.tiangolo.com/tutorial/handling-errors/#reuse-fastapis-exception-handlers
-    @app.exception_handler(EntityNotFound)
-    async def send_entity_not_found(request: Request, exc: EntityNotFound) -> Response:
-        http_exception = HTTPException(status_code=400, detail=str(exc))
-        return await http_exception_handler(request, http_exception)
-
-    @app.exception_handler(UnauthorizedError)
-    async def send_unauthorized_error(request: Request, exc: UnauthorizedError) -> Response:
-        http_exception = HTTPException(status_code=400, detail=str(exc))
-        return await http_exception_handler(request, http_exception)
+    app.add_exception_handler(ForcedResponse, handle_forced_response)  # type: ignore
+    app.add_exception_handler(EntityNotFound, handle_entity_not_found)  # type: ignore
+    app.add_exception_handler(UnauthorizedError, handle_unauthorized_error)  # type: ignore
 
     return app
 
@@ -206,3 +134,91 @@ def app() -> FastAPI:
     setup_logging(verbosity=settings.log.verbosity)
 
     return create_app_from_settings(settings)
+
+
+# https://github.com/fastapi/fastapi/discussions/8054#discussioncomment-11346542
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
+    async with AsyncExitStack() as stack:
+        app.state.stack = stack
+        try:
+            yield
+        finally:
+            del app.state.stack
+
+
+async def store_response_object(request: Request, response: Response) -> None:
+    # HACK:
+    # FastAPI creates a temporary response object we can use to set headers,
+    # however this response is overwritten if an exception is raised or a
+    # Response object is returned. To restore our headers, we need to recover
+    # this response object and transfer the headers over to the actual response.
+    #
+    # We'll use a global dependency to store FastAPI's temporary response in
+    # the request, and then extract it further down at the ASGI middleware level.
+    request.state.temp_response = response
+
+
+def add_profiling_middleware(app: FastAPI) -> None:
+    try:
+        from pyinstrument import Profiler
+    except ModuleNotFoundError:
+        log.warning(
+            "Request profiling is unavailable due to pyinstrument not being installed. "
+            "Disable in production with: BACKEND__LOG__PROFILING=0"
+        )
+        return
+
+    log.warning(
+        "Enabling request profiling with ?profile=1. "
+        "Disable in production with: BACKEND__LOG__PROFILING=0"
+    )
+
+    # https://pyinstrument.readthedocs.io/en/latest/guide.html
+    @app.middleware("http")
+    async def profile_request(request: Request, call_next):
+        profiling = request.query_params.get("profile", False)
+        if not profiling:
+            return await call_next(request)
+
+        profiler = Profiler()
+        profiler.start()
+        await call_next(request)
+        profiler.stop()
+        return HTMLResponse(profiler.output_html())
+
+
+async def preserve_headers(
+    request: Request,
+    call_next: Callable[[Request], Awaitable[Response]],
+):
+    response = await call_next(request)
+
+    temp_response = cast(Response | None, getattr(request.state, "temp_response", None))
+    if temp_response is None:
+        # Likely 404 Not Found, FastAPI routing returned before running dependencies
+        return response
+
+    if response is temp_response:
+        return response
+
+    for k, v in temp_response.headers.items():
+        response.headers.append(k, v)
+        # log.debug("Adding %s header #%s: %s", k, len(response.headers.getlist(k)), v)
+
+    return response
+
+
+def handle_forced_response(request: Request, exc: ForcedResponse) -> Response:
+    return exc.response
+
+
+# https://fastapi.tiangolo.com/tutorial/handling-errors/#reuse-fastapis-exception-handlers
+async def handle_entity_not_found(request: Request, exc: EntityNotFound) -> Response:
+    http_exception = HTTPException(status_code=400, detail=str(exc))
+    return await http_exception_handler(request, http_exception)
+
+
+async def handle_unauthorized_error(request: Request, exc: UnauthorizedError) -> Response:
+    http_exception = HTTPException(status_code=400, detail=str(exc))
+    return await http_exception_handler(request, http_exception)
