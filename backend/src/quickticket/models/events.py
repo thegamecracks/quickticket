@@ -6,19 +6,16 @@ from uuid import UUID, uuid4
 from sqlalchemy import ForeignKey, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from quickticket.models.accounts import User
 from quickticket.models.base import Base
 from quickticket.models.money import Money
+from quickticket.models.tickets import Ticket
 from quickticket.models.types import current_timestamp, pk_uuid, str_128, str_4096
 from quickticket.models.venues import Venue
 
 if TYPE_CHECKING:
     from quickticket.models.storage import StorageObject
 
-__all__ = (
-    "Event",
-    "Ticket",
-)
+__all__ = ("Event",)
 
 
 class Event(Base, kw_only=True, repr=False):
@@ -72,36 +69,4 @@ class Event(Base, kw_only=True, repr=False):
     venue: Mapped[Venue] = relationship(
         default=None,
         back_populates="events",
-    )
-
-
-class Ticket(Base, kw_only=True, repr=False):
-    __tablename__ = "ticket"
-
-    id: Mapped[pk_uuid] = mapped_column("ticket_id", default_factory=uuid4)
-
-    # Required
-    event_id: Mapped[UUID] = mapped_column(
-        ForeignKey("event.event_id", ondelete="CASCADE"),
-        default=None,
-        index=True,
-    )
-    account_id: Mapped[UUID] = mapped_column(
-        ForeignKey("account.account_id", ondelete="CASCADE"),
-        default=None,
-        index=True,
-    )
-    paid_cost: Mapped[Money]
-
-    # Optional
-    created_at: Mapped[current_timestamp] = mapped_column(default=None, index=True)
-
-    # Relationships
-    event: Mapped[Event] = relationship(
-        default=None,
-        back_populates="tickets",
-    )
-    user: Mapped[User] = relationship(
-        default=None,
-        back_populates="tickets",
     )

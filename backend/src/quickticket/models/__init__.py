@@ -4,5 +4,6 @@ from .events import *
 from .money import *
 from .organizations import *
 from .storage import *
+from .tickets import *
 from .types import *
 from .venues import *
