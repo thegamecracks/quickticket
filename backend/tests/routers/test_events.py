@@ -44,15 +44,15 @@ async def test_create_event(make_session: async_sessionmaker[AsyncSession]) -> N
         session.add_all([user, organization, member, venue])
 
     request = EventCreate(
+        venue_id=venue.id,
         display_name="Test Hockey Tournament",
         description="A mock hockey game, for testing.",
         theme="Sports",
         # should display jan 1st, 2027, 6-10pm
         starts_at=datetime(2027, 1, 1, 18, 0),
         ends_at=datetime(2027, 1, 1, 22, 0),
-        ticket_price=Money(amount=50, currency="CAD"),
         max_attendees=500,
-        venue_id=venue.id,
+        ticket_price=Money(amount=50, currency="CAD"),
     )
 
     async with make_session() as session, session.begin():
@@ -109,15 +109,15 @@ async def test_create_event_no_permissions(make_session: async_sessionmaker[Asyn
         session.add_all([user, organization, member, venue])
 
     request = EventCreate(
+        venue_id=venue.id,
         display_name="Test Hockey Tournament",
         description="A mock hockey game, for testing.",
         theme="Sports",
         # should display jan 1st, 2027, 6-10pm
         starts_at=datetime(2027, 1, 1, 18, 0),
         ends_at=datetime(2027, 1, 1, 22, 0),
-        ticket_price=Money(amount=50, currency="CAD"),
         max_attendees=500,
-        venue_id=venue.id,
+        ticket_price=Money(amount=50, currency="CAD"),
     )
 
     async with make_session() as session, session.begin():
@@ -149,15 +149,15 @@ async def test_create_event_no_venue(make_session: async_sessionmaker[AsyncSessi
         session.add_all([user, organization, member])
 
     request = EventCreate(
+        venue_id=uuid4(),  # random, no venue
         display_name="Test Hockey Tournament",
         description="A mock hockey game, for testing.",
         theme="Sports",
         # should display jan 1st, 2027, 6-10pm
         starts_at=datetime(2027, 1, 1, 18, 0),
         ends_at=datetime(2027, 1, 1, 22, 0),
-        ticket_price=Money(amount=50, currency="CAD"),
         max_attendees=500,
-        venue_id=uuid4(),  # random, no venue
+        ticket_price=Money(amount=50, currency="CAD"),
     )
 
     async with make_session() as session, session.begin():

@@ -142,18 +142,18 @@ async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: U
 
 
 class EventCreate(BaseModel):
+    venue_id: UUID
     display_name: str
     description: str
     theme: str
-    venue_id: UUID
-
-    # ! TODO: implement thumbnails & banner support
-    # thumbnail: PartialStorageObject | None
-    # banner: PartialStorageObject | None
     starts_at: datetime
     ends_at: datetime
-    ticket_price: Money
+
     max_attendees: int
+    ticket_price: Money
+    # ! TODO: implement thumbnails & banner support
+    # banner_id: UUID | None = None
+    # thumbnail_id: UUID | None = None
 
     # tickets: list[PartialTicket]
     # venue: PartialVenue
