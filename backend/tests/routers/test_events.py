@@ -2,33 +2,32 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from quickticket.errors import ORMEntityNotFound, UnauthorizedOrganizationMember
 from quickticket.models import (
     Event,
-    Money,
     Organization,
     OrganizationMember,
     OrganizationMemberPermissions,
-    Point,
     User,
     Venue,
 )
-from quickticket.routers.events import EventCreate, EventRead, EventsRead, create_event, get_events
-from tests.conftest import DatasetLoader
+from tests.conftest import AuthController, DatasetLoader
 
 
 @pytest.mark.asyncio
 async def test_get_events(
+    app: FastAPI,
     dataset_loader: DatasetLoader,
-    make_session: async_sessionmaker[AsyncSession],
 ) -> None:
     await dataset_loader.load()
 
-    async with make_session() as session, session.begin():
-        response = await get_events(user=None, session=session)
-        response = EventsRead.model_validate(response, from_attributes=True)
+    client = TestClient(app)
+    response = client.get("/api/events")
+    response.raise_for_status()
+    data = response.json()
 
     # TODO: validate full payload? would be noisy with the descriptions though...
     event_ids = (
@@ -44,15 +43,19 @@ async def test_get_events(
         UUID("0e161235-9c40-45e6-b4cd-022fd852f6e6"),
     )
 
-    assert len(response.events) == len(event_ids)
+    assert len(data["events"]) == len(event_ids)
     for i, event_id in enumerate(event_ids):
-        assert response.events[i].id == event_id
+        assert data["events"][i]["id"] == str(event_id)
 
 
 @pytest.mark.asyncio
-async def test_create_event(make_session: async_sessionmaker[AsyncSession]) -> None:
+async def test_create_event(
+    app: FastAPI,
+    auth: AuthController,
+    make_session: async_sessionmaker[AsyncSession],
+) -> None:
     async with make_session() as session, session.begin():
-        user = User(
+        auth.user = user = User(
             display_name="Display Name",
             first_name="First",
             last_name="Last",
@@ -70,54 +73,59 @@ async def test_create_event(make_session: async_sessionmaker[AsyncSession]) -> N
             description="A venue for testing.",
             theme="Sports",
             location_name="Test Stadium",
-            location_coords=Point(lat=48.8584, long=2.2945),
         )
         session.add_all([user, organization, member, venue])
 
-    request = EventCreate(
-        venue_id=venue.id,
-        display_name="Test Hockey Tournament",
-        description="A mock hockey game, for testing.",
-        theme="Sports",
-        # should display jan 1st, 2027, 6-10pm
-        starts_at=datetime(2027, 1, 1, 18, 0),
-        ends_at=datetime(2027, 1, 1, 22, 0),
-        max_attendees=500,
-        ticket_price=Money(amount=50, currency="CAD"),
+    client = TestClient(app)
+    response = client.post(
+        "/api/events",
+        json={
+            "venue_id": str(venue.id),
+            "display_name": "Test Hockey Tournament",
+            "description": "A mock hockey game, for testing.",
+            "theme": "Sports",
+            # should display jan 1st, 2027, 6-10pm
+            "starts_at": datetime(2027, 1, 1, 18, 0).isoformat(),
+            "ends_at": datetime(2027, 1, 1, 22, 0).isoformat(),
+            "max_attendees": 500,
+            "ticket_price": {"amount": 50, "currency": "CAD"},
+        },
     )
+    response.raise_for_status()
+    data = response.json()
+
+    assert len(data) == 13
+    assert data["id"] is not None
+    assert data["created_at"] is not None
+    assert data["display_name"] == "Test Hockey Tournament"
+    assert data["description"] == "A mock hockey game, for testing."
+    assert data["starts_at"] == datetime(2027, 1, 1, 18, 0).isoformat()
+    assert data["ends_at"] == datetime(2027, 1, 1, 22, 0).isoformat()
+    assert data["ticket_price"] == {"amount": 50, "currency": "CAD"}
+    assert data["max_attendees"] == 500
+    assert data["venue"]["id"] == str(venue.id)
+    assert data["venue"]["display_name"] == "Test Venue"
+    assert data["venue"]["organization"]["display_name"] == "Test Organization"
+
+    # assert data["venue"]["description"] == "A venue for testing."
+    # assert data["venue"]["theme"] == "Sports"
+    # assert data["venue"]["location_name"] == "Test Stadium"
+    # assert data["venue"]["location_coords"] == {"lat": 48.8584, "long": 2.2945}
 
     async with make_session() as session, session.begin():
-        response = await create_event(user=user, session=session, event=request)
-        event = EventRead.model_validate(response, from_attributes=True)
-
-    assert event.id is not None
-    assert event.created_at is not None
-    assert event.display_name == "Test Hockey Tournament"
-    assert event.description == "A mock hockey game, for testing."
-    assert event.starts_at == datetime(2027, 1, 1, 18, 0)
-    assert event.ends_at == datetime(2027, 1, 1, 22, 0)
-    assert event.ticket_price == Money(amount=50, currency="CAD")
-    assert event.max_attendees == 500
-    assert event.venue.id == venue.id
-
-    # assert event.venue.display_name == "Test Venue"
-    # assert event.venue.description == "A venue for testing."
-    # assert event.venue.theme == "Sports"
-    # assert event.venue.location_name == "Test Stadium"
-    # assert event.venue.location_coords == Point(lat=48.8584, long=2.2945)
-
-    # assert event.venue.organization.display_name == "Test Organization"
-
-    async with make_session() as session, session.begin():
-        persisted = await session.get(Event, event.id)
+        persisted = await session.get(Event, UUID(data["id"]))
         assert persisted is not None
-        assert persisted.id == event.id
+        assert persisted.id == UUID(data["id"])
 
 
 @pytest.mark.asyncio
-async def test_create_event_no_permissions(make_session: async_sessionmaker[AsyncSession]) -> None:
+async def test_create_event_no_permissions(
+    app: FastAPI,
+    auth: AuthController,
+    make_session: async_sessionmaker[AsyncSession],
+) -> None:
     async with make_session() as session, session.begin():
-        user = User(
+        auth.user = user = User(
             display_name="Display Name",
             first_name="First",
             last_name="Last",
@@ -135,37 +143,41 @@ async def test_create_event_no_permissions(make_session: async_sessionmaker[Asyn
             description="A venue for testing.",
             theme="Sports",
             location_name="Test Stadium",
-            location_coords=Point(lat=48.8584, long=2.2945),
         )
         session.add_all([user, organization, member, venue])
 
-    request = EventCreate(
-        venue_id=venue.id,
-        display_name="Test Hockey Tournament",
-        description="A mock hockey game, for testing.",
-        theme="Sports",
-        # should display jan 1st, 2027, 6-10pm
-        starts_at=datetime(2027, 1, 1, 18, 0),
-        ends_at=datetime(2027, 1, 1, 22, 0),
-        max_attendees=500,
-        ticket_price=Money(amount=50, currency="CAD"),
+    client = TestClient(app)
+    response = client.post(
+        "/api/events",
+        json={
+            "venue_id": str(venue.id),
+            "display_name": "Test Hockey Tournament",
+            "description": "A mock hockey game, for testing.",
+            "theme": "Sports",
+            # should display jan 1st, 2027, 6-10pm
+            "starts_at": datetime(2027, 1, 1, 18, 0).isoformat(),
+            "ends_at": datetime(2027, 1, 1, 22, 0).isoformat(),
+            "max_attendees": 500,
+            "ticket_price": {"amount": 50, "currency": "CAD"},
+        },
     )
-
-    async with make_session() as session, session.begin():
-        with pytest.raises(UnauthorizedOrganizationMember) as exc_info:
-            await create_event(user=user, session=session, event=request)
-
-    exc = exc_info.value
-    assert exc.member.organization_id == organization.id
-    assert exc.member.account_id == user.id
-    assert exc.required is OrganizationMemberPermissions.ADMINISTRATOR
-    assert exc.missing is OrganizationMemberPermissions.ADMINISTRATOR
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": (
+            f"Organization member ((UUID('{organization.id}'), UUID('{user.id}'))) "
+            f"missing permissions: ADMINISTRATOR"
+        )
+    }
 
 
 @pytest.mark.asyncio
-async def test_create_event_no_venue(make_session: async_sessionmaker[AsyncSession]) -> None:
+async def test_create_event_no_venue(
+    app: FastAPI,
+    auth: AuthController,
+    make_session: async_sessionmaker[AsyncSession],
+) -> None:
     async with make_session() as session, session.begin():
-        user = User(
+        auth.user = user = User(
             display_name="Display Name",
             first_name="First",
             last_name="Last",
@@ -179,22 +191,21 @@ async def test_create_event_no_venue(make_session: async_sessionmaker[AsyncSessi
         )
         session.add_all([user, organization, member])
 
-    request = EventCreate(
-        venue_id=uuid4(),  # random, no venue
-        display_name="Test Hockey Tournament",
-        description="A mock hockey game, for testing.",
-        theme="Sports",
-        # should display jan 1st, 2027, 6-10pm
-        starts_at=datetime(2027, 1, 1, 18, 0),
-        ends_at=datetime(2027, 1, 1, 22, 0),
-        max_attendees=500,
-        ticket_price=Money(amount=50, currency="CAD"),
+    venue_id = uuid4()  # random, no venue
+    client = TestClient(app)
+    response = client.post(
+        "/api/events",
+        json={
+            "venue_id": str(venue_id),
+            "display_name": "Test Hockey Tournament",
+            "description": "A mock hockey game, for testing.",
+            "theme": "Sports",
+            # should display jan 1st, 2027, 6-10pm
+            "starts_at": datetime(2027, 1, 1, 18, 0).isoformat(),
+            "ends_at": datetime(2027, 1, 1, 22, 0).isoformat(),
+            "max_attendees": 500,
+            "ticket_price": {"amount": 50, "currency": "CAD"},
+        },
     )
-
-    async with make_session() as session, session.begin():
-        with pytest.raises(ORMEntityNotFound) as exc_info:
-            await create_event(user=user, session=session, event=request)
-
-    exc = exc_info.value
-    assert exc.entity is Venue
-    assert exc.ident == request.venue_id
+    assert response.status_code == 400
+    assert response.json() == {"detail": f"Venue not found: {venue_id}"}

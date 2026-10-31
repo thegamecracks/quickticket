@@ -1,77 +1,109 @@
+from uuid import UUID
+
 import pytest
-from fastapi import HTTPException
-from pydantic import ValidationError
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from quickticket.models import OrganizationMember, OrganizationMemberPermissions, User
-from quickticket.routers.organizations import (
-    OrganizationCreate,
-    OrganizationRead,
-    create_organization,
+from quickticket.models import (
+    Organization,
+    OrganizationMember,
+    OrganizationMemberPermissions,
+    User,
 )
+from tests.conftest import AuthController
 
 
 @pytest.mark.asyncio
 async def test_create_organization(
+    app: FastAPI,
+    auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
     async with make_session() as session, session.begin():
-        user = User(
+        auth.user = User(
             display_name="Display Name",
             first_name="First",
             last_name="Last",
             email="user@example.com",
         )
 
-        request = OrganizationCreate(display_name="Test Organization")
-        response = await create_organization(user=user, session=session, organization=request)
-        organization = OrganizationRead.model_validate(response, from_attributes=True)
+    client = TestClient(app)
+    response = client.post("/api/organizations", json={"display_name": "Test Organization"})
+    response.raise_for_status()
+    data = response.json()
 
-    assert organization.id is not None
-    assert organization.created_at is not None
-    assert organization.display_name == "Test Organization"
-    assert organization.venues == []
-    assert organization.members[0].account_id == user.id
+    assert len(data) == 5
+    assert data["id"] is not None
+    assert data["created_at"] is not None
+    assert data["display_name"] == "Test Organization"
+    assert data["venues"] == []
+    assert UUID(data["members"][0]["account_id"]) == auth.user.id
 
     async with make_session() as session, session.begin():
-        member = await session.get(OrganizationMember, (organization.id, user.id))
+        member = await session.get(OrganizationMember, (UUID(data["id"]), auth.user.id))
         assert member is not None
         assert member.permissions == OrganizationMemberPermissions.ADMINISTRATOR
 
 
 @pytest.mark.asyncio
 async def test_create_organization_one_owner_only(
+    app: FastAPI,
+    auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
     async with make_session() as session, session.begin():
-        user = User(
+        auth.user = User(
             display_name="Display Name",
             first_name="First",
             last_name="Last",
             email="user@example.com",
         )
 
-        request = OrganizationCreate(display_name="First Organization")
-        response = await create_organization(user=user, session=session, organization=request)
+    client = TestClient(app)
+    response = client.post("/api/organizations", json={"display_name": "First Organization"})
+    response.raise_for_status()
+    first = response.json()
+
+    response = client.post("/api/organizations", json={"display_name": "Second Organization"})
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Already owns an organization"}
 
     async with make_session() as session, session.begin():
-        with pytest.raises(HTTPException) as exc_info:
-            await create_organization(
-                user=user,
-                session=session,
-                organization=OrganizationCreate(display_name="Second Organization"),
-            )
-
-    assert exc_info.value.status_code == 400
-    assert exc_info.value.detail == "Already owns an organization"
-    assert response.display_name == "First Organization"
+        organizations = await session.scalars(select(Organization))
+        assert [organization.id for organization in organizations] == [UUID(first["id"])]
 
 
-def test_create_organization_rejects_blank_display_name() -> None:
-    with pytest.raises(ValidationError):
-        OrganizationCreate(display_name="")
+@pytest.mark.asyncio
+async def test_create_organization_rejects_blank_display_name(
+    app: FastAPI,
+    auth: AuthController,
+) -> None:
+    auth.user = User(
+        display_name="Display Name",
+        first_name="First",
+        last_name="Last",
+        email="user@example.com",
+    )
+
+    client = TestClient(app)
+    response = client.post("/api/organizations", json={"display_name": ""})
+    assert response.status_code == 422
 
 
-def test_create_organization_rejects_overlong_display_name() -> None:
-    with pytest.raises(ValidationError):
-        OrganizationCreate(display_name="x" * 129)
+@pytest.mark.asyncio
+async def test_create_organization_rejects_overlong_display_name(
+    app: FastAPI,
+    auth: AuthController,
+) -> None:
+    auth.user = User(
+        display_name="Display Name",
+        first_name="First",
+        last_name="Last",
+        email="user@example.com",
+    )
+
+    client = TestClient(app)
+    response = client.post("/api/organizations", json={"display_name": "x" * 129})
+    assert response.status_code == 422
