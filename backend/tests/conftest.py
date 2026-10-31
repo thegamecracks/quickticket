@@ -13,8 +13,9 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from quickticket.app import create_app_from_settings
+from quickticket.dependencies.auth import get_user
 from quickticket.dependencies.db import get_async_engine, get_async_sessionmaker
-from quickticket.models import Base
+from quickticket.models import Base, User
 from quickticket.settings import (
     CacheSettings,
     DatabaseSettings,
@@ -90,8 +91,35 @@ def dataset_loader(
     return DatasetLoader(dataset=dataset, make_session=make_session)
 
 
+@dataclass(kw_only=True)
+class AuthController:
+    """The authenication fake used by the app fixture.
+
+    When enabled (the default), dependencies on OptionalUserDep will return
+    :attr:`user` regardless of authentication headers/cookies, so tests don't
+    need to pass cookies in.
+
+    """
+
+    enabled: bool = True
+    """Whether authentication faking is enabled."""
+
+    user: User | None = None
+    """The currently authenticated user. Can be mutated in-place."""
+
+    def get_user(self) -> User | None:
+        if self.enabled:
+            return self.user
+        raise NotImplementedError  # TODO: resolve get_user() with FastAPI's DI framework
+
+
 @pytest.fixture
-def app() -> FastAPI:
+def auth() -> AuthController:
+    return AuthController()
+
+
+@pytest.fixture
+def app(auth: AuthController) -> FastAPI:
     settings = Settings(
         _env_file=None,
         cache=CacheSettings(url="sqlite:///:memory:"),
@@ -100,4 +128,6 @@ def app() -> FastAPI:
         log=LogSettings(debug=False, profiling=False),
         openapi=OpenAPISettings(url=None),
     )
-    return create_app_from_settings(settings)
+    app = create_app_from_settings(settings)
+    app.dependency_overrides[get_user] = auth.get_user
+    return app
