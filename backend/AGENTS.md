@@ -2,59 +2,32 @@
 
 This is the backend project for QuickTicket.
 
-## Prerequisites
+## Project lints
 
-- **Python 3.14+**
-- **uv** for project management
-- **Docker/Podman** (optional) for the full stack: PostgreSQL, Redis, Garage S3
-
-## Common commands
+Before finishing a change, run the following checks to ensure it will pass CI:
 
 ```sh
-# Install/sync dependencies
-uv sync
-
-# Start the dev webserver (hot reload; API docs at /docs and /redoc)
-uv run fastapi dev
-
-# Lint (auto-fix) and format
-uv run ruff check --fix
-uv run ruff format
-
-# Type check (ty from Astral; no config in pyproject.toml yet)
-uvx ty check
-
-# Run tests
-uv run coverage run -m pytest
-
-# Measure code coverage after tests, including line numbers of missed coverage
-uv run coverage report --skip-covered --skip-empty --show-missing
-
-# Database migrations (Alembic)
-uv run alembic upgrade head                       # apply all migrations
-uv run alembic downgrade -1                       # revert the latest migration
-uv run alembic revision --autogenerate -m "…"     # generate a new migration
-
-# Full stack with Docker (backend + Redis + PostgreSQL)
-docker compose up
+uv run ruff check --fix        # lints
+uv run ruff format             # style
+uvx ty check                   # type check
+uv run coverage run -m pytest  # tests
 ```
 
-CI runs the same checks: `uv run -m pytest`, `uvx ty check`,
-`uv run ruff check`, and `uv run ruff format` (as a check, not a fixer).
-Run all four locally before finishing a change.
+## Extra commands
 
-## Configuration
+To measure code coverage after tests, including line numbers of missed coverage:
 
-- Settings are defined in `src/quickticket/settings.py` using
-  `pydantic-settings` and read from a `.env` file (see `.example.env`
-  for all available variables; never commit a real `.env` or secrets).
-- Environment variables use a **double-underscore nesting scheme**,
-  e.g. `BACKEND__SECTION__FIELD`.
-- Local development defaults to SQLite (`quickticket.db`); the Docker compose
-  stack uses PostgreSQL and Redis. Migrations must work on both.
-- A `.env` with OpenID settings (client ID/secret/discovery URL) is required for
-  any authenticated flow; the app starts fine without it, but only for
-  unauthenticated use and API docs browsing.
+```sh
+uv run coverage report --skip-covered --skip-empty --show-missing
+```
+
+To manage database migrations:
+
+```sh
+uv run alembic upgrade head                    # apply all migrations
+uv run alembic downgrade -1                    # revert the latest migration
+uv run alembic revision --autogenerate -m "…"  # generate a new migration
+```
 
 ## Project structure
 
@@ -67,17 +40,19 @@ Run all four locally before finishing a change.
 │   ├── cache.py             # cache abstraction (SQLite / Redis backends)
 │   ├── logging.py           # logging setup and verbosity levels
 │   ├── errors.py            # shared error types (e.g. ForcedResponse)
-│   ├── models/              # SQLAlchemy ORM models (accounts, events,
-│   │                        #   organizations, venues, storage, money types)
+│   ├── models/              # SQLAlchemy ORM models (base, accounts, events,
+│   │                        #   organizations, storage, tickets, venues, money)
 │   ├── routers/             # FastAPI API routers: auth, events, notifications,
 │   │                        #   organizations, profile, venues
 │   ├── dependencies/        # FastAPI dependencies: db, cache, cookies,
-│   │                        #   ratelimits, state, and auth/* (provider,
-│   │                        #   tokens, users, redirects)
+│   │                        #   models, ratelimits, state, and auth/*
+│   │                        #   (provider, tokens, users, redirects)
 │   ├── frontend/            # minimal builtin frontend (testing only)
 │   └── alembic/             # Alembic setup + versioned migrations
 ├── tests/                   # pytest tests (pytest-asyncio for async tests)
 ├── config/                  # postgresql.conf, redis.conf for Docker services
+├── alembic.ini              # Alembic configuration
+├── Dockerfile               # uv-based production image for the backend
 ├── docker-compose.yml       # backend + Redis + PostgreSQL (Garage S3 TODO)
 ├── example.env              # template of all BACKEND__* settings
 └── pyproject.toml           # project metadata, deps, ruff config
@@ -85,23 +60,16 @@ Run all four locally before finishing a change.
 
 ## Conventions and gotchas
 
-- **Ruff** is the only linter/formatter. Run `uv run ruff check --fix` and
-  `uv run ruff format` before finishing a change.
-- The codebase is **fully async**: use async SQLAlchemy sessions, `httpx2`/
-  async clients, and `pytest-asyncio` for tests. Avoid blocking calls in
-  request handlers.
-- Settings are instantiated at module import time in `app.py`
-  (`_settings = Settings()`); changing settings requires restarting the dev
-  server.
-- **Authentication is external.** Never implement password storage, login
-  forms, or credential checks in this backend — identity comes from the OpenID
-  provider's ID token via `quickticket.oauth` and `dependencies/auth/`.
-- Models are **SQLAlchemy dataclasses** (`Base` derives from
-  `MappedAsDataclass`, `kw_only=True`). Their constructors are type-checked,
-  so instantiate them with keyword arguments matching the `Mapped[...]`
-  annotations; columns without a Python-side `default` are required.
+- Use `uv` exclusively for Python tooling (`uv run …`); do not `pip install`
+  or create virtualenvs manually.
+- Local development defaults to SQLite (`quickticket.db`) when `BACKEND__DB__URL`
+  is unset.
+- A `.env` with OpenID settings (client ID/secret/discovery URL) is required for
+  any authenticated flow; the app starts fine without it, but only for browsing API docs.
 - `src/quickticket/frontend/` is a minimal in-Python test frontend used
   to verify authentication; it is not the real frontend and must not be extended.
+- When touching `src/quickticket/routers/`, keep handlers thin: business logic
+  in dedicated modules or dependencies, request/response shapes via Pydantic models.
 
 ### Database migrations
 
@@ -117,32 +85,13 @@ Run all four locally before finishing a change.
   uv run alembic upgrade head
   uv run alembic revision --autogenerate -m "Describe the change"
   ```
-- New migrations must be reversible where possible (implement `downgrade()`),
-  and must not assume PostgreSQL-only or SQLite-only features unless handled
-  explicitly (e.g. via dialect checks).
 
 ### Tests
 
 - Test files are named `test_*.py`, where `*` usually corresponds to the
   package or module under test (e.g. tests for `cache.py` live in
   `tests/test_cache.py`).
-- Do **not** require containers for tests. Prefer self-contained, in-memory
-  configurations for external dependencies:
-  - Database: SQLAlchemy with an in-memory SQLite database
-    (`sqlite+aiosqlite:///:memory:` or the shared-cache in-memory variant).
-  - Cache: `quickticket.cache.SQLiteCache` with an in-memory connection
-    (`sqlite:///:memory:`).
 - If a test requires a long artifact (e.g. a JSON payload or SQL script),
   place the file in `tests/resources/` and load it from the test.
 - Store and use common fixtures in `tests/conftest.py` when they need to be
   shared across test files.
-- Use `pytest-asyncio` (`@pytest.mark.asyncio`) for async tests.
-
-## Notes for agents
-
-- Use `uv` exclusively for Python tooling (`uv run …`); do not `pip install`
-  or create virtualenvs manually.
-- When touching `routers/`, keep handlers thin: business logic in dedicated
-  modules or dependencies, request/response shapes via Pydantic models.
-- Type checking with `uvx ty check` must pass — keep annotations accurate
-  when editing existing code.
