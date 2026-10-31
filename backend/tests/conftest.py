@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import (
 from quickticket.app import create_app_from_settings
 from quickticket.dependencies.auth import get_user
 from quickticket.dependencies.db import get_async_engine, get_async_sessionmaker
+from quickticket.dependencies.state import get_settings
 from quickticket.models import Base, User
 from quickticket.settings import (
     CacheSettings,
@@ -120,16 +121,25 @@ def auth() -> AuthController:
 
 
 @pytest.fixture
-def app(auth: AuthController) -> FastAPI:
+def app(stack: AsyncExitStack, engine: AsyncEngine, auth: AuthController) -> FastAPI:
     settings = Settings(
         _env_file=None,
         cache=CacheSettings(url="sqlite:///:memory:"),
-        db=DatabaseSettings(url="sqlite+aiosqlite:///:memory:"),
+        # The database URL is intentionally broken to raise the exception:
+        #
+        #     sqlalchemy.exc.ArgumentError: Could not parse SQLAlchemy URL from given URL string
+        #
+        # Using dependency overrides, there should not be any calls to get_async_engine()
+        # other than our fixture which makes in-memory databases pre-initialized with our schema.
+        db=DatabaseSettings(url="sqlite+aiosqlite:/"),
         frontend=FrontendSettings(builtin=False),
         log=LogSettings(debug=False, profiling=False),
         openapi=OpenAPISettings(url=None),
         security=SecuritySettings(allowed_hosts=["*"]),
     )
     app = create_app_from_settings(settings)
+    app.state.stack = stack
+    app.dependency_overrides[get_async_engine] = lambda: engine
+    app.dependency_overrides[get_settings] = lambda: settings
     app.dependency_overrides[get_user] = auth.get_user
     return app
