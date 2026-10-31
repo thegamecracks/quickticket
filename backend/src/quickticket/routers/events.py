@@ -145,6 +145,7 @@ class EventCreate(BaseModel):
     display_name: str
     description: str
     theme: str
+    venue_id: UUID
 
     # ! TODO: implement thumbnails & banner support
     # thumbnail: PartialStorageObject | None
@@ -154,8 +155,8 @@ class EventCreate(BaseModel):
     ticket_price: Money
     max_attendees: int
 
-    tickets: list[PartialTicket]
-    venue: PartialVenue
+    # tickets: list[PartialTicket]
+    # venue: PartialVenue
 
 
 @router.post("", response_model=EventRead)
@@ -169,10 +170,10 @@ async def create_event(
 
     # get venue from event object to validate permissions in controller
     nestedVenue = await session.scalar(
-        select(Venue).where(Venue.id == event.venue.id).options(selectinload(Venue.organization))
+        select(Venue).where(Venue.id == event.venue_id).options(selectinload(Venue.organization))
     )
     if nestedVenue is None:
-        raise ORMEntityNotFound(Venue, event.venue.id)
+        raise ORMEntityNotFound(Venue, event.venue_id)
 
     controller = await get_organization_controller(session, user, nestedVenue.organization_id)
     controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
@@ -181,12 +182,12 @@ async def create_event(
     event_orm = Event(
         display_name=event.display_name,
         description=event.description,
+        venue_id=event.venue_id,
         starts_at=event.starts_at,
         ends_at=event.ends_at,
         theme=event.theme,
         ticket_price=event.ticket_price,
         max_attendees=event.max_attendees,
-        venue=nestedVenue,
     )
     session.add(event_orm)
     await session.flush()
