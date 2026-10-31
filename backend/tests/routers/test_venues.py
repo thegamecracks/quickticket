@@ -1,8 +1,7 @@
 import uuid
 
 import pytest
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
+from httpx2 import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from quickticket.models import (
@@ -18,7 +17,7 @@ from tests.conftest import AuthController
 
 @pytest.mark.asyncio
 async def test_create_venue(
-    app: FastAPI,
+    client: AsyncClient,
     auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
@@ -37,8 +36,7 @@ async def test_create_venue(
         )
         session.add_all([user, organization, member])
 
-    client = TestClient(app)
-    response = client.post(
+    response = await client.post(
         "/api/venues",
         json={
             "organization_id": str(organization.id),
@@ -74,7 +72,7 @@ async def test_create_venue(
 
 @pytest.mark.asyncio
 async def test_create_venue_nonexistent_organization(
-    app: FastAPI,
+    client: AsyncClient,
     auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
@@ -88,8 +86,7 @@ async def test_create_venue_nonexistent_organization(
         session.add(user)
 
     organization_id = uuid.uuid4()
-    client = TestClient(app)
-    response = client.post(
+    response = await client.post(
         "/api/venues",
         json={
             "organization_id": str(organization_id),
@@ -106,7 +103,7 @@ async def test_create_venue_nonexistent_organization(
 
 @pytest.mark.asyncio
 async def test_create_venue_non_member(
-    app: FastAPI,
+    client: AsyncClient,
     auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
@@ -120,8 +117,7 @@ async def test_create_venue_non_member(
         organization = Organization(display_name="Test Organization")
         session.add_all([user, organization])
 
-    client = TestClient(app)
-    response = client.post(
+    response = await client.post(
         "/api/venues",
         json={
             "organization_id": str(organization.id),
@@ -140,7 +136,7 @@ async def test_create_venue_non_member(
 
 @pytest.mark.asyncio
 async def test_create_venue_member_insufficient_permissions(
-    app: FastAPI,
+    client: AsyncClient,
     auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
@@ -159,8 +155,7 @@ async def test_create_venue_member_insufficient_permissions(
         )
         session.add_all([user, organization, member])
 
-    client = TestClient(app)
-    response = client.post(
+    response = await client.post(
         "/api/venues",
         json={
             "organization_id": str(organization.id),
@@ -179,7 +174,7 @@ async def test_create_venue_member_insufficient_permissions(
 
 @pytest.mark.asyncio
 async def test_create_venue_reached_limit(
-    app: FastAPI,
+    client: AsyncClient,
     auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
@@ -209,8 +204,7 @@ async def test_create_venue_reached_limit(
                 )
             )
 
-    client = TestClient(app)
-    response = client.post(
+    response = await client.post(
         "/api/venues",
         json={
             "organization_id": str(organization.id),

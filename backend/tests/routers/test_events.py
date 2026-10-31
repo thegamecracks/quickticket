@@ -2,8 +2,7 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 import pytest
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
+from httpx2 import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from quickticket.models import (
@@ -19,13 +18,12 @@ from tests.conftest import AuthController, DatasetLoader
 
 @pytest.mark.asyncio
 async def test_get_events(
-    app: FastAPI,
+    client: AsyncClient,
     dataset_loader: DatasetLoader,
 ) -> None:
     await dataset_loader.load()
 
-    client = TestClient(app)
-    response = client.get("/api/events")
+    response = await client.get("/api/events")
     response.raise_for_status()
     data = response.json()
 
@@ -50,7 +48,7 @@ async def test_get_events(
 
 @pytest.mark.asyncio
 async def test_create_event(
-    app: FastAPI,
+    client: AsyncClient,
     auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
@@ -76,8 +74,7 @@ async def test_create_event(
         )
         session.add_all([user, organization, member, venue])
 
-    client = TestClient(app)
-    response = client.post(
+    response = await client.post(
         "/api/events",
         json={
             "venue_id": str(venue.id),
@@ -120,7 +117,7 @@ async def test_create_event(
 
 @pytest.mark.asyncio
 async def test_create_event_no_permissions(
-    app: FastAPI,
+    client: AsyncClient,
     auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
@@ -146,8 +143,7 @@ async def test_create_event_no_permissions(
         )
         session.add_all([user, organization, member, venue])
 
-    client = TestClient(app)
-    response = client.post(
+    response = await client.post(
         "/api/events",
         json={
             "venue_id": str(venue.id),
@@ -169,7 +165,7 @@ async def test_create_event_no_permissions(
 
 @pytest.mark.asyncio
 async def test_create_event_no_venue(
-    app: FastAPI,
+    client: AsyncClient,
     auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
@@ -189,8 +185,7 @@ async def test_create_event_no_venue(
         session.add_all([user, organization, member])
 
     venue_id = uuid4()  # random, no venue
-    client = TestClient(app)
-    response = client.post(
+    response = await client.post(
         "/api/events",
         json={
             "venue_id": str(venue_id),

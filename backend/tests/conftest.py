@@ -6,6 +6,7 @@ import pytest
 import pytest_asyncio
 from fastapi import FastAPI
 from fastapi.datastructures import State
+from httpx2 import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -143,3 +144,10 @@ def app(stack: AsyncExitStack, engine: AsyncEngine, auth: AuthController) -> Fas
     app.dependency_overrides[get_settings] = lambda: settings
     app.dependency_overrides[get_user] = auth.get_user
     return app
+
+
+# https://fastapi.tiangolo.com/advanced/async-tests/
+@pytest_asyncio.fixture
+async def client(app: FastAPI) -> AsyncGenerator[AsyncClient]:
+    async with AsyncClient(transport=ASGITransport(app), base_url="http://test") as client:
+        yield client
