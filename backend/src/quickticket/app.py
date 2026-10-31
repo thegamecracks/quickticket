@@ -1,3 +1,4 @@
+import importlib.metadata
 import logging
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import AsyncExitStack, asynccontextmanager
@@ -57,10 +58,12 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
             "Starlette's debug mode is enabled. Disable in production with: BACKEND__LOG__DEBUG=0"
         )
 
+    assert __package__ is not None
     app = FastAPI(
         lifespan=lifespan,
         title="QuickTicket",
         description="",
+        version=importlib.metadata.version(__package__),
         dependencies=[
             Depends(apply_request_limit),
             Depends(store_response_object),
