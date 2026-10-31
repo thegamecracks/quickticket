@@ -1,8 +1,7 @@
 from uuid import UUID
 
 import pytest
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
+from httpx2 import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -17,8 +16,8 @@ from tests.conftest import AuthController
 
 @pytest.mark.asyncio
 async def test_create_organization(
-    app: FastAPI,
     auth: AuthController,
+    client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
     async with make_session() as session, session.begin():
@@ -29,8 +28,7 @@ async def test_create_organization(
             email="user@example.com",
         )
 
-    client = TestClient(app)
-    response = client.post("/api/organizations", json={"display_name": "Test Organization"})
+    response = await client.post("/api/organizations", json={"display_name": "Test Organization"})
     response.raise_for_status()
     data = response.json()
 
@@ -49,8 +47,8 @@ async def test_create_organization(
 
 @pytest.mark.asyncio
 async def test_create_organization_one_owner_only(
-    app: FastAPI,
     auth: AuthController,
+    client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
     async with make_session() as session, session.begin():
@@ -61,12 +59,11 @@ async def test_create_organization_one_owner_only(
             email="user@example.com",
         )
 
-    client = TestClient(app)
-    response = client.post("/api/organizations", json={"display_name": "First Organization"})
+    response = await client.post("/api/organizations", json={"display_name": "First Organization"})
     response.raise_for_status()
     first = response.json()
 
-    response = client.post("/api/organizations", json={"display_name": "Second Organization"})
+    response = await client.post("/api/organizations", json={"display_name": "Second Organization"})
     assert response.status_code == 400
     assert response.json() == {"detail": "Already owns an organization"}
 
@@ -77,8 +74,8 @@ async def test_create_organization_one_owner_only(
 
 @pytest.mark.asyncio
 async def test_create_organization_rejects_blank_display_name(
-    app: FastAPI,
     auth: AuthController,
+    client: AsyncClient,
 ) -> None:
     auth.user = User(
         display_name="Display Name",
@@ -87,15 +84,14 @@ async def test_create_organization_rejects_blank_display_name(
         email="user@example.com",
     )
 
-    client = TestClient(app)
-    response = client.post("/api/organizations", json={"display_name": ""})
+    response = await client.post("/api/organizations", json={"display_name": ""})
     assert response.status_code == 422
 
 
 @pytest.mark.asyncio
 async def test_create_organization_rejects_overlong_display_name(
-    app: FastAPI,
     auth: AuthController,
+    client: AsyncClient,
 ) -> None:
     auth.user = User(
         display_name="Display Name",
@@ -104,6 +100,5 @@ async def test_create_organization_rejects_overlong_display_name(
         email="user@example.com",
     )
 
-    client = TestClient(app)
-    response = client.post("/api/organizations", json={"display_name": "x" * 129})
+    response = await client.post("/api/organizations", json={"display_name": "x" * 129})
     assert response.status_code == 422
