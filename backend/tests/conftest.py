@@ -22,6 +22,7 @@ from quickticket.settings import (
     FrontendSettings,
     LogSettings,
     OpenAPISettings,
+    SecuritySettings,
     Settings,
 )
 from tests.resources import Dataset, create_test_models
@@ -127,6 +128,7 @@ def app(auth: AuthController) -> FastAPI:
         frontend=FrontendSettings(builtin=False),
         log=LogSettings(debug=False, profiling=False),
         openapi=OpenAPISettings(url=None),
+        security=SecuritySettings(allowed_hosts=["*"]),
     )
     app = create_app_from_settings(settings)
     app.dependency_overrides[get_user] = auth.get_user
