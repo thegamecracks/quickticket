@@ -5,3 +5,4 @@ from .money import *
 from .organizations import *
 from .storage import *
 from .types import *
+from .venues import *
