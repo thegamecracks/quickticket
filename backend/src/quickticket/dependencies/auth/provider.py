@@ -42,7 +42,7 @@ async def _cache_mark_failed(cache: CacheDep, key: str, message: str) -> NoRetur
 async def _get_discovery_cache_key(settings: SettingsDep) -> str:
     # Prevents reusing cached responses when changing between providers
     if settings.openid is None:
-        raise HTTPException(500, "OpenID is not configured")
+        raise HTTPException(500, "OpenID is not configured (.env)")
 
     discovery_url = quote(str(settings.openid.discovery_url), "")
     return f"openid/{discovery_url}"
@@ -70,7 +70,7 @@ async def get_openid_provider(
             return await fail("malformed response")
 
     if settings.openid is None:
-        raise HTTPException(500, "OpenID is not configured")
+        raise HTTPException(500, "OpenID is not configured (.env)")
 
     discovery_key = f"{cache_key}/discovery"
     cached = await _cache_get_with_error(cache, discovery_key)
