@@ -121,8 +121,10 @@ def auth() -> AuthController:
     return AuthController()
 
 
-@pytest.fixture
-def app(stack: AsyncExitStack, engine: AsyncEngine, auth: AuthController) -> FastAPI:
+@pytest.fixture(scope="session")
+def _base_app() -> FastAPI:
+    # This caches the base ASGI app per test session which drastically improves performance.
+    # Tests use the app fixture which supplies per-function fixtures like the engine.
     settings = Settings(
         _env_file=None,
         cache=CacheSettings(url="sqlite:///:memory:"),
@@ -139,11 +141,22 @@ def app(stack: AsyncExitStack, engine: AsyncEngine, auth: AuthController) -> Fas
         security=SecuritySettings(allowed_hosts=["*"]),
     )
     app = create_app_from_settings(settings)
-    app.state.stack = stack
-    app.dependency_overrides[get_async_engine] = lambda: engine
     app.dependency_overrides[get_settings] = lambda: settings
-    app.dependency_overrides[get_user] = auth.get_user
     return app
+
+
+@pytest.fixture
+def app(
+    _base_app: FastAPI,
+    stack: AsyncExitStack,
+    engine: AsyncEngine,
+    auth: AuthController,
+) -> FastAPI:
+    _base_app.state.stack = stack
+    _base_app.dependency_overrides[get_async_engine] = lambda: engine
+    _base_app.dependency_overrides[get_user] = auth.get_user
+    # Technically we should cleanup our overrides after a test, but ov
+    return _base_app
 
 
 # https://fastapi.tiangolo.com/advanced/async-tests/
