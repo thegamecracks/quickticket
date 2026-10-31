@@ -7,19 +7,26 @@ ENV UV_LINK_MODE=copy
 ENV UV_LOCKED=1
 ENV UV_NO_DEV=1
 ENV UV_PYTHON=3.14
+ENV UV_PYTHON_CACHE_DIR=/root/.cache/uv/python
 
-WORKDIR /app
 # # pyinstrument/pyyaml have no musl wheels for CPython 3.15 and build from
 # # source — alpine's uv image ships no compiler by default
 # RUN apk add --no-cache build-base
-COPY --link pyproject.toml uv.lock ./
-RUN --mount=type=cache,target=/root/.cache/uv uv sync --no-install-project
-COPY --link alembic.ini README.md ./
-COPY --link src/ src/
-RUN --mount=type=cache,target=/root/.cache/uv uv sync
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv python install
+
+WORKDIR /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    uv sync --frozen --no-install-project
+
+COPY alembic.ini pyproject.toml README.md uv.lock ./
+COPY src/ src/
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked
 
 ENV PATH=/app/.venv/bin:${PATH}
-ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 STOPSIGNAL SIGINT
 ENTRYPOINT ["uv", "run"]
