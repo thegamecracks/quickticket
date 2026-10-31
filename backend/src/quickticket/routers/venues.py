@@ -11,7 +11,7 @@ from sqlalchemy.sql.functions import count
 
 from quickticket.dependencies.auth import OptionalUserDep, RequiredUserDep
 from quickticket.dependencies.db import AsyncSessionDep
-from quickticket.dependencies.organizations import get_organization_controller
+from quickticket.dependencies.models import get_organization_controller
 from quickticket.models import (
     Event,
     Money,

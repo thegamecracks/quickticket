@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 
 from quickticket.dependencies.auth import OptionalUserDep, RequiredUserDep
 from quickticket.dependencies.db import AsyncSessionDep
-from quickticket.dependencies.organizations import get_organization_controller
+from quickticket.dependencies.models import get_organization_controller
 from quickticket.errors import ORMEntityNotFound
 from quickticket.models import (
     Event,
