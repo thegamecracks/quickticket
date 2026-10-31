@@ -2,6 +2,8 @@ name: Backend tests
 
 on:
   push:
+    branches:
+      - 'main'
     paths:
       - 'backend/**.py'
       - 'backend/pyproject.toml'
