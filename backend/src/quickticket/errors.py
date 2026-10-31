@@ -62,7 +62,7 @@ class UnauthorizedOrganizationMember(UnauthorizedError):
         self.member = member
         self.required = required
         super().__init__(
-            f"Organization member ({member.organization_id, member.account_id}) "
+            f"Organization member ({member.organization_id}, {member.account_id}) "
             f"missing permissions: {', '.join(m._name_ for m in self.missing)}"
         )
 

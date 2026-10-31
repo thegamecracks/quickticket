@@ -173,10 +173,7 @@ async def test_create_venue_member_insufficient_permissions(
     )
     assert response.status_code == 400
     assert response.json() == {
-        "detail": (
-            f"Organization member ((UUID('{organization.id}'), UUID('{user.id}'))) "
-            "missing permissions: ADMINISTRATOR"
-        )
+        "detail": f"Organization member ({organization.id}, {user.id}) missing permissions: ADMINISTRATOR"
     }
 
 
