@@ -1,31 +1,29 @@
 import uuid
 
 import pytest
-from fastapi import HTTPException
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from quickticket.errors import (
-    OrganizationMemberNotFound,
-    ORMEntityNotFound,
-    UnauthorizedOrganizationMember,
-)
 from quickticket.models import (
     Organization,
     OrganizationMember,
     OrganizationMemberPermissions,
-    Point,
     User,
     Venue,
 )
-from quickticket.routers.venues import VENUE_LIMIT, VenueCreate, VenueRead, create_venue
+from quickticket.routers.venues import VENUE_LIMIT
+from tests.conftest import AuthController
 
 
 @pytest.mark.asyncio
 async def test_create_venue(
+    app: FastAPI,
+    auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
     async with make_session() as session, session.begin():
-        user = User(
+        auth.user = user = User(
             display_name="Display Name",
             first_name="First",
             last_name="Last",
@@ -39,74 +37,81 @@ async def test_create_venue(
         )
         session.add_all([user, organization, member])
 
-    request = VenueCreate(
-        organization_id=organization.id,
-        display_name="Test Venue",
-        description="A venue for testing.",
-        theme="Sports",
-        location_name="Test Stadium",
-        location_coords=Point(lat=48.8584, long=2.2945),
+    client = TestClient(app)
+    response = client.post(
+        "/api/venues",
+        json={
+            "organization_id": str(organization.id),
+            "display_name": "Test Venue",
+            "description": "A venue for testing.",
+            "theme": "Sports",
+            "location_name": "Test Stadium",
+            "location_coords": {"lat": 48.8584, "long": 2.2945},
+        },
     )
-    async with make_session() as session, session.begin():
-        response = await create_venue(user=user, session=session, venue=request)
-        venue = VenueRead.model_validate(response, from_attributes=True)
+    response.raise_for_status()
+    data = response.json()
 
-    assert venue.id is not None
-    assert venue.created_at is not None
-    assert venue.display_name == "Test Venue"
-    assert venue.description == "A venue for testing."
-    assert venue.theme == "Sports"
-    assert venue.location_name == "Test Stadium"
-    assert venue.location_coords == Point(lat=48.8584, long=2.2945)
-    assert venue.thumbnail is None
-    assert venue.banner is None
-    assert venue.events == []
-    assert venue.organization.id == organization.id
-    assert venue.organization.display_name == "Test Organization"
+    assert len(data) == 11
+    assert data["id"] is not None
+    assert data["created_at"] is not None
+    assert data["display_name"] == "Test Venue"
+    assert data["description"] == "A venue for testing."
+    assert data["theme"] == "Sports"
+    assert data["location_name"] == "Test Stadium"
+    assert data["location_coords"] == {"lat": 48.8584, "long": 2.2945}
+    assert data["thumbnail"] is None
+    assert data["banner"] is None
+    assert data["events"] == []
+    assert data["organization"]["id"] == str(organization.id)
+    assert data["organization"]["display_name"] == "Test Organization"
 
     async with make_session() as session, session.begin():
-        persisted = await session.get(Venue, venue.id)
+        persisted = await session.get(Venue, uuid.UUID(data["id"]))
         assert persisted is not None
-        assert persisted.id == venue.id
+        assert persisted.id == uuid.UUID(data["id"])
 
 
 @pytest.mark.asyncio
 async def test_create_venue_nonexistent_organization(
+    app: FastAPI,
+    auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
-    async with make_session() as session:
-        user = User(
+    async with make_session() as session, session.begin():
+        auth.user = user = User(
             display_name="Display Name",
             first_name="First",
             last_name="Last",
             email="user@example.com",
         )
         session.add(user)
-        await session.commit()
 
-    request = VenueCreate(
-        organization_id=uuid.uuid4(),
-        display_name="Test Venue",
-        description="A venue for testing.",
-        theme="Sports",
-        location_name="Test Stadium",
-        location_coords=Point(lat=48.8584, long=2.2945),
+    organization_id = uuid.uuid4()
+    client = TestClient(app)
+    response = client.post(
+        "/api/venues",
+        json={
+            "organization_id": str(organization_id),
+            "display_name": "Test Venue",
+            "description": "A venue for testing.",
+            "theme": "Sports",
+            "location_name": "Test Stadium",
+            "location_coords": {"lat": 48.8584, "long": 2.2945},
+        },
     )
-    async with make_session() as session, session.begin():
-        with pytest.raises(ORMEntityNotFound) as exc_info:
-            await create_venue(user=user, session=session, venue=request)
-
-    exc = exc_info.value
-    assert exc.entity is Organization
-    assert exc.ident == request.organization_id
+    assert response.status_code == 400
+    assert response.json() == {"detail": f"Organization not found: {organization_id}"}
 
 
 @pytest.mark.asyncio
 async def test_create_venue_non_member(
+    app: FastAPI,
+    auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
     async with make_session() as session, session.begin():
-        user = User(
+        auth.user = user = User(
             display_name="Display Name",
             first_name="First",
             last_name="Last",
@@ -115,29 +120,32 @@ async def test_create_venue_non_member(
         organization = Organization(display_name="Test Organization")
         session.add_all([user, organization])
 
-    request = VenueCreate(
-        organization_id=organization.id,
-        display_name="Test Venue",
-        description="A venue for testing.",
-        theme="Sports",
-        location_name="Test Stadium",
-        location_coords=Point(lat=48.8584, long=2.2945),
+    client = TestClient(app)
+    response = client.post(
+        "/api/venues",
+        json={
+            "organization_id": str(organization.id),
+            "display_name": "Test Venue",
+            "description": "A venue for testing.",
+            "theme": "Sports",
+            "location_name": "Test Stadium",
+            "location_coords": {"lat": 48.8584, "long": 2.2945},
+        },
     )
-    async with make_session() as session, session.begin():
-        with pytest.raises(OrganizationMemberNotFound) as exc_info:
-            await create_venue(user=user, session=session, venue=request)
-
-    exc = exc_info.value
-    assert exc.organization.id == organization.id
-    assert exc.user.id == user.id
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": f"User ({user.id}) is not a member of organization ({organization.id})"
+    }
 
 
 @pytest.mark.asyncio
 async def test_create_venue_member_insufficient_permissions(
+    app: FastAPI,
+    auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
     async with make_session() as session, session.begin():
-        user = User(
+        auth.user = user = User(
             display_name="Display Name",
             first_name="First",
             last_name="Last",
@@ -151,31 +159,35 @@ async def test_create_venue_member_insufficient_permissions(
         )
         session.add_all([user, organization, member])
 
-    request = VenueCreate(
-        organization_id=organization.id,
-        display_name="Test Venue",
-        description="A venue for testing.",
-        theme="Sports",
-        location_name="Test Stadium",
-        location_coords=Point(lat=48.8584, long=2.2945),
+    client = TestClient(app)
+    response = client.post(
+        "/api/venues",
+        json={
+            "organization_id": str(organization.id),
+            "display_name": "Test Venue",
+            "description": "A venue for testing.",
+            "theme": "Sports",
+            "location_name": "Test Stadium",
+            "location_coords": {"lat": 48.8584, "long": 2.2945},
+        },
     )
-    async with make_session() as session, session.begin():
-        with pytest.raises(UnauthorizedOrganizationMember) as exc_info:
-            await create_venue(user=user, session=session, venue=request)
-
-    exc = exc_info.value
-    assert exc.member.organization_id == organization.id
-    assert exc.member.account_id == user.id
-    assert exc.required is OrganizationMemberPermissions.ADMINISTRATOR
-    assert exc.missing is OrganizationMemberPermissions.ADMINISTRATOR
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": (
+            f"Organization member ((UUID('{organization.id}'), UUID('{user.id}'))) "
+            "missing permissions: ADMINISTRATOR"
+        )
+    }
 
 
 @pytest.mark.asyncio
 async def test_create_venue_reached_limit(
+    app: FastAPI,
+    auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
     async with make_session() as session, session.begin():
-        user = User(
+        auth.user = user = User(
             display_name="Display Name",
             first_name="First",
             last_name="Last",
@@ -196,22 +208,21 @@ async def test_create_venue_reached_limit(
                     description="A venue for testing.",
                     theme="Sports",
                     location_name="Test Stadium",
-                    location_coords=Point(lat=48.8584, long=2.2945),
+                    location_coords=None,
                 )
             )
 
-    request = VenueCreate(
-        organization_id=organization.id,
-        display_name="One Venue Too Many",
-        description="A venue for testing.",
-        theme="Sports",
-        location_name="Test Stadium",
-        location_coords=Point(lat=48.8584, long=2.2945),
+    client = TestClient(app)
+    response = client.post(
+        "/api/venues",
+        json={
+            "organization_id": str(organization.id),
+            "display_name": "One Venue Too Many",
+            "description": "A venue for testing.",
+            "theme": "Sports",
+            "location_name": "Test Stadium",
+            "location_coords": {"lat": 48.8584, "long": 2.2945},
+        },
     )
-    async with make_session() as session, session.begin():
-        with pytest.raises(HTTPException) as exc_info:
-            await create_venue(user=user, session=session, venue=request)
-
-    exc = exc_info.value
-    assert exc.status_code == 400
-    assert exc.detail == f"Reached maximum venue limit: {VENUE_LIMIT}"
+    assert response.status_code == 400
+    assert response.json() == {"detail": f"Reached maximum venue limit: {VENUE_LIMIT}"}
