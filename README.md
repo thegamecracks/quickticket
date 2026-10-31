@@ -1,6 +1,8 @@
 # QuickTicket
 
 [![](https://img.shields.io/github/actions/workflow/status/thegamecracks/quickticket/backend-test.yml?style=flat-square&logo=fastapi&label=backend)](https://github.com/thegamecracks/quickticket/actions/workflows/backend-test.yml)
+[![](https://img.shields.io/github/actions/workflow/status/thegamecracks/quickticket/backend-test.yml?style=flat-square&logo=docker&label=docker)](https://github.com/thegamecracks/quickticket/actions/workflows/docker.yml)
+[![](https://img.shields.io/github/actions/workflow/status/thegamecracks/quickticket/backend-test.yml?style=flat-square&logo=docker&label=cleanup)](https://github.com/thegamecracks/quickticket/actions/workflows/ghcr-cleanup.yml)
 [![](https://img.shields.io/github/actions/workflow/status/thegamecracks/quickticket/zizmor.yml?style=flat-square&label=zizmor)](https://github.com/thegamecracks/quickticket/actions/workflows/zizmor.yml)
 
 ## Summary
