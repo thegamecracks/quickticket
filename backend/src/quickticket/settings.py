@@ -161,14 +161,23 @@ class OpenIDSettings(BaseSettings):
 
 
 class S3Settings(BaseSettings):
-    url: Secret[str]
-    """The endpoint to connect to S3 storage.
+    url: Secret[AnyUrl]
+    """The URL to connect to S3 storage.
 
     Examples:
-    - http://s3:3900
-    - https://s3.dualstack.ca-central-1.amazonaws.com
+    - file:///path/ -> LocalStore
+    - memory:/// -> MemoryStore
+    - s3://bucket/path -> S3Store (also supports s3a)
+    - gs://bucket/path -> GCSStore
+    - az://account/container/path -> AzureStore (also supports adl, azure, abfs, abfss)
+    - http://mydomain/path -> HTTPStore
+    - https://mydomain/path -> HTTPStore
 
-    See also: https://docs.aws.amazon.com/general/latest/gr/s3.html
+    For custom S3 endpoints, use ``s3+http[s]://host/bucket`` as the format.
+
+    See also:
+    - https://developmentseed.org/obstore/latest/api/store/#obstore.store.from_url
+    - https://docs.aws.amazon.com/general/latest/gr/s3.html
 
     """
     region: Secret[str]

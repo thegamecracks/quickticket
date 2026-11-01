@@ -7,6 +7,7 @@ import pytest_asyncio
 from fastapi import FastAPI
 from fastapi.datastructures import State
 from httpx2 import ASGITransport, AsyncClient
+from obstore.store import MemoryStore
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -17,6 +18,7 @@ from quickticket.app import create_app_from_settings
 from quickticket.dependencies.auth import get_user
 from quickticket.dependencies.db import get_async_engine, get_async_sessionmaker
 from quickticket.dependencies.state import get_settings
+from quickticket.dependencies.store import Store, get_object_store
 from quickticket.models import Base, User
 from quickticket.settings import (
     CacheSettings,
@@ -121,6 +123,11 @@ def auth() -> AuthController:
     return AuthController()
 
 
+@pytest.fixture
+def store() -> Store:
+    return MemoryStore()
+
+
 @pytest.fixture(scope="session")
 def _base_app() -> FastAPI:
     # This caches the base ASGI app per test session which drastically improves performance.
@@ -152,9 +159,11 @@ async def app(
     engine: AsyncEngine,
     make_session: async_sessionmaker[AsyncSession],
     auth: AuthController,
+    store: Store,
 ) -> FastAPI:
     _base_app.state.stack = stack
     _base_app.dependency_overrides[get_async_engine] = lambda: engine
+    _base_app.dependency_overrides[get_object_store] = lambda: store
     _base_app.dependency_overrides[get_user] = auth.get_user
 
     # Technically we should cleanup our overrides after a test, but they'll get overwritten anyway
