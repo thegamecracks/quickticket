@@ -8,6 +8,10 @@ services:
       # Point the backend to our cache and database containers, taking precedence over .env.
       BACKEND__CACHE__URL: 'redis://default:abc123@cache:6379'  # 'sqlite:///data/quickticket-cache.db'
       BACKEND__DB__URL: 'postgresql+psycopg://quickticket:abc123@db:5432/quickticket?sslmode=prefer'  # 'sqlite+aiosqlite:///data/quickticket.db'
+      BACKEND__S3__URL: 's3+http://s3:3900/quickticket'
+      BACKEND__S3__REGION: 'garage'
+      BACKEND__S3__ACCESS_KEY: '${BACKEND__S3__ACCESS_KEY:-GK1f12370a0306fcb1d13c3be2304f2d5b}'
+      BACKEND__S3__SECRET_KEY: '${BACKEND__S3__SECRET_KEY:-c6c4ca3c65ccb75e024f6106d1781fc3d38c10875c77ff12820617e1a9fc1f1a}'
       FORCE_COLOR: '1'
     restart: always
     volumes:
@@ -77,9 +81,23 @@ services:
       - db-data:/var/lib/postgresql
       - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
 
-  # TODO: add S3 (https://hub.docker.com/r/dxflrs/garage)
+  s3:
+    image: docker.io/dxflrs/garage:v2.5.0
+    command: ['/garage', 'server', '--single-node', '--default-bucket']
+    ports:
+      - 127.0.0.1:3900:3900
+    environment:
+      # https://garagehq.deuxfleurs.fr/documentation/quick-start/#configuring-initial-access-credentials
+      GARAGE_DEFAULT_ACCESS_KEY: '${BACKEND__S3__ACCESS_KEY:-GK1f12370a0306fcb1d13c3be2304f2d5b}'
+      GARAGE_DEFAULT_SECRET_KEY: '${BACKEND__S3__SECRET_KEY:-c6c4ca3c65ccb75e024f6106d1781fc3d38c10875c77ff12820617e1a9fc1f1a}'
+      GARAGE_DEFAULT_BUCKET: 'quickticket'
+    restart: always
+    volumes:
+      - s3-data:/var/lib/garage
+      - ./config/garage.toml:/etc/garage.toml:ro
 
 volumes:
   backend-data:
   cache-data:
   db-data:
+  s3-data:
