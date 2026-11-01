@@ -21,7 +21,7 @@ from quickticket.models import (
     Ticket,
     Venue,
 )
-from quickticket.validators import filter_string_field
+from quickticket.validators import DisplayNameField, filter_string_field
 
 VENUE_LIMIT = 5
 
@@ -171,9 +171,7 @@ async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: U
 
 class VenueCreate(BaseModel):
     organization_id: UUID
-    display_name: Annotated[
-        str, AfterValidator(filter_string_field), Field(min_length=3, max_length=128)
-    ]
+    display_name: DisplayNameField
     description: Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
     theme: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
     location_name: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]

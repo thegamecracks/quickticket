@@ -21,7 +21,7 @@ from quickticket.models import (
     Ticket,
     Venue,
 )
-from quickticket.validators import filter_string_field
+from quickticket.validators import DisplayNameField, filter_string_field
 
 router = APIRouter(tags=["Events"])
 log = logging.getLogger(__name__)
@@ -151,7 +151,7 @@ async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: U
 
 class EventCreate(BaseModel):
     venue_id: UUID
-    display_name: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
+    display_name: DisplayNameField
     description: Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
     theme: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
     starts_at: datetime
