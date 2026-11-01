@@ -13,7 +13,7 @@ COPY . .
 
 # same-origin API prefix: backend mounts routes under /api, Traefik splits
 # /api -> api service, everything else -> this nginx
-ENV VITE_API_URL=/api
+ARG VITE_API_URL=${VITE_API_URL:-/api}
 
 RUN bun run build
 
