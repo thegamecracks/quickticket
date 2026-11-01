@@ -157,14 +157,11 @@ class EventCreate(BaseModel):
     starts_at: datetime
     ends_at: datetime
 
-    max_attendees: int
+    max_attendees: Annotated[int, Field(ge=0, le=10000)]
     ticket_price: Money
     # ! TODO: implement thumbnails & banner support
     # banner_id: UUID | None = None
     # thumbnail_id: UUID | None = None
-
-    # tickets: list[PartialTicket]
-    # venue: PartialVenue
 
 
 @router.post("", response_model=EventRead)

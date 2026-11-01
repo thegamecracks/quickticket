@@ -188,3 +188,45 @@ async def test_create_event_no_venue(
     )
     assert response.status_code == 400
     assert response.json() == {"detail": f"Venue not found: {venue_id}"}
+
+
+@pytest.mark.asyncio
+async def test_create_event_rejects_max_attendees_below_minimum(
+    auth: AuthController,
+    client: AsyncClient,
+) -> None:
+    response = await client.post(
+        "/api/events",
+        json={
+            "venue_id": str(uuid4()),
+            "display_name": "Test Hockey Tournament",
+            "description": "A mock hockey game, for testing.",
+            "theme": "Sports",
+            "starts_at": datetime(2027, 1, 1, 18, 0).isoformat(),
+            "ends_at": datetime(2027, 1, 1, 22, 0).isoformat(),
+            "max_attendees": -1,
+            "ticket_price": {"amount": 50, "currency": "CAD"},
+        },
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_event_rejects_max_attendees_above_maximum(
+    auth: AuthController,
+    client: AsyncClient,
+) -> None:
+    response = await client.post(
+        "/api/events",
+        json={
+            "venue_id": str(uuid4()),
+            "display_name": "Test Hockey Tournament",
+            "description": "A mock hockey game, for testing.",
+            "theme": "Sports",
+            "starts_at": datetime(2027, 1, 1, 18, 0).isoformat(),
+            "ends_at": datetime(2027, 1, 1, 22, 0).isoformat(),
+            "max_attendees": 10001,
+            "ticket_price": {"amount": 50, "currency": "CAD"},
+        },
+    )
+    assert response.status_code == 422
