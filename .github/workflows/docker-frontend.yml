@@ -6,13 +6,27 @@ on:
     tags: ["v*"]
     paths:
       - ".github/workflows/docker-frontend.yml"
-      # Frontend paths derived from frontend/Dockerfile
-      - "frontend/**"
+      - "frontend/public/"
+      - "frontend/src/"
+      - "frontend/.dockerignore"
+      - "frontend/bun.lock"
+      - "frontend/Dockerfile"
+      - "frontend/index.html"
+      - "frontend/nginx.conf"
+      - "frontend/package.json"
+      - "frontend/vite.config.ts"
   pull_request:
     paths:
       - ".github/workflows/docker-frontend.yml"
-      # Frontend paths derived from frontend/Dockerfile
-      - "frontend/**"
+      - "frontend/public/"
+      - "frontend/src/"
+      - "frontend/.dockerignore"
+      - "frontend/bun.lock"
+      - "frontend/Dockerfile"
+      - "frontend/index.html"
+      - "frontend/nginx.conf"
+      - "frontend/package.json"
+      - "frontend/vite.config.ts"
   workflow_dispatch:
 
 # one build at a time per branch; a new push to main supersedes a stale build

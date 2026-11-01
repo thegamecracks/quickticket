@@ -6,25 +6,25 @@ on:
     tags: ["v*"]
     paths:
       - ".github/workflows/docker-backend.yml"
-      # Backend paths derived from backend/Dockerfile
-      - "backend/.dockerignore"
-      - "backend/Dockerfile"
-      - "backend/uv.lock"
-      - "backend/alembic.ini"
-      - "backend/pyproject.toml"
-      - "backend/README.md"
+      - "backend/config/"
       - "backend/src/"
+      - "backend/.dockerignore"
+      - "backend/alembic.ini"
+      - "backend/Dockerfile"
+      - "backend/pyproject.toml"
+      # - "backend/README.md"
+      - "backend/uv.lock"
   pull_request:
     paths:
       - ".github/workflows/docker-backend.yml"
-      # Backend paths derived from backend/Dockerfile
-      - "backend/.dockerignore"
-      - "backend/Dockerfile"
-      - "backend/uv.lock"
-      - "backend/alembic.ini"
-      - "backend/pyproject.toml"
-      - "backend/README.md"
+      - "backend/config/"
       - "backend/src/"
+      - "backend/.dockerignore"
+      - "backend/alembic.ini"
+      - "backend/Dockerfile"
+      - "backend/pyproject.toml"
+      # - "backend/README.md"
+      - "backend/uv.lock"
   workflow_dispatch:
 
 # one build at a time per branch; a new push to main supersedes a stale build
