@@ -9,7 +9,7 @@ Before finishing a change, run the following checks to ensure it will pass CI:
 ```sh
 uv run ruff check --fix        # lints
 uv run ruff format             # style
-uvx ty check                   # type check
+uv run ty check                # type check
 uv run coverage run -m pytest  # tests
 ```
 
