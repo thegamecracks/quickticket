@@ -202,8 +202,8 @@ class SecuritySettings(BaseSettings):
     If ["*"] is given, all hosts are allowed. Not safe!
 
     """
-    csrf_secret: Secret[str] = Secret("insecure_qt9u0SCF3DuSJ69ZrqvzlJGTWxx7C5wh")
-    """The secret to use for ``csrftoken`` double submit cookies / ``x-csrf-token`` headers."""
+    csrf_secret: Secret[str | None] = Secret(None)  # insecure_qt9u0SCF3DuSJ69ZrqvzlJGTWxx7C5wh
+    """An optional secret to use for ``csrftoken`` double submit cookies / ``x-csrf-token`` headers."""
     cookie_encryption_secrets: list[Secret[str]] = [
         Secret("Qfw1bmzNtFba8qLxYZzxtEDfgd4P58LCDKiuMezO6lU=")
     ]

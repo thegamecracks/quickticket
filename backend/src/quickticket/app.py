@@ -19,11 +19,10 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import HTMLResponse
 from securecookies import SecureCookiesMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette_csrf.middleware import CSRFMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from quickticket.dependencies.ratelimits import apply_request_limit
-
-# from starlette_csrf.middleware import CSRFMiddleware
 from quickticket.errors import EntityNotFound, ForcedResponse, UnauthorizedError
 from quickticket.logging import setup_logging
 from quickticket.routers import auth, events, notifications, organizations, profile, venues
@@ -93,10 +92,11 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.security.allowed_hosts)
 
     # TODO: require frontend to send x-csrftoken header from csrftoken cookie
-    # csrf_secret = settings.security.csrf_secret.get_secret_value()
-    # if csrf_secret.startswith("insecure"):
-    #     log.warning("csrf_secret not set, using insecure hardcoded value")
-    # app.add_middleware(CSRFMiddleware, secret=csrf_secret)
+    csrf_secret = settings.security.csrf_secret.get_secret_value()
+    if csrf_secret is not None:
+        if csrf_secret.startswith("insecure"):
+            log.warning("csrf_secret not set, using insecure hardcoded value")
+        app.add_middleware(CSRFMiddleware, secret=csrf_secret)
 
     if settings.log.profiling:
         add_profiling_middleware(app)
