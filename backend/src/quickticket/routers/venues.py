@@ -4,7 +4,7 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import AfterValidator, BaseModel, Field
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.functions import count
@@ -21,6 +21,7 @@ from quickticket.models import (
     Ticket,
     Venue,
 )
+from quickticket.validators import filter_string_field
 
 VENUE_LIMIT = 5
 
@@ -170,10 +171,12 @@ async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: U
 
 class VenueCreate(BaseModel):
     organization_id: UUID
-    display_name: Annotated[str, Field(max_length=128)]
-    description: Annotated[str, Field(max_length=4096)]
-    theme: Annotated[str, Field(max_length=128)]
-    location_name: Annotated[str, Field(max_length=128)]
+    display_name: Annotated[
+        str, AfterValidator(filter_string_field), Field(min_length=3, max_length=128)
+    ]
+    description: Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
+    theme: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
+    location_name: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
 
     location_coords: Point | None = None
     # TODO: allow uploading banner and thumbnail in separate endpoints (see #52)

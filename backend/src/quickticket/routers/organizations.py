@@ -4,7 +4,7 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import AfterValidator, BaseModel, Field
 from sqlalchemy import exists, false, select
 from sqlalchemy.orm import selectinload
 
@@ -19,6 +19,7 @@ from quickticket.models import (
     Ticket,
     Venue,
 )
+from quickticket.validators import filter_string_field
 
 router = APIRouter(tags=["Organizations"])
 log = logging.getLogger(__name__)
@@ -158,7 +159,9 @@ async def get_organization(
 
 
 class OrganizationCreate(BaseModel):
-    display_name: Annotated[str, Field(min_length=1, max_length=128)]
+    display_name: Annotated[
+        str, AfterValidator(filter_string_field), Field(min_length=3, max_length=128)
+    ]
 
 
 @router.post("", response_model=OrganizationRead)
