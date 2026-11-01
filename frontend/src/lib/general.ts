@@ -16,3 +16,7 @@ export const formatTimeMedium = (date: string): string => {
 export const calcDateLongTimeMediumRange = (startDate: string, endDate: string): string => {
   return formatDateLongAndTimeShort(startDate) + " - " + formatTimeMedium(endDate);
 }
+
+export const calcTimeMediumRange = (startDate: string, endDate: string): string => {
+  return formatTimeMedium(startDate) + " - " + formatTimeMedium(endDate);
+}
