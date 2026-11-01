@@ -4,9 +4,29 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
-    paths: ["backend/**", "frontend/**", ".github/workflows/docker.yml"]
+    paths:
+      - ".github/workflows/docker.yml"
+      # Backend paths derived from backend/Dockerfile
+      - "backend/.dockerignore"
+      - "backend/Dockerfile"
+      - "backend/uv.lock"
+      - "backend/alembic.ini"
+      - "backend/pyproject.toml"
+      - "backend/README.md"
+      - "backend/src/"
+      - "frontend/**"
   pull_request:
-    paths: ["backend/**", "frontend/**", ".github/workflows/docker.yml"]
+    paths:
+      - ".github/workflows/docker.yml"
+      # Backend paths derived from backend/Dockerfile
+      - "backend/.dockerignore"
+      - "backend/Dockerfile"
+      - "backend/uv.lock"
+      - "backend/alembic.ini"
+      - "backend/pyproject.toml"
+      - "backend/README.md"
+      - "backend/src/"
+      - "frontend/**"
   workflow_dispatch:
 
 # one build at a time per branch; a new push to main supersedes a stale build
