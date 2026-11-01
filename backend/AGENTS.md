@@ -53,7 +53,7 @@ uv run alembic revision --autogenerate -m "…"  # generate a new migration
 ├── config/                  # postgresql.conf, redis.conf for Docker services
 ├── alembic.ini              # Alembic configuration
 ├── Dockerfile               # uv-based production image for the backend
-├── docker-compose.yml       # backend + Redis + PostgreSQL + S3
+├── compose.yaml             # backend + Redis + PostgreSQL + S3
 ├── example.env              # template of all BACKEND__* settings
 └── pyproject.toml           # project metadata, deps, ruff config
 ```

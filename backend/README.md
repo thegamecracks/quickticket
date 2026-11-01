@@ -60,7 +60,7 @@ You can now start the webserver and use it from the frontend:
 
 Using Docker or Podman, you can run the backend with additional services including
 Redis and PostgreSQL. To do this, create a [.env](example.env) file if you haven't
-already, and adjust any passwords in [docker-compose.yml](docker-compose.yml) if desired.
+already, and adjust any passwords in [compose.yaml](compose.yaml) if desired.
 
 ```sh
 /backend $ docker compose up
