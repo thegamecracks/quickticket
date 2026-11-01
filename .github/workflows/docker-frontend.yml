@@ -17,7 +17,7 @@ on:
 
 # one build at a time per branch; a new push to main supersedes a stale build
 concurrency:
-  group: docker-${{ github.ref }}
+  group: docker-frontend-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
