@@ -74,3 +74,53 @@ async def test_create_organization_rejects_overlong_display_name(
 ) -> None:
     response = await client.post("/api/organizations", json={"display_name": "x" * 129})
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_organization_rejects_whitespace_only_display_name(
+    auth: AuthController,
+    client: AsyncClient,
+) -> None:
+    response = await client.post("/api/organizations", json={"display_name": "   \t\n"})
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_organization_rejects_too_short_display_name(
+    auth: AuthController,
+    client: AsyncClient,
+) -> None:
+    # 2 characters after whitespace stripping.
+    response = await client.post("/api/organizations", json={"display_name": " ab "})
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_organization_rejects_non_printable_display_name(
+    auth: AuthController,
+    client: AsyncClient,
+) -> None:
+    # Control characters are removed, leaving fewer than 3 characters.
+    response = await client.post("/api/organizations", json={"display_name": "\x00\x1b a"})
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_organization_strips_whitespace_and_filters_non_printable_characters(
+    auth: AuthController,
+    client: AsyncClient,
+    make_session: async_sessionmaker[AsyncSession],
+) -> None:
+    response = await client.post(
+        "/api/organizations",
+        json={"display_name": "  \u200bMy Org\x00  "},
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["display_name"] == "My Org"
+
+    async with make_session() as session:
+        organization = await session.scalar(select(Organization))
+        assert organization is not None
+        assert organization.display_name == "My Org"
