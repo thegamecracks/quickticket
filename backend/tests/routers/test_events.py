@@ -10,7 +10,6 @@ from quickticket.models import (
     Organization,
     OrganizationMember,
     OrganizationMemberPermissions,
-    User,
     Venue,
 )
 from tests.conftest import AuthController, DatasetLoader
@@ -52,13 +51,9 @@ async def test_create_event(
     auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
+    assert auth.user is not None
+    user = auth.user
     async with make_session() as session, session.begin():
-        auth.user = user = User(
-            display_name="Display Name",
-            first_name="First",
-            last_name="Last",
-            email="user@example.com",
-        )
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
@@ -72,7 +67,7 @@ async def test_create_event(
             theme="Sports",
             location_name="Test Stadium",
         )
-        session.add_all([user, organization, member, venue])
+        session.add_all([organization, member, venue])
 
     response = await client.post(
         "/api/events",
@@ -121,13 +116,9 @@ async def test_create_event_no_permissions(
     auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
+    assert auth.user is not None
+    user = auth.user
     async with make_session() as session, session.begin():
-        auth.user = user = User(
-            display_name="Display Name",
-            first_name="First",
-            last_name="Last",
-            email="user@example.com",
-        )
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
@@ -141,7 +132,7 @@ async def test_create_event_no_permissions(
             theme="Sports",
             location_name="Test Stadium",
         )
-        session.add_all([user, organization, member, venue])
+        session.add_all([organization, member, venue])
 
     response = await client.post(
         "/api/events",
@@ -169,20 +160,16 @@ async def test_create_event_no_venue(
     auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
+    assert auth.user is not None
+    user = auth.user
     async with make_session() as session, session.begin():
-        auth.user = user = User(
-            display_name="Display Name",
-            first_name="First",
-            last_name="Last",
-            email="user@example.com",
-        )
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
             account_id=user.id,
             permissions=OrganizationMemberPermissions.ADMINISTRATOR,
         )
-        session.add_all([user, organization, member])
+        session.add_all([organization, member])
 
     venue_id = uuid4()  # random, no venue
     response = await client.post(

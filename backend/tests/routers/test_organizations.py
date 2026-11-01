@@ -9,7 +9,6 @@ from quickticket.models import (
     Organization,
     OrganizationMember,
     OrganizationMemberPermissions,
-    User,
 )
 from tests.conftest import AuthController
 
@@ -20,13 +19,8 @@ async def test_create_organization(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
-    async with make_session() as session, session.begin():
-        auth.user = User(
-            display_name="Display Name",
-            first_name="First",
-            last_name="Last",
-            email="user@example.com",
-        )
+    assert auth.user is not None
+    user = auth.user
 
     response = await client.post("/api/organizations", json={"display_name": "Test Organization"})
     response.raise_for_status()
@@ -37,10 +31,10 @@ async def test_create_organization(
     assert data["created_at"] is not None
     assert data["display_name"] == "Test Organization"
     assert data["venues"] == []
-    assert UUID(data["members"][0]["account_id"]) == auth.user.id
+    assert UUID(data["members"][0]["account_id"]) == user.id
 
     async with make_session() as session, session.begin():
-        member = await session.get(OrganizationMember, (UUID(data["id"]), auth.user.id))
+        member = await session.get(OrganizationMember, (UUID(data["id"]), user.id))
         assert member is not None
         assert member.permissions == OrganizationMemberPermissions.ADMINISTRATOR
 
@@ -51,14 +45,6 @@ async def test_create_organization_one_owner_only(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
-    async with make_session() as session, session.begin():
-        auth.user = User(
-            display_name="Display Name",
-            first_name="First",
-            last_name="Last",
-            email="user@example.com",
-        )
-
     response = await client.post("/api/organizations", json={"display_name": "First Organization"})
     response.raise_for_status()
     first = response.json()
@@ -77,13 +63,6 @@ async def test_create_organization_rejects_blank_display_name(
     auth: AuthController,
     client: AsyncClient,
 ) -> None:
-    auth.user = User(
-        display_name="Display Name",
-        first_name="First",
-        last_name="Last",
-        email="user@example.com",
-    )
-
     response = await client.post("/api/organizations", json={"display_name": ""})
     assert response.status_code == 422
 
@@ -93,12 +72,5 @@ async def test_create_organization_rejects_overlong_display_name(
     auth: AuthController,
     client: AsyncClient,
 ) -> None:
-    auth.user = User(
-        display_name="Display Name",
-        first_name="First",
-        last_name="Last",
-        email="user@example.com",
-    )
-
     response = await client.post("/api/organizations", json={"display_name": "x" * 129})
     assert response.status_code == 422
