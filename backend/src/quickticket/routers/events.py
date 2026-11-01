@@ -4,7 +4,7 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import AfterValidator, BaseModel, Field
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
 
@@ -21,6 +21,7 @@ from quickticket.models import (
     Ticket,
     Venue,
 )
+from quickticket.validators import filter_string_field
 
 router = APIRouter(tags=["Events"])
 log = logging.getLogger(__name__)
@@ -150,9 +151,9 @@ async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: U
 
 class EventCreate(BaseModel):
     venue_id: UUID
-    display_name: str
-    description: str
-    theme: str
+    display_name: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
+    description: Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
+    theme: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
     starts_at: datetime
     ends_at: datetime
 
