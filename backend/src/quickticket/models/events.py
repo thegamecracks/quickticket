@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-from sqlalchemy import ForeignKey, text
+from sqlalchemy import CheckConstraint, ForeignKey, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from quickticket.models.base import Base
@@ -37,7 +37,11 @@ class Event(Base, kw_only=True, repr=False):
 
     # Optional
     created_at: Mapped[current_timestamp] = mapped_column(default=None, index=True)
-    max_attendees: Mapped[int] = mapped_column(default=0, server_default=text("0"))
+    max_attendees: Mapped[int] = mapped_column(
+        CheckConstraint("max_attendees >= 0", "max_attendees_positive"),
+        default=0,
+        server_default=text("0"),
+    )
     ticket_price: Mapped[Money] = mapped_column(
         default=Money(amount=0, currency="CAD"),
         server_default=text("""'{"amount": 0, "currency": "CAD"}'"""),

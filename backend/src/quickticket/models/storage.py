@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID, uuid4
 
-from sqlalchemy import BigInteger, ForeignKey, UniqueConstraint
+from sqlalchemy import BigInteger, CheckConstraint, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from quickticket.models.base import Base
@@ -59,7 +59,10 @@ class StorageObject(Base, kw_only=True, repr=False):
     object_key: Mapped[str_2000]
     # status: Mapped[Literal["pending", "active", "deleted"]]  # TODO: is status enum needed?
     filename: Mapped[str_2000]
-    filesize: Mapped[int] = mapped_column(BigInteger)
+    filesize: Mapped[int] = mapped_column(
+        BigInteger,
+        CheckConstraint("filesize >= 0", "filesize_positive"),
+    )
     mime_type: Mapped[str_2000]
 
     # Optional
