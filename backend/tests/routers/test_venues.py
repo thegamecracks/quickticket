@@ -8,7 +8,6 @@ from quickticket.models import (
     Organization,
     OrganizationMember,
     OrganizationMemberPermissions,
-    User,
     Venue,
 )
 from quickticket.routers.venues import VENUE_LIMIT
@@ -21,20 +20,16 @@ async def test_create_venue(
     auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
+    assert auth.user is not None
+    user = auth.user
     async with make_session() as session, session.begin():
-        auth.user = user = User(
-            display_name="Display Name",
-            first_name="First",
-            last_name="Last",
-            email="user@example.com",
-        )
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
             account_id=user.id,
             permissions=OrganizationMemberPermissions.ADMINISTRATOR,
         )
-        session.add_all([user, organization, member])
+        session.add_all([organization, member])
 
     response = await client.post(
         "/api/venues",
@@ -76,15 +71,6 @@ async def test_create_venue_nonexistent_organization(
     auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
-    async with make_session() as session, session.begin():
-        auth.user = user = User(
-            display_name="Display Name",
-            first_name="First",
-            last_name="Last",
-            email="user@example.com",
-        )
-        session.add(user)
-
     organization_id = uuid.uuid4()
     response = await client.post(
         "/api/venues",
@@ -107,15 +93,11 @@ async def test_create_venue_non_member(
     auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
+    assert auth.user is not None
+    user = auth.user
     async with make_session() as session, session.begin():
-        auth.user = user = User(
-            display_name="Display Name",
-            first_name="First",
-            last_name="Last",
-            email="user@example.com",
-        )
         organization = Organization(display_name="Test Organization")
-        session.add_all([user, organization])
+        session.add(organization)
 
     response = await client.post(
         "/api/venues",
@@ -140,20 +122,16 @@ async def test_create_venue_member_insufficient_permissions(
     auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
+    assert auth.user is not None
+    user = auth.user
     async with make_session() as session, session.begin():
-        auth.user = user = User(
-            display_name="Display Name",
-            first_name="First",
-            last_name="Last",
-            email="user@example.com",
-        )
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
             account_id=user.id,
             permissions=OrganizationMemberPermissions(0),
         )
-        session.add_all([user, organization, member])
+        session.add_all([organization, member])
 
     response = await client.post(
         "/api/venues",
@@ -178,20 +156,16 @@ async def test_create_venue_reached_limit(
     auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
+    assert auth.user is not None
+    user = auth.user
     async with make_session() as session, session.begin():
-        auth.user = user = User(
-            display_name="Display Name",
-            first_name="First",
-            last_name="Last",
-            email="user@example.com",
-        )
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
             account_id=user.id,
             permissions=OrganizationMemberPermissions.ADMINISTRATOR,
         )
-        session.add_all([user, organization, member])
+        session.add_all([organization, member])
         for i in range(VENUE_LIMIT):
             session.add(
                 Venue(

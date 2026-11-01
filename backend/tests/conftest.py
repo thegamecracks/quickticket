@@ -145,17 +145,28 @@ def _base_app() -> FastAPI:
     return app
 
 
-@pytest.fixture
-def app(
+@pytest_asyncio.fixture
+async def app(
     _base_app: FastAPI,
     stack: AsyncExitStack,
     engine: AsyncEngine,
+    make_session: async_sessionmaker[AsyncSession],
     auth: AuthController,
 ) -> FastAPI:
     _base_app.state.stack = stack
     _base_app.dependency_overrides[get_async_engine] = lambda: engine
     _base_app.dependency_overrides[get_user] = auth.get_user
-    # Technically we should cleanup our overrides after a test, but ov
+
+    # Technically we should cleanup our overrides after a test, but they'll get overwritten anyway
+    async with make_session() as session, session.begin():
+        auth.user = User(
+            display_name="Test User",
+            first_name="Test",
+            last_name="User",
+            email="test.user@example.com",
+        )
+        session.add(auth.user)
+
     return _base_app
 
 
