@@ -1,11 +1,11 @@
-name: docker
+name: docker backend
 
 on:
   push:
     branches: [main]
     tags: ["v*"]
     paths:
-      - ".github/workflows/docker.yml"
+      - ".github/workflows/docker-backend.yml"
       # Backend paths derived from backend/Dockerfile
       - "backend/.dockerignore"
       - "backend/Dockerfile"
@@ -14,10 +14,9 @@ on:
       - "backend/pyproject.toml"
       - "backend/README.md"
       - "backend/src/"
-      - "frontend/**"
   pull_request:
     paths:
-      - ".github/workflows/docker.yml"
+      - ".github/workflows/docker-backend.yml"
       # Backend paths derived from backend/Dockerfile
       - "backend/.dockerignore"
       - "backend/Dockerfile"
@@ -26,7 +25,6 @@ on:
       - "backend/pyproject.toml"
       - "backend/README.md"
       - "backend/src/"
-      - "frontend/**"
   workflow_dispatch:
 
 # one build at a time per branch; a new push to main supersedes a stale build
@@ -40,7 +38,6 @@ permissions:
 env:
   REGISTRY: ghcr.io
   API_IMAGE: ghcr.io/thegamecracks/quickticket-api
-  WEB_IMAGE: ghcr.io/thegamecracks/quickticket-web
 
 jobs:
   api:
@@ -75,44 +72,12 @@ jobs:
           cache-from: type=gha,scope=api
           cache-to: type=gha,scope=api,mode=max
 
-  web:
-    runs-on: ubuntu-latest
-    permissions:
-      packages: write
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - id: version
-        env:
-          PR_NUMBER: ${{ github.event.number }}
-        run: |
-          tag="dev"
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then tag="${GITHUB_REF_NAME#v}"; fi
-          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then tag="pr-$PR_NUMBER"; fi
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-      - uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: frontend
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: |
-            ${{ env.WEB_IMAGE }}:${{ steps.version.outputs.tag }}
-            ${{ env.WEB_IMAGE }}:${{ github.sha }}
-          cache-from: type=gha,scope=web
-          cache-to: type=gha,scope=web,mode=max
-
   # dev auto-deploy: only on main pushes. The kubectl step is skipped
   # (silently, without failing the job) until the QT_DEV_KUBECONFIG secret
   # exists. The secrets context is unavailable inside if: conditionals at
   # ANY level, hence the env: indirection.
   restart-dev:
-    needs: [api, web]
+    needs: [api]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions: {}
@@ -144,6 +109,5 @@ jobs:
           mkdir -p ~/.kube
           printf '%s' "$QT_DEV_KUBECONFIG" > ~/.kube/config
           chmod 600 ~/.kube/config
-          kubectl -n quickticket rollout restart deploy/quickticket-dev deploy/quickticket-dev-web
+          kubectl -n quickticket rollout restart deploy/quickticket-dev
           kubectl -n quickticket rollout status deploy/quickticket-dev --timeout=180s
-          kubectl -n quickticket rollout status deploy/quickticket-dev-web --timeout=180s
