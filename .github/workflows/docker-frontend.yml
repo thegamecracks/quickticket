@@ -6,8 +6,8 @@ on:
     tags: ["v*"]
     paths:
       - ".github/workflows/docker-frontend.yml"
-      - "frontend/public/"
-      - "frontend/src/"
+      - "frontend/public/**"
+      - "frontend/src/**"
       - "frontend/.dockerignore"
       - "frontend/bun.lock"
       - "frontend/Dockerfile"
@@ -18,8 +18,8 @@ on:
   pull_request:
     paths:
       - ".github/workflows/docker-frontend.yml"
-      - "frontend/public/"
-      - "frontend/src/"
+      - "frontend/public/**"
+      - "frontend/src/**"
       - "frontend/.dockerignore"
       - "frontend/bun.lock"
       - "frontend/Dockerfile"

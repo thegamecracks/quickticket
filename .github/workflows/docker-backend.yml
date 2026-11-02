@@ -6,8 +6,8 @@ on:
     tags: ["v*"]
     paths:
       - ".github/workflows/docker-backend.yml"
-      - "backend/config/"
-      - "backend/src/"
+      - "backend/config/**"
+      - "backend/src/**"
       - "backend/.dockerignore"
       - "backend/alembic.ini"
       - "backend/Dockerfile"
@@ -17,8 +17,8 @@ on:
   pull_request:
     paths:
       - ".github/workflows/docker-backend.yml"
-      - "backend/config/"
-      - "backend/src/"
+      - "backend/config/**"
+      - "backend/src/**"
       - "backend/.dockerignore"
       - "backend/alembic.ini"
       - "backend/Dockerfile"
