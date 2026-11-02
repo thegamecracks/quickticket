@@ -47,6 +47,18 @@ class Dataset:
         session.add_all(self.events)
         session.add_all(self.tickets)
 
+    async def merge_all(self, session: AsyncSession) -> None:
+        entities = [
+            *self.users,
+            *self.addresses,
+            *self.organizations,
+            *self.organization_members,
+            *self.venues,
+            *self.events,
+            *self.tickets,
+        ]
+        await session.merge_all(entities)
+
 
 def create_test_models() -> Dataset:
     users = [
