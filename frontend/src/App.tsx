@@ -12,6 +12,8 @@ import MyEventsPage from './features/host/MyEventsPage'
 import MyTicketsPage from './features/tickets/MyTicketsPage'
 import TicketDetailPage from './features/tickets/TicketDetailPage'
 import EventCreationPage from './features/host/EventCreationPage'
+import VenuePage from './features/host/VenuePage'
+import OrganizationPage from './features/host/OrganizationPage'
 
 export default function App() {
   return (
@@ -27,6 +29,8 @@ export default function App() {
           <Route path="createEvent" element={<EventCreationPage />} />
           <Route path="myTickets" element={<MyTicketsPage />} />
           <Route path="myTickets/:id" element={<TicketDetailPage />} />
+          <Route path="venue/:id" element={<VenuePage />} />
+          <Route path="organization/:id" element={<OrganizationPage />} />
           <Route path="settings" element={<AccountSettingsPage />} />
         </Route>
       </Routes>
