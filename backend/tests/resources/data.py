@@ -19,6 +19,7 @@ from quickticket.models import (
     Organization,
     OrganizationMember,
     OrganizationMemberPermissions,
+    Point,
     Ticket,
     User,
     Venue,
@@ -945,6 +946,7 @@ A beautiful event space featuring **floor-to-ceiling windows** and modern amenit
 Weddings, corporate events, and private parties.""",
             theme="",
             location_name="88 Granville St.",
+            location_coords=Point(lat=42.9694548, long=-81.2127519),
         ),
         Venue(
             id=UUID("d60f59fc-721d-42bb-8a35-821de7cdc7d8"),
@@ -962,6 +964,7 @@ A charming rustic venue with exposed brick walls and **warm lighting**.
 Intimate weddings, birthday celebrations, and small conferences.""",
             theme="",
             location_name="Sycamore Cres.",
+            location_coords=Point(lat=42.9694548, long=-81.2127519),
         ),
         Venue(
             id=UUID("fbacc99d-7e4c-42fb-8032-a974ff512649"),
@@ -979,6 +982,7 @@ A state-of-the-art conference center with **flexible seating** and cutting-edge 
 Conferences, product launches, and large corporate gatherings.""",
             theme="",
             location_name="505 Rue Laurier O.",
+            location_coords=Point(lat=42.9694548, long=-81.2127519),
         ),
         Venue(
             id=UUID("1fb94585-3991-4d5b-817f-8aed59c3218d"),
@@ -996,6 +1000,7 @@ A stunning waterfront venue offering **panoramic views** and elegant décor.
 Weddings, anniversary parties, and upscale dinners.""",
             theme="",
             location_name="600 Rue Saint-Jean",
+            location_coords=Point(lat=42.9694548, long=-81.2127519),
         ),
         Venue(
             id=UUID("a70927b2-ffa4-4c76-a79f-7f308cb1f568"),
@@ -1013,6 +1018,7 @@ A versatile community hall with **customizable layouts** and affordable pricing.
 Community events, workshops, and birthday parties.""",
             theme="",
             location_name="77 Rue du Marché Champlain",
+            location_coords=Point(lat=42.9694548, long=-81.2127519),
         ),
         Venue(
             id=UUID("9558cd33-30bd-47b5-bbee-5360e524cd02"),
@@ -1030,6 +1036,7 @@ A beautiful event space featuring **floor-to-ceiling windows** and modern amenit
 Weddings, corporate events, and private parties.""",
             theme="",
             location_name="505 Rue Laurier O.",
+            location_coords=Point(lat=42.9694548, long=-81.2127519),
         ),
         Venue(
             id=UUID("bc96927a-7495-415f-965a-ca00ffda7fc0"),
@@ -1047,6 +1054,7 @@ A charming rustic venue with exposed brick walls and **warm lighting**.
 Intimate weddings, birthday celebrations, and small conferences.""",
             theme="",
             location_name="888 Robson St.",
+            location_coords=Point(lat=42.9694548, long=-81.2127519),
         ),
         Venue(
             id=UUID("820c4849-2bdc-40e5-a3df-726a091544a6"),
@@ -1064,6 +1072,7 @@ A state-of-the-art conference center with **flexible seating** and cutting-edge 
 Conferences, product launches, and large corporate gatherings.""",
             theme="",
             location_name="888 Robson St.",
+            location_coords=Point(lat=42.9694548, long=-81.2127519),
         ),
     ]
 
