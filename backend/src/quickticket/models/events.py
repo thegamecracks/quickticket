@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from uuid import UUID, uuid4
+from uuid import UUID, uuid7
 
 from sqlalchemy import CheckConstraint, ForeignKey, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -21,7 +21,7 @@ __all__ = ("Event",)
 class Event(Base, kw_only=True, repr=False):
     __tablename__ = "event"
 
-    id: Mapped[pk_uuid] = mapped_column("event_id", default_factory=uuid4)
+    id: Mapped[pk_uuid] = mapped_column("event_id", default_factory=uuid7)
 
     # Required
     venue_id: Mapped[UUID] = mapped_column(

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from enum import IntFlag
 from typing import TYPE_CHECKING
-from uuid import UUID, uuid4
+from uuid import UUID, uuid7
 
 from sqlalchemy import BigInteger, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -24,7 +24,7 @@ __all__ = (
 class Organization(Base, kw_only=True, repr=False):
     __tablename__ = "organization"
 
-    id: Mapped[pk_uuid] = mapped_column("organization_id", default_factory=uuid4)
+    id: Mapped[pk_uuid] = mapped_column("organization_id", default_factory=uuid7)
 
     # Required
     display_name: Mapped[str_128]

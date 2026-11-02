@@ -1,5 +1,5 @@
 from datetime import datetime
-from uuid import UUID, uuid4
+from uuid import UUID, uuid7
 
 import pytest
 from httpx2 import AsyncClient
@@ -171,7 +171,7 @@ async def test_create_event_no_venue(
         )
         session.add_all([organization, member])
 
-    venue_id = uuid4()  # random, no venue
+    venue_id = uuid7()  # random, no venue
     response = await client.post(
         "/api/events",
         json={
@@ -198,7 +198,7 @@ async def test_create_event_rejects_max_attendees_below_minimum(
     response = await client.post(
         "/api/events",
         json={
-            "venue_id": str(uuid4()),
+            "venue_id": str(uuid7()),
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
             "theme": "Sports",
@@ -219,7 +219,7 @@ async def test_create_event_rejects_max_attendees_above_maximum(
     response = await client.post(
         "/api/events",
         json={
-            "venue_id": str(uuid4()),
+            "venue_id": str(uuid7()),
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
             "theme": "Sports",

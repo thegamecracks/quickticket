@@ -2,7 +2,7 @@ import datetime
 import struct
 from collections.abc import Mapping
 from typing import Annotated, Any
-from uuid import UUID, uuid4
+from uuid import UUID, uuid7
 
 from pydantic import BaseModel
 from sqlalchemy import (
@@ -39,7 +39,7 @@ str_1024 = Annotated[str, mapped_column(String(1024), server_default=text("''"))
 str_2000 = Annotated[str, mapped_column(String(2000), server_default=text("''"))]
 str_4096 = Annotated[str, mapped_column(String(4096), server_default=text("''"))]
 
-pk_uuid = Annotated[UUID, mapped_column(primary_key=True, default=uuid4)]
+pk_uuid = Annotated[UUID, mapped_column(primary_key=True, default=uuid7)]
 
 current_timestamp = Annotated[
     datetime.datetime,
@@ -77,7 +77,7 @@ class PointSerializer(TypeDecorator):
 
 
 # https://gist.github.com/alexa-infra/1a2488e4980e4e3c239aaf962eab06b6
-# Implicitly set uuidv4() default function for UUID columns
+# Implicitly set uuidv7() default function for UUID columns
 @compiles(Uuid, "postgresql")
 def compile_uuid_postgresql(element, compiler, **kw):
     expr: Column | None = kw.get("type_expression")
@@ -98,5 +98,5 @@ def compile_uuid_postgresql(element, compiler, **kw):
         # As a workaround, we'll only apply the default UUID for primary keys.
         return compiler.visit_UUID(element, **kw)
 
-    expr.server_default = DefaultClause(func.uuidv4())
+    expr.server_default = DefaultClause(func.uuidv7())
     return compiler.visit_UUID(element, **kw)

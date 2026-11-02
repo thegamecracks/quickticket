@@ -71,7 +71,7 @@ async def test_create_venue_nonexistent_organization(
     auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
-    organization_id = uuid.uuid4()
+    organization_id = uuid.uuid7()
     response = await client.post(
         "/api/venues",
         json={
