@@ -33,7 +33,7 @@ async def test_create_organization(
     assert data["venues"] == []
     assert UUID(data["members"][0]["account_id"]) == user.id
 
-    async with make_session() as session, session.begin():
+    async with make_session.begin() as session:
         member = await session.get(OrganizationMember, (UUID(data["id"]), user.id))
         assert member is not None
         assert member.permissions == OrganizationMemberPermissions.ADMINISTRATOR
@@ -53,7 +53,7 @@ async def test_create_organization_one_owner_only(
     assert response.status_code == 400
     assert response.json() == {"detail": "Already owns an organization"}
 
-    async with make_session() as session, session.begin():
+    async with make_session.begin() as session:
         organizations = await session.scalars(select(Organization))
         assert [organization.id for organization in organizations] == [UUID(first["id"])]
 

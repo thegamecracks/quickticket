@@ -64,7 +64,7 @@ async def make_session(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
     return await get_async_sessionmaker(engine)
 
 
-# Prefer explicit transactions with `make_session() as session, session.begin()`
+# Prefer explicit transactions with `make_session.begin() as session`
 # @pytest_asyncio.fixture
 # async def session(
 #     make_session: async_sessionmaker[AsyncSession],
@@ -79,7 +79,7 @@ class DatasetLoader:
     make_session: async_sessionmaker[AsyncSession]
 
     async def load(self) -> None:
-        async with self.make_session() as session, session.begin():
+        async with self.make_session.begin() as session:
             self.dataset.add_all(session)
 
 
@@ -167,7 +167,7 @@ async def app(
     _base_app.dependency_overrides[get_user] = auth.get_user
 
     # Technically we should cleanup our overrides after a test, but they'll get overwritten anyway
-    async with make_session() as session, session.begin():
+    async with make_session.begin() as session:
         auth.user = User(
             display_name="Test User",
             first_name="Test",

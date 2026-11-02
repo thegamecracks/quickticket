@@ -53,7 +53,7 @@ async def test_create_event(
 ) -> None:
     assert auth.user is not None
     user = auth.user
-    async with make_session() as session, session.begin():
+    async with make_session.begin() as session:
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
@@ -104,7 +104,7 @@ async def test_create_event(
     # assert data["venue"]["location_name"] == "Test Stadium"
     # assert data["venue"]["location_coords"] == {"lat": 48.8584, "long": 2.2945}
 
-    async with make_session() as session, session.begin():
+    async with make_session.begin() as session:
         persisted = await session.get(Event, UUID(data["id"]))
         assert persisted is not None
         assert persisted.id == UUID(data["id"])
@@ -118,7 +118,7 @@ async def test_create_event_no_permissions(
 ) -> None:
     assert auth.user is not None
     user = auth.user
-    async with make_session() as session, session.begin():
+    async with make_session.begin() as session:
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
@@ -162,7 +162,7 @@ async def test_create_event_no_venue(
 ) -> None:
     assert auth.user is not None
     user = auth.user
-    async with make_session() as session, session.begin():
+    async with make_session.begin() as session:
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,

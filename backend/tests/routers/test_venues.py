@@ -22,7 +22,7 @@ async def test_create_venue(
 ) -> None:
     assert auth.user is not None
     user = auth.user
-    async with make_session() as session, session.begin():
+    async with make_session.begin() as session:
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
@@ -59,7 +59,7 @@ async def test_create_venue(
     assert data["organization"]["id"] == str(organization.id)
     assert data["organization"]["display_name"] == "Test Organization"
 
-    async with make_session() as session, session.begin():
+    async with make_session.begin() as session:
         persisted = await session.get(Venue, uuid.UUID(data["id"]))
         assert persisted is not None
         assert persisted.id == uuid.UUID(data["id"])
@@ -95,7 +95,7 @@ async def test_create_venue_non_member(
 ) -> None:
     assert auth.user is not None
     user = auth.user
-    async with make_session() as session, session.begin():
+    async with make_session.begin() as session:
         organization = Organization(display_name="Test Organization")
         session.add(organization)
 
@@ -124,7 +124,7 @@ async def test_create_venue_member_insufficient_permissions(
 ) -> None:
     assert auth.user is not None
     user = auth.user
-    async with make_session() as session, session.begin():
+    async with make_session.begin() as session:
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
@@ -158,7 +158,7 @@ async def test_create_venue_reached_limit(
 ) -> None:
     assert auth.user is not None
     user = auth.user
-    async with make_session() as session, session.begin():
+    async with make_session.begin() as session:
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
