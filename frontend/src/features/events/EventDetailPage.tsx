@@ -1,4 +1,4 @@
-import { useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 import { useState, useEffect } from 'react'
 import type { EventResponse } from './types'
 import { formatDateLong, calcTimeMediumRange } from '../../lib/general'
@@ -13,7 +13,7 @@ import GoogleMap from '../../components/GoogleMap'
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>()
   const [event, setEvent] = useState<EventResponse | undefined>(undefined)
-
+  const navigate = useNavigate();
   const md = new MarkdownIt();
 
   useEffect(() => {
@@ -25,6 +25,14 @@ export default function EventDetailPage() {
 
     getEvents();
   }, [])
+
+  const handleCheckoutClick = () => {
+    navigate(`/events/${id}/checkout`)
+  }
+
+  const handleVenueClick = () => {
+    navigate(`/venue/${event?.venue.id}`)
+  }
 
 
   return (
@@ -49,7 +57,9 @@ export default function EventDetailPage() {
               <div dangerouslySetInnerHTML={{ __html: md.render(event.description) }} />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-xl">Location: {event.venue.location_name}</h3>
+              <h3 className="font-semibold text-xl">
+                <button className="btn btn-primary" onClick={() => handleVenueClick()}>Venue</button> Location: {event.venue.location_name}
+              </h3>
               {event.venue.location_coords ? (
                 <GoogleMap latitude={event.venue.location_coords?.lat} longitude={event.venue.location_coords?.long} />
               ) : (
@@ -63,21 +73,19 @@ export default function EventDetailPage() {
           <p>{calcTimeMediumRange(event.starts_at, event.ends_at)}</p>
 
           {/* Price and availability */}
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+          <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
 
-            <span className="badge badge-primary">
-              ${event.ticket_price.amount} {event.ticket_price.currency}
-            </span>
             {/* TODO: replace with actual ticket count to check against max attendees */}
             {event.max_attendees >= getMockTicketCount(event.id) !== false ? (
-              <span className="badge badge-success">
-                Available
+              <span className="badge badge-primary">
+                ${event.ticket_price.amount} {event.ticket_price.currency}
               </span>
             ) : (
               <span className="badge badge-error">
                 Sold Out
               </span>
             )}
+            <button className="btn btn-primary" onClick={() => handleCheckoutClick()}>Checkout</button>
           </div>
         </div>
       )
