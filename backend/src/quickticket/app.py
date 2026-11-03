@@ -140,10 +140,10 @@ def app() -> FastAPI:
 # https://github.com/fastapi/fastapi/discussions/8054#discussioncomment-11346542
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
-    asynctasq = AsyncTasQIntegration()
+    app.state.asynctasq = AsyncTasQIntegration()
     async with AsyncExitStack() as stack:
         app.state.stack = stack
-        await stack.enter_async_context(asynctasq.lifespan(app))
+        await stack.enter_async_context(app.state.asynctasq.lifespan(app))
         try:
             yield
         finally:
