@@ -4,6 +4,7 @@ from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import AsyncExitStack, asynccontextmanager
 from typing import cast
 
+from asynctasq import AsyncTasQIntegration
 from fastapi import (
     APIRouter,
     Depends,
@@ -139,8 +140,10 @@ def app() -> FastAPI:
 # https://github.com/fastapi/fastapi/discussions/8054#discussioncomment-11346542
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
+    asynctasq = AsyncTasQIntegration()
     async with AsyncExitStack() as stack:
         app.state.stack = stack
+        await stack.enter_async_context(asynctasq.lifespan(app))
         try:
             yield
         finally:
