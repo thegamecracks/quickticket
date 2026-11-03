@@ -1,21 +1,12 @@
-from collections.abc import Mapping
 from contextlib import AsyncExitStack
-from typing import Any
 
-from asynctasq import (
-    HookRegistry,
-    MsgspecSerializer,
-    TypeHook,
-)
-from asynctasq.core.dispatcher import get_dispatcher
-from sqlalchemy import Dialect, NullPool
+from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from quickticket.dependencies.db import (
     AsyncEngineFactory,
     get_async_sessionmaker as _get_async_sessionmaker,
 )
-from quickticket.models import Base, Money, MoneySerializer, Point, PointSerializer
 from quickticket.settings import Settings
 
 # Ergh, global state for asynctasq
@@ -31,10 +22,6 @@ async def run_worker(settings: Settings) -> None:
     config = Config()
     driver = DriverFactory.create(config.driver, config)
 
-    serializer = MsgspecSerializer()
-    register_type_hooks(registry=None)
-    register_type_hooks(registry=serializer.registry)
-
     async with AsyncExitStack() as stack:
         await driver.connect()
         stack.push_async_callback(driver.disconnect)
@@ -45,7 +32,6 @@ async def run_worker(settings: Settings) -> None:
             queue_driver=driver,
             queues=["high-priority", "default", "low-priority"],
             concurrency=10,
-            serializer=serializer,
         )
 
         # Start worker (blocks until SIGTERM/SIGINT)
@@ -78,7 +64,28 @@ def register_async_sessionmaker(make_session: async_sessionmaker[AsyncSession]) 
     """Register an async sessionmaker for the task queue worker."""
     global _make_session
     _make_session = make_session
-    Base._asynctasq_session_factory = make_session
+    # Base._asynctasq_session_factory = make_session
+    # XXX:
+    # asynctasq is supposed to have native support for serializing ORM models
+    # by primary key. However, it turns out it doesn't work with our models
+    # and keeps trying to serialize the entire class.
+    #
+    # For models with custom types like Money and Point, this results in
+    # tasks failing to serialize and dispatch.
+    #
+    # Here's my guess as to why it doesn't work:
+    # 1. asynctasq uses the msgspec serialization library.
+    # 2. msgspec natively converts dataclasses to JSON objects.
+    # 3. our ORM models are marked as dataclasses.
+    # 4. msgspec detects this and serializes the ORM models by its attributes,
+    #    instead of calling asynctasq's encoding hook.
+    #
+    # Therefore, asynctasq doesn't get a chance to serialize by primary key.
+    #
+    # https://github.com/thegamecracks/quickticket/commit/160f9bf34d9bd831f03779ee68f3408e90176d43
+    # We could make asynctasq's TypeHook classes for our custom types,
+    # but that doesn't solve the root problem that msgspec won't let asynctasq
+    # convert dataclass-mapped ORM models to their primary keys.
 
 
 def get_async_engine() -> AsyncEngine:
@@ -93,48 +100,3 @@ def get_async_sessionmaker() -> async_sessionmaker[AsyncSession]:
     if _make_session is None:
         raise RuntimeError("Sessionmaker not registered with register_async_sessionmaker()")
     return _make_session
-
-
-def register_type_hooks(*, registry: HookRegistry | None) -> None:
-    """Register type hooks on asynctasq to allow de/serializing our custom data types."""
-    # https://github.com/adamrefaey/asynctasq/blob/ac6ca93cd2f04b1e03815c01ccf0404a11a6f773/src/asynctasq/serializers/hooks/__init__.py
-    if registry is None:
-        # Default registry used when dispatching tasks
-        registry = get_dispatcher().serializer.registry
-
-    registry.register(MoneyTypeHook())
-    registry.register(PointTypeHook())
-
-
-class MoneyTypeHook(TypeHook[Money]):
-    type_key = "__money__"
-
-    def __init__(self) -> None:
-        self._serializer = MoneySerializer()
-        self._dialect = Dialect()
-
-    def can_encode(self, obj: object):
-        return isinstance(obj, Money)
-
-    def encode(self, obj: Money):
-        return {self.type_key: self._serializer.process_bind_param(obj, self._dialect)}
-
-    def decode(self, data: Mapping[str, Any]):
-        return self._serializer.process_result_value(data[self.type_key], self._dialect)
-
-
-class PointTypeHook(TypeHook[Point]):
-    type_key = "__point__"
-
-    def __init__(self) -> None:
-        self._serializer = PointSerializer()
-        self._dialect = Dialect()
-
-    def can_encode(self, obj: object):
-        return isinstance(obj, Point)
-
-    def encode(self, obj: Point):
-        return {self.type_key: self._serializer.process_bind_param(obj, self._dialect)}
-
-    def decode(self, data: Mapping[str, Any]):
-        return self._serializer.process_result_value(data[self.type_key], self._dialect)

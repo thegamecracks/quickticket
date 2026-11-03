@@ -1,4 +1,5 @@
 import logging
+from uuid import UUID
 
 from asynctasq import task
 
@@ -16,13 +17,16 @@ async def example_task(x: int) -> int:
 
 
 @task
-async def example_task_sqlalchemy(event: Event) -> Event:
-    # `task_id = await example_task_sqlalchemy(event).dispatch()
-    log.debug("%r", event)
-    log.debug("example_task_sqlalchemy(event=%s)", event.id)
+async def example_task_sqlalchemy(event_id: UUID) -> str | None:
+    # `task_id = await example_task_sqlalchemy(event.id).dispatch()`
 
     # Creating a session manually (note function import from quickticket.worker)
     async with get_async_sessionmaker().begin() as session:
-        await session.refresh(event)
+        event = await session.get(Event, event_id)
 
-    return event
+    if event is None:
+        log.debug("Invalid event ID received, ignoring")
+        return
+
+    log.debug("example_task_sqlalchemy(event=%s)", event.id)
+    return event.display_name
