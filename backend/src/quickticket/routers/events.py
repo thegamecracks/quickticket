@@ -21,7 +21,6 @@ from quickticket.models import (
     Ticket,
     Venue,
 )
-from quickticket.tasks import example_task_sqlalchemy
 from quickticket.validators import DisplayNameField, filter_string_field
 
 router = APIRouter(tags=["Events"])
@@ -146,9 +145,6 @@ async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: U
     )
     if event is None:
         raise HTTPException(404, "Not found")
-
-    task_id = await example_task_sqlalchemy(event).dispatch()
-    log.debug(task_id)
 
     return event
 
