@@ -67,6 +67,9 @@ jobs:
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: frontend
+          build-args: |
+            VITE_GOOGLE_MAPS_API_KEY=${{ vars.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyASY_IDhXJtE2ACwRp7rE_2x99_GmtGI28' }}
+            VITE_GOOGLE_MAPS_MAP_ID=${{ vars.VITE_GOOGLE_MAPS_MAP_ID || '692a1c1a0ed6a1671af87c14' }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ${{ env.WEB_IMAGE }}:${{ steps.version.outputs.tag }}
