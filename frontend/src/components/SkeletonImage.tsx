@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import type { StorageObjectRef } from '../features/events/types'
 
 type SkeletonImageProps = {
-  src: string
+  src: StorageObjectRef | string
   alt: string
   className?: string
 }
@@ -15,7 +16,7 @@ export default function SkeletonImage({ src, alt, className }: SkeletonImageProp
         <div className="skeleton absolute inset-0 h-full w-full" />
       )}
       <img
-        src={src}
+        src={src.toString()}
         alt={alt}
         onLoad={() => setStatus('loaded')}
         onError={() => setStatus('error')}

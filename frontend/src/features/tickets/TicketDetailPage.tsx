@@ -1,4 +1,4 @@
-import NavigateBackBtn from "../../components/NavigateBack.tsx";
+import PageLayout from "../../components/PageLayout.tsx";
 import SkeletonImage from "../../components/SkeletonImage.tsx";
 import { formatDateLongAndTimeShort } from "../../lib/general.ts";
 import { getMockEvent, MockTickets } from "../../lib/mocks"
@@ -10,8 +10,7 @@ export default function TicketDetailPage() {
   const t = MockTickets.find((t: Ticket) => t.id === id);
 
   return (
-    <section className="mx-auto h-full w-full max-w-3xl grow px-4 py-12">
-      <NavigateBackBtn />
+    <PageLayout title="Ticket" back={{ to: "/myTickets" }} className="h-full">
       <div className="flex h-100">
         {t && (
           <div className="mx-auto card card-border rounded-2xl bg-primary/20 shadow-md" key={t.id}>
@@ -37,6 +36,6 @@ export default function TicketDetailPage() {
         )}
       </div>
 
-    </section >
+    </PageLayout>
   )
 }

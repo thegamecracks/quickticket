@@ -1,3 +1,4 @@
+import PageLayout from "../../components/PageLayout"
 import { useRef, useState, type ChangeEvent, type SubmitEvent } from 'react'
 import type { Event } from '../events/types'
 import {
@@ -134,14 +135,10 @@ export default function EventCreationPage({
   }
 
   return (
-    <section className="mx-auto w-full max-w-4xl grow px-4 py-10">
-      {/* Page header */}
-      <div className="mb-7">
-        <h1 className="text-3xl font-bold">Create Event</h1>
-        <p className="mt-1 text-sm text-base-content/60">
-          Enter the details guests will see when browsing your event.
-        </p>
-      </div>
+    <PageLayout title="Create Event">
+      <p className="-mt-2 mb-7 text-sm text-base-content/60">
+        Enter the details guests will see when browsing your event.
+      </p>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Basic information */}
@@ -537,6 +534,6 @@ export default function EventCreationPage({
           </button>
         </div>
       </form>
-    </section>
+    </PageLayout>
   )
 }
