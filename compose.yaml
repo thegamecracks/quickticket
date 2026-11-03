@@ -8,6 +8,8 @@ services:
       context: frontend/
       args:
         VITE_API_URL: ${VITE_API_URL:-http://127.0.0.1:8000/api}
+        VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY:-AIzaSyASY_IDhXJtE2ACwRp7rE_2x99_GmtGI28}
+        VITE_GOOGLE_MAPS_MAP_ID: ${VITE_GOOGLE_MAPS_MAP_ID:-692a1c1a0ed6a1671af87c14}
     ports:
       - 5173:80
     restart: always

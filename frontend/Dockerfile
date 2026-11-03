@@ -15,6 +15,8 @@ COPY . .
 # /api -> api service, everything else -> this nginx
 ARG VITE_API_URL=${VITE_API_URL:-/api}
 
+ARG VITE_GOOGLE_MAPS_API_KEY=""
+ARG VITE_GOOGLE_MAPS_MAP_ID=""
 RUN bun run build
 
 FROM nginx:1.29-alpine
