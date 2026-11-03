@@ -29,6 +29,12 @@ uv run alembic downgrade -1                    # revert the latest migration
 uv run alembic revision --autogenerate -m "…"  # generate a new migration
 ```
 
+To run the background task worker:
+
+```sh
+uv run asynctasq worker
+```
+
 ## Project structure
 
 ```
@@ -53,8 +59,8 @@ uv run alembic revision --autogenerate -m "…"  # generate a new migration
 ├── config/                  # postgresql.conf, redis.conf for Docker services
 ├── alembic.ini              # Alembic configuration
 ├── Dockerfile               # uv-based production image for the backend
-├── compose.yaml             # backend + Redis + PostgreSQL + S3
-├── example.env              # template of all BACKEND__* settings
+├── compose.yaml             # backend + worker + Redis + PostgreSQL + S3
+├── example.env              # template of all envvar settings
 └── pyproject.toml           # project metadata, deps, ruff config
 ```
 
