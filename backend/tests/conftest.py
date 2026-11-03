@@ -20,7 +20,7 @@ from sqlalchemy.ext.asyncio import (
 
 from quickticket.app import create_app_from_settings, lifespan
 from quickticket.dependencies.auth import get_user
-from quickticket.dependencies.db import get_async_engine, get_async_sessionmaker
+from quickticket.dependencies.db import AsyncEngineFactory, _engine_factory, get_async_sessionmaker
 from quickticket.dependencies.state import get_settings
 from quickticket.dependencies.store import Store, get_object_store
 from quickticket.models import Base, User
@@ -54,7 +54,8 @@ async def engine(stack: AsyncExitStack, state: State) -> AsyncEngine:
         db=DatabaseSettings(url="sqlite+aiosqlite:///:memory:"),
     )
 
-    engine = await get_async_engine(settings=settings, stack=stack, state=state)
+    engine_factory = AsyncEngineFactory()
+    engine = await engine_factory(settings=settings, stack=stack, state=state)
 
     # Generate schema from models instead of running the migration scripts
     async with engine.begin() as conn:
@@ -143,7 +144,7 @@ def _base_app() -> FastAPI:
         #
         #     sqlalchemy.exc.ArgumentError: Could not parse SQLAlchemy URL from given URL string
         #
-        # Using dependency overrides, there should not be any calls to get_async_engine()
+        # Using dependency overrides, there should not be any calls to AsyncEngineFactory()
         # other than our fixture which makes in-memory databases pre-initialized with our schema.
         db=DatabaseSettings(url="sqlite+aiosqlite:/"),
         frontend=FrontendSettings(builtin=False),
@@ -195,7 +196,7 @@ async def app(
     store: Store,
 ) -> AsyncGenerator[FastAPI]:
     # Technically we should cleanup our overrides after a test, but they'll get overwritten anyway
-    _base_app.dependency_overrides[get_async_engine] = lambda: engine
+    _base_app.dependency_overrides[_engine_factory] = lambda: engine
     _base_app.dependency_overrides[get_object_store] = lambda: store
     _base_app.dependency_overrides[get_user] = auth.get_user
 
