@@ -103,7 +103,7 @@ async def _setup_asynctasq_sqlalchemy(stack: AsyncExitStack) -> None:
     )
     engine = await engine_factory(settings=_get_settings(), stack=stack, state=state)
 
-    Base._asynctasq_session_factory = get_async_sessionmaker(engine)
+    Base._asynctasq_session_factory = await get_async_sessionmaker(engine)
     # TODO: make sessionmaker available to tasks
 
 
