@@ -4,9 +4,8 @@ import { useSearchParams } from 'react-router'
 import EventCard from '../../components/EventCard'
 import { useEffect, useState } from 'react'
 import { Pagination, safePage } from '../../components/Pagination'
-import type { Event, EventResponse } from './types.ts'
+import type { EventResponse } from './types.ts'
 import { api } from '../../lib/api.ts'
-import { getMockAllEvents } from '../../lib/mocks'
 
 //  TODO: figure out how to bring back categories
 // Available event categories
@@ -148,10 +147,11 @@ export default function EventsPage() {
 
       {/* Event cards */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {events?.map((event) => (
+        {paginatedEvents?.map((event) => (
           <EventCard
             key={event.id}
-            event={event} />
+            event={event}
+          />
         ))}
       </div>
 
