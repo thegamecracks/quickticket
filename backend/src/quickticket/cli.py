@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from contextlib import AsyncExitStack
 from functools import cache
 from typing import TYPE_CHECKING
 
@@ -69,9 +70,12 @@ async def _worker_async() -> None:
 
     config = Config()
     driver = DriverFactory.create(config.driver, config)
-    await driver.connect()
 
-    try:
+    async with AsyncExitStack() as stack:
+        await driver.connect()
+        stack.push_async_callback(driver.disconnect)
+        await _setup_asynctasq_sqlalchemy(stack)
+
         worker = Worker(
             queue_driver=driver,
             queues=["high-priority", "default", "low-priority"],
@@ -80,8 +84,27 @@ async def _worker_async() -> None:
 
         # Start worker (blocks until SIGTERM/SIGINT)
         await worker.start()
-    finally:
-        await driver.disconnect()
+
+
+async def _setup_asynctasq_sqlalchemy(stack: AsyncExitStack) -> None:
+    # https://github.com/adamrefaey/asynctasq/blob/main/docs/orm-integrations.md#sqlalchemy
+    from fastapi.datastructures import State
+    from sqlalchemy import NullPool
+
+    from quickticket.dependencies.db import AsyncEngineFactory, get_async_sessionmaker
+    from quickticket.models import Base
+
+    state = State()
+    engine_factory = AsyncEngineFactory(
+        engine_args={
+            "poolclass": NullPool,
+            "pool_pre_ping": True,
+        },
+    )
+    engine = await engine_factory(settings=_get_settings(), stack=stack, state=state)
+
+    Base._asynctasq_session_factory = get_async_sessionmaker(engine)
+    # TODO: make sessionmaker available to tasks
 
 
 if __name__ == "__main__":
