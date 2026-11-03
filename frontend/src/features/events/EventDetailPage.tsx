@@ -1,40 +1,33 @@
-import { useNavigate, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { useState, useEffect } from 'react'
 import type { EventResponse } from './types'
 import { formatDateLong, calcTimeMediumRange } from '../../lib/general'
 import { getMockTicketCount } from '../../lib/mocks'
 import { api } from '../../lib/api'
 import PageLayout from '../../components/PageLayout'
-import NavigateBackBtn from '../../components/NavigateBack'
+import Markdown from '../../components/Markdown'
 import SkeletonImage from '../../components/SkeletonImage'
 
-import MarkdownIt from 'markdown-it'
 import GoogleMap from '../../components/GoogleMap'
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>()
   const [event, setEvent] = useState<EventResponse | undefined>(undefined)
   const navigate = useNavigate();
-  const md = new MarkdownIt();
 
   useEffect(() => {
-    const getEvents = async (): Promise<void> => {
+    const getEvent = async (): Promise<void> => {
       const res = await api.get<EventResponse>(`/events/${id}`);
       console.log(res.data);
       setEvent(res.data);
     }
 
-    getEvents();
+    getEvent();
   }, [])
 
   const handleCheckoutClick = () => {
     navigate(`/events/${id}/checkout`)
   }
-
-  const handleVenueClick = () => {
-    navigate(`/venue/${event?.venue.id}`)
-  }
-
 
   return (
     <PageLayout
@@ -44,9 +37,8 @@ export default function EventDetailPage() {
 
     >
       {event && (
-        <div className="mx-auto max-w-6xl mt-2">
+        <div className="mt-2">
           <figure>
-            {/* TODO: resolve StorageObjectRef -> image URL once backend serves storage */}
             <SkeletonImage
               src={event.thumbnail ? `/storage/${event.thumbnail.id}` : 'https://placehold.co/800x450/272c35/ffffff?text=QuickTicket+Event'}
               alt={event.display_name}
@@ -54,16 +46,17 @@ export default function EventDetailPage() {
             />
           </figure>
 
-          <h1 className="mb-4 text-3xl font-bold mt-2">{event.display_name}</h1>
-
-          <div className="flex lg:flex-row flex-col">
-            <div className="flex-1">
+          <div className="flex lg:flex-row flex-col mt-4">
+            <div className="flex-1 space-y-4">
               <h3 className="font-semibold text-xl">Description</h3>
-              <div dangerouslySetInnerHTML={{ __html: md.render(event.description) }} />
+              <Markdown content={event.description} />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 space-y-4">
               <h3 className="font-semibold text-xl">
-                <button className="btn btn-primary" onClick={() => handleVenueClick()}>Venue</button> Location: {event.venue.location_name}
+                <span className="text-2xl font-semibold block">
+                  Location{" "}
+                  <Link className="link link-primary" to={`/venue/${event.venue.id}`}>{event.venue.location_name}</Link>
+                </span>
               </h3>
               {event.venue.location_coords ? (
                 <GoogleMap latitude={event.venue.location_coords?.lat} longitude={event.venue.location_coords?.long} />
