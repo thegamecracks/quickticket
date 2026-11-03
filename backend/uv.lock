@@ -81,8 +81,15 @@ wheels = [
 ]
 
 [package.optional-dependencies]
+fastapi = [
+    { name = "fastapi" },
+]
 redis = [
     { name = "redis", extra = ["hiredis"] },
+]
+sqlalchemy = [
+    { name = "greenlet" },
+    { name = "sqlalchemy" },
 ]
 
 [[package]]
@@ -1618,7 +1625,7 @@ source = { editable = "." }
 dependencies = [
     { name = "aiosqlite" },
     { name = "alembic" },
-    { name = "asynctasq", extra = ["redis"] },
+    { name = "asynctasq", extra = ["fastapi", "redis", "sqlalchemy"] },
     { name = "authlib" },
     { name = "fastapi", extra = ["standard"] },
     { name = "httpx2" },
@@ -1653,7 +1660,7 @@ dev = [
 requires-dist = [
     { name = "aiosqlite", specifier = ">=0.22.1" },
     { name = "alembic", specifier = ">=1.20.0" },
-    { name = "asynctasq", extras = ["redis"], specifier = ">=1.7.0" },
+    { name = "asynctasq", extras = ["fastapi", "redis", "sqlalchemy"], specifier = ">=1.7.0" },
     { name = "authlib", specifier = ">=1.8.0" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.141.1" },
     { name = "httpx2", specifier = ">=2.13.1" },
