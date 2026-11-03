@@ -47,7 +47,7 @@ def setup_logging(*, verbosity: LogVerbosity) -> None:
     handler = RichHandler(
         console=Console(
             # HACK: in docker, compensate for docker compose's prefix
-            width=int(os.getenv("COLUMNS", "148")) - (28 * is_docker()),
+            width=int(os.getenv("COLUMNS") or 148) - (28 * is_docker()),
             soft_wrap=is_docker(),
         ),
         rich_tracebacks=True,
