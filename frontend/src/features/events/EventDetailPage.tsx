@@ -4,6 +4,7 @@ import type { EventResponse } from './types'
 import { formatDateLong, calcTimeMediumRange } from '../../lib/general'
 import { getMockTicketCount } from '../../lib/mocks'
 import { api } from '../../lib/api'
+import PageLayout from '../../components/PageLayout'
 import NavigateBackBtn from '../../components/NavigateBack'
 import SkeletonImage from '../../components/SkeletonImage'
 
@@ -36,8 +37,12 @@ export default function EventDetailPage() {
 
 
   return (
-    <section className="mx-auto w-full max-w-7xl grow px-4 py-12">
-      <NavigateBackBtn />
+    <PageLayout
+      title={event?.display_name}
+      fallbackTitle="Event"
+      back={{ to: '/events' }}
+
+    >
       {event && (
         <div className="mx-auto max-w-6xl mt-2">
           <figure>
@@ -91,6 +96,6 @@ export default function EventDetailPage() {
       )
       }
 
-    </section >
+    </PageLayout>
   )
 }

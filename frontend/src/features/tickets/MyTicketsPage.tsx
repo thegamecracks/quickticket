@@ -1,3 +1,4 @@
+import PageLayout from "../../components/PageLayout"
 import { getMockEvent, MockTickets } from "../../lib/mocks"
 import { useAuth } from "../../lib/auth";
 import { useEffect, useState } from "react";
@@ -30,8 +31,7 @@ export default function MyTicketsPage() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-5xl grow px-4 py-12">
-      <h1 className="mb-4 text-3xl font-bold mx-auto">My Tickets</h1>
+    <PageLayout title="My Tickets">
       {user && tickets && (
         <ul className="list mx-auto space-y-2">
           {
@@ -53,6 +53,6 @@ export default function MyTicketsPage() {
 
       )
       }
-    </section >
+    </PageLayout>
   )
 }
