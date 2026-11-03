@@ -1,9 +1,29 @@
+x-backend-common: &backend-common
+  build:
+    context: .
+  restart: always
+  env_file: .env  # copy from example.env
+  depends_on:
+    cache:
+      condition: service_healthy
+    db:
+      condition: service_healthy
+  develop:
+    watch:
+      - action: sync+restart
+        path: ./src
+        target: /app/src
+        initial_sync: true
+      - action: rebuild
+        path: pyproject.toml
+      - action: rebuild
+        path: uv.lock
+
 services:
   backend:
-    build: .
+    <<: *backend-common
     ports:
       - 8000:8000
-    env_file: .env  # copy from example.env
     environment:
       # Point the backend to our cache and database containers, taking precedence over .env.
       BACKEND__CACHE__URL: 'redis://default:abc123@cache:6379'  # 'sqlite:///data/quickticket-cache.db'
@@ -16,27 +36,20 @@ services:
       ASYNCTASQ_DRIVER: 'redis'
       ASYNCTASQ_REDIS_URL: 'redis://default:abc123@cache:6379'
       COLUMNS: '${COLUMNS}'  # affects rich logging width and wrapping
-    restart: always
     volumes:
       # Use this volume if either the cache or database are backed by SQLite.
       - backend-data:/app/data
-    depends_on:
-      cache:
-        condition: service_healthy
-      db:
-        condition: service_healthy
     pre_start:
       - command: ['alembic', 'upgrade', 'head']  # run migrations on startup
-    develop:
-      watch:
-        - action: sync+restart
-          path: ./src
-          target: /app/src
-          initial_sync: true
-        - action: rebuild
-          path: pyproject.toml
-        - action: rebuild
-          path: uv.lock
+
+  worker:
+    <<: *backend-common
+    command: [asynctasq, worker]
+    environment:
+      FORCE_COLOR: '1'
+      ASYNCTASQ_DRIVER: 'redis'
+      ASYNCTASQ_REDIS_URL: 'redis://default:abc123@cache:6379'
+      COLUMNS: '${COLUMNS}'  # affects rich logging width and wrapping
 
   cache:
     # https://hub.docker.com/_/redis/
