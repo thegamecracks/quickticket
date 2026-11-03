@@ -28,6 +28,7 @@ from quickticket.errors import EntityNotFound, ForcedResponse, UnauthorizedError
 from quickticket.logging import setup_logging
 from quickticket.routers import auth, events, notifications, organizations, profile, venues
 from quickticket.settings import Settings
+from quickticket.worker import register_type_hooks
 
 __all__ = (
     "app",
@@ -140,6 +141,7 @@ def app() -> FastAPI:
 # https://github.com/fastapi/fastapi/discussions/8054#discussioncomment-11346542
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
+    register_type_hooks(registry=None)
     app.state.asynctasq = AsyncTasQIntegration()
     async with AsyncExitStack() as stack:
         app.state.stack = stack
