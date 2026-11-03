@@ -173,10 +173,12 @@ Alternatively, you can use [Docker Compose](#docker) which runs a worker for you
 | [pytest](https://docs.pytest.org/en/stable/) | Test framework |
 | [pytest-asyncio](https://pytest-asyncio.readthedocs.io/en/stable/) | Async tests |
 | [redis](https://redis.io/docs/latest/develop/clients/redis-py/) | Redis client |
+| [rich](https://rich.readthedocs.io/en/stable/) | Rich text formatting |
 | [ruff](https://docs.astral.sh/ruff/) | Lint and format |
 | [sqlalchemy](https://docs.sqlalchemy.org/en/21/) | Database engine and ORM |
 | [starlette-csrf](https://github.com/frankie567/starlette-csrf) | CSRF double submit cookies |
 | [starlette-securecookies](https://github.com/thearchitector/starlette-securecookies) | Cookie encryption |
+| [ty](https://docs.astral.sh/ty/) | Type checker |
 | [tzdata](https://tzdata.python.org/) | IANA timezones |
 | [uvicorn](https://uvicorn.dev/) | ASGI webserver |
 
