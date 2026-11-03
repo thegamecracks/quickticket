@@ -1,0 +1,88 @@
+# NOTE: avoid heavy top-level imports to optimize CLI startup times
+#       (3.15 lazy imports would be nice for this)
+from __future__ import annotations
+
+import logging
+from functools import cache
+from typing import TYPE_CHECKING
+
+import click
+
+if TYPE_CHECKING:
+    from quickticket.settings import Settings
+
+log = logging.getLogger(__name__)
+
+
+@click.group()
+def main() -> None:
+    """Start and manage the QuickTicket backend."""
+
+
+@main.command(
+    add_help_option=False,
+    context_settings={"ignore_unknown_options": True, "allow_extra_args": True},
+)
+def dev() -> None:
+    """Run the `fastapi dev` command."""
+    from fastapi_cli.cli import main
+
+    main()
+
+
+@main.command(
+    add_help_option=False,
+    context_settings={"ignore_unknown_options": True, "allow_extra_args": True},
+)
+def run() -> None:
+    """Run the `fastapi run` command."""
+    from fastapi_cli.cli import main
+
+    main()
+
+
+@main.command()
+def worker() -> None:
+    """Run the task queue worker."""
+    import anyio
+
+    _setup_logging()
+    anyio.run(_worker_async)
+
+
+def _setup_logging() -> None:
+    from quickticket.logging import setup_logging
+
+    setup_logging(verbosity=_get_settings().log.verbosity)
+
+
+@cache
+def _get_settings() -> Settings:
+    from quickticket.settings import Settings
+
+    return Settings()
+
+
+async def _worker_async() -> None:
+    # https://github.com/adamrefaey/asynctasq/blob/ac6ca93cd2f04b1e03815c01ccf0404a11a6f773/docs/running-workers.md#programmatic-workers
+    from asynctasq import Config, DriverFactory, Worker
+
+    config = Config()
+    driver = DriverFactory.create(config.driver, config)
+    await driver.connect()
+
+    try:
+        worker = Worker(
+            queue_driver=driver,
+            queues=["high-priority", "default", "low-priority"],
+            concurrency=10,
+        )
+
+        # Start worker (blocks until SIGTERM/SIGINT)
+        await worker.start()
+    finally:
+        await driver.disconnect()
+
+
+if __name__ == "__main__":
+    main()

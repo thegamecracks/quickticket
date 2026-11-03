@@ -145,7 +145,7 @@ Without it, some routes may fail if they require submitting tasks.
 Once configured, to run a worker process for executing tasks:
 
 ```sh
-uv run asynctasq worker
+uv run quickticket worker
 ```
 
 Alternatively, you can use [Docker Compose](#docker) which runs a worker for you.
@@ -158,6 +158,7 @@ Alternatively, you can use [Docker Compose](#docker) which runs a worker for you
 | [alembic](https://alembic.sqlalchemy.org/en/latest/index.html) | Database migrations |
 | [asynctasq](https://github.com/adamrefaey/asynctasq) | Task queue |
 | [authlib](https://docs.authlib.org/en/latest/index.html) | OAuth2 client |
+| [click](https://click.palletsprojects.com/en/stable/) | CLI toolkit |
 | [coverage](https://coverage.readthedocs.io/en/latest/) | Code coverage |
 | [fastapi](https://fastapi.tiangolo.com/) | HTTP API framework |
 | [httpx2](https://pydantic.dev/docs/httpx2/get-started/) | HTTP client |

@@ -44,7 +44,7 @@ services:
 
   worker:
     <<: *backend-common
-    command: [asynctasq, worker]
+    command: [quickticket, worker]
     environment:
       FORCE_COLOR: '1'
       ASYNCTASQ_DRIVER: 'redis'

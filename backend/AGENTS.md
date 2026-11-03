@@ -32,7 +32,7 @@ uv run alembic revision --autogenerate -m "…"  # generate a new migration
 To run the background task worker:
 
 ```sh
-uv run asynctasq worker
+uv run quickticket worker
 ```
 
 ## Project structure
