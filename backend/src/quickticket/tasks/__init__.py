@@ -4,7 +4,7 @@ from uuid import UUID
 from asynctasq import task
 
 from quickticket.models import Event
-from quickticket.worker import get_async_sessionmaker
+from quickticket.tasks.engine import get_async_sessionmaker
 
 log = logging.getLogger(__name__)
 
