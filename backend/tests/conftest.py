@@ -1,9 +1,13 @@
 from collections.abc import AsyncGenerator
 from contextlib import AsyncExitStack
 from dataclasses import dataclass
+from functools import partial
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
+from asynctasq import AsyncTasQIntegration, Dispatcher
+from asynctasq.drivers import BaseDriver
 from fastapi import FastAPI
 from fastapi.datastructures import State
 from httpx2 import ASGITransport, AsyncClient
@@ -14,9 +18,9 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
 )
 
-from quickticket.app import create_app_from_settings
+from quickticket.app import create_app_from_settings, lifespan
 from quickticket.dependencies.auth import get_user
-from quickticket.dependencies.db import get_async_engine, get_async_sessionmaker
+from quickticket.dependencies.db import AsyncEngineFactory, _engine_factory, get_async_sessionmaker
 from quickticket.dependencies.state import get_settings
 from quickticket.dependencies.store import Store, get_object_store
 from quickticket.models import Base, User
@@ -50,7 +54,8 @@ async def engine(stack: AsyncExitStack, state: State) -> AsyncEngine:
         db=DatabaseSettings(url="sqlite+aiosqlite:///:memory:"),
     )
 
-    engine = await get_async_engine(settings=settings, stack=stack, state=state)
+    engine_factory = AsyncEngineFactory()
+    engine = await engine_factory(settings=settings, stack=stack, state=state)
 
     # Generate schema from models instead of running the migration scripts
     async with engine.begin() as conn:
@@ -139,7 +144,7 @@ def _base_app() -> FastAPI:
         #
         #     sqlalchemy.exc.ArgumentError: Could not parse SQLAlchemy URL from given URL string
         #
-        # Using dependency overrides, there should not be any calls to get_async_engine()
+        # Using dependency overrides, there should not be any calls to AsyncEngineFactory()
         # other than our fixture which makes in-memory databases pre-initialized with our schema.
         db=DatabaseSettings(url="sqlite+aiosqlite:/"),
         frontend=FrontendSettings(builtin=False),
@@ -152,21 +157,49 @@ def _base_app() -> FastAPI:
     return app
 
 
+@pytest.fixture(autouse=True)
+def asynctasq_dispatcher(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
+    # https://github.com/adamrefaey/asynctasq/blob/ac6ca93cd2f04b1e03815c01ccf0404a11a6f773/tests/unit/tasks/types/test_function_task.py#L281-L301
+    mock_dispatcher = AsyncMock(Dispatcher)
+    mock_dispatcher.dispatch = AsyncMock(return_value="task-id-123")
+    monkeypatch.setattr("asynctasq.core.dispatcher.get_dispatcher", lambda *_: mock_dispatcher)
+    return mock_dispatcher
+
+
+@pytest.fixture(autouse=True)
+def asynctasq_driver(
+    monkeypatch: pytest.MonkeyPatch,
+    asynctasq_dispatcher: AsyncMock,
+) -> MagicMock:
+    # https://github.com/adamrefaey/asynctasq/blob/ac6ca93cd2f04b1e03815c01ccf0404a11a6f773/tests/unit/integrations/test_fastapi.py#L21-L27
+    mock_driver = MagicMock(BaseDriver)
+    mock_driver.connect = AsyncMock()
+    mock_driver.disconnect = AsyncMock()
+    integration = partial(AsyncTasQIntegration, driver=mock_driver)
+    monkeypatch.setattr("quickticket.app.AsyncTasQIntegration", integration)
+    monkeypatch.setattr(
+        "asynctasq.integrations.fastapi.Dispatcher",
+        lambda driver: asynctasq_dispatcher,
+    )
+    asynctasq_dispatcher.driver = mock_driver
+    return mock_driver
+
+
 @pytest_asyncio.fixture
 async def app(
+    monkeypatch: pytest.MonkeyPatch,
     _base_app: FastAPI,
     stack: AsyncExitStack,
     engine: AsyncEngine,
     make_session: async_sessionmaker[AsyncSession],
     auth: AuthController,
     store: Store,
-) -> FastAPI:
-    _base_app.state.stack = stack
-    _base_app.dependency_overrides[get_async_engine] = lambda: engine
+) -> AsyncGenerator[FastAPI]:
+    # Technically we should cleanup our overrides after a test, but they'll get overwritten anyway
+    _base_app.dependency_overrides[_engine_factory] = lambda: engine
     _base_app.dependency_overrides[get_object_store] = lambda: store
     _base_app.dependency_overrides[get_user] = auth.get_user
 
-    # Technically we should cleanup our overrides after a test, but they'll get overwritten anyway
     async with make_session.begin() as session:
         auth.user = User(
             display_name="Test User",
@@ -176,7 +209,12 @@ async def app(
         )
         session.add(auth.user)
 
-    return _base_app
+    # This runs our own lifespan function only.
+    # Proper initialization would be mimicking the ASGI lifespan protocol:
+    # https://asgi.readthedocs.io/en/latest/specs/lifespan.html
+    monkeypatch.setattr("quickticket.app.AsyncExitStack", lambda: stack)
+    async with lifespan(_base_app):
+        yield _base_app
 
 
 # https://fastapi.tiangolo.com/advanced/async-tests/

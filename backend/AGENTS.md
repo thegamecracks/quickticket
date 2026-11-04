@@ -29,32 +29,42 @@ uv run alembic downgrade -1                    # revert the latest migration
 uv run alembic revision --autogenerate -m "…"  # generate a new migration
 ```
 
+To run the background task worker:
+
+```sh
+uv run quickticket worker
+```
+
 ## Project structure
 
 ```
 .
 ├── src/quickticket/
-│   ├── app.py               # FastAPI app factory/instance, middleware, lifespan
-│   ├── settings.py          # pydantic-settings configuration (BACKEND__* vars)
-│   ├── oauth.py             # OpenID/OAuth2 client integration (authlib)
-│   ├── cache.py             # cache abstraction (SQLite / Redis backends)
-│   ├── logging.py           # logging setup and verbosity levels
-│   ├── errors.py            # shared error types (e.g. ForcedResponse)
-│   ├── models/              # SQLAlchemy ORM models (base, accounts, events,
-│   │                        #   organizations, storage, tickets, venues, money)
-│   ├── routers/             # FastAPI API routers: auth, events, notifications,
-│   │                        #   organizations, profile, venues
+│   ├── alembic/             # Alembic setup + versioned migrations
 │   ├── dependencies/        # FastAPI dependencies: db, cache, cookies,
 │   │                        #   models, ratelimits, state, and auth/*
 │   │                        #   (provider, tokens, users, redirects)
 │   ├── frontend/            # minimal builtin frontend (testing only)
-│   └── alembic/             # Alembic setup + versioned migrations
-├── tests/                   # pytest tests (pytest-asyncio for async tests)
+│   ├── models/              # SQLAlchemy ORM models (base, accounts, events,
+│   │                        #   organizations, storage, tickets, venues, money)
+│   ├── routers/             # FastAPI API routers: auth, events, notifications,
+│   │                        #   organizations, profile, venues
+│   ├── tasks/               # Task functions delegated to worker processes
+│   ├── app.py               # FastAPI app factory/instance, middleware, lifespan
+│   ├── cache.py             # cache abstraction (SQLite / Redis backends)
+│   ├── cli.py               # CLI to run webservers and task workers
+│   ├── errors.py            # shared error types (e.g. ForcedResponse)
+│   ├── logging.py           # logging setup and verbosity levels
+│   ├── oauth.py             # OpenID/OAuth2 client integration (authlib)
+│   ├── settings.py          # pydantic-settings configuration (BACKEND__* vars)
+│   ├── validators.py        # Validation helpers for Pydantic models
+│   └── worker.py            # Worker initialization for processing tasks
 ├── config/                  # postgresql.conf, redis.conf for Docker services
+├── tests/                   # pytest tests (pytest-asyncio for async tests)
 ├── alembic.ini              # Alembic configuration
+├── compose.yaml             # backend + worker + Redis + PostgreSQL + S3
 ├── Dockerfile               # uv-based production image for the backend
-├── compose.yaml             # backend + Redis + PostgreSQL + S3
-├── example.env              # template of all BACKEND__* settings
+├── example.env              # template of all envvar settings
 └── pyproject.toml           # project metadata, deps, ruff config
 ```
 
