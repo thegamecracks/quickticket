@@ -54,9 +54,17 @@ class AsyncEngineFactory:
 
 
 async def get_async_sessionmaker(
+    state: StateDep,
     engine: AsyncEngineDep,
 ) -> async_sessionmaker[AsyncSession]:
-    return async_sessionmaker(engine, expire_on_commit=False)
+    make_session = cast(
+        async_sessionmaker[AsyncSession] | None, getattr(state, "make_session", None)
+    )
+    if make_session is not None:
+        return make_session
+
+    state.make_session = async_sessionmaker(engine, expire_on_commit=False)
+    return state.make_session
 
 
 async def get_async_session(

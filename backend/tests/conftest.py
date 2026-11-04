@@ -65,8 +65,8 @@ async def engine(stack: AsyncExitStack, state: State) -> AsyncEngine:
 
 
 @pytest_asyncio.fixture
-async def make_session(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
-    return await get_async_sessionmaker(engine)
+async def make_session(state: State, engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
+    return await get_async_sessionmaker(state, engine)
 
 
 # Prefer explicit transactions with `make_session.begin() as session`
@@ -197,6 +197,7 @@ async def app(
 ) -> AsyncGenerator[FastAPI]:
     # Technically we should cleanup our overrides after a test, but they'll get overwritten anyway
     _base_app.dependency_overrides[_engine_factory] = lambda: engine
+    _base_app.dependency_overrides[get_async_sessionmaker] = lambda: make_session
     _base_app.dependency_overrides[get_object_store] = lambda: store
     _base_app.dependency_overrides[get_user] = auth.get_user
 
