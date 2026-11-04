@@ -165,7 +165,12 @@ class EventCreate(BaseModel):
     # thumbnail_id: UUID | None = None
 
 
-@router.post("", response_model=EventRead)
+@router.post(
+    "",
+    response_model=EventRead,
+    responses={HTTP_201_CREATED: {"description": "The event was successfully created."}},
+    status_code=HTTP_201_CREATED,
+)
 async def create_event(
     user: RequiredUserDep,
     session: AsyncSessionDep,
@@ -203,7 +208,6 @@ async def create_event(
     await session.flush()
     await session.refresh(event_orm, ["tickets", "venue"])
 
-    response.status_code = HTTP_201_CREATED
     response.headers["Location"] = str(request.url_for("get_event", event_id=event_orm.id))
     return event_orm
 

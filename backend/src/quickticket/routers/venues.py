@@ -183,7 +183,12 @@ class VenueCreate(BaseModel):
     # thumbnail_id: UUID | None = None
 
 
-@router.post("", response_model=VenueRead)
+@router.post(
+    "",
+    response_model=VenueRead,
+    responses={HTTP_201_CREATED: {"description": "The venue was successfully created."}},
+    status_code=HTTP_201_CREATED,
+)
 async def create_venue(
     user: RequiredUserDep,
     session: AsyncSessionDep,
@@ -216,7 +221,6 @@ async def create_venue(
     # Eagerly load relationships to prevent lazy read on VenueRead validation
     await session.refresh(venue_orm, ["events", "organization"])
 
-    response.status_code = HTTP_201_CREATED
     response.headers["Location"] = str(request.url_for("get_venue", venue_id=venue_orm.id))
     return venue_orm
 

@@ -163,7 +163,12 @@ class OrganizationCreate(BaseModel):
     display_name: DisplayNameField
 
 
-@router.post("", response_model=OrganizationRead)
+@router.post(
+    "",
+    response_model=OrganizationRead,
+    responses={HTTP_201_CREATED: {"description": "The organization was successfully created."}},
+    status_code=HTTP_201_CREATED,
+)
 async def create_organization(
     user: RequiredUserDep,
     session: AsyncSessionDep,
@@ -202,7 +207,6 @@ async def create_organization(
     await session.flush()
     await session.refresh(created, ["members", "venues"])
 
-    response.status_code = HTTP_201_CREATED
     response.headers["Location"] = str(
         request.url_for("get_organization", organization_id=created.id)
     )
