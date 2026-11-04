@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import HTMLResponse
+from fastapi_injectable import register_app
 from securecookies import SecureCookiesMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette_csrf.middleware import CSRFMiddleware
@@ -140,6 +141,7 @@ def app() -> FastAPI:
 # https://github.com/fastapi/fastapi/discussions/8054#discussioncomment-11346542
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
+    await register_app(app)  # fastapi-injectable
     app.state.asynctasq = AsyncTasQIntegration()
     async with AsyncExitStack() as stack:
         app.state.stack = stack

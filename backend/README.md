@@ -156,11 +156,13 @@ Alternatively, you can use [Docker Compose](#docker) which runs a worker for you
 |--:|:--|
 | [aiosqlite](https://aiosqlite.omnilib.dev/en/stable/) | SQLite driver |
 | [alembic](https://alembic.sqlalchemy.org/en/latest/index.html) | Database migrations |
+| [asgi-lifespan](https://github.com/florimondmanca/asgi-lifespan) | ASGI lifespan controller |
 | [asynctasq](https://github.com/adamrefaey/asynctasq) | Task queue |
 | [authlib](https://docs.authlib.org/en/latest/index.html) | OAuth2 client |
 | [click](https://click.palletsprojects.com/en/stable/) | CLI toolkit |
 | [coverage](https://coverage.readthedocs.io/en/latest/) | Code coverage |
 | [fastapi](https://fastapi.tiangolo.com/) | HTTP API framework |
+| [fastapi-injectable](https://fastapi-injectable.readthedocs.io/en/latest/index.html) | Reusable DI |
 | [httpx2](https://pydantic.dev/docs/httpx2/get-started/) | HTTP client |
 | [joserfc](https://jose.authlib.org/en/guide/jwt/) | JWT parsing and validation |
 | [limits](https://limits.readthedocs.io/en/stable/) | ratelimiter |

@@ -14,9 +14,11 @@ requires-python = ">=3.14"
 dependencies = [
     "aiosqlite>=0.22.1",
     "alembic>=1.20.0",
+    "asgi-lifespan>=2.1.0",
     "asynctasq[fastapi,redis,sqlalchemy]>=1.7.0",
     "authlib>=1.8.0",
     "click>=8.5.0",
+    "fastapi-injectable>=1.6.2",
     "fastapi[standard]>=0.141.1",
     "httpx2>=2.13.1",
     "joserfc>=1.7.5",
@@ -56,8 +58,9 @@ omit = ["src/quickticket/alembic/*"]
 [tool.fastapi]
 entrypoint = "quickticket.app:app"
 
-[tool.pytest.ini_options]
+[tool.pytest]
 asyncio_default_fixture_loop_scope = "function"
+injectable_autouse_cleanup = false
 
 [tool.ruff]
 line-length = 100

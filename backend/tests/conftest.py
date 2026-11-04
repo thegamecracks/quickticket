@@ -6,10 +6,12 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
+from asgi_lifespan import LifespanManager
 from asynctasq import AsyncTasQIntegration, Dispatcher
 from asynctasq.drivers import BaseDriver
 from fastapi import FastAPI
 from fastapi.datastructures import State
+from fastapi_injectable import cleanup_all_exit_stacks, clear_dependency_cache
 from httpx2 import ASGITransport, AsyncClient
 from obstore.store import MemoryStore
 from sqlalchemy.ext.asyncio import (
@@ -18,7 +20,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
 )
 
-from quickticket.app import create_app_from_settings, lifespan
+from quickticket.app import create_app_from_settings
 from quickticket.dependencies.auth import get_user
 from quickticket.dependencies.db import AsyncEngineFactory, _engine_factory, get_async_sessionmaker
 from quickticket.dependencies.state import get_settings
@@ -210,12 +212,15 @@ async def app(
         )
         session.add(auth.user)
 
-    # This runs our own lifespan function only.
-    # Proper initialization would be mimicking the ASGI lifespan protocol:
-    # https://asgi.readthedocs.io/en/latest/specs/lifespan.html
     monkeypatch.setattr("quickticket.app.AsyncExitStack", lambda: stack)
-    async with lifespan(_base_app):
-        yield _base_app
+    try:
+        async with LifespanManager(_base_app):
+            yield _base_app
+    finally:
+        # Reset dependencies for @injectable functions
+        # https://github.com/JasperSui/fastapi-injectable/blob/v1.6.2/src/fastapi_injectable/pytest_plugin.py
+        await cleanup_all_exit_stacks()
+        await clear_dependency_cache()
 
 
 # https://fastapi.tiangolo.com/advanced/async-tests/

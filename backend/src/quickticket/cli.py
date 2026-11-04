@@ -1,11 +1,8 @@
 import logging
-from functools import cache
 
 import click
 from fastapi_cli.cli import main as fastapi_main
 
-from quickticket.logging import setup_logging
-from quickticket.settings import Settings
 from quickticket.worker import run_worker
 
 log = logging.getLogger(__name__)
@@ -39,17 +36,7 @@ def worker() -> None:
     """Run the task queue worker."""
     import anyio
 
-    _setup_logging()
-    anyio.run(run_worker, _get_settings())
-
-
-def _setup_logging() -> None:
-    setup_logging(verbosity=_get_settings().log.verbosity)
-
-
-@cache
-def _get_settings() -> Settings:
-    return Settings()
+    anyio.run(run_worker)
 
 
 if __name__ == "__main__":

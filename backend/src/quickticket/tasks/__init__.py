@@ -2,14 +2,16 @@ import logging
 from uuid import UUID
 
 from asynctasq import task
+from fastapi_injectable import injectable
 
+from quickticket.dependencies.db import AsyncSessionDep
 from quickticket.models import Event
-from quickticket.tasks.engine import get_async_sessionmaker
 
 log = logging.getLogger(__name__)
 
 
 @task
+@injectable
 async def example_task(x: int) -> int:
     # `task_id = await example_task(123).dispatch()`
     log.debug("example_task(x=%s)", x)
@@ -17,13 +19,14 @@ async def example_task(x: int) -> int:
 
 
 @task
-async def example_task_sqlalchemy(event_id: UUID) -> str | None:
+@injectable
+async def example_task_sqlalchemy(
+    event_id: UUID,
+    session: AsyncSessionDep,
+) -> str | None:
     # `task_id = await example_task_sqlalchemy(event.id).dispatch()`
 
-    # Creating a session manually (note function import from quickticket.worker)
-    async with get_async_sessionmaker().begin() as session:
-        event = await session.get(Event, event_id)
-
+    event = await session.get(Event, event_id)
     if event is None:
         log.debug("Invalid event ID received, ignoring")
         return
