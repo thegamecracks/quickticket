@@ -83,8 +83,9 @@ async def test_create_event(
             "ticket_price": {"amount": 50, "currency": "CAD"},
         },
     )
-    response.raise_for_status()
+    assert response.status_code == 201
     data = response.json()
+    assert response.headers["location"] == f"http://test/api/events/{data['id']}"
 
     assert len(data) == 13
     assert data["id"] is not None

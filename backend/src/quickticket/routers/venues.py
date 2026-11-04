@@ -3,11 +3,12 @@ from datetime import datetime
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import AfterValidator, BaseModel, Field
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.functions import count
+from starlette.status import HTTP_201_CREATED
 
 from quickticket.dependencies.auth import OptionalUserDep, RequiredUserDep
 from quickticket.dependencies.db import AsyncSessionDep
@@ -187,6 +188,8 @@ async def create_venue(
     user: RequiredUserDep,
     session: AsyncSessionDep,
     venue: VenueCreate,
+    request: Request,
+    response: Response,
 ) -> Venue:
     """Create a new venue in an organization."""
     controller = await get_organization_controller(session, user, venue.organization_id)
@@ -213,6 +216,8 @@ async def create_venue(
     # Eagerly load relationships to prevent lazy read on VenueRead validation
     await session.refresh(venue_orm, ["events", "organization"])
 
+    response.status_code = HTTP_201_CREATED
+    response.headers["Location"] = str(request.url_for("get_venue", venue_id=venue_orm.id))
     return venue_orm
 
 

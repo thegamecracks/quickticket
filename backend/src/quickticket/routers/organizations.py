@@ -3,10 +3,11 @@ from datetime import datetime
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import BaseModel
 from sqlalchemy import exists, false, select
 from sqlalchemy.orm import selectinload
+from starlette.status import HTTP_201_CREATED
 
 from quickticket.dependencies.auth import OptionalUserDep, RequiredUserDep
 from quickticket.dependencies.db import AsyncSessionDep
@@ -167,6 +168,8 @@ async def create_organization(
     user: RequiredUserDep,
     session: AsyncSessionDep,
     organization: OrganizationCreate,
+    request: Request,
+    response: Response,
 ) -> Any:
     """Create a new organization."""
 
@@ -199,6 +202,10 @@ async def create_organization(
     await session.flush()
     await session.refresh(created, ["members", "venues"])
 
+    response.status_code = HTTP_201_CREATED
+    response.headers["Location"] = str(
+        request.url_for("get_organization", organization_id=created.id)
+    )
     return created
 
 

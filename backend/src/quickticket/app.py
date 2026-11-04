@@ -206,8 +206,13 @@ async def preserve_headers(
         return response
 
     for k, v in temp_response.headers.items():
-        response.headers.append(k, v)
-        # log.debug("Adding %s header #%s: %s", k, len(response.headers.getlist(k)), v)
+        # HACK:
+        # If a route returns plain data, FastAPI will automatically transfer
+        # headers from the temporary response to the response object.
+        # Ideally we'd detect that and skip transferring headers, but the
+        # `response is temp_response` condition doesn't handle this.
+        # For now, we'll use `response.headers[k] = v` to de-duplicate headers.
+        response.headers[k] = v
 
     return response
 

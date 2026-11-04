@@ -3,10 +3,11 @@ from datetime import datetime
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import AfterValidator, BaseModel, Field
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
+from starlette.status import HTTP_201_CREATED
 
 from quickticket.dependencies.auth import OptionalUserDep, RequiredUserDep
 from quickticket.dependencies.db import AsyncSessionDep
@@ -166,7 +167,11 @@ class EventCreate(BaseModel):
 
 @router.post("", response_model=EventRead)
 async def create_event(
-    user: RequiredUserDep, session: AsyncSessionDep, event: EventCreate
+    user: RequiredUserDep,
+    session: AsyncSessionDep,
+    event: EventCreate,
+    request: Request,
+    response: Response,
 ) -> Event:
     """Create a new event for a venue."""
     # TODO: check authorization by organization
@@ -197,6 +202,9 @@ async def create_event(
     session.add(event_orm)
     await session.flush()
     await session.refresh(event_orm, ["tickets", "venue"])
+
+    response.status_code = HTTP_201_CREATED
+    response.headers["Location"] = str(request.url_for("get_event", event_id=event_orm.id))
     return event_orm
 
 

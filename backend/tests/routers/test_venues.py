@@ -42,8 +42,9 @@ async def test_create_venue(
             "location_coords": {"lat": 48.8584, "long": 2.2945},
         },
     )
-    response.raise_for_status()
+    assert response.status_code == 201
     data = response.json()
+    assert response.headers["location"] == f"http://test/api/venues/{data['id']}"
 
     assert len(data) == 11
     assert data["id"] is not None

@@ -23,8 +23,9 @@ async def test_create_organization(
     user = auth.user
 
     response = await client.post("/api/organizations", json={"display_name": "Test Organization"})
-    response.raise_for_status()
+    assert response.status_code == 201
     data = response.json()
+    assert response.headers["location"] == f"http://test/api/organizations/{data['id']}"
 
     assert len(data) == 5
     assert data["id"] is not None
@@ -115,7 +116,7 @@ async def test_create_organization_strips_whitespace_and_filters_non_printable_c
         "/api/organizations",
         json={"display_name": "  \u200bMy Org\x00  "},
     )
-    assert response.status_code == 200
+    assert response.status_code == 201
 
     data = response.json()
     assert data["display_name"] == "My Org"
