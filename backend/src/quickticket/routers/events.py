@@ -159,7 +159,6 @@ class EventCreate(BaseModel):
     display_name: DisplayNameField
     description: Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
     theme: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
-    # FIXME: @model_validator to assert ends_at - starts_at >= 1 hour?
     starts_at: FutureAwareDatetime
     ends_at: FutureAwareDatetime
 
