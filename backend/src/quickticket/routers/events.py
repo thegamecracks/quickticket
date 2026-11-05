@@ -22,7 +22,11 @@ from quickticket.models import (
     Ticket,
     Venue,
 )
-from quickticket.validators import DisplayNameField, coerce_aware_datetime, filter_string_field
+from quickticket.validators import (
+    DisplayNameField,
+    FutureAwareDatetime,
+    filter_string_field,
+)
 
 router = APIRouter(tags=["Events"])
 log = logging.getLogger(__name__)
@@ -155,9 +159,9 @@ class EventCreate(BaseModel):
     display_name: DisplayNameField
     description: Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
     theme: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
-    # FIXME: validate datetimes in future, use FutureDatetime?
-    starts_at: Annotated[datetime, AfterValidator(coerce_aware_datetime)]
-    ends_at: Annotated[datetime, AfterValidator(coerce_aware_datetime)]
+    # FIXME: @model_validator to assert ends_at - starts_at >= 1 hour?
+    starts_at: FutureAwareDatetime
+    ends_at: FutureAwareDatetime
 
     max_attendees: Annotated[int, Field(ge=0, le=10000)]
     ticket_price: Money

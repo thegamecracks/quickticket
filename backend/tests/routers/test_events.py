@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid7
 
 import pytest
@@ -130,6 +130,8 @@ async def test_create_event(
         )
         session.add_all([organization, member, venue])
 
+    starts_at = datetime.now(UTC) + timedelta(days=1)
+    ends_at = starts_at + timedelta(hours=4)
     response = await client.post(
         "/api/events",
         json={
@@ -137,9 +139,8 @@ async def test_create_event(
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
             "theme": "Sports",
-            # should display jan 1st, 2027, 6-10pm
-            "starts_at": datetime(2027, 1, 1, 18, 0).isoformat(),
-            "ends_at": datetime(2027, 1, 1, 22, 0).isoformat(),
+            "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
+            "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
             "max_attendees": 500,
             "ticket_price": {"amount": 50, "currency": "CAD"},
         },
@@ -153,8 +154,8 @@ async def test_create_event(
     assert data["created_at"] is not None
     assert data["display_name"] == "Test Hockey Tournament"
     assert data["description"] == "A mock hockey game, for testing."
-    assert data["starts_at"] == "2027-01-01T18:00:00Z"
-    assert data["ends_at"] == "2027-01-01T22:00:00Z"
+    assert data["starts_at"] == starts_at.isoformat().replace("+00:00", "Z")
+    assert data["ends_at"] == ends_at.isoformat().replace("+00:00", "Z")
     assert data["ticket_price"] == {"amount": 50, "currency": "CAD"}
     assert data["max_attendees"] == 500
     assert data["venue"]["id"] == str(venue.id)
@@ -196,6 +197,8 @@ async def test_create_event_no_permissions(
         )
         session.add_all([organization, member, venue])
 
+    starts_at = datetime.now(UTC) + timedelta(days=1)
+    ends_at = starts_at + timedelta(hours=4)
     response = await client.post(
         "/api/events",
         json={
@@ -203,9 +206,8 @@ async def test_create_event_no_permissions(
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
             "theme": "Sports",
-            # should display jan 1st, 2027, 6-10pm
-            "starts_at": datetime(2027, 1, 1, 18, 0).isoformat(),
-            "ends_at": datetime(2027, 1, 1, 22, 0).isoformat(),
+            "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
+            "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
             "max_attendees": 500,
             "ticket_price": {"amount": 50, "currency": "CAD"},
         },
@@ -234,6 +236,8 @@ async def test_create_event_no_venue(
         session.add_all([organization, member])
 
     venue_id = uuid7()  # random, no venue
+    starts_at = datetime.now(UTC) + timedelta(days=1)
+    ends_at = starts_at + timedelta(hours=4)
     response = await client.post(
         "/api/events",
         json={
@@ -241,9 +245,8 @@ async def test_create_event_no_venue(
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
             "theme": "Sports",
-            # should display jan 1st, 2027, 6-10pm
-            "starts_at": datetime(2027, 1, 1, 18, 0).isoformat(),
-            "ends_at": datetime(2027, 1, 1, 22, 0).isoformat(),
+            "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
+            "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
             "max_attendees": 500,
             "ticket_price": {"amount": 50, "currency": "CAD"},
         },
@@ -254,9 +257,10 @@ async def test_create_event_no_venue(
 
 @pytest.mark.asyncio
 async def test_create_event_rejects_max_attendees_below_minimum(
-    auth: AuthController,
     client: AsyncClient,
 ) -> None:
+    starts_at = datetime.now(UTC) + timedelta(days=1)
+    ends_at = starts_at + timedelta(hours=4)
     response = await client.post(
         "/api/events",
         json={
@@ -264,8 +268,8 @@ async def test_create_event_rejects_max_attendees_below_minimum(
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
             "theme": "Sports",
-            "starts_at": datetime(2027, 1, 1, 18, 0).isoformat(),
-            "ends_at": datetime(2027, 1, 1, 22, 0).isoformat(),
+            "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
+            "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
             "max_attendees": -1,
             "ticket_price": {"amount": 50, "currency": "CAD"},
         },
@@ -275,9 +279,10 @@ async def test_create_event_rejects_max_attendees_below_minimum(
 
 @pytest.mark.asyncio
 async def test_create_event_rejects_max_attendees_above_maximum(
-    auth: AuthController,
     client: AsyncClient,
 ) -> None:
+    starts_at = datetime.now(UTC) + timedelta(days=1)
+    ends_at = starts_at + timedelta(hours=4)
     response = await client.post(
         "/api/events",
         json={
@@ -285,10 +290,86 @@ async def test_create_event_rejects_max_attendees_above_maximum(
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
             "theme": "Sports",
-            "starts_at": datetime(2027, 1, 1, 18, 0).isoformat(),
-            "ends_at": datetime(2027, 1, 1, 22, 0).isoformat(),
+            "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
+            "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
             "max_attendees": 10001,
             "ticket_price": {"amount": 50, "currency": "CAD"},
         },
     )
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_event_rejects_naive_datetimes(
+    client: AsyncClient,
+) -> None:
+    starts_at = datetime.now() + timedelta(days=1)
+    ends_at = starts_at
+    response = await client.post(
+        "/api/events",
+        json={
+            "venue_id": str(uuid7()),
+            "display_name": "Test Hockey Tournament",
+            "description": "A mock hockey game, for testing.",
+            "theme": "Sports",
+            "starts_at": starts_at.isoformat(),
+            "ends_at": ends_at.isoformat(),
+            "max_attendees": 500,
+            "ticket_price": {"amount": 50, "currency": "CAD"},
+        },
+    )
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": [
+            {
+                "type": "timezone_aware",
+                "loc": ["body", "starts_at"],
+                "msg": "Input should have timezone info",
+                "input": starts_at.isoformat(),
+            },
+            {
+                "type": "timezone_aware",
+                "loc": ["body", "ends_at"],
+                "msg": "Input should have timezone info",
+                "input": ends_at.isoformat(),
+            },
+        ]
+    }
+
+
+@pytest.mark.asyncio
+async def test_create_event_rejects_past_datetimes(
+    client: AsyncClient,
+) -> None:
+    starts_at = datetime.now(UTC) - timedelta(days=1)
+    ends_at = starts_at + timedelta(hours=4)
+    response = await client.post(
+        "/api/events",
+        json={
+            "venue_id": str(uuid7()),
+            "display_name": "Test Hockey Tournament",
+            "description": "A mock hockey game, for testing.",
+            "theme": "Sports",
+            "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
+            "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
+            "max_attendees": 500,
+            "ticket_price": {"amount": 50, "currency": "CAD"},
+        },
+    )
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": [
+            {
+                "type": "datetime_future",
+                "loc": ["body", "starts_at"],
+                "msg": "Input should be in the future",
+                "input": starts_at.isoformat().replace("+00:00", "Z"),
+            },
+            {
+                "type": "datetime_future",
+                "loc": ["body", "ends_at"],
+                "msg": "Input should be in the future",
+                "input": ends_at.isoformat().replace("+00:00", "Z"),
+            },
+        ]
+    }

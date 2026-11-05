@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from typing import Annotated
 
-from pydantic import AfterValidator, Field
+from pydantic import AfterValidator, AwareDatetime, Field, FutureDatetime
 
 
 def coerce_aware_datetime(value: datetime) -> datetime:
@@ -19,3 +19,4 @@ def filter_string_field(value: str) -> str:
 DisplayNameField = Annotated[
     str, AfterValidator(filter_string_field), Field(min_length=3, max_length=128)
 ]
+FutureAwareDatetime = Annotated[datetime, AwareDatetime, FutureDatetime]
