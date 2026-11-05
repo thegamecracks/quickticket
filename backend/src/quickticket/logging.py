@@ -84,6 +84,12 @@ def setup_logging(*, verbosity: LogVerbosity) -> None:
     logging.getLogger(__package__).setLevel(project_level)
     logging.getLogger("sqlalchemy.engine").setLevel(sqlalchemy_level)
 
+    # Override uvicorn's default loggers (https://uvicorn.dev/concepts/logging/)
+    for name in ("uvicorn", "uvicorn.error", "uvicorn.access"):
+        log = logging.getLogger(name)
+        log.handlers.clear()
+        log.propagate = True
+
 
 def stream_supports_colour(stream: Any) -> bool:
     # https://force-color.org/
