@@ -23,7 +23,7 @@ async def test_get_events(
     await dataset_loader.load()
 
     response = await client.get("/api/events")
-    response.raise_for_status()
+    assert response.status_code == 200
     data = response.json()
 
     # TODO: validate full payload? would be noisy with the descriptions though...

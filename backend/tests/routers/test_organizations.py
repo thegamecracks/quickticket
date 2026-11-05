@@ -47,7 +47,7 @@ async def test_create_organization_one_owner_only(
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
     response = await client.post("/api/organizations", json={"display_name": "First Organization"})
-    response.raise_for_status()
+    assert response.status_code == 201
     first = response.json()
 
     response = await client.post("/api/organizations", json={"display_name": "Second Organization"})
