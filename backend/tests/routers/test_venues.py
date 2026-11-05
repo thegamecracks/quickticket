@@ -1,4 +1,4 @@
-import uuid
+from uuid import UUID
 
 import pytest
 from httpx2 import AsyncClient
@@ -61,9 +61,9 @@ async def test_create_venue(
     assert data["organization"]["display_name"] == "Test Organization"
 
     async with make_session.begin() as session:
-        persisted = await session.get(Venue, uuid.UUID(data["id"]))
+        persisted = await session.get(Venue, UUID(data["id"]))
         assert persisted is not None
-        assert persisted.id == uuid.UUID(data["id"])
+        assert persisted.id == UUID(data["id"])
 
 
 @pytest.mark.asyncio
@@ -72,11 +72,10 @@ async def test_create_venue_nonexistent_organization(
     auth: AuthController,
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
-    organization_id = uuid.uuid7()
     response = await client.post(
         "/api/venues",
         json={
-            "organization_id": str(organization_id),
+            "organization_id": "00000000-0000-0000-0000-000000000000",
             "display_name": "Test Venue",
             "description": "A venue for testing.",
             "theme": "Sports",
@@ -85,7 +84,9 @@ async def test_create_venue_nonexistent_organization(
         },
     )
     assert response.status_code == 400
-    assert response.json() == {"detail": f"Organization not found: {organization_id}"}
+    assert response.json() == {
+        "detail": "Organization not found: 00000000-0000-0000-0000-000000000000"
+    }
 
 
 @pytest.mark.asyncio

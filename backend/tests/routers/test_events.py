@@ -1,5 +1,5 @@
 from datetime import UTC, datetime, timedelta
-from uuid import UUID, uuid7
+from uuid import UUID
 
 import pytest
 from httpx2 import AsyncClient
@@ -101,7 +101,7 @@ async def test_get_event_not_found(
 ) -> None:
     await dataset_loader.load()
 
-    response = await client.get(f"/api/events/{uuid7()}")
+    response = await client.get("/api/events/00000000-0000-0000-0000-000000000000")
     assert response.status_code == 404
     assert response.json() == {"detail": "Not found"}
 
@@ -235,13 +235,12 @@ async def test_create_event_no_venue(
         )
         session.add_all([organization, member])
 
-    venue_id = uuid7()  # random, no venue
     starts_at = datetime.now(UTC) + timedelta(days=1)
     ends_at = starts_at + timedelta(hours=4)
     response = await client.post(
         "/api/events",
         json={
-            "venue_id": str(venue_id),
+            "venue_id": "00000000-0000-0000-0000-000000000000",
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
             "theme": "Sports",
@@ -252,7 +251,7 @@ async def test_create_event_no_venue(
         },
     )
     assert response.status_code == 400
-    assert response.json() == {"detail": f"Venue not found: {venue_id}"}
+    assert response.json() == {"detail": "Venue not found: 00000000-0000-0000-0000-000000000000"}
 
 
 @pytest.mark.asyncio
@@ -264,7 +263,7 @@ async def test_create_event_rejects_max_attendees_below_minimum(
     response = await client.post(
         "/api/events",
         json={
-            "venue_id": str(uuid7()),
+            "venue_id": "00000000-0000-0000-0000-000000000000",
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
             "theme": "Sports",
@@ -286,7 +285,7 @@ async def test_create_event_rejects_max_attendees_above_maximum(
     response = await client.post(
         "/api/events",
         json={
-            "venue_id": str(uuid7()),
+            "venue_id": "00000000-0000-0000-0000-000000000000",
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
             "theme": "Sports",
@@ -308,7 +307,7 @@ async def test_create_event_rejects_naive_datetimes(
     response = await client.post(
         "/api/events",
         json={
-            "venue_id": str(uuid7()),
+            "venue_id": "00000000-0000-0000-0000-000000000000",
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
             "theme": "Sports",
@@ -346,7 +345,7 @@ async def test_create_event_rejects_past_datetimes(
     response = await client.post(
         "/api/events",
         json={
-            "venue_id": str(uuid7()),
+            "venue_id": "00000000-0000-0000-0000-000000000000",
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
             "theme": "Sports",
