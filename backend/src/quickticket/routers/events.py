@@ -175,7 +175,9 @@ class EventCreate(BaseModel):
     @model_validator(mode="after")
     def check_event_duration(self) -> Self:
         duration = self.ends_at - self.starts_at
-        if not self.MIN_DURATION <= duration <= self.MAX_DURATION:
+        if duration < timedelta():
+            raise ValueError("starts_at must be before ends_at")
+        elif not self.MIN_DURATION <= duration <= self.MAX_DURATION:
             raise ValueError(
                 f"Event duration must be between {self.MIN_DURATION} and {self.MAX_DURATION}"
             )
