@@ -4,6 +4,7 @@ from uuid import UUID
 import pytest
 from httpx2 import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.orm import selectinload
 
 from quickticket.models import (
     Event,
@@ -15,10 +16,15 @@ from quickticket.models import (
 from tests.conftest import AuthController, DatasetLoader
 
 
+def isoformat(dt: datetime) -> str:
+    return dt.isoformat().replace("+00:00", "Z")
+
+
 @pytest.mark.asyncio
 async def test_get_events(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
+    make_session: async_sessionmaker[AsyncSession],
 ) -> None:
     await dataset_loader.load()
 
@@ -26,23 +32,48 @@ async def test_get_events(
     assert response.status_code == 200
     data = response.json()
 
-    # TODO: validate full payload? would be noisy with the descriptions though...
-    event_ids = (
-        UUID("ec2eb2b0-22d7-40c0-96f0-6f799227eba4"),
-        UUID("97067d2e-7a1c-4451-ac3a-a8e974e1c6e3"),
-        UUID("8f691e68-a0b5-452e-9e27-4b0161dcc62a"),
-        UUID("df8af935-6315-4a0f-9723-e4b031458a4d"),
-        UUID("697102d3-6f53-4c93-b65b-f87a36a9b301"),
-        UUID("5a1231e3-8e9a-4e87-9835-6db515975d7c"),
-        UUID("ecca0ef6-390c-4b3e-9ec5-d7c307b642c5"),
-        UUID("0c1ed79b-e063-45de-bfce-7283f5247bc3"),
-        UUID("21afa1a9-a4ed-4d2f-8908-93b743027fec"),
-        UUID("0e161235-9c40-45e6-b4cd-022fd852f6e6"),
-    )
+    # Should be limited to 10 events per request
+    assert len(data["events"]) == min(10, len(dataset_loader.dataset.events))
 
-    assert len(data["events"]) == len(event_ids)
-    for i, event_id in enumerate(event_ids):
-        assert data["events"][i]["id"] == str(event_id)
+    async with make_session.begin() as session:
+        for event in data["events"]:
+            expected = await session.get(
+                Event,
+                UUID(event["id"]),
+                options=[selectinload(Event.venue).selectinload(Venue.organization)],
+            )
+            assert expected is not None
+            assert event == {
+                "id": str(expected.id),
+                "created_at": isoformat(expected.created_at),
+                "display_name": expected.display_name,
+                "description": expected.description,
+                "theme": expected.theme,
+                "thumbnail": None,
+                "banner": None,
+                "starts_at": isoformat(expected.starts_at),
+                "ends_at": isoformat(expected.ends_at),
+                "ticket_price": expected.ticket_price.model_dump(),
+                "max_attendees": expected.max_attendees,
+                "tickets": [],
+                "venue": {
+                    "id": str(expected.venue.id),
+                    "created_at": isoformat(expected.venue.created_at),
+                    "display_name": expected.venue.display_name,
+                    "description": expected.venue.description,
+                    "theme": expected.venue.theme,
+                    "thumbnail": None,
+                    "banner": None,
+                    "location_name": expected.venue.location_name,
+                    "location_coords": expected.venue.location_coords
+                    and expected.venue.location_coords.model_dump(),
+                    "organization": {
+                        "id": str(expected.venue.organization.id),
+                        "created_at": isoformat(expected.venue.organization.created_at),
+                        "display_name": expected.venue.organization.display_name,
+                    },
+                },
+            }
 
 
 @pytest.mark.asyncio
@@ -139,8 +170,8 @@ async def test_create_event(
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
             "theme": "Sports",
-            "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
-            "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
+            "starts_at": isoformat(starts_at),
+            "ends_at": isoformat(ends_at),
             "max_attendees": 500,
             "ticket_price": {"amount": 50, "currency": "CAD"},
         },
@@ -154,8 +185,8 @@ async def test_create_event(
     assert data["created_at"] is not None
     assert data["display_name"] == "Test Hockey Tournament"
     assert data["description"] == "A mock hockey game, for testing."
-    assert data["starts_at"] == starts_at.isoformat().replace("+00:00", "Z")
-    assert data["ends_at"] == ends_at.isoformat().replace("+00:00", "Z")
+    assert data["starts_at"] == isoformat(starts_at)
+    assert data["ends_at"] == isoformat(ends_at)
     assert data["ticket_price"] == {"amount": 50, "currency": "CAD"}
     assert data["max_attendees"] == 500
     assert data["venue"]["id"] == str(venue.id)
@@ -206,8 +237,8 @@ async def test_create_event_no_permissions(
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
             "theme": "Sports",
-            "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
-            "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
+            "starts_at": isoformat(starts_at),
+            "ends_at": isoformat(ends_at),
             "max_attendees": 500,
             "ticket_price": {"amount": 50, "currency": "CAD"},
         },
@@ -244,8 +275,8 @@ async def test_create_event_no_venue(
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
             "theme": "Sports",
-            "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
-            "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
+            "starts_at": isoformat(starts_at),
+            "ends_at": isoformat(ends_at),
             "max_attendees": 500,
             "ticket_price": {"amount": 50, "currency": "CAD"},
         },
@@ -267,8 +298,8 @@ async def test_create_event_rejects_max_attendees_below_minimum(
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
             "theme": "Sports",
-            "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
-            "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
+            "starts_at": isoformat(starts_at),
+            "ends_at": isoformat(ends_at),
             "max_attendees": -1,
             "ticket_price": {"amount": 50, "currency": "CAD"},
         },
@@ -289,8 +320,8 @@ async def test_create_event_rejects_max_attendees_above_maximum(
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
             "theme": "Sports",
-            "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
-            "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
+            "starts_at": isoformat(starts_at),
+            "ends_at": isoformat(ends_at),
             "max_attendees": 10001,
             "ticket_price": {"amount": 50, "currency": "CAD"},
         },
@@ -349,8 +380,8 @@ async def test_create_event_rejects_past_datetimes(
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
             "theme": "Sports",
-            "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
-            "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
+            "starts_at": isoformat(starts_at),
+            "ends_at": isoformat(ends_at),
             "max_attendees": 500,
             "ticket_price": {"amount": 50, "currency": "CAD"},
         },
@@ -362,13 +393,13 @@ async def test_create_event_rejects_past_datetimes(
                 "type": "datetime_future",
                 "loc": ["body", "starts_at"],
                 "msg": "Input should be in the future",
-                "input": starts_at.isoformat().replace("+00:00", "Z"),
+                "input": isoformat(starts_at),
             },
             {
                 "type": "datetime_future",
                 "loc": ["body", "ends_at"],
                 "msg": "Input should be in the future",
-                "input": ends_at.isoformat().replace("+00:00", "Z"),
+                "input": isoformat(ends_at),
             },
         ]
     }
@@ -387,8 +418,8 @@ async def test_create_event_rejects_ends_at_before_starts_at(
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
             "theme": "Sports",
-            "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
-            "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
+            "starts_at": isoformat(starts_at),
+            "ends_at": isoformat(ends_at),
             "max_attendees": 500,
             "ticket_price": {"amount": 50, "currency": "CAD"},
         },
@@ -405,8 +436,8 @@ async def test_create_event_rejects_ends_at_before_starts_at(
                     "display_name": "Test Hockey Tournament",
                     "description": "A mock hockey game, for testing.",
                     "theme": "Sports",
-                    "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
-                    "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
+                    "starts_at": isoformat(starts_at),
+                    "ends_at": isoformat(ends_at),
                     "max_attendees": 500,
                     "ticket_price": {"amount": 50, "currency": "CAD"},
                 },
@@ -431,8 +462,8 @@ async def test_create_event_rejects_duration_below_minimum(
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
             "theme": "Sports",
-            "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
-            "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
+            "starts_at": isoformat(starts_at),
+            "ends_at": isoformat(ends_at),
             "max_attendees": 500,
             "ticket_price": {"amount": 50, "currency": "CAD"},
         },
@@ -449,8 +480,8 @@ async def test_create_event_rejects_duration_below_minimum(
                     "display_name": "Test Hockey Tournament",
                     "description": "A mock hockey game, for testing.",
                     "theme": "Sports",
-                    "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
-                    "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
+                    "starts_at": isoformat(starts_at),
+                    "ends_at": isoformat(ends_at),
                     "max_attendees": 500,
                     "ticket_price": {"amount": 50, "currency": "CAD"},
                 },
@@ -473,8 +504,8 @@ async def test_create_event_rejects_duration_above_maximum(
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
             "theme": "Sports",
-            "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
-            "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
+            "starts_at": isoformat(starts_at),
+            "ends_at": isoformat(ends_at),
             "max_attendees": 500,
             "ticket_price": {"amount": 50, "currency": "CAD"},
         },
@@ -491,8 +522,8 @@ async def test_create_event_rejects_duration_above_maximum(
                     "display_name": "Test Hockey Tournament",
                     "description": "A mock hockey game, for testing.",
                     "theme": "Sports",
-                    "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
-                    "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
+                    "starts_at": isoformat(starts_at),
+                    "ends_at": isoformat(ends_at),
                     "max_attendees": 500,
                     "ticket_price": {"amount": 50, "currency": "CAD"},
                 },
