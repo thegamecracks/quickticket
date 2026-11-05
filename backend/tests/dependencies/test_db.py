@@ -1,10 +1,19 @@
-from contextlib import AsyncExitStack
+from contextlib import AsyncExitStack, asynccontextmanager
 
 import pytest
+from fastapi import Response
 from fastapi.datastructures import State
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
+from sqlalchemy.sql.functions import count
 
-from quickticket.dependencies.db import AsyncEngineFactory, get_async_sessionmaker
+from quickticket.dependencies.db import (
+    AsyncEngineFactory,
+    get_async_session,
+    get_async_sessionmaker,
+)
+from quickticket.errors import ForcedResponse
+from quickticket.models import User
 from quickticket.settings import DatabaseSettings, Settings
 
 
@@ -30,3 +39,61 @@ async def test_get_async_sessionmaker_reuses_sessionmaker(
     make_session_1 = await get_async_sessionmaker(state, engine)
     make_session_2 = await get_async_sessionmaker(state, engine)
     assert make_session_1 is make_session_2
+
+
+enter_get_async_session = asynccontextmanager(get_async_session)
+
+
+def create_user() -> User:
+    return User(
+        display_name="Test User",
+        first_name="Test",
+        last_name="User",
+        email="test.user@example.com",
+    )
+
+
+async def count_users(session: AsyncSession) -> int:
+    ret = await session.scalar(select(count()).select_from(User))
+    assert ret is not None
+    return ret
+
+
+@pytest.mark.asyncio
+async def test_get_async_session_commits(
+    make_session: async_sessionmaker[AsyncSession],
+) -> None:
+    async with enter_get_async_session(make_session) as session:
+        session.add(create_user())
+
+    async with make_session.begin() as session:
+        assert await count_users(session) == 1
+
+
+@pytest.mark.asyncio
+async def test_get_async_session_rolls_back_on_error(
+    make_session: async_sessionmaker[AsyncSession],
+) -> None:
+    with pytest.raises(RuntimeError, match="^rollback$"):
+        async with enter_get_async_session(make_session) as session:
+            session.add(create_user())
+            raise RuntimeError("rollback")
+
+    async with make_session.begin() as session:
+        assert await count_users(session) == 0
+
+
+@pytest.mark.asyncio
+async def test_get_async_session_commits_on_forced_response(
+    make_session: async_sessionmaker[AsyncSession],
+) -> None:
+    forced_response = ForcedResponse(Response())
+
+    with pytest.raises(ForcedResponse) as exc_info:
+        async with enter_get_async_session(make_session) as session:
+            session.add(create_user())
+            raise forced_response
+
+    assert exc_info.value is forced_response
+    async with make_session.begin() as session:
+        assert await count_users(session) == 1
