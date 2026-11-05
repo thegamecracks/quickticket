@@ -1,4 +1,5 @@
 from collections.abc import Mapping
+from datetime import datetime
 from typing import ClassVar
 
 from sqlalchemy import MetaData
@@ -6,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass
 
 from quickticket.models.money import Money, MoneySerializer
-from quickticket.models.types import Point, PointSerializer
+from quickticket.models.types import Point, PointSerializer, TZDateTime
 
 __all__ = ("Base",)
 
@@ -25,6 +26,7 @@ class Base(AsyncAttrs, MappedAsDataclass, DeclarativeBase, kw_only=True, repr=Fa
     metadata = metadata_obj
     # https://docs.sqlalchemy.org/en/21/core/custom_types.html#linking-python-uuid-uuid-to-the-custom-type-for-orm-mappings
     type_annotation_map: ClassVar[Mapping[type, object]] = {
+        datetime: TZDateTime,
         Money: MoneySerializer,
         Point: PointSerializer,
     }

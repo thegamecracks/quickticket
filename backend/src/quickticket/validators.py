@@ -1,6 +1,13 @@
+from datetime import UTC, datetime
 from typing import Annotated
 
 from pydantic import AfterValidator, Field
+
+
+def coerce_aware_datetime(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=UTC)
+    return value
 
 
 def filter_string_field(value: str) -> str:

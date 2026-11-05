@@ -153,8 +153,8 @@ async def test_create_event(
     assert data["created_at"] is not None
     assert data["display_name"] == "Test Hockey Tournament"
     assert data["description"] == "A mock hockey game, for testing."
-    assert data["starts_at"] == datetime(2027, 1, 1, 18, 0).isoformat()
-    assert data["ends_at"] == datetime(2027, 1, 1, 22, 0).isoformat()
+    assert data["starts_at"] == "2027-01-01T18:00:00Z"
+    assert data["ends_at"] == "2027-01-01T22:00:00Z"
     assert data["ticket_price"] == {"amount": 50, "currency": "CAD"}
     assert data["max_attendees"] == 500
     assert data["venue"]["id"] == str(venue.id)

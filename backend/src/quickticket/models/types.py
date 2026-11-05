@@ -7,6 +7,7 @@ from uuid import UUID, uuid7
 from pydantic import BaseModel
 from sqlalchemy import (
     Column,
+    DateTime,
     DefaultClause,
     Dialect,
     LargeBinary,
@@ -22,6 +23,7 @@ from sqlalchemy.orm import mapped_column
 __all__ = (
     "Point",
     "PointSerializer",
+    "TZDateTime",
     "can_cascade_delete",
     "current_timestamp",
     "pk_uuid",
@@ -51,6 +53,25 @@ can_cascade_delete: Mapping[str, Any] = {
     "cascade": "save-update, delete, delete-orphan, merge, expunge",
     "passive_deletes": True,
 }
+
+
+# https://docs.sqlalchemy.org/en/21/core/custom_types.html#store-timezone-aware-timestamps-as-timezone-naive-utc
+class TZDateTime(TypeDecorator):
+    impl = DateTime
+    cache_ok = True
+
+    def process_bind_param(self, value: datetime.datetime | None, dialect: Dialect):
+        if value is None:
+            return value
+        elif not value.tzinfo or value.tzinfo.utcoffset(value) is None:
+            raise TypeError("Cannot serialize timezone-naive datetime, tzinfo= must be set")
+        else:
+            return value.astimezone(datetime.UTC).replace(tzinfo=None)
+
+    def process_result_value(self, value: datetime.datetime | None, dialect: Dialect):
+        if value is not None:
+            value = value.replace(tzinfo=datetime.UTC)
+        return value
 
 
 class Point(BaseModel):
