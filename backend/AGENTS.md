@@ -105,3 +105,22 @@ uv run quickticket worker
   place the file in `tests/resources/` and load it from the test.
 - Store and use common fixtures in `tests/conftest.py` when they need to be
   shared across test files.
+- The `dataset` fixture and `dataset_loader.dataset` are the same per-test
+  object. Because `make_session` uses `expire_on_commit=False`, ORM objects keep
+  their Python-side attributes after `dataset_loader.load()`, so expected
+  payloads can be built from the seeded objects instead of hardcoding values.
+  Seeded events rely on model defaults such as `max_attendees=0`,
+  `ticket_price=Money(amount=0, currency="CAD")`, and `tickets=[]`.
+- The test database is SQLite and does not preserve timezone offsets for
+  `current_timestamp` columns: tz-aware datetimes seeded in
+  `tests/resources/data.py` come back naive with the same wall-clock time.
+  Compare them with `.replace(tzinfo=None)` (or `datetime.fromisoformat()` on
+  the response).
+- Pydantic value types serialize straight to JSON: compare `Money`/`Point`
+  expectations via `.model_dump()`, and note that `Currency` is a `StrEnum`
+  that compares equal to its string value.
+- FastAPI path params typed as `UUID` return 422 for malformed strings and 404
+  only for well-formed-but-missing IDs. To exercise a 404, pass a valid UUID
+  that is not in the dataset (e.g. `uuid7()`), not an arbitrary string.
+- Assert exact status codes (e.g. `assert response.status_code == 200`) rather
+  than `raise_for_status()`, and check `len(data)` when validating payloads.

@@ -46,6 +46,68 @@ async def test_get_events(
 
 
 @pytest.mark.asyncio
+async def test_get_event(
+    client: AsyncClient,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+
+    event = dataset.events[0]
+    assert event.id == UUID("df7b2a4c-6647-43b7-88c7-17ddd2a43080")
+    venue = next(v for v in dataset.venues if v.id == event.venue_id)
+    assert venue.location_coords is not None
+    organization = next(o for o in dataset.organizations if o.id == venue.organization_id)
+
+    response = await client.get(f"/api/events/{event.id}")
+    assert response.status_code == 200
+    data = response.json()
+
+    assert len(data) == 13
+    assert data["id"] == str(event.id)
+    assert data["created_at"] is not None
+    assert data["display_name"] == event.display_name
+    assert data["description"] == event.description
+    assert data["theme"] == event.theme
+    assert data["thumbnail"] is None
+    assert data["banner"] is None
+    # The test database does not preserve the timezone offset of the seeded datetimes
+    assert datetime.fromisoformat(data["starts_at"]) == event.starts_at.replace(tzinfo=None)
+    assert datetime.fromisoformat(data["ends_at"]) == event.ends_at.replace(tzinfo=None)
+    assert data["ticket_price"] == event.ticket_price.model_dump()
+    assert data["max_attendees"] == event.max_attendees
+    assert data["tickets"] == []
+
+    assert len(data["venue"]) == 10
+    assert data["venue"]["id"] == str(venue.id)
+    assert data["venue"]["created_at"] is not None
+    assert data["venue"]["display_name"] == venue.display_name
+    assert data["venue"]["description"] == venue.description
+    assert data["venue"]["theme"] == venue.theme
+    assert data["venue"]["thumbnail"] is None
+    assert data["venue"]["banner"] is None
+    assert data["venue"]["location_name"] == venue.location_name
+    assert data["venue"]["location_coords"] == venue.location_coords.model_dump()
+
+    assert len(data["venue"]["organization"]) == 3
+    assert data["venue"]["organization"]["id"] == str(organization.id)
+    assert data["venue"]["organization"]["created_at"] is not None
+    assert data["venue"]["organization"]["display_name"] == organization.display_name
+
+
+@pytest.mark.asyncio
+async def test_get_event_not_found(
+    client: AsyncClient,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+
+    response = await client.get(f"/api/events/{uuid7()}")
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Not found"}
+
+
+@pytest.mark.asyncio
 async def test_create_event(
     client: AsyncClient,
     auth: AuthController,
