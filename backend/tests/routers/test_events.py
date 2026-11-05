@@ -71,9 +71,8 @@ async def test_get_event(
     assert data["theme"] == event.theme
     assert data["thumbnail"] is None
     assert data["banner"] is None
-    # The test database does not preserve the timezone offset of the seeded datetimes
-    assert datetime.fromisoformat(data["starts_at"]) == event.starts_at.replace(tzinfo=None)
-    assert datetime.fromisoformat(data["ends_at"]) == event.ends_at.replace(tzinfo=None)
+    assert datetime.fromisoformat(data["starts_at"]) == event.starts_at
+    assert datetime.fromisoformat(data["ends_at"]) == event.ends_at
     assert data["ticket_price"] == event.ticket_price.model_dump()
     assert data["max_attendees"] == event.max_attendees
     assert data["tickets"] == []

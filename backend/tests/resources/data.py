@@ -69,6 +69,7 @@ def create_test_models() -> Dataset:
             first_name="James",
             last_name="Smith",
             email="james.smith0@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("cd1e919c-78ac-4222-96c1-6bea98f57281"),
@@ -76,6 +77,7 @@ def create_test_models() -> Dataset:
             first_name="Maria",
             last_name="Johnson",
             email="maria.johnson1@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("63363a5a-f35b-4b76-84b0-aa354843e426"),
@@ -83,6 +85,7 @@ def create_test_models() -> Dataset:
             first_name="Liam",
             last_name="Williams",
             email="liam.williams2@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("75e4418a-1216-4988-afd0-74db0f4d121f"),
@@ -90,6 +93,7 @@ def create_test_models() -> Dataset:
             first_name="Sophie",
             last_name="Brown",
             email="sophie.brown3@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("bb355aea-9041-4fc3-b0ff-cd55a8fb6a46"),
@@ -97,6 +101,7 @@ def create_test_models() -> Dataset:
             first_name="Noah",
             last_name="Jones",
             email="noah.jones4@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("521df1bc-8a74-40c7-a768-c41dcf49e02b"),
@@ -104,6 +109,7 @@ def create_test_models() -> Dataset:
             first_name="Ava",
             last_name="Garcia",
             email="ava.garcia5@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("e9706931-6932-4a7c-9a48-0c81728b4ee0"),
@@ -111,6 +117,7 @@ def create_test_models() -> Dataset:
             first_name="Ethan",
             last_name="Miller",
             email="ethan.miller6@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("3f7b69d9-8908-4350-b7f4-eb3bcb303455"),
@@ -118,6 +125,7 @@ def create_test_models() -> Dataset:
             first_name="Chloe",
             last_name="Davis",
             email="chloe.davis7@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("7094965f-be3d-49db-8a3d-c8e1bc8b3f99"),
@@ -125,6 +133,7 @@ def create_test_models() -> Dataset:
             first_name="Lucas",
             last_name="Rodriguez",
             email="lucas.rodriguez8@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("6f04f89b-e24a-43ac-8bb4-4b692db482ba"),
@@ -132,6 +141,7 @@ def create_test_models() -> Dataset:
             first_name="Emma",
             last_name="Martinez",
             email="emma.martinez9@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("94f35ca2-5e50-4cde-b814-37c8169c0614"),
@@ -139,6 +149,7 @@ def create_test_models() -> Dataset:
             first_name="Oliver",
             last_name="Hernandez",
             email="oliver.hernandez10@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("0daec970-3840-4aad-b2fb-05c1e4fa635d"),
@@ -146,6 +157,7 @@ def create_test_models() -> Dataset:
             first_name="Julia",
             last_name="Lopez",
             email="julia.lopez11@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("bf90f3a5-e204-4373-acd1-dd24e1eb58f3"),
@@ -153,6 +165,7 @@ def create_test_models() -> Dataset:
             first_name="Mason",
             last_name="Gonzalez",
             email="mason.gonzalez12@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("bfd9708f-d51b-4fe1-bfcc-ca8cb2830a7d"),
@@ -160,6 +173,7 @@ def create_test_models() -> Dataset:
             first_name="Layla",
             last_name="Wilson",
             email="layla.wilson13@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("c3ed02b5-b175-4ab8-b153-640c4e8dbfa6"),
@@ -167,6 +181,7 @@ def create_test_models() -> Dataset:
             first_name="Logan",
             last_name="Anderson",
             email="logan.anderson14@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("2911b7f6-3d3f-4d03-a09e-0bfe013ef161"),
@@ -174,6 +189,7 @@ def create_test_models() -> Dataset:
             first_name="Aria",
             last_name="Thomas",
             email="aria.thomas15@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("3529c963-84c7-4e26-8017-b1805d0a4280"),
@@ -181,6 +197,7 @@ def create_test_models() -> Dataset:
             first_name="Elijah",
             last_name="Taylor",
             email="elijah.taylor16@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("54839cd2-c8fb-47ca-a9f0-fbfd73046582"),
@@ -188,6 +205,7 @@ def create_test_models() -> Dataset:
             first_name="Mia",
             last_name="Moore",
             email="mia.moore17@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("55391432-b85d-4479-8b03-71029cc4a76a"),
@@ -195,6 +213,7 @@ def create_test_models() -> Dataset:
             first_name="Jayden",
             last_name="Jackson",
             email="jayden.jackson18@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("9a9c45d7-1891-48c3-aad8-a328c0eca705"),
@@ -202,6 +221,7 @@ def create_test_models() -> Dataset:
             first_name="Zoe",
             last_name="Martin",
             email="zoe.martin19@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("c12f41cd-8bd2-4c1d-896d-16e33d0df389"),
@@ -209,6 +229,7 @@ def create_test_models() -> Dataset:
             first_name="Aiden",
             last_name="Lee",
             email="aiden.lee20@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("d43f9db4-b2bd-477c-98ba-07de383d867a"),
@@ -216,6 +237,7 @@ def create_test_models() -> Dataset:
             first_name="Harper",
             last_name="Perez",
             email="harper.perez21@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("21658b93-8b33-4921-9b7b-715b34a1461a"),
@@ -223,6 +245,7 @@ def create_test_models() -> Dataset:
             first_name="Daniel",
             last_name="Thompson",
             email="daniel.thompson22@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("f9a12ff2-21ca-4ad5-b3ea-80911709726c"),
@@ -230,6 +253,7 @@ def create_test_models() -> Dataset:
             first_name="Ella",
             last_name="White",
             email="ella.white23@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("35c42278-c7ee-4680-b67b-65658e2438e6"),
@@ -237,6 +261,7 @@ def create_test_models() -> Dataset:
             first_name="Benjamin",
             last_name="Harris",
             email="benjamin.harris24@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("0837cf2f-c000-4d8c-8ec1-7aa38af5e236"),
@@ -244,6 +269,7 @@ def create_test_models() -> Dataset:
             first_name="Grace",
             last_name="Sanchez",
             email="grace.sanchez25@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("7ca2be93-1698-419a-9d8e-066dc81deb7c"),
@@ -251,6 +277,7 @@ def create_test_models() -> Dataset:
             first_name="Samuel",
             last_name="Clark",
             email="samuel.clark26@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("685cb5b2-2a60-4951-840a-114e6db46905"),
@@ -258,6 +285,7 @@ def create_test_models() -> Dataset:
             first_name="Lily",
             last_name="Ramirez",
             email="lily.ramirez27@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("a99a2fba-9fad-4650-82a7-5dfd4398b0b0"),
@@ -265,6 +293,7 @@ def create_test_models() -> Dataset:
             first_name="Henry",
             last_name="Lewis",
             email="henry.lewis28@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("bbd27b45-b5f3-4aa9-b21a-b07f5d9de9f7"),
@@ -272,6 +301,7 @@ def create_test_models() -> Dataset:
             first_name="Avery",
             last_name="Robinson",
             email="avery.robinson29@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("2fdc08c9-0264-4e1f-80ff-0625bf2e8cfe"),
@@ -279,6 +309,7 @@ def create_test_models() -> Dataset:
             first_name="Jack",
             last_name="Walker",
             email="jack.walker30@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("f52711be-8b3e-4757-b856-de1aa74acb5f"),
@@ -286,6 +317,7 @@ def create_test_models() -> Dataset:
             first_name="Evelyn",
             last_name="Young",
             email="evelyn.young31@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("346e81a4-9470-4230-ab97-452e9dec447d"),
@@ -293,6 +325,7 @@ def create_test_models() -> Dataset:
             first_name="Owen",
             last_name="Allen",
             email="owen.allen32@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("5e2891be-eaec-4ce1-a817-72613c5c167e"),
@@ -300,6 +333,7 @@ def create_test_models() -> Dataset:
             first_name="Abigail",
             last_name="King",
             email="abigail.king33@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("bad3c6c0-e362-4461-9d00-e4f30126a1e6"),
@@ -307,6 +341,7 @@ def create_test_models() -> Dataset:
             first_name="Sam",
             last_name="Wright",
             email="sam.wright34@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("eb29e535-9e86-4b79-af06-baf174990004"),
@@ -314,6 +349,7 @@ def create_test_models() -> Dataset:
             first_name="Emily",
             last_name="Scott",
             email="emily.scott35@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("af378101-2a61-43d7-8aec-5479b2ac4a03"),
@@ -321,6 +357,7 @@ def create_test_models() -> Dataset:
             first_name="Leo",
             last_name="Torres",
             email="leo.torres36@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("e7eb73ec-c6ac-48ca-b781-6492307a5eb2"),
@@ -328,6 +365,7 @@ def create_test_models() -> Dataset:
             first_name="Charlotte",
             last_name="Nguyen",
             email="charlotte.nguyen37@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("cf43748d-f2fa-4763-8d7a-82c93b45c23f"),
@@ -335,6 +373,7 @@ def create_test_models() -> Dataset:
             first_name="Caleb",
             last_name="Hill",
             email="caleb.hill38@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("ee409a63-ea67-4026-8b67-cbe3155f6f15"),
@@ -342,6 +381,7 @@ def create_test_models() -> Dataset:
             first_name="Amelia",
             last_name="Flores",
             email="amelia.flores39@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("ef27f0e0-8ff7-49a5-ad6d-92f97257849a"),
@@ -349,6 +389,7 @@ def create_test_models() -> Dataset:
             first_name="Ryan",
             last_name="Green",
             email="ryan.green40@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("532e5da4-0fde-4c4f-b8a9-21af37513a90"),
@@ -356,6 +397,7 @@ def create_test_models() -> Dataset:
             first_name="Madison",
             last_name="Adams",
             email="madison.adams41@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("aba1901e-ae2e-4515-9402-b25b84dcb482"),
@@ -363,6 +405,7 @@ def create_test_models() -> Dataset:
             first_name="Nathan",
             last_name="Nelson",
             email="nathan.nelson42@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("886ec931-d5d4-4c66-893b-373fe5ad5a93"),
@@ -370,6 +413,7 @@ def create_test_models() -> Dataset:
             first_name="Ella",
             last_name="Baker",
             email="ella.baker43@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("14bcf231-2818-4ff9-8222-6f63f7e65809"),
@@ -377,6 +421,7 @@ def create_test_models() -> Dataset:
             first_name="Aaron",
             last_name="Hall",
             email="aaron.hall44@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("947c2e18-c1e1-4d34-937f-ff62c375229a"),
@@ -384,6 +429,7 @@ def create_test_models() -> Dataset:
             first_name="Scarlett",
             last_name="Rivera",
             email="scarlett.rivera45@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("2d63f888-8b83-4c38-9953-15f61347732e"),
@@ -391,6 +437,7 @@ def create_test_models() -> Dataset:
             first_name="Adrian",
             last_name="Campbell",
             email="adrian.campbell46@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("5ecbfff1-c5ba-491b-a0aa-de881b0349cb"),
@@ -398,6 +445,7 @@ def create_test_models() -> Dataset:
             first_name="Victoria",
             last_name="Mitchell",
             email="victoria.mitchell47@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("f99e9128-e51e-4b1d-b8f2-ea83f2d4b90b"),
@@ -405,6 +453,7 @@ def create_test_models() -> Dataset:
             first_name="Cameron",
             last_name="Carter",
             email="cameron.carter48@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
         User(
             id=UUID("426875ac-13f2-4d1c-b0ea-fe34b2a8c959"),
@@ -412,6 +461,7 @@ def create_test_models() -> Dataset:
             first_name="Nora",
             last_name="Roberts",
             email="nora.roberts49@example.com",
+            created_at=datetime(2026, 10, 1),
         ),
     ]
 
@@ -872,22 +922,27 @@ def create_test_models() -> Dataset:
         Organization(
             id=UUID("2cbd7222-4fd3-4cef-9500-79746e76da89"),
             display_name="Éclair Events",
+            created_at=datetime(2026, 10, 2),
         ),
         Organization(
             id=UUID("8e21c0af-d7a0-4f06-940c-b23728ae59e1"),
             display_name="Lopezs Event Planning and Decor",
+            created_at=datetime(2026, 10, 2),
         ),
         Organization(
             id=UUID("7092b056-4bec-4f3e-aec4-7f7e8f37b13d"),
             display_name="Golden Hour Gatherings",
+            created_at=datetime(2026, 10, 2),
         ),
         Organization(
             id=UUID("f729f07d-833d-48e3-97e3-61d360b18e2e"),
             display_name="The Grand Occasion Co.",
+            created_at=datetime(2026, 10, 2),
         ),
         Organization(
             id=UUID("dbdf610b-3e5e-4565-b12a-707eb57b8b35"),
             display_name="Evergreen Celebrations Ltd.",
+            created_at=datetime(2026, 10, 2),
         ),
     ]
 
@@ -896,36 +951,43 @@ def create_test_models() -> Dataset:
             organization_id=UUID("2cbd7222-4fd3-4cef-9500-79746e76da89"),
             account_id=UUID("2911b7f6-3d3f-4d03-a09e-0bfe013ef161"),
             permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+            joined_at=datetime(2026, 10, 2),
         ),
         OrganizationMember(
             organization_id=UUID("8e21c0af-d7a0-4f06-940c-b23728ae59e1"),
             account_id=UUID("0daec970-3840-4aad-b2fb-05c1e4fa635d"),
             permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+            joined_at=datetime(2026, 10, 2),
         ),
         OrganizationMember(
             organization_id=UUID("7092b056-4bec-4f3e-aec4-7f7e8f37b13d"),
             account_id=UUID("cd1e919c-78ac-4222-96c1-6bea98f57281"),
             permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+            joined_at=datetime(2026, 10, 2),
         ),
         OrganizationMember(
             organization_id=UUID("7092b056-4bec-4f3e-aec4-7f7e8f37b13d"),
             account_id=UUID("5ecbfff1-c5ba-491b-a0aa-de881b0349cb"),
             permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+            joined_at=datetime(2026, 10, 2),
         ),
         OrganizationMember(
             organization_id=UUID("f729f07d-833d-48e3-97e3-61d360b18e2e"),
             account_id=UUID("7ca2be93-1698-419a-9d8e-066dc81deb7c"),
             permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+            joined_at=datetime(2026, 10, 2),
         ),
         OrganizationMember(
             organization_id=UUID("f729f07d-833d-48e3-97e3-61d360b18e2e"),
             account_id=UUID("aba1901e-ae2e-4515-9402-b25b84dcb482"),
             permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+            joined_at=datetime(2026, 10, 2),
         ),
         OrganizationMember(
             organization_id=UUID("dbdf610b-3e5e-4565-b12a-707eb57b8b35"),
             account_id=UUID("54839cd2-c8fb-47ca-a9f0-fbfd73046582"),
             permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+            joined_at=datetime(2026, 10, 2),
         ),
     ]
 
@@ -947,6 +1009,7 @@ Weddings, corporate events, and private parties.""",
             theme="",
             location_name="88 Granville St.",
             location_coords=Point(lat=42.9694548, long=-81.2127519),
+            created_at=datetime(2026, 10, 3),
         ),
         Venue(
             id=UUID("d60f59fc-721d-42bb-8a35-821de7cdc7d8"),
@@ -965,6 +1028,7 @@ Intimate weddings, birthday celebrations, and small conferences.""",
             theme="",
             location_name="Sycamore Cres.",
             location_coords=Point(lat=42.9694548, long=-81.2127519),
+            created_at=datetime(2026, 10, 3),
         ),
         Venue(
             id=UUID("fbacc99d-7e4c-42fb-8032-a974ff512649"),
@@ -983,6 +1047,7 @@ Conferences, product launches, and large corporate gatherings.""",
             theme="",
             location_name="505 Rue Laurier O.",
             location_coords=Point(lat=42.9694548, long=-81.2127519),
+            created_at=datetime(2026, 10, 3),
         ),
         Venue(
             id=UUID("1fb94585-3991-4d5b-817f-8aed59c3218d"),
@@ -1001,6 +1066,7 @@ Weddings, anniversary parties, and upscale dinners.""",
             theme="",
             location_name="600 Rue Saint-Jean",
             location_coords=Point(lat=42.9694548, long=-81.2127519),
+            created_at=datetime(2026, 10, 3),
         ),
         Venue(
             id=UUID("a70927b2-ffa4-4c76-a79f-7f308cb1f568"),
@@ -1019,6 +1085,7 @@ Community events, workshops, and birthday parties.""",
             theme="",
             location_name="77 Rue du Marché Champlain",
             location_coords=Point(lat=42.9694548, long=-81.2127519),
+            created_at=datetime(2026, 10, 3),
         ),
         Venue(
             id=UUID("9558cd33-30bd-47b5-bbee-5360e524cd02"),
@@ -1037,6 +1104,7 @@ Weddings, corporate events, and private parties.""",
             theme="",
             location_name="505 Rue Laurier O.",
             location_coords=Point(lat=42.9694548, long=-81.2127519),
+            created_at=datetime(2026, 10, 3),
         ),
         Venue(
             id=UUID("bc96927a-7495-415f-965a-ca00ffda7fc0"),
@@ -1055,6 +1123,7 @@ Intimate weddings, birthday celebrations, and small conferences.""",
             theme="",
             location_name="888 Robson St.",
             location_coords=Point(lat=42.9694548, long=-81.2127519),
+            created_at=datetime(2026, 10, 3),
         ),
         Venue(
             id=UUID("820c4849-2bdc-40e5-a3df-726a091544a6"),
@@ -1073,6 +1142,7 @@ Conferences, product launches, and large corporate gatherings.""",
             theme="",
             location_name="888 Robson St.",
             location_coords=Point(lat=42.9694548, long=-81.2127519),
+            created_at=datetime(2026, 10, 3),
         ),
     ]
 
@@ -1092,8 +1162,9 @@ Join us for an **elegant evening** of dinner, dancing, and live entertainment.
 - General Admission: $75
 - VIP Table: $500 (seats 8)""",
             theme="",
-            starts_at=datetime.now().astimezone(),
-            ends_at=datetime.now().astimezone(),
+            created_at=datetime(2026, 10, 4),
+            starts_at=datetime(2026, 10, 5),
+            ends_at=datetime(2026, 10, 6),
         ),
         Event(
             id=UUID("ad1d67bd-d92c-41e8-8494-c943eaaac05a"),
@@ -1111,8 +1182,9 @@ A full-day conference featuring **industry leaders** and networking opportunitie
 - Sustainable Business
 - Leadership in Uncertain Times""",
             theme="",
-            starts_at=datetime.now().astimezone(),
-            ends_at=datetime.now().astimezone(),
+            created_at=datetime(2026, 10, 4),
+            starts_at=datetime(2026, 10, 5),
+            ends_at=datetime(2026, 10, 6),
         ),
         Event(
             id=UUID("0e161235-9c40-45e6-b4cd-022fd852f6e6"),
@@ -1130,8 +1202,9 @@ Discover the latest trends in **wedding planning**, décor, and catering.
 - Vendor booths
 - Fashion show""",
             theme="",
-            starts_at=datetime.now().astimezone(),
-            ends_at=datetime.now().astimezone(),
+            created_at=datetime(2026, 10, 4),
+            starts_at=datetime(2026, 10, 5),
+            ends_at=datetime(2026, 10, 6),
         ),
         Event(
             id=UUID("21afa1a9-a4ed-4d2f-8908-93b743027fec"),
@@ -1149,8 +1222,9 @@ An evening dedicated to supporting **local causes** through fine dining and auct
 - Local Food Bank
 - Environmental Fund""",
             theme="",
-            starts_at=datetime.now().astimezone(),
-            ends_at=datetime.now().astimezone(),
+            created_at=datetime(2026, 10, 4),
+            starts_at=datetime(2026, 10, 5),
+            ends_at=datetime(2026, 10, 6),
         ),
         Event(
             id=UUID("0c1ed79b-e063-45de-bfce-7283f5247bc3"),
@@ -1168,8 +1242,9 @@ Ring in the new year with **champagne, fireworks**, and dancing until midnight.
 - Live DJ
 - Midnight toast""",
             theme="",
-            starts_at=datetime.now().astimezone(),
-            ends_at=datetime.now().astimezone(),
+            created_at=datetime(2026, 10, 4),
+            starts_at=datetime(2026, 10, 5),
+            ends_at=datetime(2026, 10, 6),
         ),
         Event(
             id=UUID("ecca0ef6-390c-4b3e-9ec5-d7c307b642c5"),
@@ -1186,8 +1261,9 @@ Join us for an **elegant evening** of dinner, dancing, and live entertainment.
 - General Admission: $75
 - VIP Table: $500 (seats 8)""",
             theme="",
-            starts_at=datetime.now().astimezone(),
-            ends_at=datetime.now().astimezone(),
+            created_at=datetime(2026, 10, 4),
+            starts_at=datetime(2026, 10, 5),
+            ends_at=datetime(2026, 10, 6),
         ),
         Event(
             id=UUID("5a1231e3-8e9a-4e87-9835-6db515975d7c"),
@@ -1205,8 +1281,9 @@ A full-day conference featuring **industry leaders** and networking opportunitie
 - Sustainable Business
 - Leadership in Uncertain Times""",
             theme="",
-            starts_at=datetime.now().astimezone(),
-            ends_at=datetime.now().astimezone(),
+            created_at=datetime(2026, 10, 4),
+            starts_at=datetime(2026, 10, 5),
+            ends_at=datetime(2026, 10, 6),
         ),
         Event(
             id=UUID("697102d3-6f53-4c93-b65b-f87a36a9b301"),
@@ -1224,8 +1301,9 @@ Discover the latest trends in **wedding planning**, décor, and catering.
 - Vendor booths
 - Fashion show""",
             theme="",
-            starts_at=datetime.now().astimezone(),
-            ends_at=datetime.now().astimezone(),
+            created_at=datetime(2026, 10, 4),
+            starts_at=datetime(2026, 10, 5),
+            ends_at=datetime(2026, 10, 6),
         ),
         Event(
             id=UUID("df8af935-6315-4a0f-9723-e4b031458a4d"),
@@ -1243,8 +1321,9 @@ An evening dedicated to supporting **local causes** through fine dining and auct
 - Local Food Bank
 - Environmental Fund""",
             theme="",
-            starts_at=datetime.now().astimezone(),
-            ends_at=datetime.now().astimezone(),
+            created_at=datetime(2026, 10, 4),
+            starts_at=datetime(2026, 10, 5),
+            ends_at=datetime(2026, 10, 6),
         ),
         Event(
             id=UUID("8f691e68-a0b5-452e-9e27-4b0161dcc62a"),
@@ -1262,8 +1341,9 @@ Ring in the new year with **champagne, fireworks**, and dancing until midnight.
 - Live DJ
 - Midnight toast""",
             theme="",
-            starts_at=datetime.now().astimezone(),
-            ends_at=datetime.now().astimezone(),
+            created_at=datetime(2026, 10, 4),
+            starts_at=datetime(2026, 10, 5),
+            ends_at=datetime(2026, 10, 6),
         ),
         Event(
             id=UUID("97067d2e-7a1c-4451-ac3a-a8e974e1c6e3"),
@@ -1280,8 +1360,9 @@ Join us for an **elegant evening** of dinner, dancing, and live entertainment.
 - General Admission: $75
 - VIP Table: $500 (seats 8)""",
             theme="",
-            starts_at=datetime.now().astimezone(),
-            ends_at=datetime.now().astimezone(),
+            created_at=datetime(2026, 10, 4),
+            starts_at=datetime(2026, 10, 5),
+            ends_at=datetime(2026, 10, 6),
         ),
         Event(
             id=UUID("ec2eb2b0-22d7-40c0-96f0-6f799227eba4"),
@@ -1299,8 +1380,9 @@ A full-day conference featuring **industry leaders** and networking opportunitie
 - Sustainable Business
 - Leadership in Uncertain Times""",
             theme="",
-            starts_at=datetime.now().astimezone(),
-            ends_at=datetime.now().astimezone(),
+            created_at=datetime(2026, 10, 4),
+            starts_at=datetime(2026, 10, 5),
+            ends_at=datetime(2026, 10, 6),
         ),
     ]
 
