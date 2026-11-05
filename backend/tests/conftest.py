@@ -25,7 +25,7 @@ from quickticket.dependencies.auth import get_user
 from quickticket.dependencies.db import AsyncEngineFactory, _engine_factory, get_async_sessionmaker
 from quickticket.dependencies.state import get_settings
 from quickticket.dependencies.store import Store, get_object_store
-from quickticket.models import Base, User
+from quickticket.models import Address, Base, User
 from quickticket.settings import (
     CacheSettings,
     DatabaseSettings,
@@ -209,6 +209,15 @@ async def app(
             first_name="Test",
             last_name="User",
             email="test.user@example.com",
+            addresses=[
+                Address(
+                    line_1="123 Test Street",
+                    line_2="Unit 4",
+                    city="Testville",
+                    province="Ontario",
+                    postal_code="A1B 2C3",
+                )
+            ],
         )
         session.add(auth.user)
 
