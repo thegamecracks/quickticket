@@ -373,3 +373,87 @@ async def test_create_event_rejects_past_datetimes(
             },
         ]
     }
+
+
+@pytest.mark.asyncio
+async def test_create_event_rejects_duration_below_minimum(
+    client: AsyncClient,
+) -> None:
+    starts_at = datetime.now(UTC) + timedelta(days=1)
+    ends_at = starts_at + timedelta(minutes=59)
+    response = await client.post(
+        "/api/events",
+        json={
+            "venue_id": "00000000-0000-0000-0000-000000000000",
+            "display_name": "Test Hockey Tournament",
+            "description": "A mock hockey game, for testing.",
+            "theme": "Sports",
+            "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
+            "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
+            "max_attendees": 500,
+            "ticket_price": {"amount": 50, "currency": "CAD"},
+        },
+    )
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": [
+            {
+                "type": "value_error",
+                "loc": ["body"],
+                "msg": "Value error, Event duration must be between 1:00:00 and 7 days, 0:00:00",
+                "input": {
+                    "venue_id": "00000000-0000-0000-0000-000000000000",
+                    "display_name": "Test Hockey Tournament",
+                    "description": "A mock hockey game, for testing.",
+                    "theme": "Sports",
+                    "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
+                    "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
+                    "max_attendees": 500,
+                    "ticket_price": {"amount": 50, "currency": "CAD"},
+                },
+                "ctx": {"error": {}},
+            }
+        ]
+    }
+
+
+@pytest.mark.asyncio
+async def test_create_event_rejects_duration_above_maximum(
+    client: AsyncClient,
+) -> None:
+    starts_at = datetime.now(UTC) + timedelta(days=1)
+    ends_at = starts_at + timedelta(days=8)
+    response = await client.post(
+        "/api/events",
+        json={
+            "venue_id": "00000000-0000-0000-0000-000000000000",
+            "display_name": "Test Hockey Tournament",
+            "description": "A mock hockey game, for testing.",
+            "theme": "Sports",
+            "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
+            "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
+            "max_attendees": 500,
+            "ticket_price": {"amount": 50, "currency": "CAD"},
+        },
+    )
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": [
+            {
+                "type": "value_error",
+                "loc": ["body"],
+                "msg": "Value error, Event duration must be between 1:00:00 and 7 days, 0:00:00",
+                "input": {
+                    "venue_id": "00000000-0000-0000-0000-000000000000",
+                    "display_name": "Test Hockey Tournament",
+                    "description": "A mock hockey game, for testing.",
+                    "theme": "Sports",
+                    "starts_at": starts_at.isoformat().replace("+00:00", "Z"),
+                    "ends_at": ends_at.isoformat().replace("+00:00", "Z"),
+                    "max_attendees": 500,
+                    "ticket_price": {"amount": 50, "currency": "CAD"},
+                },
+                "ctx": {"error": {}},
+            }
+        ]
+    }

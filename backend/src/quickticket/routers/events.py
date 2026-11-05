@@ -1,10 +1,10 @@
 import logging
-from datetime import datetime
-from typing import Annotated, Any
+from datetime import datetime, timedelta
+from typing import Annotated, Any, ClassVar, Self
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
-from pydantic import AfterValidator, BaseModel, Field
+from pydantic import AfterValidator, BaseModel, Field, model_validator
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
 from starlette.status import HTTP_201_CREATED
@@ -168,6 +168,18 @@ class EventCreate(BaseModel):
     # ! TODO: implement thumbnails & banner support
     # banner_id: UUID | None = None
     # thumbnail_id: UUID | None = None
+
+    MIN_DURATION: ClassVar[timedelta] = timedelta(hours=1)
+    MAX_DURATION: ClassVar[timedelta] = timedelta(days=7)
+
+    @model_validator(mode="after")
+    def check_event_duration(self) -> Self:
+        duration = self.ends_at - self.starts_at
+        if not self.MIN_DURATION <= duration <= self.MAX_DURATION:
+            raise ValueError(
+                f"Event duration must be between {self.MIN_DURATION} and {self.MAX_DURATION}"
+            )
+        return self
 
 
 @router.post(
