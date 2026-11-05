@@ -36,7 +36,6 @@ services:
       FORCE_COLOR: '1'
       ASYNCTASQ_DRIVER: 'redis'
       ASYNCTASQ_REDIS_URL: 'redis://default:abc123@cache:6379'
-      COLUMNS: '${COLUMNS}'  # affects rich logging width and wrapping
     volumes:
       # Use this volume if either the cache or database are backed by SQLite.
       - backend-data:/app/data
@@ -50,7 +49,6 @@ services:
       FORCE_COLOR: '1'
       ASYNCTASQ_DRIVER: 'redis'
       ASYNCTASQ_REDIS_URL: 'redis://default:abc123@cache:6379'
-      COLUMNS: '${COLUMNS}'  # affects rich logging width and wrapping
 
   cache:
     # https://hub.docker.com/_/redis/
