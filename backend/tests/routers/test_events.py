@@ -417,11 +417,13 @@ async def test_create_event_rejects_ends_at_before_starts_at(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(["offset"], [(timedelta(),), (timedelta(minutes=59),)])
 async def test_create_event_rejects_duration_below_minimum(
     client: AsyncClient,
+    offset: timedelta,
 ) -> None:
     starts_at = datetime.now(UTC) + timedelta(days=1)
-    ends_at = starts_at + timedelta(minutes=59)
+    ends_at = starts_at + offset
     response = await client.post(
         "/api/events",
         json={
