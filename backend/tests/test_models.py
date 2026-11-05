@@ -1,9 +1,11 @@
 """Tests for ORM model behavior, such as server/flush-generated defaults."""
 
 import pytest
+from sqlalchemy.dialects import postgresql
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from quickticket.models import User
+from quickticket.models import MoneySerializer, User
 
 
 @pytest.mark.asyncio
@@ -35,3 +37,9 @@ async def test_current_timestamp_server_default(
         await session.refresh(user)
 
         assert user.created_at is not None
+
+
+def test_money_serializer_postgresql_dialect() -> None:
+    serializer = MoneySerializer()
+    impl = serializer.load_dialect_impl(postgresql.dialect())
+    assert isinstance(impl, JSONB)
