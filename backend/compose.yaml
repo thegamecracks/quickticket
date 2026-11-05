@@ -4,6 +4,17 @@ x-backend-common: &backend-common
     context: .
   restart: always
   env_file: .env  # copy from example.env
+  environment:
+    # Point the backend to our cache and database containers, taking precedence over .env.
+    BACKEND__CACHE__URL: 'redis://default:abc123@cache:6379'  # 'sqlite:///data/quickticket-cache.db'
+    BACKEND__DB__URL: 'postgresql+psycopg://quickticket:abc123@db:5432/quickticket?sslmode=prefer'  # 'sqlite+aiosqlite:///data/quickticket.db'
+    BACKEND__S3__URL: 's3+http://s3:3900/quickticket'
+    BACKEND__S3__REGION: 'garage'
+    BACKEND__S3__ACCESS_KEY: '${BACKEND__S3__ACCESS_KEY:-GK1f12370a0306fcb1d13c3be2304f2d5b}'
+    BACKEND__S3__SECRET_KEY: '${BACKEND__S3__SECRET_KEY:-c6c4ca3c65ccb75e024f6106d1781fc3d38c10875c77ff12820617e1a9fc1f1a}'
+    FORCE_COLOR: '1'
+    ASYNCTASQ_DRIVER: 'redis'
+    ASYNCTASQ_REDIS_URL: 'redis://default:abc123@cache:6379'
   depends_on:
     cache:
       condition: service_healthy
@@ -25,17 +36,6 @@ services:
     <<: *backend-common
     ports:
       - 8000:8000
-    environment:
-      # Point the backend to our cache and database containers, taking precedence over .env.
-      BACKEND__CACHE__URL: 'redis://default:abc123@cache:6379'  # 'sqlite:///data/quickticket-cache.db'
-      BACKEND__DB__URL: 'postgresql+psycopg://quickticket:abc123@db:5432/quickticket?sslmode=prefer'  # 'sqlite+aiosqlite:///data/quickticket.db'
-      BACKEND__S3__URL: 's3+http://s3:3900/quickticket'
-      BACKEND__S3__REGION: 'garage'
-      BACKEND__S3__ACCESS_KEY: '${BACKEND__S3__ACCESS_KEY:-GK1f12370a0306fcb1d13c3be2304f2d5b}'
-      BACKEND__S3__SECRET_KEY: '${BACKEND__S3__SECRET_KEY:-c6c4ca3c65ccb75e024f6106d1781fc3d38c10875c77ff12820617e1a9fc1f1a}'
-      FORCE_COLOR: '1'
-      ASYNCTASQ_DRIVER: 'redis'
-      ASYNCTASQ_REDIS_URL: 'redis://default:abc123@cache:6379'
     volumes:
       # Use this volume if either the cache or database are backed by SQLite.
       - backend-data:/app/data
@@ -45,10 +45,6 @@ services:
   worker:
     <<: *backend-common
     command: [quickticket, worker]
-    environment:
-      FORCE_COLOR: '1'
-      ASYNCTASQ_DRIVER: 'redis'
-      ASYNCTASQ_REDIS_URL: 'redis://default:abc123@cache:6379'
 
   cache:
     # https://hub.docker.com/_/redis/
