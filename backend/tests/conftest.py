@@ -191,6 +191,7 @@ def asynctasq_driver(
 async def app(
     monkeypatch: pytest.MonkeyPatch,
     _base_app: FastAPI,
+    state: State,
     stack: AsyncExitStack,
     engine: AsyncEngine,
     make_session: async_sessionmaker[AsyncSession],
@@ -198,6 +199,7 @@ async def app(
     store: Store,
 ) -> AsyncGenerator[FastAPI]:
     # Technically we should cleanup our overrides after a test, but they'll get overwritten anyway
+    _base_app.state = state
     _base_app.dependency_overrides[_engine_factory] = lambda: engine
     _base_app.dependency_overrides[get_async_sessionmaker] = lambda: make_session
     _base_app.dependency_overrides[get_object_store] = lambda: store
