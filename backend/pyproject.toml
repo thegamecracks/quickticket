@@ -67,3 +67,6 @@ line-length = 100
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
+
+[tool.uv.sources]
+asynctasq = { git = "https://github.com/thegamecracks/asynctasq", rev = "e5ed6b230d4f7e479900761a001d3bf7430e8281" }

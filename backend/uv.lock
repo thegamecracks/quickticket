@@ -80,16 +80,12 @@ wheels = [
 [[package]]
 name = "asynctasq"
 version = "1.7.0"
-source = { registry = "https://pypi.org/simple" }
+source = { git = "https://github.com/thegamecracks/asynctasq?rev=e5ed6b230d4f7e479900761a001d3bf7430e8281#e5ed6b230d4f7e479900761a001d3bf7430e8281" }
 dependencies = [
     { name = "msgspec" },
     { name = "pydantic-settings" },
     { name = "rich" },
-    { name = "uvloop" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/eb/f8/16cc2d2b8d7c8410e88ed82e3880c08b19381bebf76d171f6f23f9089607/asynctasq-1.7.0.tar.gz", hash = "sha256:7daf4b31e7c7bd952014181a10dbbb56631cb81fceecb5326967cb31a99dc93e", size = 120782, upload-time = "2026-01-14T07:02:16.808Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/42/54/61c12f288c9b160aad4eee02ffe8faa81ef8e3bd08ed8b11b1d68df46adf/asynctasq-1.7.0-py3-none-any.whl", hash = "sha256:f1cc5b391b974c3c5262a93a6b72eee66f129c5df627ca7b8105693d914ac225", size = 159194, upload-time = "2026-01-14T07:02:15.199Z" },
+    { name = "uvloop", marker = "sys_platform != 'win32'" },
 ]
 
 [package.optional-dependencies]
@@ -1688,7 +1684,7 @@ requires-dist = [
     { name = "aiosqlite", specifier = ">=0.22.1" },
     { name = "alembic", specifier = ">=1.20.0" },
     { name = "asgi-lifespan", specifier = ">=2.1.0" },
-    { name = "asynctasq", extras = ["fastapi", "redis", "sqlalchemy"], specifier = ">=1.7.0" },
+    { name = "asynctasq", extras = ["fastapi", "redis", "sqlalchemy"], git = "https://github.com/thegamecracks/asynctasq?rev=e5ed6b230d4f7e479900761a001d3bf7430e8281" },
     { name = "authlib", specifier = ">=1.8.0" },
     { name = "click", specifier = ">=8.5.0" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.141.1" },
