@@ -69,8 +69,10 @@ class TZDateTime(TypeDecorator):
             return value.astimezone(UTC).replace(tzinfo=None)
 
     def process_result_value(self, value: datetime | None, dialect: Dialect) -> datetime | None:
-        if value is not None:
-            value = value.replace(tzinfo=UTC)
+        if value is None:
+            return value
+        elif value.tzinfo is None:
+            return value.replace(tzinfo=UTC)
         return value
 
 
