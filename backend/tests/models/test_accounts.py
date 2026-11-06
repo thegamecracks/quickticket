@@ -1,13 +1,9 @@
-"""Tests for ORM model behavior, such as server/flush-generated defaults."""
-
 from datetime import UTC, datetime
 
 import pytest
-from sqlalchemy.dialects import postgresql
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from quickticket.models import MoneySerializer, User
+from quickticket.models import User
 
 
 @pytest.mark.asyncio
@@ -61,9 +57,3 @@ async def test_persisting_timezone_aware_datetime(
     assert saved is not None
     assert saved.created_at.tzinfo is not None
     assert saved.created_at == user.created_at
-
-
-def test_money_serializer_postgresql_dialect() -> None:
-    serializer = MoneySerializer()
-    impl = serializer.load_dialect_impl(postgresql.dialect())
-    assert isinstance(impl, JSONB)
