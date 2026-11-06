@@ -98,10 +98,10 @@ uv run quickticket worker
 
 ### Tests
 
-- Test files are named `test_*.py`, where `*` usually corresponds to the
-  package or module under test (e.g. tests for `cache.py` live in
-  `tests/test_cache.py`).
-- Store and use common fixtures in `tests/conftest.py` when they need to be
+- Test files are organized under `tests/`, typically following the same file structure
+  as the package itself. For example, a test for `src/quickticket/models/types.py`
+  would be located at `tests/models/test_types.py`.
+- Common fixtures should be stored in `tests/conftest.py` when they need to be
   shared across test files.
 - The `dataset` fixture and `dataset_loader.dataset` are the same per-test
   object. Because `make_session` uses `expire_on_commit=False`, ORM objects keep
