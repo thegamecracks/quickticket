@@ -35,7 +35,7 @@ from quickticket.settings import (
     SecuritySettings,
     Settings,
 )
-from tests.resources import Dataset, create_test_models
+from tests.dataset import Dataset, create_test_models
 
 
 @pytest.fixture

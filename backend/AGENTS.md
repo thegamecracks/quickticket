@@ -101,8 +101,6 @@ uv run quickticket worker
 - Test files are named `test_*.py`, where `*` usually corresponds to the
   package or module under test (e.g. tests for `cache.py` live in
   `tests/test_cache.py`).
-- If a test requires a long artifact (e.g. a JSON payload or SQL script),
-  place the file in `tests/resources/` and load it from the test.
 - Store and use common fixtures in `tests/conftest.py` when they need to be
   shared across test files.
 - The `dataset` fixture and `dataset_loader.dataset` are the same per-test

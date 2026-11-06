@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from quickticket.logging import LogVerbosity, setup_logging
 from quickticket.settings import Settings
-from tests.resources import create_test_models
+from tests.dataset import create_test_models
 
 log = logging.getLogger(__name__)
 
