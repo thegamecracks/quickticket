@@ -9,8 +9,8 @@ RUN apk add --no-cache --virtual .git git
 # # source — alpine's uv image ships no compiler by default
 # RUN apk add --no-cache build-base
 
-# Improves startup time, but costs ~110MB in disk usage.
-# ENV UV_COMPILE_BYTECODE=1
+# Improves startup time by ~3.5s, but costs ~110MB in disk usage.
+ENV UV_COMPILE_BYTECODE=1
 
 ENV UV_LINK_MODE=copy
 ENV UV_NO_DEV=1
