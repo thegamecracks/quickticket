@@ -114,6 +114,7 @@ uv run quickticket worker
   that compares equal to its string value.
 - FastAPI path params typed as `UUID` return 422 for malformed strings and 404
   only for well-formed-but-missing IDs. To exercise a 404, pass a valid UUID
-  that is not in the dataset (e.g. `uuid7()`), not an arbitrary string.
+  that is not in the dataset (e.g. `00000000-0000-0000-0000-000000000000`),
+  not an arbitrary string.
 - Assert exact status codes (e.g. `assert response.status_code == 200`) rather
   than `raise_for_status()`, and check `len(data)` when validating payloads.
