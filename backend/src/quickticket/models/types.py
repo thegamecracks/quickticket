@@ -1,6 +1,6 @@
-import datetime
 import struct
 from collections.abc import Mapping
+from datetime import UTC, datetime
 from typing import Annotated, Any
 from uuid import UUID, uuid7
 
@@ -44,7 +44,7 @@ str_4096 = Annotated[str, mapped_column(String(4096), server_default=text("''"))
 pk_uuid = Annotated[UUID, mapped_column(primary_key=True, default=uuid7)]
 
 current_timestamp = Annotated[
-    datetime.datetime,
+    datetime,
     mapped_column(nullable=False, server_default=func.CURRENT_TIMESTAMP()),
 ]
 
@@ -60,17 +60,17 @@ class TZDateTime(TypeDecorator):
     impl = DateTime
     cache_ok = True
 
-    def process_bind_param(self, value: datetime.datetime | None, dialect: Dialect):
+    def process_bind_param(self, value: datetime | None, dialect: Dialect) -> datetime | None:
         if value is None:
             return value
         elif not value.tzinfo or value.tzinfo.utcoffset(value) is None:
             raise TypeError("Cannot serialize timezone-naive datetime, tzinfo= must be set")
         else:
-            return value.astimezone(datetime.UTC).replace(tzinfo=None)
+            return value.astimezone(UTC).replace(tzinfo=None)
 
-    def process_result_value(self, value: datetime.datetime | None, dialect: Dialect):
+    def process_result_value(self, value: datetime | None, dialect: Dialect) -> datetime | None:
         if value is not None:
-            value = value.replace(tzinfo=datetime.UTC)
+            value = value.replace(tzinfo=UTC)
         return value
 
 
