@@ -198,12 +198,12 @@ async def app(
     auth: AuthController,
     store: Store,
 ) -> AsyncGenerator[FastAPI]:
-    # Technically we should cleanup our overrides after a test, but they'll get overwritten anyway
-    _base_app.state = state
-    _base_app.dependency_overrides[_engine_factory] = lambda: engine
-    _base_app.dependency_overrides[get_async_sessionmaker] = lambda: make_session
-    _base_app.dependency_overrides[get_object_store] = lambda: store
-    _base_app.dependency_overrides[get_user] = auth.get_user
+    monkeypatch.setattr(_base_app, "state", state)
+    overrides = _base_app.dependency_overrides
+    monkeypatch.setitem(overrides, _engine_factory, lambda: engine)
+    monkeypatch.setitem(overrides, get_async_sessionmaker, lambda: make_session)
+    monkeypatch.setitem(overrides, get_object_store, lambda: store)
+    monkeypatch.setitem(overrides, get_user, auth.get_user)
 
     async with make_session.begin() as session:
         auth.user = User(
