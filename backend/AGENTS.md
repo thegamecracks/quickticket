@@ -111,11 +111,6 @@ uv run quickticket worker
   payloads can be built from the seeded objects instead of hardcoding values.
   Seeded events rely on model defaults such as `max_attendees=0`,
   `ticket_price=Money(amount=0, currency="CAD")`, and `tickets=[]`.
-- The test database is SQLite and does not preserve timezone offsets for
-  `current_timestamp` columns: tz-aware datetimes seeded in
-  `tests/resources/data.py` come back naive with the same wall-clock time.
-  Compare them with `.replace(tzinfo=None)` (or `datetime.fromisoformat()` on
-  the response).
 - Pydantic value types serialize straight to JSON: compare `Money`/`Point`
   expectations via `.model_dump()`, and note that `Currency` is a `StrEnum`
   that compares equal to its string value.
