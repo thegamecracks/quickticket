@@ -1,16 +1,12 @@
 # QuickTicket
 
-QuickTicket is a web application for creating and discovering physical/virtual
-events and purchasing tickets. This repository is a monorepo:
+Monorepo: `backend/` (Python 3.14 + FastAPI JSON API) and `frontend/` (React 19 + TypeScript SPA, Vite).
 
-- `backend/` — a Python HTTP API serving JSON to the frontend.
-- `frontend/` — the user-facing frontend, built with React.js.
+- Working in `backend/` → read `backend/AGENTS.md`.
+- Working in `frontend/` → read `frontend/AGENTS.md`.
 
 ## Git conventions
 
-Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/):
-
-- Backend-only changes use the `backend` scope, e.g. `feat(backend): …`.
-- Frontend-only changes use the `frontend` scope, e.g. `feat(frontend): …`.
-- Do not mix backend and frontend changes in the same commit. Commit them separately.
-- Branch names use the pattern `username/my-feature`.
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/), scoped by side:
+`feat(backend): …` / `feat(frontend): …`. Commit backend and frontend changes separately.
+Branch names use the pattern `username/my-feature`.

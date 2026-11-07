@@ -1,10 +1,11 @@
 # QuickTicket Backend
 
-This is the backend project for QuickTicket.
+Python 3.14 + FastAPI JSON API in `src/quickticket/`, tooled with `uv`.
 
-## Project lints
+## Verify before you finish
 
-Before finishing a change, run the following checks to ensure it will pass CI:
+All four must pass, with nothing left for the tools to change — `check --fix` and `format`
+rewrite files, so re-run until clean:
 
 ```sh
 uv run ruff check --fix        # lints
@@ -13,108 +14,65 @@ uv run ty check                # type check
 uv run coverage run -m pytest  # tests
 ```
 
-## Extra commands
+`uv run coverage report --skip-covered --skip-empty --show-missing` adds missed line numbers.
 
-To measure code coverage after tests, including line numbers of missed coverage:
+## Layout
+
+`src/quickticket/`:
+
+- `routers/` — thin handlers: business logic in dedicated modules or dependencies,
+  request/response shapes via Pydantic models.
+- `dependencies/` — DI: db, cache, cookies, models, ratelimits, state, auth.
+- `models/` — SQLAlchemy ORM: base, accounts, events, organizations, storage, tickets,
+  venues, money.
+- `tasks/` — functions delegated to worker processes; `alembic/` — migrations;
+  `settings.py` (`BACKEND__*` envvars), `cli.py`, `worker.py`, `app.py`.
+- `frontend/` — throwaway page for testing auth; real frontend work belongs in `../frontend/`.
+
+`tests/` mirrors `src/`: `src/quickticket/models/types.py` → `tests/models/test_types.py`.
+
+## Environment
+
+- `uv run fastapi dev` serves the API (`/docs`, `/redoc`); `uv run quickticket worker`
+  runs the background task worker.
+- Local development uses SQLite (`quickticket.db`) when `BACKEND__DB__URL` is unset.
+- Authenticated flows need `.env` with an OpenID client ID/secret/discovery URL
+  (see `example.env`); without it the app still starts, for browsing the API docs only.
+- Python tooling goes through `uv run …`; dependencies live in `pyproject.toml` + `uv.lock`.
+
+## Database migrations
+
+Changing a model requires a migration in the same change. Add a new file:
+`alembic/versions/` history is append-only once migrations may have been applied elsewhere.
+
+Autogenerate diffs the live database, so regenerate from a clean one for a clean diff:
 
 ```sh
-uv run coverage report --skip-covered --skip-empty --show-missing
+unset BACKEND__DB__URL
+rm quickticket.db
+uv run alembic upgrade head
+uv run alembic revision --autogenerate -m "Describe the change"
 ```
 
-To manage database migrations:
+Read the generated file top to bottom: it must contain only the changes your model edits
+imply — no unrelated tables or columns — with any ambiguity Alembic flagged resolved by hand.
 
-```sh
-uv run alembic upgrade head                    # apply all migrations
-uv run alembic downgrade -1                    # revert the latest migration
-uv run alembic revision --autogenerate -m "…"  # generate a new migration
-```
+`uv run alembic upgrade head` applies migrations; `uv run alembic downgrade -1` reverts the
+latest one.
 
-To run the background task worker:
+## Tests
 
-```sh
-uv run quickticket worker
-```
+Shared fixtures live in `tests/conftest.py`.
 
-## Project structure
-
-```
-.
-├── src/quickticket/
-│   ├── alembic/             # Alembic setup + versioned migrations
-│   ├── dependencies/        # FastAPI dependencies: db, cache, cookies,
-│   │                        #   models, ratelimits, state, and auth/*
-│   │                        #   (provider, tokens, users, redirects)
-│   ├── frontend/            # minimal builtin frontend (testing only)
-│   ├── models/              # SQLAlchemy ORM models (base, accounts, events,
-│   │                        #   organizations, storage, tickets, venues, money)
-│   ├── routers/             # FastAPI API routers: auth, events, notifications,
-│   │                        #   organizations, profile, venues
-│   ├── tasks/               # Task functions delegated to worker processes
-│   ├── app.py               # FastAPI app factory/instance, middleware, lifespan
-│   ├── cache.py             # cache abstraction (SQLite / Redis backends)
-│   ├── cli.py               # CLI to run webservers and task workers
-│   ├── errors.py            # shared error types (e.g. ForcedResponse)
-│   ├── logging.py           # logging setup and verbosity levels
-│   ├── oauth.py             # OpenID/OAuth2 client integration (authlib)
-│   ├── settings.py          # pydantic-settings configuration (BACKEND__* vars)
-│   ├── validators.py        # Validation helpers for Pydantic models
-│   └── worker.py            # Worker initialization for processing tasks
-├── config/                  # postgresql.conf, redis.conf for Docker services
-├── tests/                   # pytest tests (pytest-asyncio for async tests)
-├── alembic.ini              # Alembic configuration
-├── compose.yaml             # backend + worker + Redis + PostgreSQL + S3
-├── Dockerfile               # uv-based production image for the backend
-├── example.env              # template of all envvar settings
-└── pyproject.toml           # project metadata, deps, ruff config
-```
-
-## Conventions and gotchas
-
-- Use `uv` exclusively for Python tooling (`uv run …`); do not `pip install`
-  or create virtualenvs manually.
-- Local development defaults to SQLite (`quickticket.db`) when `BACKEND__DB__URL`
-  is unset.
-- A `.env` with OpenID settings (client ID/secret/discovery URL) is required for
-  any authenticated flow; the app starts fine without it, but only for browsing API docs.
-- `src/quickticket/frontend/` is a minimal in-Python test frontend used
-  to verify authentication; it is not the real frontend and must not be extended.
-- When touching `src/quickticket/routers/`, keep handlers thin: business logic
-  in dedicated modules or dependencies, request/response shapes via Pydantic models.
-
-### Database migrations
-
-- When changing SQLAlchemy models, always generate an Alembic migration in the
-  same change; never edit `alembic/versions/` history destructively once
-  migrations may have been applied elsewhere.
-- **Review auto-generated migrations carefully** — autogenerate diffs the live
-  database and can produce unwanted objects or miss ambiguities. For a clean
-  diff, recreate the SQLite database first:
-  ```sh
-  unset BACKEND__DB__URL
-  rm quickticket.db
-  uv run alembic upgrade head
-  uv run alembic revision --autogenerate -m "Describe the change"
-  ```
-
-### Tests
-
-- Test files are organized under `tests/`, typically following the same file structure
-  as the package itself. For example, a test for `src/quickticket/models/types.py`
-  would be located at `tests/models/test_types.py`.
-- Common fixtures should be stored in `tests/conftest.py` when they need to be
-  shared across test files.
-- The `dataset` fixture and `dataset_loader.dataset` are the same per-test
-  object. Because `make_session` uses `expire_on_commit=False`, ORM objects keep
-  their Python-side attributes after `dataset_loader.load()`, so expected
-  payloads can be built from the seeded objects instead of hardcoding values.
-  Seeded events rely on model defaults such as `max_attendees=0`,
-  `ticket_price=Money(amount=0, currency="CAD")`, and `tickets=[]`.
-- Pydantic value types serialize straight to JSON: compare `Money`/`Point`
-  expectations via `.model_dump()`, and note that `Currency` is a `StrEnum`
-  that compares equal to its string value.
-- FastAPI path params typed as `UUID` return 422 for malformed strings and 404
-  only for well-formed-but-missing IDs. To exercise a 404, pass a valid UUID
-  that is not in the dataset (e.g. `00000000-0000-0000-0000-000000000000`),
-  not an arbitrary string.
-- Assert exact status codes (e.g. `assert response.status_code == 200`) rather
-  than `raise_for_status()`, and check `len(data)` when validating payloads.
+- `make_session` uses `expire_on_commit=False`, and `dataset`/`dataset_loader.dataset` are
+  the same per-test object, so ORM objects keep their Python-side attributes after
+  `dataset_loader.load()`. Build expected payloads from the seeded objects rather than
+  hardcoding values; seeded events rely on model defaults (`max_attendees=0`,
+  `ticket_price=Money(amount=0, currency="CAD")`, `tickets=[]`).
+- Pydantic value types serialize straight to JSON: compare `Money`/`Point` expectations via
+  `.model_dump()`. `Currency` is a `StrEnum` and compares equal to its string value.
+- Path params typed as `UUID` return 422 for malformed strings and 404 only for
+  well-formed-but-missing IDs. For a 404, pass a valid UUID absent from the dataset
+  (e.g. `00000000-0000-0000-0000-000000000000`).
+- Assert exact status codes (`assert response.status_code == 200`) rather than
+  `raise_for_status()`; check `len(data)` when validating payloads.
