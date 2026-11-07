@@ -4,6 +4,7 @@ from typing import Annotated
 
 from authlib.integrations.base_client import OAuthError
 from fastapi import Depends, HTTPException, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from joserfc.errors import ExpiredTokenError, JoseError
 from sqlalchemy import select
 from sqlalchemy.orm import load_only, selectinload
@@ -208,6 +209,7 @@ async def get_or_refresh_access_token(
     access_token_cookie: Annotated[str | None, OAuthAccessTokenCookie] = None,
     # id_token_cookie: Annotated[str | None, OAuthIdTokenCookie] = None,
     refresh_token_cookie: Annotated[str | None, OAuthRefreshTokenCookie] = None,
+    bearer_token: Annotated[HTTPAuthorizationCredentials | None, Depends(HTTPBearer())] = None,
 ) -> AccessToken | None:
     """Attempt to return a valid access token from the user's cookies.
 
@@ -216,6 +218,13 @@ async def get_or_refresh_access_token(
     If this fails, the token cookies will be marked for deletion.
 
     """
+    if bearer_token is not None:
+        try:
+            return validator.parse_access_token(bearer_token.credentials)
+        except JoseError as e:
+            log.debug("Ignoring invalid bearer token (%s)", e)
+            raise HTTPException(401, "Not authenticated", {"WWW-Authenticate": "Bearer"})
+
     if access_token_cookie is not None:
         try:
             return validator.parse_access_token(access_token_cookie)
