@@ -1,34 +1,51 @@
 # QuickTicket frontend
 
-# React + TypeScript + Vite
+This is the QuickTicket web frontend written with React 19 + TypeScript,
+built with Vite, and styled with Tailwind 4 + daisyUI.
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+## Prerequisites
 
-Currently, two official plugins are available:
+This project is managed with [Bun](https://bun.sh/).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```sh
+# Linux
+curl -fsSL https://bun.sh/install | bash
+# Windows
+powershell -c "irm bun.sh/install.ps1|iex"
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Getting started
+
+```sh
+cd frontend
+bun install  # install dependencies from bun.lock
+bun run dev  # start the dev server at http://localhost:5173
+```
+
+For the backend, make sure to set a `.env` file to reach the backend:
+
+```ini
+VITE_API_URL=http://127.0.0.1:8000/api
+```
+
+If you also want Google Maps support, you'll need to set
+`VITE_GOOGLE_MAPS_API_KEY` and `VITE_GOOGLE_MAPS_MAP_ID`.
+
+## Commands
+
+| Command           | What it does                       |
+| ----------------- | ---------------------------------- |
+| `bun run dev`     | Development server                 |
+| `bun run lint`    | Run oxlint                         |
+| `bun run build`   | Type-check and build to `dist/`    |
+| `bun run preview` | Serve the production build locally |
+
+## Before you commit
+
+```sh
+bun run lint
+bun run build
+```
+
+`lint` must exit 0 with no new warnings, and `build` must pass.
+There is no test runner yet so you should manually test in your browser.
