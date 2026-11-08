@@ -43,6 +43,7 @@ export default function EventCreationPage({
   const orgVenues = organization
     ? getMockVenuesForOrganization(organization.id)
     : []
+  // TODO: consolidate useStates
   const [displayName, setDisplayName] = useState('')
   const [description, setDescription] = useState('')
   const [theme, setTheme] = useState('')
