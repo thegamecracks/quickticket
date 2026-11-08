@@ -71,15 +71,6 @@ async def make_session(state: State, engine: AsyncEngine) -> async_sessionmaker[
     return await get_async_sessionmaker(state, engine)
 
 
-# Prefer explicit transactions with `make_session.begin() as session`
-# @pytest_asyncio.fixture
-# async def session(
-#     make_session: async_sessionmaker[AsyncSession],
-# ) -> AsyncGenerator[AsyncSession]:
-#     async with make_session.begin() as session:
-#         yield session
-
-
 @dataclass(kw_only=True)
 class DatasetLoader:
     dataset: Dataset
