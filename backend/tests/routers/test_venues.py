@@ -1,3 +1,5 @@
+from collections import defaultdict
+from datetime import datetime
 from uuid import UUID
 
 import pytest
@@ -5,13 +7,72 @@ from httpx2 import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from quickticket.models import (
+    Event,
     Organization,
     OrganizationMember,
     OrganizationMemberPermissions,
     Venue,
 )
 from quickticket.routers.venues import VENUE_LIMIT
-from tests.conftest import AuthController
+from tests.conftest import AuthController, DatasetLoader
+
+
+def isoformat(dt: datetime) -> str:
+    return dt.isoformat().replace("+00:00", "Z")
+
+
+@pytest.mark.asyncio
+async def test_get_venues(
+    client: AsyncClient,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+
+    response = await client.get("/api/venues")
+    assert response.status_code == 200
+    data = response.json()
+
+    assert set(data) == {"items", "next", "total"}
+    assert data["total"] == len(dataset.venues)
+    assert data["next"] is None
+    assert len(data["items"]) == len(dataset.venues)
+
+    venues = {venue.id: venue for venue in dataset.venues}
+    organizations = {organization.id: organization for organization in dataset.organizations}
+    events: defaultdict[UUID, list[Event]] = defaultdict(list)
+    for event in dataset.events:
+        events[event.venue_id].append(event)
+
+    assert {UUID(item["id"]) for item in data["items"]} == set(venues)
+    for item in data["items"]:
+        venue = venues[UUID(item["id"])]
+        organization = organizations[venue.organization_id]
+
+        item_events = item.pop("events")
+        assert {UUID(event["id"]) for event in item_events} == {
+            event.id for event in events[venue.id]
+        }
+        assert all(event["tickets"] == [] for event in item_events)
+
+        assert item == {
+            "id": str(venue.id),
+            "created_at": isoformat(venue.created_at),
+            "display_name": venue.display_name,
+            "description": venue.description,
+            "theme": venue.theme,
+            "thumbnail": None,
+            "banner": None,
+            "location_name": venue.location_name,
+            "location_coords": venue.location_coords.model_dump()
+            if venue.location_coords is not None
+            else None,
+            "organization": {
+                "id": str(organization.id),
+                "created_at": isoformat(organization.created_at),
+                "display_name": organization.display_name,
+            },
+        }
 
 
 @pytest.mark.asyncio

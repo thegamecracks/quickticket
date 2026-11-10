@@ -22,7 +22,7 @@ from quickticket.models import (
     Ticket,
     Venue,
 )
-from quickticket.paging import BeforePageParams
+from quickticket.paging import BeforePageParams, KeysetPagedResponse
 from quickticket.validators import DisplayNameField, filter_string_field
 
 VENUE_LIMIT = 5
@@ -65,12 +65,7 @@ class PartialVenue(BaseModel):
     organization: PartialOrganization
 
 
-class VenuesRead(BaseModel):
-    venues: list[PartialVenue]
-    # TODO: ended, next, and total fields for pagination
-
-
-@router.get("", response_model=VenuesRead)
+@router.get("", response_model=KeysetPagedResponse[PartialVenue, datetime])
 async def get_venues(
     user: OptionalUserDep,
     session: AsyncSessionDep,
@@ -104,8 +99,13 @@ async def get_venues(
         selectinload(Venue.organization),
     )
 
-    venues = await session.scalars(paged_query)
-    return {"venues": venues.all()}
+    items = await session.scalars(paged_query)
+    items = items.all()
+    # Next key must match order_by() clause
+    next_key = None if len(items) < page.limit else items[-1].created_at
+    # Is this slow?
+    total = await session.scalar(query.with_only_columns(count(), maintain_column_froms=True))
+    return {"items": items, "next": next_key, "total": total}
 
 
 class VenueReadEvent(BaseModel):

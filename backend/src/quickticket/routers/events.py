@@ -134,15 +134,13 @@ async def get_events(
         ).load_only(Ticket.id),
     )
 
-    events = await session.scalars(paged_query)
-    events = events.all()
-
+    items = await session.scalars(paged_query)
+    items = items.all()
     # Next key must match order_by() clause
-    next_key = None if len(events) < page.limit else events[-1].created_at
+    next_key = None if len(items) < page.limit else items[-1].created_at
     # Is this slow?
     total = await session.scalar(query.with_only_columns(count(), maintain_column_froms=True))
-
-    return {"items": events, "next": next_key, "total": total}
+    return {"items": items, "next": next_key, "total": total}
 
 
 @router.get("/{event_id}", response_model=EventRead)

@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import BaseModel
 from sqlalchemy import exists, false, select
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql.functions import count
 from starlette.status import HTTP_201_CREATED
 
 from quickticket.dependencies.auth import OptionalUserDep, RequiredUserDep
@@ -20,7 +21,7 @@ from quickticket.models import (
     Ticket,
     Venue,
 )
-from quickticket.paging import BeforePageParams
+from quickticket.paging import BeforePageParams, KeysetPagedResponse
 from quickticket.validators import DisplayNameField
 
 router = APIRouter(tags=["Organizations"])
@@ -33,12 +34,7 @@ class PartialOrganization(BaseModel):
     display_name: str
 
 
-class OrganizationsRead(BaseModel):
-    organizations: list[PartialOrganization]
-    # TODO: ended, next, and total fields for pagination
-
-
-@router.get("", response_model=OrganizationsRead)
+@router.get("", response_model=KeysetPagedResponse[PartialOrganization, datetime])
 async def get_organizations(
     session: AsyncSessionDep,
     page: Annotated[BeforePageParams, Query()],
@@ -54,8 +50,13 @@ async def get_organizations(
         # NOTE: keyset pagination breaks if there are >=limit items with the same key
         paged_query = paged_query.where(Organization.created_at < page.before)
 
-    organizations = await session.scalars(paged_query)
-    return {"organizations": organizations.all()}
+    items = await session.scalars(paged_query)
+    items = items.all()
+    # Next key must match order_by() clause
+    next_key = None if len(items) < page.limit else items[-1].created_at
+    # Is this slow?
+    total = await session.scalar(query.with_only_columns(count(), maintain_column_froms=True))
+    return {"items": items, "next": next_key, "total": total}
 
 
 class PartialStorageObject(BaseModel):
