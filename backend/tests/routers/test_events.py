@@ -245,21 +245,45 @@ async def test_get_events_before_matches_nothing(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ["organization_id", "expected_total"],
+    [
+        # No filter
+        (None, 12),
+        # Éclair Events, whose events fit in one page
+        (UUID("2cbd7222-4fd3-4cef-9500-79746e76da89"), 2),
+        # Lopezs Event Planning and Decor, whose events span multiple pages
+        (UUID("8e21c0af-d7a0-4f06-940c-b23728ae59e1"), 5),
+    ],
+)
 @pytest.mark.parametrize("limit", [10, 1])
 async def test_get_events_pagination_walk(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
+    organization_id: UUID | None,
+    expected_total: int,
     limit: int,
 ) -> None:
     await dataset_loader.load()
     dataset = dataset_loader.dataset
-    expected = sorted(dataset.events, key=lambda event: event.created_at, reverse=True)
+    venue_organizations = {venue.id: venue.organization_id for venue in dataset.venues}
+    expected = sorted(
+        (
+            event
+            for event in dataset.events
+            if organization_id is None or venue_organizations[event.venue_id] == organization_id
+        ),
+        key=lambda event: event.created_at,
+        reverse=True,
+    )
 
     collected: list[dict[str, object]] = []
     before: str | None = None
     pages = 0
     while True:
         params = {"limit": str(limit)}
+        if organization_id is not None:
+            params["organization_id"] = str(organization_id)
         if before is not None:
             params["before"] = before
 
@@ -269,7 +293,8 @@ async def test_get_events_pagination_walk(
         pages += 1
 
         assert set(data) == {"items", "next", "total"}
-        assert data["total"] == len(dataset.events)
+        # total reflects the filters, not the remaining items in the page set
+        assert data["total"] == expected_total
         collected.extend(data["items"])
 
         if data["next"] is None:
@@ -279,7 +304,8 @@ async def test_get_events_pagination_walk(
         assert len(data["items"]) == limit
         assert data["next"] == data["items"][-1]["created_at"]
         before = data["next"]
-        assert pages <= len(dataset.events) + 1
+
+    assert pages == (expected_total // limit) + 1
 
     ids = [event["id"] for event in collected]
     assert len(ids) == len(set(ids))
