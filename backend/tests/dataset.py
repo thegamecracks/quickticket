@@ -1182,9 +1182,9 @@ A full-day conference featuring **industry leaders** and networking opportunitie
 - Sustainable Business
 - Leadership in Uncertain Times""",
             theme="",
-            created_at=datetime(2026, 10, 4, tzinfo=UTC),
-            starts_at=datetime(2026, 10, 5, tzinfo=UTC),
-            ends_at=datetime(2026, 10, 6, tzinfo=UTC),
+            created_at=datetime(2026, 10, 7, tzinfo=UTC),
+            starts_at=datetime(2026, 10, 8, tzinfo=UTC),
+            ends_at=datetime(2026, 10, 9, tzinfo=UTC),
         ),
         Event(
             id=UUID("0e161235-9c40-45e6-b4cd-022fd852f6e6"),
@@ -1202,9 +1202,9 @@ Discover the latest trends in **wedding planning**, décor, and catering.
 - Vendor booths
 - Fashion show""",
             theme="",
-            created_at=datetime(2026, 10, 4, tzinfo=UTC),
-            starts_at=datetime(2026, 10, 5, tzinfo=UTC),
-            ends_at=datetime(2026, 10, 6, tzinfo=UTC),
+            created_at=datetime(2026, 10, 10, tzinfo=UTC),
+            starts_at=datetime(2026, 10, 11, tzinfo=UTC),
+            ends_at=datetime(2026, 10, 12, tzinfo=UTC),
         ),
         Event(
             id=UUID("21afa1a9-a4ed-4d2f-8908-93b743027fec"),
@@ -1222,9 +1222,9 @@ An evening dedicated to supporting **local causes** through fine dining and auct
 - Local Food Bank
 - Environmental Fund""",
             theme="",
-            created_at=datetime(2026, 10, 4, tzinfo=UTC),
-            starts_at=datetime(2026, 10, 5, tzinfo=UTC),
-            ends_at=datetime(2026, 10, 6, tzinfo=UTC),
+            created_at=datetime(2026, 10, 13, tzinfo=UTC),
+            starts_at=datetime(2026, 10, 14, tzinfo=UTC),
+            ends_at=datetime(2026, 10, 15, tzinfo=UTC),
         ),
         Event(
             id=UUID("0c1ed79b-e063-45de-bfce-7283f5247bc3"),
@@ -1242,9 +1242,9 @@ Ring in the new year with **champagne, fireworks**, and dancing until midnight.
 - Live DJ
 - Midnight toast""",
             theme="",
-            created_at=datetime(2026, 10, 4, tzinfo=UTC),
-            starts_at=datetime(2026, 10, 5, tzinfo=UTC),
-            ends_at=datetime(2026, 10, 6, tzinfo=UTC),
+            created_at=datetime(2026, 10, 16, tzinfo=UTC),
+            starts_at=datetime(2026, 10, 17, tzinfo=UTC),
+            ends_at=datetime(2026, 10, 18, tzinfo=UTC),
         ),
         Event(
             id=UUID("ecca0ef6-390c-4b3e-9ec5-d7c307b642c5"),
@@ -1261,9 +1261,9 @@ Join us for an **elegant evening** of dinner, dancing, and live entertainment.
 - General Admission: $75
 - VIP Table: $500 (seats 8)""",
             theme="",
-            created_at=datetime(2026, 10, 4, tzinfo=UTC),
-            starts_at=datetime(2026, 10, 5, tzinfo=UTC),
-            ends_at=datetime(2026, 10, 6, tzinfo=UTC),
+            created_at=datetime(2026, 10, 19, tzinfo=UTC),
+            starts_at=datetime(2026, 10, 20, tzinfo=UTC),
+            ends_at=datetime(2026, 10, 21, tzinfo=UTC),
         ),
         Event(
             id=UUID("5a1231e3-8e9a-4e87-9835-6db515975d7c"),
@@ -1281,9 +1281,9 @@ A full-day conference featuring **industry leaders** and networking opportunitie
 - Sustainable Business
 - Leadership in Uncertain Times""",
             theme="",
-            created_at=datetime(2026, 10, 4, tzinfo=UTC),
-            starts_at=datetime(2026, 10, 5, tzinfo=UTC),
-            ends_at=datetime(2026, 10, 6, tzinfo=UTC),
+            created_at=datetime(2026, 10, 22, tzinfo=UTC),
+            starts_at=datetime(2026, 10, 23, tzinfo=UTC),
+            ends_at=datetime(2026, 10, 24, tzinfo=UTC),
         ),
         Event(
             id=UUID("697102d3-6f53-4c93-b65b-f87a36a9b301"),
@@ -1301,9 +1301,9 @@ Discover the latest trends in **wedding planning**, décor, and catering.
 - Vendor booths
 - Fashion show""",
             theme="",
-            created_at=datetime(2026, 10, 4, tzinfo=UTC),
-            starts_at=datetime(2026, 10, 5, tzinfo=UTC),
-            ends_at=datetime(2026, 10, 6, tzinfo=UTC),
+            created_at=datetime(2026, 10, 25, tzinfo=UTC),
+            starts_at=datetime(2026, 10, 26, tzinfo=UTC),
+            ends_at=datetime(2026, 10, 27, tzinfo=UTC),
         ),
         Event(
             id=UUID("df8af935-6315-4a0f-9723-e4b031458a4d"),
@@ -1321,9 +1321,9 @@ An evening dedicated to supporting **local causes** through fine dining and auct
 - Local Food Bank
 - Environmental Fund""",
             theme="",
-            created_at=datetime(2026, 10, 4, tzinfo=UTC),
-            starts_at=datetime(2026, 10, 5, tzinfo=UTC),
-            ends_at=datetime(2026, 10, 6, tzinfo=UTC),
+            created_at=datetime(2026, 10, 28, tzinfo=UTC),
+            starts_at=datetime(2026, 10, 29, tzinfo=UTC),
+            ends_at=datetime(2026, 10, 30, tzinfo=UTC),
         ),
         Event(
             id=UUID("8f691e68-a0b5-452e-9e27-4b0161dcc62a"),
@@ -1341,9 +1341,9 @@ Ring in the new year with **champagne, fireworks**, and dancing until midnight.
 - Live DJ
 - Midnight toast""",
             theme="",
-            created_at=datetime(2026, 10, 4, tzinfo=UTC),
-            starts_at=datetime(2026, 10, 5, tzinfo=UTC),
-            ends_at=datetime(2026, 10, 6, tzinfo=UTC),
+            created_at=datetime(2026, 10, 31, tzinfo=UTC),
+            starts_at=datetime(2026, 11, 1, tzinfo=UTC),
+            ends_at=datetime(2026, 11, 2, tzinfo=UTC),
         ),
         Event(
             id=UUID("97067d2e-7a1c-4451-ac3a-a8e974e1c6e3"),
@@ -1360,9 +1360,9 @@ Join us for an **elegant evening** of dinner, dancing, and live entertainment.
 - General Admission: $75
 - VIP Table: $500 (seats 8)""",
             theme="",
-            created_at=datetime(2026, 10, 4, tzinfo=UTC),
-            starts_at=datetime(2026, 10, 5, tzinfo=UTC),
-            ends_at=datetime(2026, 10, 6, tzinfo=UTC),
+            created_at=datetime(2026, 11, 3, tzinfo=UTC),
+            starts_at=datetime(2026, 11, 4, tzinfo=UTC),
+            ends_at=datetime(2026, 11, 5, tzinfo=UTC),
         ),
         Event(
             id=UUID("ec2eb2b0-22d7-40c0-96f0-6f799227eba4"),
@@ -1380,9 +1380,9 @@ A full-day conference featuring **industry leaders** and networking opportunitie
 - Sustainable Business
 - Leadership in Uncertain Times""",
             theme="",
-            created_at=datetime(2026, 10, 4, tzinfo=UTC),
-            starts_at=datetime(2026, 10, 5, tzinfo=UTC),
-            ends_at=datetime(2026, 10, 6, tzinfo=UTC),
+            created_at=datetime(2026, 11, 6, tzinfo=UTC),
+            starts_at=datetime(2026, 11, 7, tzinfo=UTC),
+            ends_at=datetime(2026, 11, 8, tzinfo=UTC),
         ),
     ]
 

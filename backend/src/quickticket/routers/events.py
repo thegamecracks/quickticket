@@ -106,6 +106,7 @@ async def get_events(
     # TODO: maybe support FTS search?
     query = select(Event).order_by(Event.created_at.desc()).limit(limit)
     if before is not None:
+        # NOTE: keyset pagination breaks if there are >=limit items with the same key
         query = query.where(Event.created_at < before)
 
     query = query.options(
