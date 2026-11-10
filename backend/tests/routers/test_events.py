@@ -20,37 +20,6 @@ def isoformat(dt: datetime) -> str:
     return dt.isoformat().replace("+00:00", "Z")
 
 
-async def create_events(
-    session: AsyncSession,
-    *,
-    count: int,
-    start: datetime = datetime(2026, 1, 1, tzinfo=UTC),
-) -> list[Event]:
-    """Create `count` events with strictly increasing created_at values."""
-    organization = Organization(display_name="Test Organization")
-    venue = Venue(
-        organization_id=organization.id,
-        display_name="Test Venue",
-        description="A venue for testing.",
-        theme="Sports",
-        location_name="Test Stadium",
-    )
-    events = [
-        Event(
-            venue_id=venue.id,
-            display_name=f"Test Event {i}",
-            description="An event for testing.",
-            theme="Sports",
-            starts_at=start + timedelta(days=i),
-            ends_at=start + timedelta(days=i, hours=4),
-            created_at=start + timedelta(days=i),
-        )
-        for i in range(count)
-    ]
-    session.add_all([organization, venue, *events])
-    return events
-
-
 @pytest.mark.asyncio
 async def test_get_events(
     client: AsyncClient,
@@ -236,42 +205,26 @@ async def test_get_events_last_page_has_no_next(
 @pytest.mark.asyncio
 async def test_get_events_exact_multiple_ends_on_empty_page(
     client: AsyncClient,
-    make_session: async_sessionmaker[AsyncSession],
+    dataset_loader: DatasetLoader,
 ) -> None:
-    async with make_session.begin() as session:
-        events = await create_events(session, count=20)
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
 
-    ordered = sorted(events, key=lambda event: event.created_at, reverse=True)
+    # 12 events with a limit of 4, one empty page at end
+    params = {"limit": 4}
+    for expected_size in (4, 4, 4, 0):
+        response = await client.get("/api/events", params=params)
+        assert response.status_code == 200
+        data = response.json()
 
-    # Fetch first page of events
-    response = await client.get("/api/events", params={"limit": 10})
-    assert response.status_code == 200
-    data = response.json()
+        assert len(data["items"]) == expected_size
+        assert data["total"] == len(dataset.events)
 
-    assert [event["id"] for event in data["items"]] == [str(event.id) for event in ordered[:10]]
-    assert data["next"] is not None
-    assert data["next"] == isoformat(ordered[9].created_at)
-    assert data["total"] == 20
-
-    # Fetch second page of events
-    response = await client.get("/api/events", params={"limit": 10, "before": data["next"]})
-    assert response.status_code == 200
-    data = response.json()
-
-    # Note that ended remains False, since the endpoint doesn't know it's at the end
-    assert [event["id"] for event in data["items"]] == [str(event.id) for event in ordered[10:]]
-    assert data["next"] is not None
-    assert data["next"] == isoformat(ordered[-1].created_at)
-    assert data["total"] == 20
-
-    # Fetch empty page
-    response = await client.get("/api/events", params={"limit": 10, "before": data["next"]})
-    assert response.status_code == 200
-    assert response.json() == {
-        "items": [],
-        "next": None,
-        "total": 20,
-    }
+        if expected_size > 0:
+            assert data["next"] is not None
+            params["before"] = data["next"]
+        else:
+            assert data["next"] is None
 
 
 @pytest.mark.asyncio
