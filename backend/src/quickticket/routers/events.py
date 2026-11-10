@@ -16,6 +16,7 @@ from quickticket.errors import ORMEntityNotFound
 from quickticket.models import (
     Event,
     Money,
+    Organization,
     OrganizationMemberPermissions,
     Point,
     StorageObject,
@@ -99,6 +100,14 @@ async def get_events(
             le=10,
         ),
     ] = 10,
+    organization_id: Annotated[
+        UUID | None,
+        Query(
+            description=(
+                "Filter events by organization ID. Nonexistent organizations return an empty list."
+            ),
+        ),
+    ] = None,
 ) -> Any:
     """Get a list of events."""
     # TODO: sort by location?
@@ -107,7 +116,12 @@ async def get_events(
     query = select(Event)
 
     # Insert filter conditions between here and paged_query
-    # query = query.where(...)
+    if organization_id is not None:
+        query = (
+            query.join(Event.venue)
+            .join(Venue.organization)
+            .where(Organization.id == organization_id)
+        )
 
     paged_query = query.order_by(Event.created_at.desc()).limit(limit)
     if before is not None:
