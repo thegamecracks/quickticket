@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import AfterValidator, BaseModel, Field, model_validator
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql.functions import count
 from starlette.status import HTTP_201_CREATED
 
 from quickticket.dependencies.auth import OptionalUserDep, RequiredUserDep
@@ -80,6 +81,12 @@ class EventRead(BaseModel):
 
 class EventsRead(BaseModel):
     events: list[EventRead]
+    ended: bool
+    """If true, this is the last page."""
+    next: datetime | None
+    """The next key to use for pagination."""
+    total: int
+    """The total number of events."""
 
 
 @router.get("", response_model=EventsRead)
@@ -150,7 +157,20 @@ async def get_events(
     )
 
     events = await session.scalars(paged_query)
-    return {"events": events.all()}
+    events = events.all()
+
+    ended = len(events) < limit
+    # Next key must match order_by() clause
+    next_key: datetime | None = events[-1].created_at if not ended and events else None
+    # Is this slow?
+    total = await session.scalar(select(count()).select_from(Event))
+
+    return {
+        "events": events,
+        "ended": ended,
+        "next": next_key,
+        "total": total,
+    }
 
 
 @router.get("/{event_id}", response_model=EventRead)

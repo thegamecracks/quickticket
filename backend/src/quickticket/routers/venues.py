@@ -66,6 +66,7 @@ class PartialVenue(BaseModel):
 
 class VenuesRead(BaseModel):
     venues: list[PartialVenue]
+    # TODO: ended, next, and total fields for pagination
 
 
 @router.get("", response_model=VenuesRead)

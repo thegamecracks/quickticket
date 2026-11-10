@@ -34,6 +34,7 @@ class PartialOrganization(BaseModel):
 
 class OrganizationsRead(BaseModel):
     organizations: list[PartialOrganization]
+    # TODO: ended, next, and total fields for pagination
 
 
 @router.get("", response_model=OrganizationsRead)
