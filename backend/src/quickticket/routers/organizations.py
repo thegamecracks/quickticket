@@ -55,11 +55,17 @@ async def get_organizations(
     ] = 10,
 ) -> Any:
     """Get a list of organizations."""
-    query = select(Organization).order_by(Organization.created_at.desc()).limit(limit)
-    if before is not None:
-        query = query.where(Organization.created_at < before)
+    query = select(Organization)
 
-    organizations = await session.scalars(query)
+    # Insert filter conditions between here and paged_query
+    # query = query.where(...)
+
+    paged_query = query.order_by(Organization.created_at.desc()).limit(limit)
+    if before is not None:
+        # NOTE: keyset pagination breaks if there are >=limit items with the same key
+        paged_query = paged_query.where(Organization.created_at < before)
+
+    organizations = await session.scalars(paged_query)
     return {"organizations": organizations.all()}
 
 

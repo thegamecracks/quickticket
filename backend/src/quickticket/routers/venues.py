@@ -90,11 +90,17 @@ async def get_venues(
     """Get a list of venues."""
     # TODO: sort by location proximity in latitude/longitude
     # TODO: maybe support FTS search?
-    query = select(Venue).order_by(Venue.created_at.desc()).limit(limit)
-    if before is not None:
-        query = query.where(Venue.created_at < before)
+    query = select(Venue)
 
-    query = query.options(
+    # Insert filter conditions between here and paged_query
+    # query = query.where(...)
+
+    paged_query = query.order_by(Venue.created_at.desc()).limit(limit)
+    if before is not None:
+        # NOTE: keyset pagination breaks if there are >=limit items with the same key
+        paged_query = paged_query.where(Venue.created_at < before)
+
+    paged_query = paged_query.options(
         selectinload(Venue.banner).load_only(StorageObject.id),
         selectinload(Venue.thumbnail).load_only(StorageObject.id),
         # Venue => Events => Tickets
@@ -109,7 +115,7 @@ async def get_venues(
         selectinload(Venue.organization),
     )
 
-    venues = await session.scalars(query)
+    venues = await session.scalars(paged_query)
     return {"venues": venues.all()}
 
 

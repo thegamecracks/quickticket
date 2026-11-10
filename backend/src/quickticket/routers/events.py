@@ -104,12 +104,17 @@ async def get_events(
     # TODO: sort by location?
     # TODO: sort by most tickets?
     # TODO: maybe support FTS search?
-    query = select(Event).order_by(Event.created_at.desc()).limit(limit)
+    query = select(Event)
+
+    # Insert filter conditions between here and paged_query
+    # query = query.where(...)
+
+    paged_query = query.order_by(Event.created_at.desc()).limit(limit)
     if before is not None:
         # NOTE: keyset pagination breaks if there are >=limit items with the same key
-        query = query.where(Event.created_at < before)
+        paged_query = paged_query.where(Event.created_at < before)
 
-    query = query.options(
+    paged_query = paged_query.options(
         selectinload(Event.banner).load_only(StorageObject.id),
         selectinload(Event.thumbnail).load_only(StorageObject.id),
         selectinload(Event.venue).load_only(
@@ -130,7 +135,7 @@ async def get_events(
         ).load_only(Ticket.id),
     )
 
-    events = await session.scalars(query)
+    events = await session.scalars(paged_query)
     return {"events": events.all()}
 
 
