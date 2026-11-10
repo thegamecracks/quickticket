@@ -160,6 +160,7 @@ async def test_get_events_filtered_by_organization(
     assert [event["id"] for event in data["items"]] == [
         str(expected_id) for expected_id in expected_ids
     ]
+    assert data["total"] == len(expected_ids)
 
 
 @pytest.mark.asyncio
@@ -175,7 +176,11 @@ async def test_get_events_filtered_by_organization_with_no_events(
         params={"organization_id": "7092b056-4bec-4f3e-aec4-7f7e8f37b13d"},
     )
     assert response.status_code == 200
-    assert response.json()["items"] == []
+    assert response.json() == {
+        "items": [],
+        "next": None,
+        "total": 0,
+    }
 
 
 @pytest.mark.asyncio
@@ -190,7 +195,11 @@ async def test_get_events_filtered_by_nonexistent_organization(
         params={"organization_id": "00000000-0000-0000-0000-000000000000"},
     )
     assert response.status_code == 200
-    assert response.json()["items"] == []
+    assert response.json() == {
+        "items": [],
+        "next": None,
+        "total": 0,
+    }
 
 
 @pytest.mark.asyncio

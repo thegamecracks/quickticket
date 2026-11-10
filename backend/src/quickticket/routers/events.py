@@ -153,7 +153,7 @@ async def get_events(
     # Next key must match order_by() clause
     next_key = None if len(events) < limit else events[-1].created_at
     # Is this slow?
-    total = await session.scalar(select(count()).select_from(Event))
+    total = await session.scalar(query.with_only_columns(count(), maintain_column_froms=True))
 
     return {"items": events, "next": next_key, "total": total}
 

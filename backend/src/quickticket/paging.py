@@ -10,4 +10,4 @@ class KeysetPagedResponse[E, K](BaseModel):
     next: K | None
     """The next key to use. If null, this is the last page."""
     total: int
-    """The total number of items. May be reduced by filters."""
+    """The total number of (potentially filtered) items."""
