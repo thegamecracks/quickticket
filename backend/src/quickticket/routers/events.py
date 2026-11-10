@@ -140,7 +140,6 @@ async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: U
     event = await session.scalar(
         select(Event)
         .where(Event.id == event_id)
-        .order_by(Event.created_at.desc())
         .options(
             selectinload(Event.venue).selectinload(Venue.organization),
             selectinload(
