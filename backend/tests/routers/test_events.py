@@ -66,8 +66,8 @@ async def test_get_events(
     # Should be limited to 10 events per request
     assert len(data["events"]) == min(10, len(dataset_loader.dataset.events))
 
-    assert set(data) == {"events", "ended", "next", "total"}
-    assert data["ended"] is False
+    assert set(data) == {"events", "next", "total"}
+    assert data["next"] is not None
     assert data["total"] == len(dataset_loader.dataset.events)
 
     ordered = sorted(
@@ -199,7 +199,6 @@ async def test_get_events_empty_database(client: AsyncClient) -> None:
     assert response.status_code == 200
     assert response.json() == {
         "events": [],
-        "ended": True,
         "next": None,
         "total": 0,
     }
@@ -221,7 +220,6 @@ async def test_get_events_last_page_has_no_next(
     data = response.json()
 
     assert [event["id"] for event in data["events"]] == [str(event.id) for event in ordered[10:]]
-    assert data["ended"] is True
     assert data["next"] is None
     assert data["total"] == len(dataset.events)
 
@@ -242,7 +240,7 @@ async def test_get_events_exact_multiple_ends_on_empty_page(
     data = response.json()
 
     assert [event["id"] for event in data["events"]] == [str(event.id) for event in ordered[:10]]
-    assert data["ended"] is False
+    assert data["next"] is not None
     assert data["next"] == isoformat(ordered[9].created_at)
     assert data["total"] == 20
 
@@ -253,7 +251,7 @@ async def test_get_events_exact_multiple_ends_on_empty_page(
 
     # Note that ended remains False, since the endpoint doesn't know it's at the end
     assert [event["id"] for event in data["events"]] == [str(event.id) for event in ordered[10:]]
-    assert data["ended"] is False
+    assert data["next"] is not None
     assert data["next"] == isoformat(ordered[-1].created_at)
     assert data["total"] == 20
 
@@ -262,7 +260,6 @@ async def test_get_events_exact_multiple_ends_on_empty_page(
     assert response.status_code == 200
     assert response.json() == {
         "events": [],
-        "ended": True,
         "next": None,
         "total": 20,
     }
@@ -280,7 +277,6 @@ async def test_get_events_before_matches_nothing(
     assert response.status_code == 200
     assert response.json() == {
         "events": [],
-        "ended": True,
         "next": None,
         "total": len(dataset_loader.dataset.events),
     }
@@ -310,12 +306,11 @@ async def test_get_events_pagination_walk(
         data = response.json()
         pages += 1
 
-        assert set(data) == {"events", "ended", "next", "total"}
+        assert set(data) == {"events", "next", "total"}
         assert data["total"] == len(dataset.events)
         collected.extend(data["events"])
 
-        if data["ended"]:
-            assert data["next"] is None
+        if data["next"] is None:
             break
 
         # A non-final page must be full and must point at its last event.

@@ -81,12 +81,11 @@ class EventRead(BaseModel):
 
 class EventsRead(BaseModel):
     events: list[EventRead]
-    ended: bool
-    """If true, this is the last page."""
+    """The items for the current page."""
     next: datetime | None
-    """The next key to use for pagination."""
+    """The next key to use for pagination. If null, this is the last page."""
     total: int
-    """The total number of events."""
+    """The total number of items, taking filters into consideration."""
 
 
 @router.get("", response_model=EventsRead)
@@ -159,18 +158,12 @@ async def get_events(
     events = await session.scalars(paged_query)
     events = events.all()
 
-    ended = len(events) < limit
     # Next key must match order_by() clause
-    next_key: datetime | None = events[-1].created_at if not ended and events else None
+    next_key = None if len(events) < limit else events[-1].created_at
     # Is this slow?
     total = await session.scalar(select(count()).select_from(Event))
 
-    return {
-        "events": events,
-        "ended": ended,
-        "next": next_key,
-        "total": total,
-    }
+    return {"events": events, "next": next_key, "total": total}
 
 
 @router.get("/{event_id}", response_model=EventRead)
