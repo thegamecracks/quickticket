@@ -77,6 +77,79 @@ async def test_get_events(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ["organization_id", "expected_ids"],
+    [
+        (
+            # Éclair Events
+            UUID("2cbd7222-4fd3-4cef-9500-79746e76da89"),
+            [
+                UUID("ad1d67bd-d92c-41e8-8494-c943eaaac05a"),
+                UUID("df7b2a4c-6647-43b7-88c7-17ddd2a43080"),
+            ],
+        ),
+        (
+            # Lopezs Event Planning and Decor
+            UUID("8e21c0af-d7a0-4f06-940c-b23728ae59e1"),
+            [
+                UUID("5a1231e3-8e9a-4e87-9835-6db515975d7c"),
+                UUID("ecca0ef6-390c-4b3e-9ec5-d7c307b642c5"),
+                UUID("0c1ed79b-e063-45de-bfce-7283f5247bc3"),
+                UUID("21afa1a9-a4ed-4d2f-8908-93b743027fec"),
+                UUID("0e161235-9c40-45e6-b4cd-022fd852f6e6"),
+            ],
+        ),
+    ],
+)
+async def test_get_events_filtered_by_organization(
+    client: AsyncClient,
+    dataset_loader: DatasetLoader,
+    organization_id: UUID,
+    expected_ids: list[UUID],
+) -> None:
+    await dataset_loader.load()
+
+    response = await client.get("/api/events", params={"organization_id": str(organization_id)})
+    assert response.status_code == 200
+    data = response.json()
+
+    assert [event["id"] for event in data["events"]] == [
+        str(expected_id) for expected_id in expected_ids
+    ]
+
+
+@pytest.mark.asyncio
+async def test_get_events_filtered_by_organization_with_no_events(
+    client: AsyncClient,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+
+    # Golden Hour Gatherings has venues, but no events
+    response = await client.get(
+        "/api/events",
+        params={"organization_id": "7092b056-4bec-4f3e-aec4-7f7e8f37b13d"},
+    )
+    assert response.status_code == 200
+    assert response.json()["events"] == []
+
+
+@pytest.mark.asyncio
+async def test_get_events_filtered_by_nonexistent_organization(
+    client: AsyncClient,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+
+    response = await client.get(
+        "/api/events",
+        params={"organization_id": "00000000-0000-0000-0000-000000000000"},
+    )
+    assert response.status_code == 200
+    assert response.json()["events"] == []
+
+
+@pytest.mark.asyncio
 async def test_get_event(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
