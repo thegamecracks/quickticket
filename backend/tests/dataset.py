@@ -1014,7 +1014,7 @@ Weddings, corporate events, and private parties.""",
         Venue(
             id=UUID("d60f59fc-721d-42bb-8a35-821de7cdc7d8"),
             organization_id=UUID("8e21c0af-d7a0-4f06-940c-b23728ae59e1"),
-            display_name="Lopez's Event Planning and Decor - Venue 1",
+            display_name="Lopezs Event Planning and Decor - Venue 1",
             description="""## About
 A charming rustic venue with exposed brick walls and **warm lighting**.
 
@@ -1033,7 +1033,7 @@ Intimate weddings, birthday celebrations, and small conferences.""",
         Venue(
             id=UUID("fbacc99d-7e4c-42fb-8032-a974ff512649"),
             organization_id=UUID("8e21c0af-d7a0-4f06-940c-b23728ae59e1"),
-            display_name="Lopez's Event Planning and Decor - Venue 2",
+            display_name="Lopezs Event Planning and Decor - Venue 2",
             description="""## About
 A state-of-the-art conference center with **flexible seating** and cutting-edge technology.
 
