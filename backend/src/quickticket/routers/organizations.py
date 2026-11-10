@@ -20,6 +20,7 @@ from quickticket.models import (
     Ticket,
     Venue,
 )
+from quickticket.paging import BeforePageParams
 from quickticket.validators import DisplayNameField
 
 router = APIRouter(tags=["Organizations"])
@@ -40,20 +41,7 @@ class OrganizationsRead(BaseModel):
 @router.get("", response_model=OrganizationsRead)
 async def get_organizations(
     session: AsyncSessionDep,
-    before: Annotated[
-        datetime | None,
-        Query(
-            description="Return events before the given datetime, exclusive.",
-        ),
-    ] = None,
-    limit: Annotated[
-        int,
-        Query(
-            description="Limit the number of events returned.",
-            gt=0,
-            le=10,
-        ),
-    ] = 10,
+    page: Annotated[BeforePageParams, Query()],
 ) -> Any:
     """Get a list of organizations."""
     query = select(Organization)
@@ -61,10 +49,10 @@ async def get_organizations(
     # Insert filter conditions between here and paged_query
     # query = query.where(...)
 
-    paged_query = query.order_by(Organization.created_at.desc()).limit(limit)
-    if before is not None:
+    paged_query = query.order_by(Organization.created_at.desc()).limit(page.limit)
+    if page.before is not None:
         # NOTE: keyset pagination breaks if there are >=limit items with the same key
-        paged_query = paged_query.where(Organization.created_at < before)
+        paged_query = paged_query.where(Organization.created_at < page.before)
 
     organizations = await session.scalars(paged_query)
     return {"organizations": organizations.all()}

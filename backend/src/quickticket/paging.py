@@ -1,4 +1,21 @@
-from pydantic import BaseModel
+from datetime import datetime
+
+from pydantic import BaseModel, Field
+
+
+class BeforePageParams(BaseModel):
+    """Pagination parameters for ?before= sorting key."""
+
+    before: datetime | None = Field(
+        description="Return items before the given datetime, exclusive.",
+        default=None,
+    )
+    limit: int = Field(
+        description="Limit the number of items returned.",
+        default=10,
+        gt=0,
+        le=10,
+    )
 
 
 class KeysetPagedResponse[E, K](BaseModel):

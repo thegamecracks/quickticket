@@ -24,7 +24,7 @@ from quickticket.models import (
     Ticket,
     Venue,
 )
-from quickticket.paging import KeysetPagedResponse
+from quickticket.paging import BeforePageParams, KeysetPagedResponse
 from quickticket.validators import (
     DisplayNameField,
     FutureAwareDatetime,
@@ -84,20 +84,7 @@ class EventRead(BaseModel):
 async def get_events(
     user: OptionalUserDep,
     session: AsyncSessionDep,
-    before: Annotated[
-        datetime | None,
-        Query(
-            description="Return events before the given datetime, exclusive.",
-        ),
-    ] = None,
-    limit: Annotated[
-        int,
-        Query(
-            description="Limit the number of events returned.",
-            gt=0,
-            le=10,
-        ),
-    ] = 10,
+    page: Annotated[BeforePageParams, Query()],
     organization_id: Annotated[
         UUID | None,
         Query(
@@ -121,10 +108,10 @@ async def get_events(
             .where(Organization.id == organization_id)
         )
 
-    paged_query = query.order_by(Event.created_at.desc()).limit(limit)
-    if before is not None:
+    paged_query = query.order_by(Event.created_at.desc()).limit(page.limit)
+    if page.before is not None:
         # NOTE: keyset pagination breaks if there are >=limit items with the same key
-        paged_query = paged_query.where(Event.created_at < before)
+        paged_query = paged_query.where(Event.created_at < page.before)
 
     paged_query = paged_query.options(
         selectinload(Event.banner).load_only(StorageObject.id),
@@ -151,7 +138,7 @@ async def get_events(
     events = events.all()
 
     # Next key must match order_by() clause
-    next_key = None if len(events) < limit else events[-1].created_at
+    next_key = None if len(events) < page.limit else events[-1].created_at
     # Is this slow?
     total = await session.scalar(query.with_only_columns(count(), maintain_column_froms=True))
 

@@ -22,6 +22,7 @@ from quickticket.models import (
     Ticket,
     Venue,
 )
+from quickticket.paging import BeforePageParams
 from quickticket.validators import DisplayNameField, filter_string_field
 
 VENUE_LIMIT = 5
@@ -73,20 +74,7 @@ class VenuesRead(BaseModel):
 async def get_venues(
     user: OptionalUserDep,
     session: AsyncSessionDep,
-    before: Annotated[
-        datetime | None,
-        Query(
-            description="Return venues before the given datetime, exclusive.",
-        ),
-    ] = None,
-    limit: Annotated[
-        int,
-        Query(
-            description="Limit the number of venues returned.",
-            gt=0,
-            le=10,
-        ),
-    ] = 10,
+    page: Annotated[BeforePageParams, Query()],
 ) -> Any:
     """Get a list of venues."""
     # TODO: sort by location proximity in latitude/longitude
@@ -96,10 +84,10 @@ async def get_venues(
     # Insert filter conditions between here and paged_query
     # query = query.where(...)
 
-    paged_query = query.order_by(Venue.created_at.desc()).limit(limit)
-    if before is not None:
+    paged_query = query.order_by(Venue.created_at.desc()).limit(page.limit)
+    if page.before is not None:
         # NOTE: keyset pagination breaks if there are >=limit items with the same key
-        paged_query = paged_query.where(Venue.created_at < before)
+        paged_query = paged_query.where(Venue.created_at < page.before)
 
     paged_query = paged_query.options(
         selectinload(Venue.banner).load_only(StorageObject.id),
