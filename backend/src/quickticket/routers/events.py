@@ -24,6 +24,7 @@ from quickticket.models import (
     Ticket,
     Venue,
 )
+from quickticket.paging import KeysetPagedResponse
 from quickticket.validators import (
     DisplayNameField,
     FutureAwareDatetime,
@@ -79,16 +80,7 @@ class EventRead(BaseModel):
     venue: PartialVenue
 
 
-class EventsRead(BaseModel):
-    events: list[EventRead]
-    """The items for the current page."""
-    next: datetime | None
-    """The next key to use for pagination. If null, this is the last page."""
-    total: int
-    """The total number of items, taking filters into consideration."""
-
-
-@router.get("", response_model=EventsRead)
+@router.get("", response_model=KeysetPagedResponse[EventRead, datetime])
 async def get_events(
     user: OptionalUserDep,
     session: AsyncSessionDep,
@@ -163,7 +155,7 @@ async def get_events(
     # Is this slow?
     total = await session.scalar(select(count()).select_from(Event))
 
-    return {"events": events, "next": next_key, "total": total}
+    return {"items": events, "next": next_key, "total": total}
 
 
 @router.get("/{event_id}", response_model=EventRead)

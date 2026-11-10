@@ -64,9 +64,9 @@ async def test_get_events(
     data = response.json()
 
     # Should be limited to 10 events per request
-    assert len(data["events"]) == min(10, len(dataset_loader.dataset.events))
+    assert len(data["items"]) == min(10, len(dataset_loader.dataset.events))
 
-    assert set(data) == {"events", "next", "total"}
+    assert set(data) == {"items", "next", "total"}
     assert data["next"] is not None
     assert data["total"] == len(dataset_loader.dataset.events)
 
@@ -76,11 +76,11 @@ async def test_get_events(
         reverse=True,
     )
     returned = ordered[:10]
-    assert [event["id"] for event in data["events"]] == [str(event.id) for event in returned]
+    assert [event["id"] for event in data["items"]] == [str(event.id) for event in returned]
     assert data["next"] == isoformat(returned[-1].created_at)
 
     async with make_session.begin() as session:
-        for event in data["events"]:
+        for event in data["items"]:
             expected = await session.get(
                 Event,
                 UUID(event["id"]),
@@ -157,7 +157,7 @@ async def test_get_events_filtered_by_organization(
     assert response.status_code == 200
     data = response.json()
 
-    assert [event["id"] for event in data["events"]] == [
+    assert [event["id"] for event in data["items"]] == [
         str(expected_id) for expected_id in expected_ids
     ]
 
@@ -175,7 +175,7 @@ async def test_get_events_filtered_by_organization_with_no_events(
         params={"organization_id": "7092b056-4bec-4f3e-aec4-7f7e8f37b13d"},
     )
     assert response.status_code == 200
-    assert response.json()["events"] == []
+    assert response.json()["items"] == []
 
 
 @pytest.mark.asyncio
@@ -190,7 +190,7 @@ async def test_get_events_filtered_by_nonexistent_organization(
         params={"organization_id": "00000000-0000-0000-0000-000000000000"},
     )
     assert response.status_code == 200
-    assert response.json()["events"] == []
+    assert response.json()["items"] == []
 
 
 @pytest.mark.asyncio
@@ -198,7 +198,7 @@ async def test_get_events_empty_database(client: AsyncClient) -> None:
     response = await client.get("/api/events")
     assert response.status_code == 200
     assert response.json() == {
-        "events": [],
+        "items": [],
         "next": None,
         "total": 0,
     }
@@ -219,7 +219,7 @@ async def test_get_events_last_page_has_no_next(
     assert response.status_code == 200
     data = response.json()
 
-    assert [event["id"] for event in data["events"]] == [str(event.id) for event in ordered[10:]]
+    assert [event["id"] for event in data["items"]] == [str(event.id) for event in ordered[10:]]
     assert data["next"] is None
     assert data["total"] == len(dataset.events)
 
@@ -239,7 +239,7 @@ async def test_get_events_exact_multiple_ends_on_empty_page(
     assert response.status_code == 200
     data = response.json()
 
-    assert [event["id"] for event in data["events"]] == [str(event.id) for event in ordered[:10]]
+    assert [event["id"] for event in data["items"]] == [str(event.id) for event in ordered[:10]]
     assert data["next"] is not None
     assert data["next"] == isoformat(ordered[9].created_at)
     assert data["total"] == 20
@@ -250,7 +250,7 @@ async def test_get_events_exact_multiple_ends_on_empty_page(
     data = response.json()
 
     # Note that ended remains False, since the endpoint doesn't know it's at the end
-    assert [event["id"] for event in data["events"]] == [str(event.id) for event in ordered[10:]]
+    assert [event["id"] for event in data["items"]] == [str(event.id) for event in ordered[10:]]
     assert data["next"] is not None
     assert data["next"] == isoformat(ordered[-1].created_at)
     assert data["total"] == 20
@@ -259,7 +259,7 @@ async def test_get_events_exact_multiple_ends_on_empty_page(
     response = await client.get("/api/events", params={"limit": 10, "before": data["next"]})
     assert response.status_code == 200
     assert response.json() == {
-        "events": [],
+        "items": [],
         "next": None,
         "total": 20,
     }
@@ -276,7 +276,7 @@ async def test_get_events_before_matches_nothing(
     response = await client.get("/api/events", params={"before": before})
     assert response.status_code == 200
     assert response.json() == {
-        "events": [],
+        "items": [],
         "next": None,
         "total": len(dataset_loader.dataset.events),
     }
@@ -306,16 +306,16 @@ async def test_get_events_pagination_walk(
         data = response.json()
         pages += 1
 
-        assert set(data) == {"events", "next", "total"}
+        assert set(data) == {"items", "next", "total"}
         assert data["total"] == len(dataset.events)
-        collected.extend(data["events"])
+        collected.extend(data["items"])
 
         if data["next"] is None:
             break
 
         # A non-final page must be full and must point at its last event.
-        assert len(data["events"]) == limit
-        assert data["next"] == data["events"][-1]["created_at"]
+        assert len(data["items"]) == limit
+        assert data["next"] == data["items"][-1]["created_at"]
         before = data["next"]
         assert pages <= len(dataset.events) + 1
 
