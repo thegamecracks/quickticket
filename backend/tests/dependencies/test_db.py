@@ -97,3 +97,17 @@ async def test_get_async_session_commits_on_forced_response(
     assert exc_info.value is forced_response
     async with make_session.begin() as session:
         assert await count_users(session) == 1
+
+
+@pytest.mark.asyncio
+async def test_get_async_session_returns_aware_datetimes(
+    make_session: async_sessionmaker[AsyncSession],
+) -> None:
+    async with enter_get_async_session(make_session) as session:
+        session.add(create_user())
+
+    async with make_session.begin() as session:
+        user = await session.scalar(select(User))
+        assert user is not None
+        # The TZDateTime converter coerces the database's naive timestamps.
+        assert user.created_at.tzinfo is not None
