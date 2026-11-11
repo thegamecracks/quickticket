@@ -22,7 +22,12 @@ from quickticket.models import (
     Ticket,
     Venue,
 )
-from quickticket.paging import BeforePageParams, KeysetPagedResponse
+from quickticket.paging import (
+    DateTimeFilterParams,
+    DateTimeSortKey,
+    KeysetPagedResponse,
+    KeysetPageParams,
+)
 from quickticket.validators import DisplayNameField, filter_string_field
 
 VENUE_LIMIT = 5
@@ -65,11 +70,12 @@ class PartialVenue(BaseModel):
     organization: PartialOrganization
 
 
-@router.get("", response_model=KeysetPagedResponse[PartialVenue, datetime])
+@router.get("", response_model=KeysetPagedResponse[PartialVenue, DateTimeSortKey])
 async def get_venues(
     user: OptionalUserDep,
     session: AsyncSessionDep,
-    page: Annotated[BeforePageParams, Query()],
+    page: Annotated[KeysetPageParams[DateTimeSortKey], Query()],
+    dt_filter: Annotated[DateTimeFilterParams, Query()],
 ) -> Any:
     """Get a list of venues."""
     # TODO: sort by location proximity in latitude/longitude
@@ -77,12 +83,13 @@ async def get_venues(
     query = select(Venue)
 
     # Insert filter conditions between here and paged_query
-    # query = query.where(...)
+    if dt_filter.before is not None:
+        query = query.where(Venue.created_at < dt_filter.before)
 
     paged_query = query.order_by(Venue.created_at.desc()).limit(page.limit)
-    if page.before is not None:
+    if page.next is not None:
         # NOTE: keyset pagination breaks if there are >=limit items with the same key
-        paged_query = paged_query.where(Venue.created_at < page.before)
+        paged_query = paged_query.where(Venue.created_at < page.next)
 
     paged_query = paged_query.options(
         selectinload(Venue.banner).load_only(StorageObject.id),

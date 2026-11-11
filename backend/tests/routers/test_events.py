@@ -13,11 +13,7 @@ from quickticket.models import (
     OrganizationMemberPermissions,
     Venue,
 )
-from tests.conftest import AuthController, DatasetLoader
-
-
-def isoformat(dt: datetime) -> str:
-    return dt.isoformat().replace("+00:00", "Z")
+from tests.conftest import AuthController, DatasetLoader, assert_keyset_walk, isoformat
 
 
 @pytest.mark.asyncio
@@ -46,7 +42,6 @@ async def test_get_events(
     )
     returned = ordered[:10]
     assert [event["id"] for event in data["items"]] == [str(event.id) for event in returned]
-    assert data["next"] == isoformat(returned[-1].created_at)
 
     async with make_session.begin() as session:
         for event in data["items"]:
@@ -183,6 +178,22 @@ async def test_get_events_empty_database(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
+async def test_get_events_next_key_is_last_created_at(
+    client: AsyncClient,
+    dataset_loader: DatasetLoader,
+) -> None:
+    """The current contract: next is the sort key of the page's last item."""
+    await dataset_loader.load()
+
+    response = await client.get("/api/events")
+    assert response.status_code == 200
+    data = response.json()
+
+    assert len(data["items"]) == 10
+    assert data["next"] == data["items"][-1]["created_at"]
+
+
+@pytest.mark.asyncio
 async def test_get_events_last_page_has_no_next(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -193,7 +204,12 @@ async def test_get_events_last_page_has_no_next(
 
     # With 12 events and the default limit of 10, the second page holds the two
     # oldest events and is the last page.
-    response = await client.get("/api/events", params={"before": isoformat(ordered[9].created_at)})
+    first = await client.get("/api/events")
+    assert first.status_code == 200
+    first_page = first.json()
+    assert first_page["next"] is not None
+
+    response = await client.get("/api/events", params={"next": first_page["next"]})
     assert response.status_code == 200
     data = response.json()
 
@@ -222,7 +238,7 @@ async def test_get_events_exact_multiple_ends_on_empty_page(
 
         if expected_size > 0:
             assert data["next"] is not None
-            params["before"] = data["next"]
+            params["next"] = data["next"]
         else:
             assert data["next"] is None
 
@@ -240,8 +256,175 @@ async def test_get_events_before_matches_nothing(
     assert response.json() == {
         "items": [],
         "next": None,
-        "total": len(dataset_loader.dataset.events),
+        "total": 0,
     }
+
+
+@pytest.mark.asyncio
+async def test_get_events_before_is_exclusive(
+    client: AsyncClient,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    ordered = sorted(dataset.events, key=lambda event: event.created_at, reverse=True)
+
+    # Excluding the newest event leaves 11 events, of which the first page holds 10.
+    response = await client.get("/api/events", params={"before": isoformat(ordered[0].created_at)})
+    assert response.status_code == 200
+    data = response.json()
+
+    assert [event["id"] for event in data["items"]] == [str(event.id) for event in ordered[1:11]]
+    assert data["next"] == isoformat(ordered[10].created_at)
+    assert data["total"] == len(dataset.events) - 1
+
+
+@pytest.mark.asyncio
+async def test_get_events_before_and_organization_id(
+    client: AsyncClient,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+
+    # Lopezs Event Planning and Decor
+    organization_id = UUID("8e21c0af-d7a0-4f06-940c-b23728ae59e1")
+    venue_organizations = {venue.id: venue.organization_id for venue in dataset.venues}
+    organization_events = sorted(
+        (
+            event
+            for event in dataset.events
+            if venue_organizations[event.venue_id] == organization_id
+        ),
+        key=lambda event: event.created_at,
+        reverse=True,
+    )
+
+    # The organization has five events; the filter excludes the three newest.
+    response = await client.get(
+        "/api/events",
+        params={
+            "organization_id": str(organization_id),
+            "before": isoformat(organization_events[2].created_at),
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+
+    assert [event["id"] for event in data["items"]] == [
+        str(event.id) for event in organization_events[3:]
+    ]
+    assert data["next"] is None
+    assert data["total"] == 2
+
+
+@pytest.mark.asyncio
+async def test_get_events_next_is_exclusive(
+    client: AsyncClient,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    ordered = sorted(dataset.events, key=lambda event: event.created_at, reverse=True)
+
+    response = await client.get("/api/events", params={"next": isoformat(ordered[3].created_at)})
+    assert response.status_code == 200
+    data = response.json()
+
+    assert [event["id"] for event in data["items"]] == [str(event.id) for event in ordered[4:]]
+    assert str(ordered[3].id) not in {event["id"] for event in data["items"]}
+    assert data["next"] is None
+    # next narrows the page, not the total dataset
+    assert data["total"] == len(dataset.events)
+
+
+@pytest.mark.asyncio
+async def test_get_events_next_between_keys(
+    client: AsyncClient,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    ordered = sorted(dataset.events, key=lambda event: event.created_at, reverse=True)
+
+    between = ordered[5].created_at - timedelta(days=1)
+    response = await client.get("/api/events", params={"next": isoformat(between)})
+    assert response.status_code == 200
+    data = response.json()
+
+    assert [event["id"] for event in data["items"]] == [str(event.id) for event in ordered[6:]]
+    assert data["next"] is None
+    assert data["total"] == len(dataset.events)
+
+
+@pytest.mark.asyncio
+async def test_get_events_next_oldest_key_returns_empty(
+    client: AsyncClient,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    ordered = sorted(dataset.events, key=lambda event: event.created_at, reverse=True)
+
+    response = await client.get("/api/events", params={"next": isoformat(ordered[-1].created_at)})
+    assert response.status_code == 200
+    assert response.json() == {
+        "items": [],
+        "next": None,
+        "total": len(dataset.events),
+    }
+
+
+@pytest.mark.asyncio
+async def test_get_events_before_and_next(
+    client: AsyncClient,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    ordered = sorted(dataset.events, key=lambda event: event.created_at, reverse=True)
+
+    response = await client.get(
+        "/api/events",
+        params={
+            # before is a filter: it excludes the newest event and reduces total
+            "before": isoformat(ordered[0].created_at),
+            # next paginates within the before-filtered set
+            "next": isoformat(ordered[2].created_at),
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+
+    assert [event["id"] for event in data["items"]] == [str(event.id) for event in ordered[3:]]
+    assert data["next"] is None
+    assert data["total"] == len(dataset.events) - 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ["params", "expected_loc", "expected_type"],
+    [
+        ({"next": "nope"}, ["query", "next"], "datetime_from_date_parsing"),
+        ({"before": "nope"}, ["query", "before"], "datetime_from_date_parsing"),
+        ({"next": "2026-10-20T00:00:00"}, ["query", "next"], "timezone_aware"),
+        ({"before": "2026-10-20T00:00:00"}, ["query", "before"], "timezone_aware"),
+        ({"limit": "0"}, ["query", "limit"], "greater_than"),
+        ({"limit": "11"}, ["query", "limit"], "less_than_equal"),
+        ({"limit": "abc"}, ["query", "limit"], "int_parsing"),
+    ],
+)
+async def test_get_events_rejects_invalid_page_params(
+    client: AsyncClient,
+    params: dict[str, str],
+    expected_loc: list[str],
+    expected_type: str,
+) -> None:
+    response = await client.get("/api/events", params=params)
+    assert response.status_code == 422
+
+    errors = response.json()["detail"]
+    assert any(error["loc"] == expected_loc and error["type"] == expected_type for error in errors)
 
 
 @pytest.mark.asyncio
@@ -277,42 +460,52 @@ async def test_get_events_pagination_walk(
         reverse=True,
     )
 
-    collected: list[dict[str, object]] = []
-    before: str | None = None
-    pages = 0
-    while True:
-        params = {"limit": str(limit)}
-        if organization_id is not None:
-            params["organization_id"] = str(organization_id)
-        if before is not None:
-            params["before"] = before
+    params = {}
+    if organization_id is not None:
+        params["organization_id"] = str(organization_id)
 
-        response = await client.get("/api/events", params=params)
-        assert response.status_code == 200
-        data = response.json()
-        pages += 1
+    assert len(expected) == expected_total
+    await assert_keyset_walk(
+        client,
+        "/api/events",
+        expected_ids=[event.id for event in expected],
+        limit=limit,
+        params=params,
+    )
 
-        assert set(data) == {"items", "next", "total"}
-        # total reflects the filters, not the remaining items in the page set
-        assert data["total"] == expected_total
-        collected.extend(data["items"])
 
-        if data["next"] is None:
-            break
+@pytest.mark.asyncio
+async def test_get_events_pagination_walk_with_before(
+    client: AsyncClient,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
 
-        # A non-final page must be full and must point at its last event.
-        assert len(data["items"]) == limit
-        assert data["next"] == data["items"][-1]["created_at"]
-        before = data["next"]
+    # Lopezs Event Planning and Decor
+    organization_id = UUID("8e21c0af-d7a0-4f06-940c-b23728ae59e1")
+    venue_organizations = {venue.id: venue.organization_id for venue in dataset.venues}
+    organization_events = sorted(
+        (
+            event
+            for event in dataset.events
+            if venue_organizations[event.venue_id] == organization_id
+        ),
+        key=lambda event: event.created_at,
+        reverse=True,
+    )
 
-    assert pages == (expected_total // limit) + 1
-
-    ids = [event["id"] for event in collected]
-    assert len(ids) == len(set(ids))
-    assert set(ids) == {str(event.id) for event in expected}
-    assert [event["created_at"] for event in collected] == [
-        isoformat(event.created_at) for event in expected
-    ]
+    # The filter excludes the newest event, leaving four across three pages.
+    await assert_keyset_walk(
+        client,
+        "/api/events",
+        expected_ids=[event.id for event in organization_events[1:]],
+        limit=2,
+        params={
+            "organization_id": str(organization_id),
+            "before": isoformat(organization_events[0].created_at),
+        },
+    )
 
 
 @pytest.mark.asyncio

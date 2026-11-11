@@ -21,7 +21,12 @@ from quickticket.models import (
     Ticket,
     Venue,
 )
-from quickticket.paging import BeforePageParams, KeysetPagedResponse
+from quickticket.paging import (
+    DateTimeFilterParams,
+    DateTimeSortKey,
+    KeysetPagedResponse,
+    KeysetPageParams,
+)
 from quickticket.validators import DisplayNameField
 
 router = APIRouter(tags=["Organizations"])
@@ -34,21 +39,23 @@ class PartialOrganization(BaseModel):
     display_name: str
 
 
-@router.get("", response_model=KeysetPagedResponse[PartialOrganization, datetime])
+@router.get("", response_model=KeysetPagedResponse[PartialOrganization, DateTimeSortKey])
 async def get_organizations(
     session: AsyncSessionDep,
-    page: Annotated[BeforePageParams, Query()],
+    page: Annotated[KeysetPageParams[DateTimeSortKey], Query()],
+    dt_filter: Annotated[DateTimeFilterParams, Query()],
 ) -> Any:
     """Get a list of organizations."""
     query = select(Organization)
 
     # Insert filter conditions between here and paged_query
-    # query = query.where(...)
+    if dt_filter.before is not None:
+        query = query.where(Organization.created_at < dt_filter.before)
 
     paged_query = query.order_by(Organization.created_at.desc()).limit(page.limit)
-    if page.before is not None:
+    if page.next is not None:
         # NOTE: keyset pagination breaks if there are >=limit items with the same key
-        paged_query = paged_query.where(Organization.created_at < page.before)
+        paged_query = paged_query.where(Organization.created_at < page.next)
 
     items = await session.scalars(paged_query)
     items = items.all()

@@ -24,7 +24,12 @@ from quickticket.models import (
     Ticket,
     Venue,
 )
-from quickticket.paging import BeforePageParams, KeysetPagedResponse
+from quickticket.paging import (
+    DateTimeFilterParams,
+    DateTimeSortKey,
+    KeysetPagedResponse,
+    KeysetPageParams,
+)
 from quickticket.validators import (
     DisplayNameField,
     FutureAwareDatetime,
@@ -80,11 +85,12 @@ class EventRead(BaseModel):
     venue: PartialVenue
 
 
-@router.get("", response_model=KeysetPagedResponse[EventRead, datetime])
+@router.get("", response_model=KeysetPagedResponse[EventRead, DateTimeSortKey])
 async def get_events(
     user: OptionalUserDep,
     session: AsyncSessionDep,
-    page: Annotated[BeforePageParams, Query()],
+    page: Annotated[KeysetPageParams[DateTimeSortKey], Query()],
+    dt_filter: Annotated[DateTimeFilterParams, Query()],
     organization_id: Annotated[
         UUID | None,
         Query(
@@ -101,6 +107,8 @@ async def get_events(
     query = select(Event)
 
     # Insert filter conditions between here and paged_query
+    if dt_filter.before is not None:
+        query = query.where(Event.created_at < dt_filter.before)
     if organization_id is not None:
         query = (
             query.join(Event.venue)
@@ -109,9 +117,9 @@ async def get_events(
         )
 
     paged_query = query.order_by(Event.created_at.desc()).limit(page.limit)
-    if page.before is not None:
+    if page.next is not None:
         # NOTE: keyset pagination breaks if there are >=limit items with the same key
-        paged_query = paged_query.where(Event.created_at < page.before)
+        paged_query = paged_query.where(Event.created_at < page.next)
 
     paged_query = paged_query.options(
         selectinload(Event.banner).load_only(StorageObject.id),

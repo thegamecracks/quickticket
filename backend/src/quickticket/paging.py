@@ -1,21 +1,45 @@
 from datetime import datetime
+from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import AwareDatetime, BaseModel, Field
+
+DateTimeSortKey = Annotated[datetime, AwareDatetime]
+"""A timezone-aware datetime used as a keyset pagination sort key."""
 
 
-class BeforePageParams(BaseModel):
-    """Pagination parameters for ?before= sorting key."""
+class DateTimeFilterParams(BaseModel):
+    """Filter parameters based on some time field."""
 
-    before: datetime | None = Field(
+    # after: Annotated[datetime, AwareDatetime] | None = Field(
+    #     description="Return items after the given datetime, exclusive.",
+    #     default=None,
+    # )
+
+    before: Annotated[datetime, AwareDatetime] | None = Field(
         description="Return items before the given datetime, exclusive.",
         default=None,
     )
+
+
+class KeysetPageParams[K](BaseModel):
+    """Parameters for keyset pagination."""
+
+    next: K | None = Field(
+        description="Get the next page by key.",
+        default=None,
+    )
+
     limit: int = Field(
         description="Limit the number of items returned.",
         default=10,
         gt=0,
         le=10,
     )
+
+    # sort: Annotated[SortKey | None, AfterValidator(parse_sort_key)] = Field(
+    #     description="Sort by a given attribute in ascending (+) or descending (-) order.",
+    #     default=None,
+    # )
 
 
 class KeysetPagedResponse[E, K](BaseModel):
