@@ -22,6 +22,12 @@ from quickticket.models import (
     Ticket,
     Venue,
 )
+from quickticket.paging import (
+    DateTimeFilterParams,
+    DateTimeSortKey,
+    KeysetPagedResponse,
+    KeysetPageParams,
+)
 from quickticket.validators import DisplayNameField, filter_string_field
 
 VENUE_LIMIT = 5
@@ -64,28 +70,12 @@ class PartialVenue(BaseModel):
     organization: PartialOrganization
 
 
-class VenuesRead(BaseModel):
-    venues: list[PartialVenue]
-
-
-@router.get("", response_model=VenuesRead)
+@router.get("", response_model=KeysetPagedResponse[PartialVenue, DateTimeSortKey])
 async def get_venues(
     user: OptionalUserDep,
     session: AsyncSessionDep,
-    before: Annotated[
-        datetime | None,
-        Query(
-            description="Return venues before the given datetime, exclusive.",
-        ),
-    ] = None,
-    limit: Annotated[
-        int,
-        Query(
-            description="Limit the number of venues returned.",
-            gt=0,
-            le=10,
-        ),
-    ] = 10,
+    page: Annotated[KeysetPageParams[DateTimeSortKey], Query()],
+    dt_filter: Annotated[DateTimeFilterParams, Query()],
 ) -> Any:
     """Get a list of venues."""
     # TODO: sort by location proximity in latitude/longitude
@@ -93,12 +83,15 @@ async def get_venues(
     query = select(Venue)
 
     # Insert filter conditions between here and paged_query
-    # query = query.where(...)
+    if dt_filter.after is not None:
+        query = query.where(Venue.created_at > dt_filter.after)
+    if dt_filter.before is not None:
+        query = query.where(Venue.created_at < dt_filter.before)
 
-    paged_query = query.order_by(Venue.created_at.desc()).limit(limit)
-    if before is not None:
+    paged_query = query.order_by(Venue.created_at.desc()).limit(page.limit)
+    if page.next is not None:
         # NOTE: keyset pagination breaks if there are >=limit items with the same key
-        paged_query = paged_query.where(Venue.created_at < before)
+        paged_query = paged_query.where(Venue.created_at < page.next)
 
     paged_query = paged_query.options(
         selectinload(Venue.banner).load_only(StorageObject.id),
@@ -115,8 +108,13 @@ async def get_venues(
         selectinload(Venue.organization),
     )
 
-    venues = await session.scalars(paged_query)
-    return {"venues": venues.all()}
+    items = await session.scalars(paged_query)
+    items = items.all()
+    # Next key must match order_by() clause
+    next_key = None if len(items) < page.limit else items[-1].created_at
+    # Is this slow?
+    total = await session.scalar(query.with_only_columns(count(), maintain_column_froms=True))
+    return {"items": items, "next": next_key, "total": total}
 
 
 class VenueReadEvent(BaseModel):

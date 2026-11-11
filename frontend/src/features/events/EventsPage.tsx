@@ -37,9 +37,9 @@ export default function EventsPage() {
     // eventual const res = api.get("/events");
     const getEvents = async (): Promise<void> => {
       // MOCK  const res = getMockAllEvents();
-      const res = await api.get<{ events: EventResponse[] }>("/events");
+      const res = await api.get<{ items: EventResponse[] }>("/events");
       console.log(res.data);
-      setEvents(res.data.events);
+      setEvents(res.data.items);
     }
 
     getEvents();

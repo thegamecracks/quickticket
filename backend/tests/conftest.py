@@ -1,8 +1,11 @@
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Mapping, Sequence
 from contextlib import AsyncExitStack
 from dataclasses import dataclass
+from datetime import datetime
 from functools import partial
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
+from uuid import UUID
 
 import pytest
 import pytest_asyncio
@@ -36,6 +39,60 @@ from quickticket.settings import (
     Settings,
 )
 from tests.dataset import Dataset, create_test_models
+
+
+def isoformat(dt: datetime) -> str:
+    return dt.isoformat().replace("+00:00", "Z")
+
+
+async def assert_keyset_walk(
+    client: AsyncClient,
+    url: str,
+    *,
+    expected_ids: Sequence[UUID | str],
+    limit: int,
+    params: Mapping[str, str] | None = None,
+) -> list[dict[str, Any]]:
+    """Walk every page of a keyset-paginated endpoint, treating next as opaque.
+
+    Returns the collected items in the order the endpoint returned them.
+    """
+    expected_ids = [str(expected_id) for expected_id in expected_ids]
+    total = len(expected_ids)
+    query = dict(params or {})
+    next_key: str | None = None
+    collected: list[dict[str, Any]] = []
+    pages = 0
+
+    while True:
+        request_params = {**query, "limit": str(limit)}
+        if next_key is not None:
+            request_params["next"] = next_key
+
+        response = await client.get(url, params=request_params)
+        assert response.status_code == 200
+        data = response.json()
+        pages += 1
+
+        assert set(data) == {"items", "next", "total"}
+        # total reflects the filters, not the remaining items in the page set
+        assert data["total"] == total
+        collected.extend(data["items"])
+
+        if data["next"] is None:
+            break
+
+        # A non-final page must be full.
+        assert len(data["items"]) == limit
+        next_key = data["next"]
+
+    # A full final page yields one extra, empty page.
+    assert pages == total // limit + 1
+
+    ids = [item["id"] for item in collected]
+    assert len(ids) == len(set(ids))
+    assert ids == expected_ids
+    return collected
 
 
 @pytest.fixture

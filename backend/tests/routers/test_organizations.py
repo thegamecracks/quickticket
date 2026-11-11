@@ -10,7 +10,56 @@ from quickticket.models import (
     OrganizationMember,
     OrganizationMemberPermissions,
 )
-from tests.conftest import AuthController
+from tests.conftest import AuthController, DatasetLoader, isoformat
+
+
+@pytest.mark.asyncio
+async def test_get_organizations(
+    client: AsyncClient,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+
+    response = await client.get("/api/organizations")
+    assert response.status_code == 200
+    data = response.json()
+
+    assert set(data) == {"items", "next", "total"}
+    assert data["total"] == len(dataset.organizations)
+    assert data["next"] is None
+    assert len(data["items"]) == len(dataset.organizations)
+
+    organizations = {organization.id: organization for organization in dataset.organizations}
+    assert {UUID(item["id"]) for item in data["items"]} == set(organizations)
+    for item in data["items"]:
+        organization = organizations[UUID(item["id"])]
+        assert item == {
+            "id": str(organization.id),
+            "created_at": isoformat(organization.created_at),
+            "display_name": organization.display_name,
+        }
+
+
+@pytest.mark.asyncio
+async def test_get_organizations_before_filters_total(
+    client: AsyncClient,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    ordered = sorted(dataset.organizations, key=lambda org: org.created_at, reverse=True)
+
+    # before is a filter: it excludes the three newest organizations.
+    response = await client.get(
+        "/api/organizations", params={"before": isoformat(ordered[2].created_at)}
+    )
+    assert response.status_code == 200
+    data = response.json()
+
+    assert [org["id"] for org in data["items"]] == [str(org.id) for org in ordered[3:]]
+    assert data["next"] is None
+    assert data["total"] == len(ordered) - 3
 
 
 @pytest.mark.asyncio

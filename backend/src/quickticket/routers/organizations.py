@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import BaseModel
 from sqlalchemy import exists, false, select
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql.functions import count
 from starlette.status import HTTP_201_CREATED
 
 from quickticket.dependencies.auth import OptionalUserDep, RequiredUserDep
@@ -20,6 +21,12 @@ from quickticket.models import (
     Ticket,
     Venue,
 )
+from quickticket.paging import (
+    DateTimeFilterParams,
+    DateTimeSortKey,
+    KeysetPagedResponse,
+    KeysetPageParams,
+)
 from quickticket.validators import DisplayNameField
 
 router = APIRouter(tags=["Organizations"])
@@ -32,41 +39,33 @@ class PartialOrganization(BaseModel):
     display_name: str
 
 
-class OrganizationsRead(BaseModel):
-    organizations: list[PartialOrganization]
-
-
-@router.get("", response_model=OrganizationsRead)
+@router.get("", response_model=KeysetPagedResponse[PartialOrganization, DateTimeSortKey])
 async def get_organizations(
     session: AsyncSessionDep,
-    before: Annotated[
-        datetime | None,
-        Query(
-            description="Return events before the given datetime, exclusive.",
-        ),
-    ] = None,
-    limit: Annotated[
-        int,
-        Query(
-            description="Limit the number of events returned.",
-            gt=0,
-            le=10,
-        ),
-    ] = 10,
+    page: Annotated[KeysetPageParams[DateTimeSortKey], Query()],
+    dt_filter: Annotated[DateTimeFilterParams, Query()],
 ) -> Any:
     """Get a list of organizations."""
     query = select(Organization)
 
     # Insert filter conditions between here and paged_query
-    # query = query.where(...)
+    if dt_filter.after is not None:
+        query = query.where(Organization.created_at > dt_filter.after)
+    if dt_filter.before is not None:
+        query = query.where(Organization.created_at < dt_filter.before)
 
-    paged_query = query.order_by(Organization.created_at.desc()).limit(limit)
-    if before is not None:
+    paged_query = query.order_by(Organization.created_at.desc()).limit(page.limit)
+    if page.next is not None:
         # NOTE: keyset pagination breaks if there are >=limit items with the same key
-        paged_query = paged_query.where(Organization.created_at < before)
+        paged_query = paged_query.where(Organization.created_at < page.next)
 
-    organizations = await session.scalars(paged_query)
-    return {"organizations": organizations.all()}
+    items = await session.scalars(paged_query)
+    items = items.all()
+    # Next key must match order_by() clause
+    next_key = None if len(items) < page.limit else items[-1].created_at
+    # Is this slow?
+    total = await session.scalar(query.with_only_columns(count(), maintain_column_froms=True))
+    return {"items": items, "next": next_key, "total": total}
 
 
 class PartialStorageObject(BaseModel):

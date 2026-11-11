@@ -13,11 +13,7 @@ from quickticket.models import (
     OrganizationMemberPermissions,
     Venue,
 )
-from tests.conftest import AuthController, DatasetLoader
-
-
-def isoformat(dt: datetime) -> str:
-    return dt.isoformat().replace("+00:00", "Z")
+from tests.conftest import AuthController, DatasetLoader, isoformat
 
 
 @pytest.mark.asyncio
@@ -33,10 +29,22 @@ async def test_get_events(
     data = response.json()
 
     # Should be limited to 10 events per request
-    assert len(data["events"]) == min(10, len(dataset_loader.dataset.events))
+    assert len(data["items"]) == min(10, len(dataset_loader.dataset.events))
+
+    assert set(data) == {"items", "next", "total"}
+    assert data["next"] is not None
+    assert data["total"] == len(dataset_loader.dataset.events)
+
+    ordered = sorted(
+        dataset_loader.dataset.events,
+        key=lambda event: event.created_at,
+        reverse=True,
+    )
+    returned = ordered[:10]
+    assert [event["id"] for event in data["items"]] == [str(event.id) for event in returned]
 
     async with make_session.begin() as session:
-        for event in data["events"]:
+        for event in data["items"]:
             expected = await session.get(
                 Event,
                 UUID(event["id"]),
@@ -113,9 +121,10 @@ async def test_get_events_filtered_by_organization(
     assert response.status_code == 200
     data = response.json()
 
-    assert [event["id"] for event in data["events"]] == [
+    assert [event["id"] for event in data["items"]] == [
         str(expected_id) for expected_id in expected_ids
     ]
+    assert data["total"] == len(expected_ids)
 
 
 @pytest.mark.asyncio
@@ -131,7 +140,11 @@ async def test_get_events_filtered_by_organization_with_no_events(
         params={"organization_id": "7092b056-4bec-4f3e-aec4-7f7e8f37b13d"},
     )
     assert response.status_code == 200
-    assert response.json()["events"] == []
+    assert response.json() == {
+        "items": [],
+        "next": None,
+        "total": 0,
+    }
 
 
 @pytest.mark.asyncio
@@ -146,7 +159,97 @@ async def test_get_events_filtered_by_nonexistent_organization(
         params={"organization_id": "00000000-0000-0000-0000-000000000000"},
     )
     assert response.status_code == 200
-    assert response.json()["events"] == []
+    assert response.json() == {
+        "items": [],
+        "next": None,
+        "total": 0,
+    }
+
+
+@pytest.mark.asyncio
+async def test_get_events_empty_database(client: AsyncClient) -> None:
+    response = await client.get("/api/events")
+    assert response.status_code == 200
+    assert response.json() == {
+        "items": [],
+        "next": None,
+        "total": 0,
+    }
+
+
+@pytest.mark.asyncio
+async def test_get_events_before_matches_nothing(
+    client: AsyncClient,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+
+    before = isoformat(datetime(2026, 1, 1, tzinfo=UTC))
+    response = await client.get("/api/events", params={"before": before})
+    assert response.status_code == 200
+    assert response.json() == {
+        "items": [],
+        "next": None,
+        "total": 0,
+    }
+
+
+@pytest.mark.asyncio
+async def test_get_events_before_is_exclusive(
+    client: AsyncClient,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    ordered = sorted(dataset.events, key=lambda event: event.created_at, reverse=True)
+
+    # Excluding the newest event leaves 11 events, of which the first page holds 10.
+    response = await client.get("/api/events", params={"before": isoformat(ordered[0].created_at)})
+    assert response.status_code == 200
+    data = response.json()
+
+    assert [event["id"] for event in data["items"]] == [str(event.id) for event in ordered[1:11]]
+    assert data["next"] == isoformat(ordered[10].created_at)
+    assert data["total"] == len(dataset.events) - 1
+
+
+@pytest.mark.asyncio
+async def test_get_events_before_and_organization_id(
+    client: AsyncClient,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+
+    # Lopezs Event Planning and Decor
+    organization_id = UUID("8e21c0af-d7a0-4f06-940c-b23728ae59e1")
+    venue_organizations = {venue.id: venue.organization_id for venue in dataset.venues}
+    organization_events = sorted(
+        (
+            event
+            for event in dataset.events
+            if venue_organizations[event.venue_id] == organization_id
+        ),
+        key=lambda event: event.created_at,
+        reverse=True,
+    )
+
+    # The organization has five events; the filter excludes the three newest.
+    response = await client.get(
+        "/api/events",
+        params={
+            "organization_id": str(organization_id),
+            "before": isoformat(organization_events[2].created_at),
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+
+    assert [event["id"] for event in data["items"]] == [
+        str(event.id) for event in organization_events[3:]
+    ]
+    assert data["next"] is None
+    assert data["total"] == 2
 
 
 @pytest.mark.asyncio
