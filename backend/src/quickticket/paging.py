@@ -53,7 +53,6 @@ class KeysetPagedResponse[E, K](BaseModel):
 
     items: list[E]
     """The items for the current page."""
-    # NOTE: maybe field specifying the relevant query parameter?
     next: K | None
     """The next key to use. If null, this is the last page."""
     total: int
