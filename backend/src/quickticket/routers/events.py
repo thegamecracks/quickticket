@@ -107,6 +107,8 @@ async def get_events(
     query = select(Event)
 
     # Insert filter conditions between here and paged_query
+    if dt_filter.after is not None:
+        query = query.where(Event.created_at > dt_filter.after)
     if dt_filter.before is not None:
         query = query.where(Event.created_at < dt_filter.before)
     if organization_id is not None:

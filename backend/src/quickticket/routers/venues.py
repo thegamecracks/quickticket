@@ -83,6 +83,8 @@ async def get_venues(
     query = select(Venue)
 
     # Insert filter conditions between here and paged_query
+    if dt_filter.after is not None:
+        query = query.where(Venue.created_at > dt_filter.after)
     if dt_filter.before is not None:
         query = query.where(Venue.created_at < dt_filter.before)
 

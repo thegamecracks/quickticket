@@ -49,6 +49,8 @@ async def get_organizations(
     query = select(Organization)
 
     # Insert filter conditions between here and paged_query
+    if dt_filter.after is not None:
+        query = query.where(Organization.created_at > dt_filter.after)
     if dt_filter.before is not None:
         query = query.where(Organization.created_at < dt_filter.before)
 

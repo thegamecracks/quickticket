@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Self
 
-from pydantic import AwareDatetime, BaseModel, Field
+from pydantic import AwareDatetime, BaseModel, Field, model_validator
 
 DateTimeSortKey = Annotated[datetime, AwareDatetime]
 """A timezone-aware datetime used as a keyset pagination sort key."""
@@ -10,15 +10,21 @@ DateTimeSortKey = Annotated[datetime, AwareDatetime]
 class DateTimeFilterParams(BaseModel):
     """Filter parameters based on some time field."""
 
-    # after: Annotated[datetime, AwareDatetime] | None = Field(
-    #     description="Return items after the given datetime, exclusive.",
-    #     default=None,
-    # )
+    after: Annotated[datetime, AwareDatetime] | None = Field(
+        description="Return items after the given datetime, exclusive.",
+        default=None,
+    )
 
     before: Annotated[datetime, AwareDatetime] | None = Field(
         description="Return items before the given datetime, exclusive.",
         default=None,
     )
+
+    @model_validator(mode="after")
+    def check_after_before(self) -> Self:
+        if self.after is not None and self.before is not None and self.after >= self.before:
+            raise ValueError("after must be before before")
+        return self
 
 
 class KeysetPageParams[K](BaseModel):
