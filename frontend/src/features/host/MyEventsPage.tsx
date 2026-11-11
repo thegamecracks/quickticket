@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 
 import PageLayout from '../../components/PageLayout'
 import EventCard from '../../components/EventCard'
@@ -29,12 +29,11 @@ function getOrganizerEvents(accountId: string): EventResponse[] {
 
     if (!venue) return []
 
-    // Only include events from organizations this user belongs to.
     const organization = organizationMap.get(venue.organization_id)
 
+    // Exclude events belonging to other organizers.
     if (!organization) return []
 
-    // Match the EventResponse format used by the shared EventCard.
     return [{
       id: event.id,
       created_at: event.created_at,
@@ -79,12 +78,11 @@ export default function MyEventsPage() {
     setCurrentPage(1)
   }, [user?.account_id])
 
-  // Only retrieve events for the logged-in account.
+  // Get events for the logged-in account only.
   const myEvents = user
     ? getOrganizerEvents(user.account_id)
     : []
 
-  // Same search functionality as the existing Events page.
   const search = searchParams.get('search') ?? ''
 
   const filteredEvents = myEvents.filter(event => {
@@ -109,7 +107,6 @@ export default function MyEventsPage() {
     page * eventsPerPage
   )
 
-  // Update search parameters and reset pagination.
   const handleSearch = (value: string) => {
     const nextParams = new URLSearchParams(searchParams)
 
@@ -126,14 +123,14 @@ export default function MyEventsPage() {
   return (
     <PageLayout title="My Events">
 
-      {/* Check authentication */}
+      {/* Authentication loading state */}
       {user === undefined && (
         <p className="text-base-content/70">
           Checking your account...
         </p>
       )}
 
-      {/* User is not signed in */}
+      {/* Sign-in required */}
       {user === null && (
         <div className="rounded-lg bg-base-200 p-6">
           <h2 className="text-lg font-semibold">
@@ -146,47 +143,81 @@ export default function MyEventsPage() {
         </div>
       )}
 
-      {/* Logged-in user's events */}
+      {/* Organizer's event listing */}
       {user && (
-        <>
-          {/* Search bar */}
-          <div className="mb-8 flex flex-col gap-4 sm:flex-row">
-            <input
-              type="text"
-              placeholder="Search my events..."
-              aria-label="Search my events"
-              className="input input-bordered w-full"
-              value={search}
-              onChange={e => handleSearch(e.target.value)}
-            />
+        <div className="space-y-6">
+
+          {/* Create Event action */}
+          <div className="flex justify-end">
+            <Link
+              to="/createEvent"
+              className="btn btn-primary"
+            >
+              + Create Event
+            </Link>
           </div>
 
-          {/* Event listing using the existing EventCard */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {paginatedEvents.map(event => (
-              <EventCard
-                key={event.id}
-                event={event}
-              />
-            ))}
-          </div>
+          {/* Search */}
+          <input
+            type="text"
+            placeholder="Search my events..."
+            aria-label="Search my events"
+            className="input input-bordered w-full"
+            value={search}
+            onChange={e => handleSearch(e.target.value)}
+          />
 
-          {/* Empty state */}
-          {filteredEvents.length === 0 && (
-            <p className="text-base-content/70">
-              {search
-                ? 'No matching events found.'
-                : 'You have not created any events yet.'}
-            </p>
+          {/* Existing event cards */}
+          {filteredEvents.length > 0 && (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {paginatedEvents.map(event => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                />
+              ))}
+            </div>
           )}
 
-          {/* Existing pagination component */}
-          <Pagination
-            currentPage={page}
-            totalPages={totalPages}
-            onChangePage={setCurrentPage}
-          />
-        </>
+          {/* No matching search results */}
+          {filteredEvents.length === 0 && search.trim() && (
+            <div className="rounded-xl border border-base-300 bg-base-200 p-8 text-center">
+              <p className="text-base-content/70">
+                No matching events found.
+              </p>
+            </div>
+          )}
+
+          {/* No events created */}
+          {myEvents.length === 0 && !search.trim() && (
+            <div className="rounded-xl border border-base-300 bg-base-200 px-6 py-12 text-center">
+              <h2 className="text-xl font-semibold">
+                No Events Yet
+              </h2>
+
+              <p className="mt-2 text-base-content/70">
+                You haven't created any events yet.
+              </p>
+
+              <Link
+                to="/createEvent"
+                className="btn btn-primary mt-5"
+              >
+                Create Your First Event
+              </Link>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onChangePage={setCurrentPage}
+            />
+          )}
+
+        </div>
       )}
 
     </PageLayout>
