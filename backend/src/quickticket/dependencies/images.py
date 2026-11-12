@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import timedelta
+from hashlib import sha3_256
 from io import BytesIO
 from typing import TYPE_CHECKING, Annotated, BinaryIO, Protocol
 from uuid import UUID
@@ -34,14 +35,16 @@ __all__ = (
 )
 
 # Careful on accepted formats, some are more prone to vulnerabilities
-ACCEPTED_IMAGE_FORMATS = (
-    MimeType("image/avif"),
-    MimeType("image/bmp"),
-    MimeType("image/gif"),
-    MimeType("image/jpeg"),
-    MimeType("image/png"),
-    MimeType("image/webp"),
-)
+MIME_TYPES_TO_EXTENSIONS = {
+    MimeType("image/avif"): "avif",
+    MimeType("image/bmp"): "bmp",
+    MimeType("image/gif"): "gif",
+    MimeType("image/jpeg"): "jpeg",
+    MimeType("image/png"): "png",
+    MimeType("image/webp"): "webp",
+}
+ACCEPTED_IMAGE_MIME_TYPES = tuple(MIME_TYPES_TO_EXTENSIONS)
+ACCEPTED_IMAGE_FORMATS = tuple(MIME_TYPES_TO_EXTENSIONS.values())
 
 log = logging.getLogger(__name__)
 
@@ -54,7 +57,10 @@ class ImageRead(BaseModel):
     created_at: AwareDatetime
 
 
-def _process_banner(file: BinaryIO) -> bytes:
+def _process_banner(file: BinaryIO) -> tuple[bytes, MimeType]:
+    mime_type = MimeType("image/jpeg")
+    fmt = MIME_TYPES_TO_EXTENSIONS[mime_type]
+
     with Image.open(file, formats=ACCEPTED_IMAGE_FORMATS) as image, BytesIO() as f:
         # TODO: strict dimension assertions? minimum size, maximum size
         _check_not_animated(image)
@@ -63,9 +69,9 @@ def _process_banner(file: BinaryIO) -> bytes:
         resized = ImageOps.contain(image, (2048, 1024), Resampling.BICUBIC)
 
         # https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#jpeg-saving
-        resized.save(f, "jpeg", quality=75, optimize=True, progressive=True)
+        resized.save(f, fmt, quality=75, optimize=True, progressive=True)
 
-        return f.getvalue()
+        return f.getvalue(), mime_type
 
 
 def _check_not_animated(image: Image.Image) -> None:
@@ -105,50 +111,43 @@ class ImageService:
         *,
         user: User,
     ) -> StorageObject:
-        key_str = f"banners/{entity.id}/"
-        await self._check(key_str, user, file)
-        mime_type = MimeType(file.content_type)
+        base_key = f"banners/{entity.id}"
+        await self._check_file(file)
+        await self._check_ratelimit(user)
 
-        image_bytes = await anyio.to_thread.run_sync(_process_banner, file.file)
+        image_bytes, mime_type = await anyio.to_thread.run_sync(_process_banner, file.file)
 
         # Intentionally use a separate session to commit early
         # and avoid rolling back if an exception is raised downstream.
         async with self.make_session.begin() as session:
-            obj = await self._upload(session, key_str, user, image_bytes, mime_type=mime_type)
+            obj = await self._upload(session, base_key, user, image_bytes, mime_type=mime_type)
             entity.banner = obj
             return obj
 
-    async def _check(
-        self,
-        key: str,
-        user: User,
-        file: UploadFile,
-        *,
-        max_filesize: int = 2**20 * 10,
-    ) -> None:
-        if not key.endswith("/"):
-            raise ValueError("Expected trailing slash in object key")
-
-        if file.content_type not in ACCEPTED_IMAGE_FORMATS:
-            raise ImageFormatNotAccepted(file.content_type, ACCEPTED_IMAGE_FORMATS)
-
+    async def _check_file(self, file: UploadFile, *, max_filesize: int = 2**20 * 10) -> None:
+        if file.content_type not in ACCEPTED_IMAGE_MIME_TYPES:
+            raise ImageFormatNotAccepted(file.content_type, ACCEPTED_IMAGE_MIME_TYPES)
         FileSizeExceeded.raise_if_exceeded(file.size, max_filesize=max_filesize)
 
-        # TODO: per-user ratelimiting
+    async def _check_ratelimit(self, user: User) -> None:
+        pass  # TODO: per-user ratelimiting
 
     async def _upload(
         self,
         session: AsyncSession,
-        key: str,
+        base_key: str,
         user: User,
         data: bytes,
         mime_type: MimeType,
     ) -> StorageObject:
-        _, _, filename = key.rpartition("/")
+        filename = self._calculate_filename(data, mime_type)
+        key = f"{base_key}/{filename}"
+
         _ = await self.store.put_async(key, data)
+
         obj = StorageObject(
             object_key=key,
-            filename=filename,
+            filename=filename,  # TODO: is this redundant? maybe turn into property
             filesize=len(data),
             mime_type=mime_type,
             provider=await self._get_storage_provider(session),
@@ -156,6 +155,12 @@ class ImageService:
         )
         session.add(obj)
         return obj
+
+    @staticmethod
+    def _calculate_filename(data: bytes, mime_type: MimeType) -> str:
+        ext = MIME_TYPES_TO_EXTENSIONS[mime_type]
+        data_hash = sha3_256(data).hexdigest()
+        return f"{data_hash}.{ext}"
 
     async def _get_storage_provider(self, session: AsyncSession) -> StorageProvider:
         assert self.settings.s3 is not None
