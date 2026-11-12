@@ -266,7 +266,7 @@ async def app(
                     city="Testville",
                     province="Ontario",
                     postal_code="A1B 2C3",
-                )
+                ),
             ],
         )
         session.add(auth.user)

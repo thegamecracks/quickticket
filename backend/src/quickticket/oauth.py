@@ -46,7 +46,7 @@ class OpenIDDiscovery(BaseModel):
     backchannel_token_delivery_modes_supported: list[str] = Field(default_factory=list)
     backchannel_authentication_endpoint: AnyUrl | None = None
     backchannel_authentication_request_signing_alg_values_supported: list[str] = Field(
-        default_factory=list
+        default_factory=list,
     )
 
     device_authorization_endpoint: AnyUrl | None = None
@@ -90,11 +90,11 @@ class OAuth2Client:
 
         if "S256" not in self.discovery.code_challenge_methods_supported:
             log.warning(
-                "Provider discovery does not indicate support for 'S256' code challenge method"
+                "Provider discovery does not indicate support for 'S256' code challenge method",
             )
         if "authorization_code" not in self.discovery.grant_types_supported:
             log.warning(
-                "Provider discovery does not indicate support for 'authorization_code' grant type"
+                "Provider discovery does not indicate support for 'authorization_code' grant type",
             )
         if "code" not in self.discovery.response_types_supported:
             log.warning("Provider discovery does not indicate support for 'code' response type")

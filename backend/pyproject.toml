@@ -65,6 +65,10 @@ injectable_autouse_cleanup = false
 [tool.ruff]
 line-length = 100
 
+[tool.ruff.lint]
+# select = ["ALL"]
+extend-select = ["COM"]
+
 [tool.ruff.lint.isort]
 combine-as-imports = true
 

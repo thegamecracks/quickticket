@@ -50,7 +50,7 @@ async def _get_discovery_cache_key(settings: SettingsDep) -> str:
 
 def _raise_missing_openid_settings() -> NoReturn:
     log.error(
-        "OpenID is not configured; do you have the BACKEND__OPENID__* environment variables set?"
+        "OpenID is not configured; do you have the BACKEND__OPENID__* environment variables set?",
     )
     raise HTTPException(500, "OpenID is not configured (.env)")
 

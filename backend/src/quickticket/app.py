@@ -41,7 +41,7 @@ log = logging.getLogger(__name__)
 def create_app_from_settings(settings: Settings) -> FastAPI:
     if settings.log.debug:
         log.warning(
-            "Starlette's debug mode is enabled. Disable in production with: BACKEND__LOG__DEBUG=0"
+            "Starlette's debug mode is enabled. Disable in production with: BACKEND__LOG__DEBUG=0",
         )
 
     assert __package__ is not None
@@ -76,7 +76,7 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
         from quickticket import frontend
 
         log.warning(
-            "Serving minimal frontend. Disable in production with: BACKEND__FRONTEND__BUILTIN=0"
+            "Serving minimal frontend. Disable in production with: BACKEND__FRONTEND__BUILTIN=0",
         )
         app.mount("/static", frontend.static, name="static")
         app.include_router(frontend.router)
@@ -170,13 +170,13 @@ def add_profiling_middleware(app: FastAPI) -> None:
     except ModuleNotFoundError:
         log.warning(
             "Request profiling is unavailable due to pyinstrument not being installed. "
-            "Disable in production with: BACKEND__LOG__PROFILING=0"
+            "Disable in production with: BACKEND__LOG__PROFILING=0",
         )
         return
 
     log.warning(
         "Enabling request profiling with ?profile=1. "
-        "Disable in production with: BACKEND__LOG__PROFILING=0"
+        "Disable in production with: BACKEND__LOG__PROFILING=0",
     )
 
     # https://pyinstrument.readthedocs.io/en/latest/guide.html

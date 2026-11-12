@@ -76,7 +76,7 @@ class SQLiteCache(Cache):
                 value BLOB,
                 expires_at TIMESTAMP
             );
-            """
+            """,
         )
         await self.client.execute(
             "DELETE FROM kv_cache WHERE expires_at <= ?1",

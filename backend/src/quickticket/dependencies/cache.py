@@ -33,7 +33,7 @@ async def get_cache(
                 url.path[1:],
                 autocommit=True,
                 uri=True,
-            )
+            ),
         )
         state.cache = await stack.enter_async_context(SQLiteCache(conn))
     elif url.scheme in ("redis", "rediss"):
@@ -47,7 +47,7 @@ async def get_cache(
                 password=url.password,
                 ssl=url.scheme == "rediss",
                 decode_responses=True,  # without this, bytes are returned instead of str
-            )
+            ),
         )
         state.cache = await stack.enter_async_context(RedisCache(client))
     else:

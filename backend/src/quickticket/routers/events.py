@@ -140,7 +140,7 @@ async def get_events(
         selectinload(Event.venue, Venue.organization),
         selectinload(
             # TODO: return all tickets if user has permission from organization
-            Event.tickets.and_(Ticket.account_id == user.id if user is not None else false())
+            Event.tickets.and_(Ticket.account_id == user.id if user is not None else false()),
         ).load_only(Ticket.id),
     )
 
@@ -163,9 +163,9 @@ async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: U
             selectinload(Event.venue).selectinload(Venue.organization),
             selectinload(
                 # TODO: return all tickets if user has permission from organization
-                Event.tickets.and_(Ticket.account_id == user.id if user is not None else false())
+                Event.tickets.and_(Ticket.account_id == user.id if user is not None else false()),
             ).load_only(Ticket.id),
-        )
+        ),
     )
     if event is None:
         raise HTTPException(404, "Not found")
@@ -197,7 +197,7 @@ class EventCreate(BaseModel):
             raise ValueError("starts_at must be before ends_at")
         elif not self.MIN_DURATION <= duration <= self.MAX_DURATION:
             raise ValueError(
-                f"Event duration must be between {self.MIN_DURATION} and {self.MAX_DURATION}"
+                f"Event duration must be between {self.MIN_DURATION} and {self.MAX_DURATION}",
             )
         return self
 

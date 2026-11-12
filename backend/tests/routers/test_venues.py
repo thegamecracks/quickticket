@@ -160,7 +160,7 @@ async def test_create_venue_nonexistent_organization(
     )
     assert response.status_code == 400
     assert response.json() == {
-        "detail": "Organization not found: 00000000-0000-0000-0000-000000000000"
+        "detail": "Organization not found: 00000000-0000-0000-0000-000000000000",
     }
 
 
@@ -189,7 +189,7 @@ async def test_create_venue_non_member(
     )
     assert response.status_code == 400
     assert response.json() == {
-        "detail": f"User ({user.id}) is not a member of organization ({organization.id})"
+        "detail": f"User ({user.id}) is not a member of organization ({organization.id})",
     }
 
 
@@ -223,7 +223,7 @@ async def test_create_venue_member_insufficient_permissions(
     )
     assert response.status_code == 400
     assert response.json() == {
-        "detail": f"Organization member ({organization.id}, {user.id}) missing permissions: ADMINISTRATOR"
+        "detail": f"Organization member ({organization.id}, {user.id}) missing permissions: ADMINISTRATOR",
     }
 
 
@@ -252,7 +252,7 @@ async def test_create_venue_reached_limit(
                     theme="Sports",
                     location_name="Test Stadium",
                     location_coords=None,
-                )
+                ),
             )
 
     response = await client.post(

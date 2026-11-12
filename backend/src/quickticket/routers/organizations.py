@@ -142,20 +142,20 @@ async def get_organization(
             )
             .selectinload(
                 # TODO: return all tickets if user has permission from organization
-                Event.tickets.and_(Ticket.account_id == user.id if user is not None else false())
+                Event.tickets.and_(Ticket.account_id == user.id if user is not None else false()),
             )
             .load_only(Ticket.id),
             selectinload(Organization.venues, Venue.banner).load_only(StorageObject.id),
             selectinload(Organization.venues, Venue.thumbnail).load_only(StorageObject.id),
             selectinload(Organization.venues, Venue.events, Event.banner).load_only(
-                StorageObject.id
+                StorageObject.id,
             ),
             selectinload(Organization.venues, Venue.events, Event.thumbnail).load_only(
-                StorageObject.id
+                StorageObject.id,
             ),
             # Organization => OrganizationMembers
             selectinload(Organization.members).load_only(OrganizationMember.account_id),
-        )
+        ),
     )
     if organization is None:
         raise HTTPException(404, "Not found")
@@ -189,10 +189,10 @@ async def create_organization(
             exists().where(
                 OrganizationMember.account_id == user.id,
                 OrganizationMember.permissions.bitwise_and(
-                    OrganizationMemberPermissions.ADMINISTRATOR
+                    OrganizationMemberPermissions.ADMINISTRATOR,
                 ),
-            )
-        )
+            ),
+        ),
     )
     if owns_organization:
         raise HTTPException(400, "Already owns an organization")
@@ -212,7 +212,7 @@ async def create_organization(
     await session.refresh(created, ["members", "venues"])
 
     response.headers["Location"] = str(
-        request.url_for("get_organization", organization_id=created.id)
+        request.url_for("get_organization", organization_id=created.id),
     )
     return created
 

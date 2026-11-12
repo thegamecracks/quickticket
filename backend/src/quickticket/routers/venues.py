@@ -100,7 +100,7 @@ async def get_venues(
         .load_only(Event.id)
         .selectinload(
             # TODO: return all tickets if user has permission from organization
-            Event.tickets.and_(Ticket.account_id == user.id if user is not None else false())
+            Event.tickets.and_(Ticket.account_id == user.id if user is not None else false()),
         )
         .load_only(Ticket.id),
         # Venue => Organization
@@ -160,12 +160,12 @@ async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: U
             selectinload(Venue.events)
             .selectinload(
                 # TODO: return all tickets if user has permission from organization
-                Event.tickets.and_(Ticket.account_id == user.id if user is not None else false())
+                Event.tickets.and_(Ticket.account_id == user.id if user is not None else false()),
             )
             .load_only(Ticket.id),
             # Venue => Organization
             selectinload(Venue.organization),
-        )
+        ),
     )
     if venue is None:
         raise HTTPException(404, "Not found")
@@ -204,7 +204,7 @@ async def create_venue(
     controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
 
     venue_count = await session.scalar(
-        select(count()).where(Venue.organization_id == controller.organization.id)
+        select(count()).where(Venue.organization_id == controller.organization.id),
     )
     assert venue_count is not None
     if venue_count >= VENUE_LIMIT:

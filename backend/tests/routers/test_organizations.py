@@ -52,7 +52,8 @@ async def test_get_organizations_before_filters_total(
 
     # before is a filter: it excludes the three newest organizations.
     response = await client.get(
-        "/api/organizations", params={"before": isoformat(ordered[2].created_at)}
+        "/api/organizations",
+        params={"before": isoformat(ordered[2].created_at)},
     )
     assert response.status_code == 200
     data = response.json()

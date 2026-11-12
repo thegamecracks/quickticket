@@ -35,5 +35,8 @@ def downgrade() -> None:
     with op.batch_alter_table("event", schema=None) as batch_op:
         batch_op.drop_constraint(batch_op.f("fk_event_venue_id_venue"), type_="foreignkey")
         batch_op.create_foreign_key(
-            batch_op.f("fk_event_venue_id_venue"), "venue", ["venue_id"], ["venue_id"]
+            batch_op.f("fk_event_venue_id_venue"),
+            "venue",
+            ["venue_id"],
+            ["venue_id"],
         )

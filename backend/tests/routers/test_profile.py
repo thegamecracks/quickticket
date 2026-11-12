@@ -42,5 +42,5 @@ async def test_profile_me(
             "city": "Testville",
             "province": "Ontario",
             "postal_code": "A1B 2C3",
-        }
+        },
     ]

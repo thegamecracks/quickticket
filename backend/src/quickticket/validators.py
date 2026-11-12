@@ -11,6 +11,8 @@ def filter_string_field(value: str) -> str:
 
 
 DisplayNameField = Annotated[
-    str, AfterValidator(filter_string_field), Field(min_length=3, max_length=128)
+    str,
+    AfterValidator(filter_string_field),
+    Field(min_length=3, max_length=128),
 ]
 FutureAwareDatetime = Annotated[datetime, AwareDatetime, FutureDatetime]

@@ -31,13 +31,22 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column(
-            "display_name", sa.String(length=128), server_default=sa.text("('')"), nullable=False
+            "display_name",
+            sa.String(length=128),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.Column(
-            "first_name", sa.String(length=128), server_default=sa.text("('')"), nullable=False
+            "first_name",
+            sa.String(length=128),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.Column(
-            "last_name", sa.String(length=128), server_default=sa.text("('')"), nullable=False
+            "last_name",
+            sa.String(length=128),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.Column("email", sa.String(length=256), server_default=sa.text("('')"), nullable=False),
         sa.Column("openid_sub", sa.String(), nullable=True),
@@ -55,7 +64,10 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column(
-            "display_name", sa.String(length=128), server_default=sa.text("('')"), nullable=False
+            "display_name",
+            sa.String(length=128),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.PrimaryKeyConstraint("organization_id", name=op.f("pk_organization")),
     )
@@ -67,10 +79,16 @@ def upgrade() -> None:
         sa.Column("line_2", sa.String(length=128), server_default=sa.text("('')"), nullable=False),
         sa.Column("city", sa.String(length=128), server_default=sa.text("('')"), nullable=False),
         sa.Column(
-            "province", sa.String(length=128), server_default=sa.text("('')"), nullable=False
+            "province",
+            sa.String(length=128),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.Column(
-            "postal_code", sa.String(length=128), server_default=sa.text("('')"), nullable=False
+            "postal_code",
+            sa.String(length=128),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.ForeignKeyConstraint(
             ["account_id"],
@@ -97,10 +115,16 @@ def upgrade() -> None:
         sa.Column("email_at", sa.DateTime(), nullable=True),
         sa.Column("is_read", sa.Boolean(), nullable=False),
         sa.Column(
-            "content_short", sa.String(length=1024), server_default=sa.text("('')"), nullable=False
+            "content_short",
+            sa.String(length=1024),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.Column(
-            "content_full", sa.String(length=4096), server_default=sa.text("('')"), nullable=False
+            "content_full",
+            sa.String(length=4096),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.ForeignKeyConstraint(
             ["account_id"],
@@ -112,7 +136,9 @@ def upgrade() -> None:
     )
     with op.batch_alter_table("notification", schema=None) as batch_op:
         batch_op.create_index(
-            batch_op.f("ix_notification_account_id"), ["account_id"], unique=False
+            batch_op.f("ix_notification_account_id"),
+            ["account_id"],
+            unique=False,
         )
 
     op.create_table(
@@ -137,7 +163,9 @@ def upgrade() -> None:
             name=op.f("fk_organization_member_organization_id_organization"),
         ),
         sa.PrimaryKeyConstraint(
-            "organization_id", "acccount_id", name=op.f("pk_organization_member")
+            "organization_id",
+            "acccount_id",
+            name=op.f("pk_organization_member"),
         ),
     )
     op.create_table(
@@ -151,20 +179,35 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column(
-            "display_name", sa.String(length=128), server_default=sa.text("('')"), nullable=False
+            "display_name",
+            sa.String(length=128),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.Column(
-            "description", sa.String(length=4096), server_default=sa.text("('')"), nullable=False
+            "description",
+            sa.String(length=4096),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.Column("theme", sa.String(length=128), server_default=sa.text("('')"), nullable=False),
         sa.Column(
-            "thumbnail_url", sa.String(length=2000), server_default=sa.text("('')"), nullable=False
+            "thumbnail_url",
+            sa.String(length=2000),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.Column(
-            "banner_url", sa.String(length=2000), server_default=sa.text("('')"), nullable=False
+            "banner_url",
+            sa.String(length=2000),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.Column(
-            "location_name", sa.String(length=128), server_default=sa.text("('')"), nullable=False
+            "location_name",
+            sa.String(length=128),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.Column("location_coords", sa.JSON(), nullable=True),
         sa.ForeignKeyConstraint(
@@ -176,7 +219,9 @@ def upgrade() -> None:
     )
     with op.batch_alter_table("venue", schema=None) as batch_op:
         batch_op.create_index(
-            batch_op.f("ix_venue_organization_id"), ["organization_id"], unique=False
+            batch_op.f("ix_venue_organization_id"),
+            ["organization_id"],
+            unique=False,
         )
 
     op.create_table(
@@ -190,17 +235,29 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column(
-            "display_name", sa.String(length=128), server_default=sa.text("('')"), nullable=False
+            "display_name",
+            sa.String(length=128),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.Column(
-            "description", sa.String(length=4096), server_default=sa.text("('')"), nullable=False
+            "description",
+            sa.String(length=4096),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.Column("theme", sa.String(length=128), server_default=sa.text("('')"), nullable=False),
         sa.Column(
-            "thumbnail_url", sa.String(length=2000), server_default=sa.text("('')"), nullable=False
+            "thumbnail_url",
+            sa.String(length=2000),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.Column(
-            "banner_url", sa.String(length=2000), server_default=sa.text("('')"), nullable=False
+            "banner_url",
+            sa.String(length=2000),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.Column(
             "starts_at",
@@ -209,12 +266,17 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column(
-            "ends_at", sa.DateTime(), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=False
+            "ends_at",
+            sa.DateTime(),
+            server_default=sa.text("(CURRENT_TIMESTAMP)"),
+            nullable=False,
         ),
         sa.Column("ticket_price", sa.JSON(), nullable=False),
         sa.Column("max_attendees", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["venue_id"], ["venue.venue_id"], name=op.f("fk_event_venue_id_venue")
+            ["venue_id"],
+            ["venue.venue_id"],
+            name=op.f("fk_event_venue_id_venue"),
         ),
         sa.PrimaryKeyConstraint("event_id", name=op.f("pk_event")),
     )
@@ -240,7 +302,9 @@ def upgrade() -> None:
             ondelete="CASCADE",
         ),
         sa.ForeignKeyConstraint(
-            ["event_id"], ["event.event_id"], name=op.f("fk_ticket_event_id_event")
+            ["event_id"],
+            ["event.event_id"],
+            name=op.f("fk_ticket_event_id_event"),
         ),
         sa.PrimaryKeyConstraint("ticket_id", name=op.f("pk_ticket")),
     )

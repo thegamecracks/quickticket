@@ -119,7 +119,7 @@ class RegistrationController:
             select(OpenIDAccount)
             .join(User, OpenIDAccount.user)
             .where(OpenIDAccount.issuer == claims.iss, OpenIDAccount.sub == claims.sub)
-            .options(load_only(OpenIDAccount.account_id), selectinload(OpenIDAccount.user))
+            .options(load_only(OpenIDAccount.account_id), selectinload(OpenIDAccount.user)),
         )
         if openid_account is not None:
             user = openid_account.user
@@ -129,7 +129,9 @@ class RegistrationController:
             return user, openid_account
 
         if (email := getattr(claims, "email", None)) is not None and getattr(
-            claims, "email_verified", False
+            claims,
+            "email_verified",
+            False,
         ) is True:
             # Link email claim from either access or ID token if present
             # FIXME: no guarantee two users don't share same email, prompt recommended

@@ -58,7 +58,8 @@ async def get_async_sessionmaker(
     engine: AsyncEngineDep,
 ) -> async_sessionmaker[AsyncSession]:
     make_session = cast(
-        async_sessionmaker[AsyncSession] | None, getattr(state, "make_session", None)
+        async_sessionmaker[AsyncSession] | None,
+        getattr(state, "make_session", None),
     )
     if make_session is not None:
         return make_session

@@ -421,7 +421,7 @@ async def test_create_event_no_permissions(
     )
     assert response.status_code == 400
     assert response.json() == {
-        "detail": f"Organization member ({organization.id}, {user.id}) missing permissions: ADMINISTRATOR"
+        "detail": f"Organization member ({organization.id}, {user.id}) missing permissions: ADMINISTRATOR",
     }
 
 
@@ -539,7 +539,7 @@ async def test_create_event_rejects_naive_datetimes(
                 "msg": "Input should have timezone info",
                 "input": ends_at.isoformat(),
             },
-        ]
+        ],
     }
 
 
@@ -577,7 +577,7 @@ async def test_create_event_rejects_past_datetimes(
                 "msg": "Input should be in the future",
                 "input": isoformat(ends_at),
             },
-        ]
+        ],
     }
 
 
@@ -618,8 +618,8 @@ async def test_create_event_rejects_ends_at_before_starts_at(
                     "ticket_price": {"amount": 50, "currency": "CAD"},
                 },
                 "ctx": {"error": {}},
-            }
-        ]
+            },
+        ],
     }
 
 
@@ -662,8 +662,8 @@ async def test_create_event_rejects_duration_below_minimum(
                     "ticket_price": {"amount": 50, "currency": "CAD"},
                 },
                 "ctx": {"error": {}},
-            }
-        ]
+            },
+        ],
     }
 
 
@@ -704,6 +704,6 @@ async def test_create_event_rejects_duration_above_maximum(
                     "ticket_price": {"amount": 50, "currency": "CAD"},
                 },
                 "ctx": {"error": {}},
-            }
-        ]
+            },
+        ],
     }

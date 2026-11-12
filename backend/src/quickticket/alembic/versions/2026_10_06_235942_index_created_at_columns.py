@@ -28,7 +28,9 @@ def upgrade() -> None:
 
     with op.batch_alter_table("organization", schema=None) as batch_op:
         batch_op.create_index(
-            batch_op.f("ix_organization_created_at"), ["created_at"], unique=False
+            batch_op.f("ix_organization_created_at"),
+            ["created_at"],
+            unique=False,
         )
 
     with op.batch_alter_table("ticket", schema=None) as batch_op:

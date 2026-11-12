@@ -31,12 +31,18 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column(
-            "endpoint", sa.String(length=2000), server_default=sa.text("('')"), nullable=False
+            "endpoint",
+            sa.String(length=2000),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.Column("region", sa.String(length=2000), server_default=sa.text("('')"), nullable=False),
         sa.Column("bucket", sa.String(length=2000), server_default=sa.text("('')"), nullable=False),
         sa.Column(
-            "cdn_base_url", sa.String(length=2000), server_default=sa.text("('')"), nullable=False
+            "cdn_base_url",
+            sa.String(length=2000),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.PrimaryKeyConstraint("storage_provider_id", name=op.f("pk_storage_provider")),
         sa.UniqueConstraint("endpoint", "region", name=op.f("uq_storage_provider_endpoint")),
@@ -53,14 +59,23 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column(
-            "object_key", sa.String(length=2000), server_default=sa.text("('')"), nullable=False
+            "object_key",
+            sa.String(length=2000),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.Column(
-            "filename", sa.String(length=2000), server_default=sa.text("('')"), nullable=False
+            "filename",
+            sa.String(length=2000),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.Column("filesize", sa.BigInteger(), nullable=False),
         sa.Column(
-            "mime_type", sa.String(length=2000), server_default=sa.text("('')"), nullable=False
+            "mime_type",
+            sa.String(length=2000),
+            server_default=sa.text("('')"),
+            nullable=False,
         ),
         sa.ForeignKeyConstraint(
             ["account_id"],
@@ -77,7 +92,9 @@ def upgrade() -> None:
     )
     with op.batch_alter_table("storage_object", schema=None) as batch_op:
         batch_op.create_index(
-            batch_op.f("ix_storage_object_account_id"), ["account_id"], unique=False
+            batch_op.f("ix_storage_object_account_id"),
+            ["account_id"],
+            unique=False,
         )
 
     with op.batch_alter_table("event", schema=None) as batch_op:
@@ -133,7 +150,7 @@ def downgrade() -> None:
                 sa.VARCHAR(length=2000),
                 server_default=sa.text("('')"),
                 nullable=False,
-            )
+            ),
         )
         batch_op.add_column(
             sa.Column(
@@ -141,13 +158,15 @@ def downgrade() -> None:
                 sa.VARCHAR(length=2000),
                 server_default=sa.text("('')"),
                 nullable=False,
-            )
+            ),
         )
         batch_op.drop_constraint(
-            batch_op.f("fk_venue_thumbnail_id_storage_object"), type_="foreignkey"
+            batch_op.f("fk_venue_thumbnail_id_storage_object"),
+            type_="foreignkey",
         )
         batch_op.drop_constraint(
-            batch_op.f("fk_venue_banner_id_storage_object"), type_="foreignkey"
+            batch_op.f("fk_venue_banner_id_storage_object"),
+            type_="foreignkey",
         )
         batch_op.drop_column("banner_id")
         batch_op.drop_column("thumbnail_id")
@@ -159,7 +178,7 @@ def downgrade() -> None:
                 sa.VARCHAR(length=2000),
                 server_default=sa.text("('')"),
                 nullable=False,
-            )
+            ),
         )
         batch_op.add_column(
             sa.Column(
@@ -167,13 +186,15 @@ def downgrade() -> None:
                 sa.VARCHAR(length=2000),
                 server_default=sa.text("('')"),
                 nullable=False,
-            )
+            ),
         )
         batch_op.drop_constraint(
-            batch_op.f("fk_event_thumbnail_id_storage_object"), type_="foreignkey"
+            batch_op.f("fk_event_thumbnail_id_storage_object"),
+            type_="foreignkey",
         )
         batch_op.drop_constraint(
-            batch_op.f("fk_event_banner_id_storage_object"), type_="foreignkey"
+            batch_op.f("fk_event_banner_id_storage_object"),
+            type_="foreignkey",
         )
         batch_op.drop_column("banner_id")
         batch_op.drop_column("thumbnail_id")

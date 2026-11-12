@@ -179,8 +179,8 @@ async def test_after_not_before_before_rejected(
                     "before": isoformat(ordered[before_index].created_at),
                 },
                 "ctx": {"error": {}},
-            }
-        ]
+            },
+        ],
     }
 
 
