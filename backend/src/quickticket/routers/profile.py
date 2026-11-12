@@ -1,9 +1,8 @@
 import logging
-from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import AwareDatetime, BaseModel
 
 from quickticket.dependencies.auth import RequiredUserDep
 
@@ -22,7 +21,7 @@ class ProfileAddress(BaseModel):
 
 class Profile(BaseModel):
     account_id: UUID
-    created_at: datetime
+    created_at: AwareDatetime
     display_name: str
     first_name: str
     last_name: str

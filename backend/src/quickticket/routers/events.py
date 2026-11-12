@@ -1,10 +1,10 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Annotated, Any, ClassVar, Self
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
-from pydantic import AfterValidator, BaseModel, Field, model_validator
+from pydantic import AfterValidator, AwareDatetime, BaseModel, Field, model_validator
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.functions import count
@@ -46,7 +46,7 @@ class PartialTicket(BaseModel):
 
 class PartialOrganization(BaseModel):
     id: UUID
-    created_at: datetime
+    created_at: AwareDatetime
     display_name: str
 
 
@@ -56,7 +56,7 @@ class PartialStorageObject(BaseModel):
 
 class PartialVenue(BaseModel):
     id: UUID
-    created_at: datetime
+    created_at: AwareDatetime
     display_name: str
     description: str
     theme: str
@@ -70,14 +70,14 @@ class PartialVenue(BaseModel):
 
 class EventRead(BaseModel):
     id: UUID
-    created_at: datetime
+    created_at: AwareDatetime
     display_name: str
     description: str
     theme: str
     thumbnail: PartialStorageObject | None
     banner: PartialStorageObject | None
-    starts_at: datetime
-    ends_at: datetime
+    starts_at: AwareDatetime
+    ends_at: AwareDatetime
     ticket_price: Money
     max_attendees: int
 

@@ -1,10 +1,9 @@
 import logging
-from datetime import datetime
 from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
-from pydantic import BaseModel
+from pydantic import AwareDatetime, BaseModel
 from sqlalchemy import exists, false, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.functions import count
@@ -35,7 +34,7 @@ log = logging.getLogger(__name__)
 
 class PartialOrganization(BaseModel):
     id: UUID
-    created_at: datetime
+    created_at: AwareDatetime
     display_name: str
 
 
@@ -74,21 +73,21 @@ class PartialStorageObject(BaseModel):
 
 class PartialEvent(BaseModel):
     id: UUID
-    created_at: datetime
+    created_at: AwareDatetime
     display_name: str
     description: str
     theme: str
     thumbnail: PartialStorageObject | None
     banner: PartialStorageObject | None
-    # starts_at: datetime
-    # ends_at: datetime
+    # starts_at: AwareDatetime
+    # ends_at: AwareDatetime
     # ticket_price: Money
     # max_attendees: int
 
 
 class PartialVenue(BaseModel):
     id: UUID
-    created_at: datetime
+    created_at: AwareDatetime
     display_name: str
     description: str
     theme: str
@@ -106,7 +105,7 @@ class PartialOrganizationMember(BaseModel):
 
 class OrganizationRead(BaseModel):
     id: UUID
-    created_at: datetime
+    created_at: AwareDatetime
     display_name: str
 
     venues: list[PartialVenue]
