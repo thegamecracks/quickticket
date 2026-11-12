@@ -1,20 +1,25 @@
 import logging
 from dataclasses import dataclass
-from functools import partial
-from typing import Annotated, BinaryIO
+from datetime import timedelta
+from io import BytesIO
+from typing import Annotated, BinaryIO, Protocol
 from uuid import UUID
 
 import anyio.to_thread
+import obstore
 from fastapi import Depends, UploadFile
-from PIL import Image
+from obstore.store import AzureStore, GCSStore, S3Store
+from PIL import Image, ImageOps
+from PIL.Image import Resampling
 from pydantic import AwareDatetime, BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from quickticket.dependencies.db import AsyncSessionMakerDep
 from quickticket.dependencies.state import SettingsDep
 from quickticket.dependencies.store import ObjectStoreDep
-from quickticket.errors import FileSizeExceeded, ImageFormatNotAccepted
-from quickticket.models import StorageObject, StorageProvider, User
+from quickticket.errors import FileSizeExceeded, ImageAnimationNotAccepted, ImageFormatNotAccepted
+from quickticket.models import MimeType, StorageObject, StorageProvider, User
 
 __all__ = (
     "ImageRead",
@@ -25,12 +30,12 @@ __all__ = (
 
 # Careful on accepted formats, some are more prone to vulnerabilities
 ACCEPTED_IMAGE_FORMATS = (
-    "image/avif",
-    "image/bmp",
-    "image/gif",
-    "image/jpeg",
-    "image/png",
-    "image/webp",
+    MimeType("image/avif"),
+    MimeType("image/bmp"),
+    MimeType("image/gif"),
+    MimeType("image/jpeg"),
+    MimeType("image/png"),
+    MimeType("image/webp"),
 )
 
 log = logging.getLogger(__name__)
@@ -38,18 +43,36 @@ log = logging.getLogger(__name__)
 
 class ImageRead(BaseModel):
     id: UUID
-    object_key: str
     filename: str
     filesize: str
-    mime_type: str
+    mime_type: MimeType
     created_at: AwareDatetime
 
 
-def _process_image(file: BinaryIO, *, content_type: str) -> bytes:
-    with Image.open(file, formats=ACCEPTED_IMAGE_FORMATS) as image:
-        # image.load()
-        # TODO: forbid animated images
-        raise NotImplementedError(image)  # TODO: resize and compress
+def _process_banner(file: BinaryIO) -> bytes:
+    with Image.open(file, formats=ACCEPTED_IMAGE_FORMATS) as image, BytesIO() as f:
+        # TODO: strict dimension assertions? minimum size, maximum size
+        _check_not_animated(image)
+
+        # https://pillow.readthedocs.io/en/stable/reference/ImageOps.html#resize-relative-to-a-given-size
+        resized = ImageOps.contain(image, (2048, 1024), Resampling.BICUBIC)
+
+        # https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#jpeg-saving
+        resized.save(f, "jpeg", quality=75, optimize=True, progressive=True)
+
+        return f.getvalue()
+
+
+def _check_not_animated(image: Image.Image) -> None:
+    if getattr(image, "is_animated", False):
+        raise ImageAnimationNotAccepted
+
+
+class BannerEntity(Protocol):
+    banner: StorageObject | None
+
+    @property
+    def id(self) -> UUID | None: ...
 
 
 @dataclass(kw_only=True, repr=False)
@@ -58,21 +81,34 @@ class ImageService:
     settings: SettingsDep
     store: ObjectStoreDep
 
-    async def upload_banner(self, key: UUID, user: User, file: UploadFile) -> StorageObject:
-        key_str = f"banners/{key}/"
-        await self._check(key_str, user, file)
-        assert file.content_type is not None
-
-        image_bytes = await anyio.to_thread.run_sync(
-            partial(
-                _process_image,
-                file.file,
-                content_type=file.content_type,
-            ),
+    async def get_url(self, obj: StorageObject) -> str:
+        assert isinstance(self.store, (AzureStore, GCSStore, S3Store))
+        return await obstore.sign_async(
+            self.store,
+            "GET",
+            obj.object_key,
+            expires_in=timedelta(minutes=10),
         )
 
+    async def upload_banner(
+        self,
+        entity: BannerEntity,
+        file: UploadFile,
+        *,
+        user: User,
+    ) -> StorageObject:
+        key_str = f"banners/{entity.id}/"
+        await self._check(key_str, user, file)
+        mime_type = MimeType(file.content_type)
+
+        image_bytes = await anyio.to_thread.run_sync(_process_banner, file.file)
+
+        # Intentionally use a separate session to commit early
+        # and avoid rolling back if an exception is raised downstream.
         async with self.make_session.begin() as session:
-            return await self._upload(session, key_str, image_bytes)
+            obj = await self._upload(session, key_str, image_bytes, mime_type=mime_type)
+            entity.banner = obj
+            return obj
 
     async def _check(
         self,
@@ -97,24 +133,43 @@ class ImageService:
         session: AsyncSession,
         key: str,
         data: bytes,
-        *,
-        can_animate: bool = False,
-        max_filesize: int = 2**20 * 10,
+        mime_type: MimeType,
     ) -> StorageObject:
-
-        # obj = StorageObject(
-        #     object_key=,
-        #     status=,
-        #     filename=,
-        #     filesize=,
-        #     mime_type=,
-        #     provider=await self._get_storage_provider(session),
-        # )
-        # session.add(obj)
-        raise NotImplementedError  # TODO: upload to s3 and store in db
+        _, _, filename = key.rpartition("/")
+        _ = await self.store.put_async(key, data)
+        obj = StorageObject(
+            object_key=key,
+            filename=filename,
+            filesize=len(data),
+            mime_type=mime_type,
+            provider=await self._get_storage_provider(session),
+        )
+        session.add(obj)
+        return obj
 
     async def _get_storage_provider(self, session: AsyncSession) -> StorageProvider:
-        raise NotImplementedError  # TODO: upsert into db
+        assert self.settings.s3 is not None
+        url = str(self.settings.s3.url.get_secret_value())
+        region = self.settings.s3.region.get_secret_value()
+
+        # Should this be cached?
+        provider = await session.scalar(
+            select(StorageProvider).where(
+                StorageProvider.endpoint == url,
+                StorageProvider.region == region,
+            ),
+        )
+
+        if provider is None:
+            provider = StorageProvider(
+                endpoint=url,
+                region=region,
+                bucket="",  # TODO: is this really needed? bucket goes in url
+                cdn_base_url="",  # TODO: add CDN url
+            )
+            session.add(provider)
+
+        return provider
 
 
 async def get_image_service(
