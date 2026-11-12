@@ -1,9 +1,14 @@
 from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
+from pydantic import BaseModel, ValidationError
 from sqlalchemy.dialects import postgresql
 
 from quickticket.models.types import MimeType, MimeTypeSerializer, TZDateTime
+
+
+class MimeTypeModel(BaseModel):
+    mime: MimeType
 
 
 def test_bind_param_none() -> None:
@@ -46,6 +51,31 @@ def test_mime_type_valid() -> None:
 def test_mime_type_invalid() -> None:
     with pytest.raises(ValueError, match="Invalid mime type"):
         MimeType("text/plain; charset=utf-8")
+
+
+def test_mime_type_pydantic_valid() -> None:
+    model = MimeTypeModel(mime="image/png")
+    assert model.mime == "image/png"
+    assert type(model.mime) is MimeType
+    assert model.model_dump() == {"mime": "image/png"}
+    assert type(model.model_dump(mode="json")["mime"]) is str
+
+
+def test_mime_type_pydantic_invalid() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        MimeTypeModel(mime="text/plain; charset=utf-8")
+    errors = exc_info.value.errors()
+    assert len(errors) == 1
+    assert errors[0]["type"] == "value_error"
+    assert errors[0]["loc"] == ("mime",)
+    assert "Invalid mime type" in errors[0]["msg"]
+
+
+def test_mime_type_pydantic_prevalidated() -> None:
+    value = MimeType("image/svg+xml")
+    model = MimeTypeModel(mime=value)
+    assert model.mime == value
+    assert type(model.mime) is MimeType
 
 
 def test_mime_type_bind_param_mime_type() -> None:

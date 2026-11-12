@@ -5,7 +5,8 @@ from datetime import UTC, datetime
 from typing import Annotated, Any, ClassVar, NewType, Self
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, GetCoreSchemaHandler, GetJsonSchemaHandler
+from pydantic_core import core_schema
 from sqlalchemy import (
     Column,
     DateTime,
@@ -128,6 +129,28 @@ class MimeType(str):
         if not cls._pattern.fullmatch(ret):
             raise ValueError(f"Invalid mime type: {ret!r}")
         return ret
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls,
+        source: type[Any],
+        handler: GetCoreSchemaHandler,
+    ) -> core_schema.AfterValidatorFunctionSchema:
+        return core_schema.with_info_after_validator_function(
+            lambda value, validation_info: cls(value),
+            core_schema.str_schema(),
+            serialization=core_schema.to_string_ser_schema(),
+        )
+
+    @classmethod
+    def __get_pydantic_json_schema__(
+        cls,
+        schema: core_schema.CoreSchema,
+        handler: GetJsonSchemaHandler,
+    ) -> dict[str, Any]:
+        json_schema = handler(schema)
+        json_schema.update({"pattern": cls._pattern.pattern})
+        return json_schema
 
 
 class MimeTypeSerializer(TypeDecorator):
