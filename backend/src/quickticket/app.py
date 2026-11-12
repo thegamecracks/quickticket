@@ -121,9 +121,9 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
         cookie_secure=True,
     )
 
-    app.add_exception_handler(ForcedResponse, handle_forced_response)  # type: ignore
-    app.add_exception_handler(EntityNotFound, handle_entity_not_found)  # type: ignore
-    app.add_exception_handler(UnauthorizedError, handle_unauthorized_error)  # type: ignore
+    app.add_exception_handler(ForcedResponse, handle_forced_response)  # ty: ignore[invalid-argument-type]
+    app.add_exception_handler(EntityNotFound, handle_entity_not_found)  # ty: ignore[invalid-argument-type]
+    app.add_exception_handler(UnauthorizedError, handle_unauthorized_error)  # ty: ignore[invalid-argument-type]
 
     return app
 

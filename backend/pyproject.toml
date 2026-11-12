@@ -75,6 +75,7 @@ extend-select = [
     "DTZ",    # date timezones
     "E501",   # lines too long
     "E711",   # None equality
+    "PGH",    # blanket type ignores / noqa
     "PT",     # pytest
     "PTH",    # pathlib
     "RET",    # return values

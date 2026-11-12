@@ -21,7 +21,7 @@ async def run_worker() -> None:
 
     async with create_app_for_dependency_injection():
         stack = await async_get_injected_obj(get_async_exit_stack)
-        await attach_asynctasq_to_models()  # type: ignore
+        await attach_asynctasq_to_models()  # ty: ignore[missing-argument]
 
         config = Config()
         driver = DriverFactory.create(config.driver, config)
