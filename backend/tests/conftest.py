@@ -39,6 +39,7 @@ from quickticket.settings import (
     FrontendSettings,
     LogSettings,
     OpenAPISettings,
+    S3Settings,
     SecuritySettings,
     Settings,
 )
@@ -215,6 +216,12 @@ def _base_app() -> FastAPI:
         frontend=FrontendSettings(builtin=False),
         log=LogSettings(debug=False, profiling=False),
         openapi=OpenAPISettings(url=None),
+        s3=S3Settings(
+            url="memory:///",
+            region="us-east-1",
+            access_key="test-access-key",
+            secret_key="test-secret-key",  # noqa: S106
+        ),
         security=SecuritySettings(allowed_hosts=["*"]),
     )
     app = create_app_from_settings(settings)
