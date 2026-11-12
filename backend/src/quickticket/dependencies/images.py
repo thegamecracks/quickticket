@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
 from datetime import timedelta
 from io import BytesIO
-from typing import Annotated, BinaryIO, Protocol
+from typing import TYPE_CHECKING, Annotated, BinaryIO, Protocol
 from uuid import UUID
 
 import anyio.to_thread
@@ -20,6 +22,9 @@ from quickticket.dependencies.state import SettingsDep
 from quickticket.dependencies.store import ObjectStoreDep
 from quickticket.errors import FileSizeExceeded, ImageAnimationNotAccepted, ImageFormatNotAccepted
 from quickticket.models import MimeType, StorageObject, StorageProvider, User
+
+if TYPE_CHECKING:
+    from obstore import GetResult
 
 __all__ = (
     "ImageRead",
@@ -80,6 +85,9 @@ class ImageService:
     make_session: AsyncSessionMakerDep
     settings: SettingsDep
     store: ObjectStoreDep
+
+    async def get(self, obj: StorageObject) -> GetResult:
+        return await self.store.get_async(obj.object_key)
 
     async def get_url(self, obj: StorageObject) -> str:
         assert isinstance(self.store, (AzureStore, GCSStore, S3Store))
