@@ -9,6 +9,7 @@ import os
 import sys
 from enum import IntEnum
 from functools import cache
+from pathlib import Path
 from typing import Any, ClassVar
 
 from rich.console import Console
@@ -115,9 +116,9 @@ def stream_supports_colour(stream: Any) -> bool:
 
 @cache
 def is_docker() -> bool:
-    path = "/proc/self/cgroup"
-    return os.path.exists("/.dockerenv") or (
-        os.path.isfile(path) and any("docker" in line for line in open(path))
+    path = Path("/proc/self/cgroup")
+    return Path("/.dockerenv").exists() or (
+        path.is_file() and any("docker" in line for line in path.open())
     )
 
 

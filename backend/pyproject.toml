@@ -72,6 +72,7 @@ extend-select = [
     "COM",    # trailing commas
     "E501",   # line too long
     "PT",     # pytest
+    "PTH",    # pathlib
     "RET",    # return values
     "RUF043", # pytest raises ambiguous pattern
 ]
