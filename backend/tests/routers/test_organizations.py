@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from quickticket.models import (
     Organization,
+    OrganizationID,
     OrganizationMember,
     OrganizationMemberPermissions,
 )
@@ -31,9 +32,9 @@ async def test_get_organizations(
     assert len(data["items"]) == len(dataset.organizations)
 
     organizations = {organization.id: organization for organization in dataset.organizations}
-    assert {UUID(item["id"]) for item in data["items"]} == set(organizations)
+    assert {OrganizationID(UUID(item["id"])) for item in data["items"]} == set(organizations)
     for item in data["items"]:
-        organization = organizations[UUID(item["id"])]
+        organization = organizations[OrganizationID(UUID(item["id"]))]
         assert item == {
             "id": str(organization.id),
             "created_at": isoformat(organization.created_at),

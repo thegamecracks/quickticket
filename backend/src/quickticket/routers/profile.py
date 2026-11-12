@@ -1,17 +1,17 @@
 import logging
-from uuid import UUID
 
 from fastapi import APIRouter
 from pydantic import AwareDatetime, BaseModel
 
 from quickticket.dependencies.auth import RequiredUserDep
+from quickticket.models import AddressID, UserID
 
 router = APIRouter(tags=["Profiles"])
 log = logging.getLogger(__name__)
 
 
 class ProfileAddress(BaseModel):
-    address_id: UUID
+    address_id: AddressID
     line_1: str
     line_2: str
     city: str
@@ -20,7 +20,7 @@ class ProfileAddress(BaseModel):
 
 
 class Profile(BaseModel):
-    account_id: UUID
+    account_id: UserID
     created_at: AwareDatetime
     display_name: str
     first_name: str

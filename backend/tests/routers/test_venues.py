@@ -7,10 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from quickticket.models import (
     Event,
+    EventID,
     Organization,
     OrganizationMember,
     OrganizationMemberPermissions,
     Venue,
+    VenueID,
 )
 from quickticket.routers.venues import VENUE_LIMIT
 from tests.conftest import AuthController, DatasetLoader, isoformat
@@ -39,13 +41,13 @@ async def test_get_venues(
     for event in dataset.events:
         events[event.venue_id].append(event)
 
-    assert {UUID(item["id"]) for item in data["items"]} == set(venues)
+    assert {VenueID(UUID(item["id"])) for item in data["items"]} == set(venues)
     for item in data["items"]:
-        venue = venues[UUID(item["id"])]
+        venue = venues[VenueID(UUID(item["id"]))]
         organization = organizations[venue.organization_id]
 
         item_events = item.pop("events")
-        assert {UUID(event["id"]) for event in item_events} == {
+        assert {EventID(UUID(event["id"])) for event in item_events} == {
             event.id for event in events[venue.id]
         }
         assert all(event["tickets"] == [] for event in item_events)

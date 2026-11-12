@@ -1,14 +1,16 @@
 from __future__ import annotations
 
-from uuid import UUID, uuid7
+from uuid import uuid7
 
 from sqlalchemy import BigInteger, CheckConstraint, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from quickticket.models.base import Base
 from quickticket.models.types import (
+    StorageObjectID,
+    StorageProviderID,
+    UserID,
     current_timestamp,
-    pk_uuid,
     str_2000,
 )
 
@@ -22,7 +24,11 @@ class StorageProvider(Base, kw_only=True, repr=False):
     __tablename__ = "storage_provider"
     __table_args__ = (UniqueConstraint("endpoint", "region"),)
 
-    id: Mapped[pk_uuid] = mapped_column("storage_provider_id", default_factory=uuid7)
+    id: Mapped[StorageProviderID] = mapped_column(
+        "storage_provider_id",
+        primary_key=True,
+        default_factory=uuid7,
+    )
 
     # Required
     endpoint: Mapped[str_2000]
@@ -43,14 +49,18 @@ class StorageProvider(Base, kw_only=True, repr=False):
 class StorageObject(Base, kw_only=True, repr=False):
     __tablename__ = "storage_object"
 
-    id: Mapped[pk_uuid] = mapped_column("storage_object_id", default_factory=uuid7)
+    id: Mapped[StorageObjectID] = mapped_column(
+        "storage_object_id",
+        primary_key=True,
+        default_factory=uuid7,
+    )
 
     # Required
-    storage_provider_id: Mapped[UUID] = mapped_column(
+    storage_provider_id: Mapped[StorageProviderID] = mapped_column(
         ForeignKey("storage_provider.storage_provider_id"),
         default=None,
     )
-    account_id: Mapped[UUID | None] = mapped_column(
+    account_id: Mapped[UserID | None] = mapped_column(
         ForeignKey("account.account_id", ondelete="SET NULL"),
         default=None,
         index=True,

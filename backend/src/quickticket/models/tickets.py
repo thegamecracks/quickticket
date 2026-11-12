@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from uuid import UUID, uuid7
+from uuid import uuid7
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -9,7 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from quickticket.models.accounts import User
 from quickticket.models.base import Base
 from quickticket.models.money import Money
-from quickticket.models.types import current_timestamp, pk_uuid
+from quickticket.models.types import EventID, TicketID, UserID, current_timestamp
 
 if TYPE_CHECKING:
     from quickticket.models.events import Event
@@ -20,15 +20,15 @@ __all__ = ("Ticket",)
 class Ticket(Base, kw_only=True, repr=False):
     __tablename__ = "ticket"
 
-    id: Mapped[pk_uuid] = mapped_column("ticket_id", default_factory=uuid7)
+    id: Mapped[TicketID] = mapped_column("ticket_id", primary_key=True, default_factory=uuid7)
 
     # Required
-    event_id: Mapped[UUID] = mapped_column(
+    event_id: Mapped[EventID] = mapped_column(
         ForeignKey("event.event_id", ondelete="CASCADE"),
         default=None,
         index=True,
     )
-    account_id: Mapped[UUID] = mapped_column(
+    account_id: Mapped[UserID] = mapped_column(
         ForeignKey("account.account_id", ondelete="CASCADE"),
         default=None,
         index=True,
