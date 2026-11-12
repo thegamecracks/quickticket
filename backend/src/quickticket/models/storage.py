@@ -5,6 +5,7 @@ from uuid import uuid7
 from sqlalchemy import BigInteger, CheckConstraint, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from quickticket.models import User
 from quickticket.models.base import Base
 from quickticket.models.types import (
     StorageObjectID,
@@ -81,6 +82,10 @@ class StorageObject(Base, kw_only=True, repr=False):
 
     # Relationships
     provider: Mapped[StorageProvider] = relationship(
+        default=None,
+        back_populates="storage_objects",
+    )
+    user: Mapped[User] = relationship(
         default=None,
         back_populates="storage_objects",
     )
