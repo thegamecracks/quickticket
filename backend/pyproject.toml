@@ -71,6 +71,7 @@ extend-select = [
     "ANN",  # annotations
     "COM",  # trailing commas
     "E501", # line too long
+    "PT",   # pytest
     "RET",  # return values
 ]
 ignore = [

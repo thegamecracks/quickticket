@@ -86,7 +86,7 @@ async def test_get_events(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ["organization_id", "expected_ids"],
+    ("organization_id", "expected_ids"),
     [
         (
             # Éclair Events
@@ -626,7 +626,7 @@ async def test_create_event_rejects_ends_at_before_starts_at(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(["offset"], [(timedelta(),), (timedelta(minutes=59),)])
+@pytest.mark.parametrize("offset", [timedelta(), timedelta(minutes=59)])
 async def test_create_event_rejects_duration_below_minimum(
     client: AsyncClient,
     offset: timedelta,

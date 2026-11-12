@@ -27,7 +27,7 @@ def ordered_collection(
         return sorted(dataset.venues, key=lambda venue: venue.created_at, reverse=True)
     if url == "/api/organizations":
         return sorted(dataset.organizations, key=lambda org: org.created_at, reverse=True)
-    assert False, f"Unknown endpoint: {url}"
+    pytest.fail(f"Unknown endpoint: {url}")
 
 
 def assert_page(
@@ -142,7 +142,7 @@ async def test_after_and_before_window(
 @pytest.mark.asyncio
 @pytest.mark.parametrize("url", ENDPOINTS)
 @pytest.mark.parametrize(
-    ["after_index", "before_index"],
+    ("after_index", "before_index"),
     [
         # after is later than before
         (1, 3),
@@ -209,7 +209,7 @@ async def test_after_pagination_walk(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ["params", "expected_loc", "expected_type"],
+    ("params", "expected_loc", "expected_type"),
     [
         ({"next": "nope"}, ["query", "next"], "datetime_from_date_parsing"),
         ({"after": "nope"}, ["query", "after"], "datetime_from_date_parsing"),
@@ -453,7 +453,7 @@ async def test_get_events_before_and_next(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ["organization_id", "expected_total"],
+    ("organization_id", "expected_total"),
     [
         # No filter
         (None, 12),
