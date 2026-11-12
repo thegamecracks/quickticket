@@ -289,7 +289,7 @@ async def edit_venue_banner(
     return await images.upload_banner(venue, file, user=user)
 
 
-@router.delete("/{venue_id}/banner", response_model=ImageRead, status_code=204)
+@router.delete("/{venue_id}/banner", status_code=204)
 async def delete_venue_banner(
     user: RequiredUserDep,
     session: AsyncSessionDep,
