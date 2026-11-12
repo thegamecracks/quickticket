@@ -5,9 +5,10 @@ from uuid import uuid7
 from sqlalchemy import BigInteger, CheckConstraint, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from quickticket.models import User
+from quickticket.models.accounts import User
 from quickticket.models.base import Base
 from quickticket.models.types import (
+    MimeType,
     StorageObjectID,
     StorageProviderID,
     UserID,
@@ -75,7 +76,7 @@ class StorageObject(Base, kw_only=True, repr=False):
         BigInteger,
         CheckConstraint("filesize >= 0", "filesize_positive"),
     )
-    mime_type: Mapped[str_2000]
+    mime_type: Mapped[MimeType]
 
     # Optional
     created_at: Mapped[current_timestamp] = mapped_column(default=None)
