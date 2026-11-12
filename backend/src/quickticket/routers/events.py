@@ -34,6 +34,7 @@ from quickticket.paging import (
     KeysetPagedResponse,
     KeysetPageParams,
 )
+from quickticket.routers.images import create_banner_routes
 from quickticket.validators import (
     DisplayNameField,
     FutureAwareDatetime,
@@ -273,3 +274,12 @@ async def delete_event(
     # TODO: check authorization by organization
     # TODO: block event deletion if any tickets are issued
     raise HTTPException(501)
+
+
+router.include_router(
+    create_banner_routes(
+        Event,
+        get_organization_id=lambda event: event.venue.organization_id,
+        options=(selectinload(Event.venue),),
+    ),
+)

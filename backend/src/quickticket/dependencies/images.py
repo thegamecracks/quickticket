@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from obstore import GetResult
 
 __all__ = (
+    "BannerEntity",
     "ImageRead",
     "ImageService",
     "ImageServiceDep",
