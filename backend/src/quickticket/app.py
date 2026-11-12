@@ -25,7 +25,13 @@ from starlette_csrf.middleware import CSRFMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from quickticket.dependencies.ratelimits import apply_request_limit
-from quickticket.errors import EntityNotFound, ForcedResponse, UnauthorizedError
+from quickticket.errors import (
+    EntityNotFound,
+    FileProcessingError,
+    ForcedResponse,
+    ImageFormatNotAccepted,
+    UnauthorizedError,
+)
 from quickticket.logging import setup_logging
 from quickticket.routers import auth, events, notifications, organizations, profile, venues
 from quickticket.settings import Settings
@@ -123,6 +129,8 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
 
     app.add_exception_handler(ForcedResponse, handle_forced_response)  # ty: ignore[invalid-argument-type]
     app.add_exception_handler(EntityNotFound, handle_entity_not_found)  # ty: ignore[invalid-argument-type]
+    app.add_exception_handler(FileProcessingError, handle_file_processing_error)  # ty: ignore[invalid-argument-type]
+    app.add_exception_handler(ImageFormatNotAccepted, handle_image_format_not_accepted)  # ty: ignore[invalid-argument-type]
     app.add_exception_handler(UnauthorizedError, handle_unauthorized_error)  # ty: ignore[invalid-argument-type]
 
     return app
@@ -232,6 +240,20 @@ def handle_forced_response(request: Request, exc: ForcedResponse) -> Response:
 # https://fastapi.tiangolo.com/tutorial/handling-errors/#reuse-fastapis-exception-handlers
 async def handle_entity_not_found(request: Request, exc: EntityNotFound) -> Response:
     http_exception = HTTPException(status_code=400, detail=str(exc))
+    return await http_exception_handler(request, http_exception)
+
+
+async def handle_file_processing_error(request: Request, exc: FileProcessingError) -> Response:
+    http_exception = HTTPException(status_code=400, detail=str(exc))
+    return await http_exception_handler(request, http_exception)
+
+
+async def handle_image_format_not_accepted(
+    request: Request,
+    exc: ImageFormatNotAccepted,
+) -> Response:
+    # FIXME: test HTTP 415 is returned instead of HTTP 400 from FileProcessingError
+    http_exception = HTTPException(status_code=415, detail=str(exc))
     return await http_exception_handler(request, http_exception)
 
 

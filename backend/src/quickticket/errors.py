@@ -1,3 +1,5 @@
+from collections.abc import Collection
+
 from fastapi import Response
 
 from quickticket.models import (
@@ -69,3 +71,33 @@ class UnauthorizedOrganizationMember(UnauthorizedError):
     @property
     def missing(self) -> OrganizationMemberPermissions:
         return self.required & ~self.member.permissions
+
+
+class FileProcessingError(Exception):
+    """An input file cannot be processed."""
+
+
+class ImageFormatNotAccepted(FileProcessingError):
+    """The image filetype does not match the accepted image formats."""
+
+    def __init__(self, content_type: str | None, accepted: Collection[str]) -> None:
+        self.content_type = content_type
+        self.accepted = accepted
+        super().__init__(f"Image format not accepted: {content_type}")
+
+
+class FileSizeExceeded(FileProcessingError):
+    """The file's size exceeds the maximum filesize allowed."""
+
+    def __init__(self, filesize: int, max_filesize: int) -> None:
+        self.filesize = filesize
+        self.max_filesize = max_filesize
+        super().__init__(f"File size exceeded: {filesize:,d}B > {max_filesize:,d}B")
+
+    @classmethod
+    def raise_if_exceeded(cls, filesize: int | None, *, max: int) -> None:
+        # Intentional keyword-only parameter to avoid mis-ordering arguments
+        if filesize is None:
+            raise cls(0, max)
+        elif filesize > max:
+            raise cls(filesize, max)
