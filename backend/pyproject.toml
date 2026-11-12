@@ -81,6 +81,7 @@ extend-select = [
     "RUF043", # pytest raises ambiguous pattern
     "S105",   # hardcoded password strings
     "S106",   # hardcoded password calls
+    "SLF",    # private member access
     "SIM108", # ternary operators
     "TRY400", # log exceptions
 ]

@@ -34,7 +34,7 @@ async def run_worker() -> None:
             queues=["high-priority", "default", "low-priority"],
             concurrency=10,
         )
-        worker._task_executor = InjectableTaskExecutor()
+        worker._task_executor = InjectableTaskExecutor()  # noqa: SLF001
 
         # Start worker (blocks until SIGTERM/SIGINT)
         await worker.start()
@@ -42,7 +42,7 @@ async def run_worker() -> None:
 
 @asynccontextmanager
 async def create_app_for_dependency_injection() -> AsyncGenerator[FastAPI]:
-    db._engine_factory = AsyncEngineFactory(
+    db._engine_factory = AsyncEngineFactory(  # noqa: SLF001
         engine_args={
             "poolclass": NullPool,
             "pool_pre_ping": True,
@@ -55,7 +55,7 @@ async def create_app_for_dependency_injection() -> AsyncGenerator[FastAPI]:
 
 @injectable
 async def attach_asynctasq_to_models(make_session: AsyncSessionMakerDep) -> None:
-    Base._asynctasq_session_factory = make_session
+    Base._asynctasq_session_factory = make_session  # noqa: SLF001
     # XXX:
     # asynctasq is supposed to have native support for serializing ORM models
     # by primary key. However, it turns out it doesn't work with our models
