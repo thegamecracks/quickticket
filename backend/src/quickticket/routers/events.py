@@ -216,18 +216,15 @@ async def create_event(
     response: Response,
 ) -> Event:
     """Create a new event for a venue."""
-    # TODO: check authorization by organization
     # TODO: schedule notifications
     # TODO: allow event drafts?
 
     # get venue from event object to validate permissions in controller
-    nestedVenue = await session.scalar(
-        select(Venue).where(Venue.id == event.venue_id).options(selectinload(Venue.organization))
-    )
-    if nestedVenue is None:
+    venue = await session.get(Venue, event.venue_id, options=[selectinload(Venue.organization)])
+    if venue is None:
         raise ORMEntityNotFound(Venue, event.venue_id)
 
-    controller = await get_organization_controller(session, user, nestedVenue.organization_id)
+    controller = await get_organization_controller(session, user, venue.organization_id)
     controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
 
     # ! TODO: add banner, thumbnail
