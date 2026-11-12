@@ -66,7 +66,7 @@ injectable_autouse_cleanup = false
 line-length = 100
 
 [tool.ruff.lint]
-# select = ["ALL"]
+select = ["ALL"]
 extend-select = [
     "A",      # builtin shadowing
     "ANN",    # annotations
@@ -90,16 +90,25 @@ extend-select = [
     "TRY400", # log exceptions
 ]
 ignore = [
-    "ANN401",  # Any type
+    "ANN401",  # Any types
+    "ARG",     # unused arguments
     "CPY",     # copyright
     "D",       # docstrings
-    "FIX",     # fixme / todo comments
+    "EM101",   # raw strings in exceptions
+    "EM102",   # f-strings in exceptions
     "ERA001",  # commented code
-    "PLR2004", # magic value comparison
-    "S101",    # assert statement
+    "F403",    # star imports
+    "FIX",     # fixme / todo comments
+    "N818",    # Error suffix
+    "PLR0913", # too many arguments
+    "PLR0917", # too many positional arguments
+    "PLR2004", # magic value comparisons
+    "S101",    # assert statements
+    "T201",    # prints
     "TC",      # type-checking
-    "TD002",   # todo author
-    "TD003",   # todo link
+    "TD002",   # todo authors
+    "TD003",   # todo links
+    "TRY003",  # long messages outside of exception class
 ]
 
 [tool.ruff.lint.isort]
