@@ -82,6 +82,6 @@ async def attach_asynctasq_to_models(make_session: AsyncSessionMakerDep) -> None
 class InjectableTaskExecutor(TaskExecutor):
     """Wraps task execution with fastapi-injectable dependency cleanup."""
 
-    async def execute(self, task: BaseTask, timeout: float | None = None) -> None:
+    async def execute(self, task: BaseTask, timeout: float | None = None) -> None:  # noqa: ASYNC109
         async with injectable_scope():
             return await super().execute(task, timeout=timeout)

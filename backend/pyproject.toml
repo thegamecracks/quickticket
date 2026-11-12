@@ -70,6 +70,7 @@ line-length = 100
 extend-select = [
     "A",      # builtin shadowing
     "ANN",    # annotations
+    "ASYNC",  # async/await
     "COM",    # trailing commas
     "DTZ",    # date timezones
     "E501",   # lines too long
