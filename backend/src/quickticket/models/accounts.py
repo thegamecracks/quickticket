@@ -78,6 +78,7 @@ class User(Base, kw_only=True, repr=False):
     )
     storage_objects: Mapped[list[StorageObject]] = relationship(
         default_factory=list,
+        back_populates="user",
         passive_deletes=True,
     )
     tickets: Mapped[list[Ticket]] = relationship(
