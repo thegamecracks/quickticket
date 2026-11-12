@@ -72,14 +72,15 @@ extend-select = [
     "ANN",    # annotations
     "COM",    # trailing commas
     "DTZ",    # date timezones
-    "E501",   # line too long
+    "E501",   # lines too long
     "E711",   # None equality
     "PT",     # pytest
     "PTH",    # pathlib
     "RET",    # return values
     "RUF043", # pytest raises ambiguous pattern
-    "S106",   # hardcoded secrets
-    "SIM108", # ternary operator
+    "S105",   # hardcoded password strings
+    "S106",   # hardcoded password calls
+    "SIM108", # ternary operators
 ]
 ignore = [
     "ANN401",  # Any type
