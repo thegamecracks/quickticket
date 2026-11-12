@@ -106,7 +106,7 @@ class ImageService:
         # Intentionally use a separate session to commit early
         # and avoid rolling back if an exception is raised downstream.
         async with self.make_session.begin() as session:
-            obj = await self._upload(session, key_str, image_bytes, mime_type=mime_type)
+            obj = await self._upload(session, key_str, user, image_bytes, mime_type=mime_type)
             entity.banner = obj
             return obj
 
@@ -132,6 +132,7 @@ class ImageService:
         self,
         session: AsyncSession,
         key: str,
+        user: User,
         data: bytes,
         mime_type: MimeType,
     ) -> StorageObject:
@@ -143,6 +144,7 @@ class ImageService:
             filesize=len(data),
             mime_type=mime_type,
             provider=await self._get_storage_provider(session),
+            user=user,
         )
         session.add(obj)
         return obj
