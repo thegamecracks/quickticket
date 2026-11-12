@@ -110,6 +110,7 @@ class SQLiteCache(Cache):
         row = await c.fetchone()
         if row is not None:
             return row[0]
+        return None
 
     async def set(
         self,
@@ -150,3 +151,4 @@ class SQLiteCache(Cache):
 
         if row is not None:
             return row[0]
+        return None

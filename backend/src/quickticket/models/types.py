@@ -63,15 +63,14 @@ class TZDateTime(TypeDecorator):
     def process_bind_param(self, value: datetime | None, dialect: Dialect) -> datetime | None:
         if value is None:
             return value
-        elif not value.tzinfo or value.tzinfo.utcoffset(value) is None:
+        if not value.tzinfo or value.tzinfo.utcoffset(value) is None:
             raise TypeError("Cannot serialize timezone-naive datetime, tzinfo= must be set")
-        else:
-            return value.astimezone(UTC).replace(tzinfo=None)
+        return value.astimezone(UTC).replace(tzinfo=None)
 
     def process_result_value(self, value: datetime | None, dialect: Dialect) -> datetime | None:
         if value is None:
             return value
-        elif value.tzinfo is None:
+        if value.tzinfo is None:
             return value.replace(tzinfo=UTC)
         return value
 
@@ -92,11 +91,13 @@ class PointSerializer(TypeDecorator):
     def process_bind_param(self, value: Point | None, dialect: Dialect) -> bytes | None:
         if value is not None:
             return struct.pack("<dd", value.lat, value.long)
+        return None
 
     def process_result_value(self, value: bytes | None, dialect: Dialect) -> Point | None:
         if value is not None:
             lat, long = struct.unpack("<dd", value)
             return Point(lat=lat, long=long)
+        return None
 
 
 # https://gist.github.com/alexa-infra/1a2488e4980e4e3c239aaf962eab06b6
@@ -106,13 +107,13 @@ def compile_uuid_postgresql(element, compiler, **kw):  # noqa: ANN001, ANN003, A
     expr: Column | None = kw.get("type_expression")
     if expr is None:
         return compiler.visit_UUID(element, **kw)
-    elif expr.server_default is not None:
+    if expr.server_default is not None:
         # Don't override server default if it's defined.
         return compiler.visit_UUID(element, **kw)
-    elif expr.nullable:
+    if expr.nullable:
         # For nullable columns, assume a UUID default isn't required.
         return compiler.visit_UUID(element, **kw)
-    elif expr.foreign_keys or not expr.primary_key:
+    if expr.foreign_keys or not expr.primary_key:
         # Don't generate UUIDs for foreign keys.
         #
         # In practice, `expr.foreign_keys` doesn't work with Alembic since ForeignKey()

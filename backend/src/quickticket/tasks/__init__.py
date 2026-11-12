@@ -29,7 +29,7 @@ async def example_task_sqlalchemy(
     event = await session.get(Event, event_id)
     if event is None:
         log.debug("Invalid event ID received, ignoring")
-        return
+        return None
 
     log.debug("example_task_sqlalchemy(event=%s)", event.id)
     return event.display_name

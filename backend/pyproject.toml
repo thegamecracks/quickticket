@@ -70,6 +70,7 @@ line-length = 100
 extend-select = [
     "ANN", # annotations
     "COM", # trailing commas
+    "RET", # return values
 ]
 ignore = [
     "ANN401",  # Any type

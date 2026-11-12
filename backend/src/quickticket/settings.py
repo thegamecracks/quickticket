@@ -257,7 +257,7 @@ class SMTPSettings(BaseSettings):
     def infer_tls_from_port(self) -> Self:
         if self.tls is not None:
             return self
-        elif self.port == 465:
+        if self.port == 465:
             self.tls = "implicit"
         elif self.port == 587:
             self.tls = "starttls"

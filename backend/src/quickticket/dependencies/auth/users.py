@@ -229,7 +229,7 @@ async def get_or_refresh_access_token(
     if refresh_token_cookie is None:
         if access_token_cookie is not None:
             cookies.delete_tokens()  # flush out invalid access token
-        return
+        return None
 
     log.debug("Refreshing access token")
     try:
@@ -240,7 +240,7 @@ async def get_or_refresh_access_token(
         else:
             log.debug("Failed to refresh access token", exc_info=e)
         cookies.delete_tokens()
-        return
+        return None
 
     try:
         access_token = validator.parse_access_token(tokens.access_token)
@@ -249,7 +249,7 @@ async def get_or_refresh_access_token(
         # This suggests conflicting configuration,
         # perhaps incorrect system time or outdated JWKs?
         log.warning("OpenID returned invalid tokens", exc_info=e)
-        return
+        return None
 
     await registration.register(
         access_token=access_token,
@@ -275,6 +275,7 @@ async def get_user(
         # This may fetch the user twice if their access token had to be refreshed.
         user, _ = await registration.select_user_by_token(access_token)
         return user
+    return None
 
 
 async def get_user_or_fail(user: OptionalUserDep) -> User:
@@ -293,6 +294,7 @@ async def get_openid_account(
     if access_token is not None:
         _, openid_account = await registration.select_user_by_token(access_token)
         return openid_account
+    return None
 
 
 OptionalAccessTokenDep = Annotated[AccessToken | None, Depends(get_or_refresh_access_token)]

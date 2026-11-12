@@ -32,7 +32,7 @@ async def get_access_claims_registry(
     provider: OpenIDProviderDep,
 ) -> JWTClaimsRegistry:
     # https://jose.authlib.org/en/guide/jwt/#validate-claims
-    registry = jwt.JWTClaimsRegistry(
+    return jwt.JWTClaimsRegistry(
         leeway=settings.security.token_leeway,
         exp={"essential": True},
         iat={"essential": True},
@@ -41,7 +41,6 @@ async def get_access_claims_registry(
         typ={"essential": True},
         azp={"essential": True, "value": provider.client_id.get_secret_value()},
     )
-    return registry
 
 
 async def get_id_claims_registry(
@@ -49,7 +48,7 @@ async def get_id_claims_registry(
     provider: OpenIDProviderDep,
 ) -> JWTClaimsRegistry:
     # https://jose.authlib.org/en/guide/jwt/#validate-claims
-    registry = jwt.JWTClaimsRegistry(
+    return jwt.JWTClaimsRegistry(
         leeway=settings.security.token_leeway,
         iss={"essential": True, "value": str(provider.discovery.issuer)},
         sub={"essential": True},
@@ -66,7 +65,6 @@ async def get_id_claims_registry(
         preferred_username={"essential": True},
         groups={"essential": True},
     )
-    return registry
 
 
 class TokenHeader(BaseModel):

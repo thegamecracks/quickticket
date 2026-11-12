@@ -31,6 +31,7 @@ async def main() -> None:
             return log.info("Run with -y/--yes to confirm")
 
         await run_queries(session)
+    return None
 
 
 async def run_queries(session: AsyncSession) -> None:
