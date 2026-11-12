@@ -4,6 +4,7 @@ from typing import Any
 from pydantic import BaseModel
 from sqlalchemy import JSON, Dialect, TypeDecorator
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.types import TypeEngine
 
 __all__ = (
     "Currency",
@@ -167,16 +168,16 @@ class MoneySerializer(TypeDecorator):
     impl = JSON
     cache_ok = True
 
-    def load_dialect_impl(self, dialect: Dialect):
+    def load_dialect_impl(self, dialect: Dialect) -> TypeEngine[JSON | JSONB]:
         if dialect.name == "postgresql":
             return dialect.type_descriptor(JSONB(none_as_null=True))
         else:
             return dialect.type_descriptor(JSON(none_as_null=True))
 
-    def process_bind_param(self, value: Money | None, dialect: Dialect):
+    def process_bind_param(self, value: Money | None, dialect: Dialect) -> dict[str, Any] | None:
         if value is not None:
             return value.model_dump()
 
-    def process_result_value(self, value: Any | None, dialect: Dialect):
+    def process_result_value(self, value: Any | None, dialect: Dialect) -> Money | None:
         if value is not None:
             return Money.model_validate(value)

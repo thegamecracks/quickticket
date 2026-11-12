@@ -1,6 +1,6 @@
 import logging
 from datetime import timedelta
-from typing import Annotated
+from typing import Annotated, Any, NoReturn
 
 from authlib.common.security import generate_token
 from fastapi import APIRouter, HTTPException, Query, Request
@@ -37,6 +37,7 @@ log = logging.getLogger(__name__)
 # https://docs.authlib.org/en/latest/oauth2/client/http/index.html#oidc-session
 @router.post(
     "/login",
+    response_model=None,
     responses={303: {"description": "The user is being redirected."}},
     status_code=303,
 )
@@ -47,7 +48,7 @@ async def oauth_login(
     client: OAuth2ClientDep,
     cache: CacheDep,
     cookies: OAuthCookieControllerDep,
-):
+) -> NoReturn:
     """Redirect the user to login at the OpenID provider.
 
     The access and refresh token cookies are optional.
@@ -108,7 +109,7 @@ async def oauth_post_login(
     registration: RegistrationControllerDep,
     # Optional
     redirect_uri: PostRedirectUriDep,
-):
+) -> RedirectResponse:
     if state_query != state_cookie:
         # Cross-site request forgery
         log.debug("?state= query mismatch with state cookie, possible CSRF")
@@ -155,7 +156,7 @@ async def oauth_post_login(
 
 
 @router.get("/validate", deprecated=True)
-async def oauth_validate(settings: SettingsDep, access_token: RequiredAccessTokenDep):
+async def oauth_validate(settings: SettingsDep, access_token: RequiredAccessTokenDep) -> Any:
     """Verify authentication and return the decoded access token."""
     if not settings.frontend.builtin:
         raise HTTPException(404)
@@ -164,6 +165,7 @@ async def oauth_validate(settings: SettingsDep, access_token: RequiredAccessToke
 
 @router.post(
     "/logout",
+    response_model=None,
     responses={307: {"description": "The user is being redirected."}},
     status_code=307,
 )
@@ -173,7 +175,7 @@ async def oauth_logout(
     client: OAuth2ClientDep,
     request: Request,
     openid_account: OptionalOpenIDAccountDep,
-):
+) -> NoReturn:
     """Redirect the user to logout at the OpenID provider.
 
     If no access token is provided, this redirects straight to ``redirect_uri``.
@@ -202,6 +204,7 @@ async def oauth_logout(
 
 @router.get(
     "/post-logout",
+    response_model=None,
     responses={
         307: {"description": "The user successfully logged out."},
         400: {"description": "The state is invalid."},
@@ -222,7 +225,7 @@ async def oauth_post_logout(
     cookies: OAuthCookieControllerDep,
     # Optional
     redirect_uri: PostRedirectUriDep,
-):
+) -> NoReturn:
     if state_query != state_cookie:
         # Cross-site request forgery
         log.debug("?state= query mismatch with state cookie, possible CSRF")

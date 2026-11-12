@@ -89,11 +89,11 @@ class PointSerializer(TypeDecorator):
     impl = LargeBinary
     cache_ok = True
 
-    def process_bind_param(self, value: Point | None, dialect: Dialect):
+    def process_bind_param(self, value: Point | None, dialect: Dialect) -> bytes | None:
         if value is not None:
             return struct.pack("<dd", value.lat, value.long)
 
-    def process_result_value(self, value: bytes | None, dialect: Dialect):
+    def process_result_value(self, value: bytes | None, dialect: Dialect) -> Point | None:
         if value is not None:
             lat, long = struct.unpack("<dd", value)
             return Point(lat=lat, long=long)
@@ -102,7 +102,7 @@ class PointSerializer(TypeDecorator):
 # https://gist.github.com/alexa-infra/1a2488e4980e4e3c239aaf962eab06b6
 # Implicitly set uuidv7() default function for UUID columns
 @compiles(Uuid, "postgresql")
-def compile_uuid_postgresql(element, compiler, **kw):
+def compile_uuid_postgresql(element, compiler, **kw):  # noqa: ANN001, ANN003, ANN202
     expr: Column | None = kw.get("type_expression")
     if expr is None:
         return compiler.visit_UUID(element, **kw)

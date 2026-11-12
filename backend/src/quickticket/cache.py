@@ -1,5 +1,6 @@
 import logging
 from datetime import UTC, datetime, timedelta
+from types import TracebackType
 from typing import Any, Protocol, Self
 
 import aiosqlite
@@ -11,7 +12,12 @@ log = logging.getLogger(__name__)
 # Adapter pattern
 class Cache(Protocol):
     async def __aenter__(self) -> Self: ...
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> object: ...
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> object: ...
     async def get(self, key: str) -> Any | None: ...
     async def set(self, key: str, value: Any, *, expiry: timedelta | None = None) -> object: ...
     async def delete(self, key: str) -> bool: ...
@@ -26,7 +32,12 @@ class RedisCache(Cache):
         log.debug("Entering %s", type(self).__name__)
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         log.debug("Closing %s", type(self).__name__)
         # await self.client.aclose()  # caller's repsonsibility
 
@@ -63,7 +74,12 @@ class SQLiteCache(Cache):
         await self._create_schema()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         log.debug("Closing %s", type(self).__name__)
         # await self.client.close()  # caller's responsibility
 

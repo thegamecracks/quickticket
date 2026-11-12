@@ -147,7 +147,7 @@ class _ColourFormatter(logging.Formatter):
         for level, colour in LEVEL_COLOURS
     }
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         formatter = self.FORMATS.get(record.levelno)
         if formatter is None:
             formatter = self.FORMATS[logging.DEBUG]

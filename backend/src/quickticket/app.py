@@ -181,7 +181,10 @@ def add_profiling_middleware(app: FastAPI) -> None:
 
     # https://pyinstrument.readthedocs.io/en/latest/guide.html
     @app.middleware("http")
-    async def profile_request(request: Request, call_next):
+    async def profile_request(
+        request: Request,
+        call_next: Callable[[Request], Awaitable[object]],
+    ) -> object:
         profiling = request.query_params.get("profile", False)
         if not profiling:
             return await call_next(request)
@@ -196,7 +199,7 @@ def add_profiling_middleware(app: FastAPI) -> None:
 async def preserve_headers(
     request: Request,
     call_next: Callable[[Request], Awaitable[Response]],
-):
+) -> Response:
     response = await call_next(request)
 
     temp_response = cast(Response | None, getattr(request.state, "temp_response", None))
