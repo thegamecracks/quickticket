@@ -190,7 +190,7 @@ class RegistrationController:
         user.email = claims.email
 
         groups = claims.groups
-        if self.admin_group is not None:
+        if self.admin_group is not None:  # noqa: SIM108
             is_admin = self.admin_group in groups
         else:
             is_admin = None  # noqa: F841
