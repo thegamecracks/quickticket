@@ -216,8 +216,11 @@ async def preserve_headers(
         # headers from the temporary response to the response object.
         # Ideally we'd detect that and skip transferring headers, but the
         # `response is temp_response` condition doesn't handle this.
-        # For now, we'll use `response.headers[k] = v` to de-duplicate headers.
-        response.headers[k] = v
+        #
+        # Skip values that were already transferred, but never overwrite distinct
+        # values: multi-valued headers like Set-Cookie must be preserved as-is.
+        if v not in response.headers.getlist(k):
+            response.headers.append(k, v)
 
     return response
 

@@ -119,7 +119,7 @@ async def test_create_venue(
     )
     assert response.status_code == 201
     data = response.json()
-    assert response.headers["location"] == f"http://test/api/venues/{data['id']}"
+    assert response.headers.get_list("location") == [f"http://test/api/venues/{data['id']}"]
 
     assert len(data) == 11
     assert data["id"] is not None

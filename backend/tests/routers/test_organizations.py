@@ -75,7 +75,7 @@ async def test_create_organization(
     response = await client.post("/api/organizations", json={"display_name": "Test Organization"})
     assert response.status_code == 201
     data = response.json()
-    assert response.headers["location"] == f"http://test/api/organizations/{data['id']}"
+    assert response.headers.get_list("location") == [f"http://test/api/organizations/{data['id']}"]
 
     assert len(data) == 5
     assert data["id"] is not None
