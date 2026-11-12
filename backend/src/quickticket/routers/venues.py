@@ -1,7 +1,7 @@
 import logging
 from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException, Query, Request, Response
+from fastapi import APIRouter, HTTPException, Query, Request, Response, UploadFile
 from pydantic import AfterValidator, AwareDatetime, BaseModel, Field
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
@@ -10,7 +10,9 @@ from starlette.status import HTTP_201_CREATED
 
 from quickticket.dependencies.auth import OptionalUserDep, RequiredUserDep
 from quickticket.dependencies.db import AsyncSessionDep
+from quickticket.dependencies.images import ImageRead, ImageServiceDep
 from quickticket.dependencies.models import get_organization_controller
+from quickticket.errors import ORMEntityNotFound
 from quickticket.models import (
     Event,
     EventID,
@@ -242,6 +244,25 @@ async def edit_venue(
     # TODO: check authorization by organization
     # TODO: allow venue drafts?
     raise HTTPException(501)
+
+
+@router.put("/{venue_id}/banner", response_model=ImageRead)
+async def edit_venue_banner(
+    user: RequiredUserDep,
+    session: AsyncSessionDep,
+    images: ImageServiceDep,
+    venue_id: UUID,
+    file: UploadFile,
+) -> StorageObject:
+    """Edit a venue's banner."""
+    venue = await session.get(Venue, venue_id)
+    if venue is None:
+        raise ORMEntityNotFound(Venue, venue_id)
+
+    controller = await get_organization_controller(session, user, venue.organization_id)
+    controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
+
+    return await images.upload_banner(venue_id, user, file)
 
 
 @router.delete("/{venue_id}", deprecated=True)
