@@ -68,10 +68,10 @@ async def get_openid_provider(
     async def parse_provider(data: str) -> OpenIDProvider:
         assert settings.openid is not None
 
-        id, secret = settings.openid.client_id, settings.openid.client_secret
+        client_id, secret = settings.openid.client_id, settings.openid.client_secret
         try:
             data = from_json(data)
-            return OpenIDProvider(client_id=id, client_secret=secret, discovery=data)
+            return OpenIDProvider(client_id=client_id, client_secret=secret, discovery=data)
         except ValueError as e:
             log.error("Cannot parse provider", exc_info=e)
             return await fail("malformed response")
