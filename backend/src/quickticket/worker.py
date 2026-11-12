@@ -17,7 +17,7 @@ from quickticket.models import Base
 async def run_worker() -> None:
     """Start a task queue worker with the given settings."""
     # https://github.com/adamrefaey/asynctasq/blob/ac6ca93cd2f04b1e03815c01ccf0404a11a6f773/docs/running-workers.md#programmatic-workers
-    from asynctasq import Config, DriverFactory, Worker
+    from asynctasq import Config, DriverFactory, Worker  # noqa: PLC0415
 
     async with create_app_for_dependency_injection():
         stack = await async_get_injected_obj(get_async_exit_stack)

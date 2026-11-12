@@ -34,7 +34,7 @@ def run() -> None:
 @main.command()
 def worker() -> None:
     """Run the task queue worker."""
-    import anyio
+    import anyio  # noqa: PLC0415
 
     anyio.run(run_worker)
 

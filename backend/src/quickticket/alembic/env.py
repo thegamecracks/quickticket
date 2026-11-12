@@ -31,7 +31,7 @@ target_metadata = Base.metadata
 
 
 def _get_database_url() -> str:
-    from quickticket.settings import Settings
+    from quickticket.settings import Settings  # noqa: PLC0415
 
     return Settings().db.url.get_secret_value().unicode_string()
 

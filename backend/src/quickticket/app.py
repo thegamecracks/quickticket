@@ -73,7 +73,7 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
     app.include_router(api, prefix="/api")
 
     if settings.frontend.builtin:
-        from quickticket import frontend
+        from quickticket import frontend  # noqa: PLC0415
 
         log.warning(
             "Serving minimal frontend. Disable in production with: BACKEND__FRONTEND__BUILTIN=0",
@@ -166,7 +166,7 @@ async def store_response_object(request: Request, response: Response) -> None:
 
 def add_profiling_middleware(app: FastAPI) -> None:
     try:
-        from pyinstrument import Profiler
+        from pyinstrument import Profiler  # noqa: PLC0415
     except ModuleNotFoundError:
         log.warning(
             "Request profiling is unavailable due to pyinstrument not being installed. "
