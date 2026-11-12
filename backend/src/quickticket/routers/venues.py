@@ -1,8 +1,7 @@
 import logging
 from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException, Query, Request, Response, UploadFile
-from fastapi.responses import RedirectResponse
+from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import AfterValidator, AwareDatetime, BaseModel, Field
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
@@ -11,9 +10,7 @@ from starlette.status import HTTP_201_CREATED
 
 from quickticket.dependencies.auth import OptionalUserDep, RequiredUserDep
 from quickticket.dependencies.db import AsyncSessionDep
-from quickticket.dependencies.images import ImageRead, ImageServiceDep
 from quickticket.dependencies.models import get_organization_controller
-from quickticket.errors import ORMEntityNotFound
 from quickticket.models import (
     Event,
     EventID,
@@ -34,6 +31,7 @@ from quickticket.paging import (
     KeysetPagedResponse,
     KeysetPageParams,
 )
+from quickticket.routers.images import create_banner_routes
 from quickticket.validators import DisplayNameField, filter_string_field
 
 VENUE_LIMIT = 5
@@ -247,69 +245,6 @@ async def edit_venue(
     raise HTTPException(501)
 
 
-@router.get(
-    "/{venue_id}/banner",
-    response_model=None,
-    responses={
-        307: {"description": "Redirecting to image source."},
-        404: {"description": "The image does not exist."},
-    },
-    status_code=404,
-)
-async def get_venue_banner(
-    session: AsyncSessionDep,
-    images: ImageServiceDep,
-    venue_id: UUID,
-) -> RedirectResponse | None:
-    """Get a venue's banner."""
-    venue = await session.get(Venue, venue_id, options=[selectinload(Venue.banner)])
-    if venue is None:
-        raise ORMEntityNotFound(Venue, venue_id)
-    if venue.banner is None:
-        return None
-    return RedirectResponse(await images.get_url(venue.banner), 307)
-
-
-@router.put("/{venue_id}/banner", response_model=ImageRead)
-async def edit_venue_banner(
-    user: RequiredUserDep,
-    session: AsyncSessionDep,
-    images: ImageServiceDep,
-    venue_id: UUID,
-    file: UploadFile,
-) -> StorageObject:
-    """Edit a venue's banner."""
-    venue = await session.get(Venue, venue_id)
-    if venue is None:
-        raise ORMEntityNotFound(Venue, venue_id)
-
-    controller = await get_organization_controller(session, user, venue.organization_id)
-    controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
-
-    return await images.upload_banner(venue, file, user=user)
-
-
-@router.delete("/{venue_id}/banner", status_code=204)
-async def delete_venue_banner(
-    user: RequiredUserDep,
-    session: AsyncSessionDep,
-    venue_id: UUID,
-) -> None:
-    """Delete a venue's banner."""
-    venue = await session.get(Venue, venue_id, options=[selectinload(Venue.banner)])
-    if venue is None:
-        raise ORMEntityNotFound(Venue, venue_id)
-
-    controller = await get_organization_controller(session, user, venue.organization_id)
-    controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
-
-    if venue.banner is None:
-        raise HTTPException(404, "Image not set")
-
-    # TODO: schedule image for deletion
-    venue.banner = None
-
-
 @router.delete("/{venue_id}", deprecated=True)
 async def delete_venue(
     user: RequiredUserDep,
@@ -320,3 +255,12 @@ async def delete_venue(
     # TODO: check authorization by organization
     # TODO: block venue deletion if any tickets are issued
     raise HTTPException(501)
+
+
+router.include_router(
+    create_banner_routes(
+        Venue,
+        get_organization_id=lambda venue: venue.organization_id,
+        options=(),
+    ),
+)
