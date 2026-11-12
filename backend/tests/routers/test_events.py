@@ -511,7 +511,7 @@ async def test_create_event_rejects_max_attendees_above_maximum(
 async def test_create_event_rejects_naive_datetimes(
     client: AsyncClient,
 ) -> None:
-    starts_at = datetime.now() + timedelta(days=1)
+    starts_at = datetime.now() + timedelta(days=1)  # noqa: DTZ005
     ends_at = starts_at
     response = await client.post(
         "/api/events",
