@@ -77,6 +77,13 @@ class FileProcessingError(Exception):
     """An input file cannot be processed."""
 
 
+class ImageAnimationNotAccepted(FileProcessingError):
+    """The image cannot be animated."""
+
+    def __init__(self) -> None:
+        super().__init__("Animated image not accepted")
+
+
 class ImageFormatNotAccepted(FileProcessingError):
     """The image filetype does not match the accepted image formats."""
 

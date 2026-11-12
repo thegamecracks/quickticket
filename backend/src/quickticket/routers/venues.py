@@ -2,6 +2,7 @@ import logging
 from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response, UploadFile
+from fastapi.responses import RedirectResponse
 from pydantic import AfterValidator, AwareDatetime, BaseModel, Field
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
@@ -246,6 +247,29 @@ async def edit_venue(
     raise HTTPException(501)
 
 
+@router.get(
+    "/{venue_id}/banner",
+    response_model=None,
+    responses={
+        307: {"description": "Redirecting to image source."},
+        404: {"description": "The image does not exist."},
+    },
+    status_code=404,
+)
+async def get_venue_banner(
+    session: AsyncSessionDep,
+    images: ImageServiceDep,
+    venue_id: UUID,
+) -> RedirectResponse | None:
+    """Get a venue's banner."""
+    venue = await session.get(Venue, venue_id, options=[selectinload(Venue.banner)])
+    if venue is None:
+        raise ORMEntityNotFound(Venue, venue_id)
+    if venue.banner is None:
+        return None
+    return RedirectResponse(await images.get_url(venue.banner), 307)
+
+
 @router.put("/{venue_id}/banner", response_model=ImageRead)
 async def edit_venue_banner(
     user: RequiredUserDep,
@@ -262,7 +286,7 @@ async def edit_venue_banner(
     controller = await get_organization_controller(session, user, venue.organization_id)
     controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
 
-    return await images.upload_banner(venue_id, user, file)
+    return await images.upload_banner(venue, file, user=user)
 
 
 @router.delete("/{venue_id}", deprecated=True)
