@@ -95,9 +95,9 @@ class FileSizeExceeded(FileProcessingError):
         super().__init__(f"File size exceeded: {filesize:,d}B > {max_filesize:,d}B")
 
     @classmethod
-    def raise_if_exceeded(cls, filesize: int | None, *, max: int) -> None:
+    def raise_if_exceeded(cls, filesize: int | None, *, max_filesize: int) -> None:
         # Intentional keyword-only parameter to avoid mis-ordering arguments
         if filesize is None:
-            raise cls(0, max)
-        elif filesize > max:
-            raise cls(filesize, max)
+            raise cls(0, max_filesize)
+        if filesize > max_filesize:
+            raise cls(filesize, max_filesize)

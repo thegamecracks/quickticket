@@ -252,7 +252,7 @@ async def handle_image_format_not_accepted(
     request: Request,
     exc: ImageFormatNotAccepted,
 ) -> Response:
-    # FIXME: test HTTP 415 is returned instead of HTTP 400 from FileProcessingError
+    # TODO: test HTTP 415 is returned instead of HTTP 400 from FileProcessingError
     http_exception = HTTPException(status_code=415, detail=str(exc))
     return await http_exception_handler(request, http_exception)
 

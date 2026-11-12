@@ -48,8 +48,8 @@ class ImageRead(BaseModel):
 def _process_image(file: BinaryIO, *, content_type: str) -> bytes:
     with Image.open(file, formats=ACCEPTED_IMAGE_FORMATS) as image:
         # image.load()
-        # FIXME: forbid animated images
-        raise NotImplementedError(image)  # TODO
+        # TODO: forbid animated images
+        raise NotImplementedError(image)  # TODO: resize and compress
 
 
 @dataclass(kw_only=True, repr=False)
@@ -68,7 +68,7 @@ class ImageService:
                 _process_image,
                 file.file,
                 content_type=file.content_type,
-            )
+            ),
         )
 
         async with self.make_session.begin() as session:
@@ -88,7 +88,7 @@ class ImageService:
         if file.content_type not in ACCEPTED_IMAGE_FORMATS:
             raise ImageFormatNotAccepted(file.content_type, ACCEPTED_IMAGE_FORMATS)
 
-        FileSizeExceeded.raise_if_exceeded(file.size, max=max_filesize)
+        FileSizeExceeded.raise_if_exceeded(file.size, max_filesize=max_filesize)
 
         # TODO: per-user ratelimiting
 
@@ -110,11 +110,11 @@ class ImageService:
         #     mime_type=,
         #     provider=await self._get_storage_provider(session),
         # )
-        session.add(obj)
-        raise NotImplementedError  # TODO
+        # session.add(obj)
+        raise NotImplementedError  # TODO: upload to s3 and store in db
 
     async def _get_storage_provider(self, session: AsyncSession) -> StorageProvider:
-        raise NotImplementedError  # TODO
+        raise NotImplementedError  # TODO: upsert into db
 
 
 async def get_image_service(
