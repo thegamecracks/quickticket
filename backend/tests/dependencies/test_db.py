@@ -74,7 +74,7 @@ async def test_get_async_session_commits(
 async def test_get_async_session_rolls_back_on_error(
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
-    with pytest.raises(RuntimeError, match="^rollback$"):  # noqa: PT012
+    with pytest.raises(RuntimeError, match=r"^rollback$"):  # noqa: PT012
         async with enter_get_async_session(make_session) as session:
             session.add(create_user())
             raise RuntimeError("rollback")

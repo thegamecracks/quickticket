@@ -68,11 +68,12 @@ line-length = 100
 [tool.ruff.lint]
 # select = ["ALL"]
 extend-select = [
-    "ANN",  # annotations
-    "COM",  # trailing commas
-    "E501", # line too long
-    "PT",   # pytest
-    "RET",  # return values
+    "ANN",    # annotations
+    "COM",    # trailing commas
+    "E501",   # line too long
+    "PT",     # pytest
+    "RET",    # return values
+    "RUF043", # pytest raises ambiguous pattern
 ]
 ignore = [
     "ANN401",  # Any type
