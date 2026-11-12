@@ -289,6 +289,27 @@ async def edit_venue_banner(
     return await images.upload_banner(venue, file, user=user)
 
 
+@router.delete("/{venue_id}/banner", response_model=ImageRead, status_code=204)
+async def delete_venue_banner(
+    user: RequiredUserDep,
+    session: AsyncSessionDep,
+    venue_id: UUID,
+) -> None:
+    """Delete a venue's banner."""
+    venue = await session.get(Venue, venue_id, options=[selectinload(Venue.banner)])
+    if venue is None:
+        raise ORMEntityNotFound(Venue, venue_id)
+
+    controller = await get_organization_controller(session, user, venue.organization_id)
+    controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
+
+    if venue.banner is None:
+        raise HTTPException(404, "Image not set")
+
+    # TODO: schedule image for deletion
+    venue.banner = None
+
+
 @router.delete("/{venue_id}", deprecated=True)
 async def delete_venue(
     user: RequiredUserDep,
