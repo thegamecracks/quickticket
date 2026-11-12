@@ -203,7 +203,7 @@ class SecuritySettings(BaseSettings):
 
     """
     csrf_secret: Secret[str | None] = Secret(None)  # insecure_qt9u0SCF3DuSJ69ZrqvzlJGTWxx7C5wh
-    """An optional secret to use for ``csrftoken`` double submit cookies / ``x-csrf-token`` headers."""
+    """An optional secret for ``csrftoken`` double submit cookies / ``x-csrf-token`` headers."""
     cookie_encryption_secrets: list[Secret[str]] = [
         Secret("Qfw1bmzNtFba8qLxYZzxtEDfgd4P58LCDKiuMezO6lU="),
     ]
@@ -220,7 +220,7 @@ class SecuritySettings(BaseSettings):
 
         BACKEND__SECURITY__COOKIE_ENCRYPTION_SECRETS=["my-new-base64-secret", "Qfw1bmzNtFba8qLxYZzxtEDfgd4P58LCDKiuMezO6lU="]
 
-    """
+    """  # noqa: E501
     token_leeway: int = 30
     """The tolerance for time desync between the OpenID provider and the backend.
 

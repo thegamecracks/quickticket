@@ -141,8 +141,11 @@ class _ColourFormatter(logging.Formatter):
 
     FORMATS: ClassVar[dict[int, logging.Formatter]] = {
         level: logging.Formatter(
-            f"\x1b[30;1m%(asctime)s\x1b[0m {colour}%(levelname)-8s\x1b[0m \x1b[35m%(name)s\x1b[0m %(message)s",
-            "%Y-%m-%d %H:%M:%S",
+            fmt=(
+                f"\x1b[30;1m%(asctime)s\x1b[0m {colour}%(levelname)-8s\x1b[0m "
+                f"\x1b[35m%(name)s\x1b[0m %(message)s"
+            ),
+            datefmt="%Y-%m-%d %H:%M:%S",
         )
         for level, colour in LEVEL_COLOURS
     }
