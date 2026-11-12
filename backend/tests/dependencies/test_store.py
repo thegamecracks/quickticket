@@ -14,7 +14,7 @@ async def test_memory_store_from_url() -> None:
             url="memory:///",
             region="us-east-1",
             access_key="test-access-key",
-            secret_key="test-secret-key",
+            secret_key="test-secret-key",  # noqa: S106
         ),
     )
     state = State()

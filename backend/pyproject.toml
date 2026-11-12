@@ -76,6 +76,7 @@ extend-select = [
     "PTH",    # pathlib
     "RET",    # return values
     "RUF043", # pytest raises ambiguous pattern
+    "S106",   # hardcoded secrets
     "SIM108", # ternary operator
 ]
 ignore = [
