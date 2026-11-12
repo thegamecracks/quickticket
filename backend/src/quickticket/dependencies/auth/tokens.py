@@ -111,7 +111,7 @@ class Address(BaseModel):
 class IdTokenClaims(TokenClaims):
     model_config = ConfigDict(extra="allow")
 
-    # FIXME: likely needs looser validation to support other providers
+    # TODO: likely needs looser validation to support other providers
     jti: str
     sid: str
     auth_time: int

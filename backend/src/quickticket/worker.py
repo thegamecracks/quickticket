@@ -56,7 +56,7 @@ async def create_app_for_dependency_injection() -> AsyncGenerator[FastAPI]:
 @injectable
 async def attach_asynctasq_to_models(make_session: AsyncSessionMakerDep) -> None:
     Base._asynctasq_session_factory = make_session  # noqa: SLF001
-    # XXX:
+    # HACK:
     # asynctasq is supposed to have native support for serializing ORM models
     # by primary key. However, it turns out it doesn't work with our models
     # and keeps trying to serialize the entire class.

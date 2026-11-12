@@ -134,7 +134,7 @@ class RegistrationController:
             False,
         ) is True:
             # Link email claim from either access or ID token if present
-            # FIXME: no guarantee two users don't share same email, prompt recommended
+            # TODO: no guarantee two users don't share same email, prompt recommended
             user = await self.session.scalar(select(User).where(User.email == email))
 
         if user is not None:
