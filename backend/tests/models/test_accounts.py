@@ -28,7 +28,7 @@ async def test_current_timestamp_server_default(
             last_name="Last",
             email="user@example.com",
         )
-        assert user.created_at == None  # HACK: bypass ty's dead code lint with equality
+        assert user.created_at == None  # noqa: E711  # bypass ty's dead code lint with equality
 
         session.add(user)
         await session.flush()

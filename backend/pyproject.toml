@@ -71,6 +71,7 @@ extend-select = [
     "ANN",    # annotations
     "COM",    # trailing commas
     "E501",   # line too long
+    "E711",   # None equality
     "PT",     # pytest
     "PTH",    # pathlib
     "RET",    # return values
