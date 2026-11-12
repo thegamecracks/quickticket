@@ -67,7 +67,21 @@ line-length = 100
 
 [tool.ruff.lint]
 # select = ["ALL"]
-extend-select = ["COM"]
+extend-select = [
+    "COM", # trailing commas
+]
+ignore = [
+    "ANN401",  # Any type
+    "CPY",     # copyright
+    "D",       # docstrings
+    "FIX",     # fixme / todo comments
+    "ERA001",  # commented code
+    "PLR2004", # magic value comparison
+    "S101",    # assert statement
+    "TC",      # type-checking
+    "TD002",   # todo author
+    "TD003",   # todo link
+]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
