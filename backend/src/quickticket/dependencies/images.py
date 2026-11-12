@@ -159,7 +159,7 @@ class ImageService:
     @staticmethod
     def _calculate_filename(data: bytes, mime_type: MimeType) -> str:
         ext = MIME_TYPES_TO_EXTENSIONS[mime_type]
-        data_hash = sha3_256(data).hexdigest()
+        data_hash = sha3_256(data).hexdigest()[:32]
         return f"{data_hash}.{ext}"
 
     async def _get_storage_provider(self, session: AsyncSession) -> StorageProvider:
