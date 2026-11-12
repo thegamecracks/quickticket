@@ -82,6 +82,7 @@ extend-select = [
     "S105",   # hardcoded password strings
     "S106",   # hardcoded password calls
     "SIM108", # ternary operators
+    "TRY400", # log exceptions
 ]
 ignore = [
     "ANN401",  # Any type

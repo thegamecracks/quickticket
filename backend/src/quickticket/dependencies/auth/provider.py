@@ -72,8 +72,8 @@ async def get_openid_provider(
         try:
             data = from_json(data)
             return OpenIDProvider(client_id=client_id, client_secret=secret, discovery=data)
-        except ValueError as e:
-            log.error("Cannot parse provider", exc_info=e)
+        except ValueError:
+            log.exception("Cannot parse provider")
             return await fail("malformed response")
 
     if settings.openid is None:
@@ -107,8 +107,8 @@ async def get_openid_provider_jwks(
     async def parse_key_set(data: str) -> KeySet:
         try:
             return KeySet.import_key_set(from_json(data))
-        except ValueError as e:
-            log.error("Cannot parse JWKs", exc_info=e)
+        except ValueError:
+            log.exception("Cannot parse JWKs")
             await fail("malformed response")
 
     jwks_key = f"{cache_key}/jwks"
