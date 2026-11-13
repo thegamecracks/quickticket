@@ -35,7 +35,7 @@ export default function EventCreationPage({
   venueId: wizardVenueId,
 }: EventCreationPageProps) {
   // replace mock lookup with real wizard/router values later
-  const organizations = getMockOrganizationsForAccount(MockUser.account_id)
+  const organizations = getMockOrganizationsForAccount(MockUser.id)
   const organization = wizardOrganizationId
     ? organizations.find((o) => o.id === wizardOrganizationId)
     : organizations[0]

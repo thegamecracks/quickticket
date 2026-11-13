@@ -10,8 +10,7 @@ from uuid import UUID
 import pytest
 import pytest_asyncio
 from asgi_lifespan import LifespanManager
-from asynctasq import AsyncTasQIntegration, Dispatcher
-from asynctasq.drivers import BaseDriver
+from asynctasq import AsyncTasQIntegration
 from fastapi import FastAPI
 from fastapi.datastructures import State
 from fastapi_injectable import cleanup_all_exit_stacks, clear_dependency_cache
@@ -25,7 +24,12 @@ from sqlalchemy.ext.asyncio import (
 
 from quickticket.app import create_app_from_settings
 from quickticket.dependencies.auth import get_user
-from quickticket.dependencies.db import AsyncEngineFactory, _engine_factory, get_async_sessionmaker
+from quickticket.dependencies.db import (
+    AsyncEngineFactory,
+    AsyncSessionDep,
+    _engine_factory,
+    get_async_sessionmaker,
+)
 from quickticket.dependencies.state import get_settings
 from quickticket.dependencies.store import Store, get_object_store
 from quickticket.models import Address, Base, User
@@ -106,26 +110,35 @@ async def stack() -> AsyncGenerator[AsyncExitStack]:
         yield stack
 
 
-@pytest_asyncio.fixture
-async def engine(stack: AsyncExitStack, state: State) -> AsyncEngine:
+@pytest_asyncio.fixture(scope="session")
+async def engine() -> AsyncGenerator[AsyncEngine]:
     settings = Settings(
         _env_file=None,
         db=DatabaseSettings(url="sqlite+aiosqlite:///:memory:"),
     )
 
     engine_factory = AsyncEngineFactory()
-    engine = await engine_factory(settings=settings, stack=stack, state=state)
+    async with AsyncExitStack() as stack:
+        engine = await engine_factory(settings=settings, stack=stack, state=State())
 
-    # Generate schema from models instead of running the migration scripts
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        # Generate schema from models instead of running the migration scripts
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
 
-    return engine
+        yield engine
 
 
 @pytest_asyncio.fixture
-async def make_session(state: State, engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
-    return await get_async_sessionmaker(state, engine)
+async def make_session(engine: AsyncEngine) -> AsyncGenerator[async_sessionmaker[AsyncSession]]:
+    async with engine.begin() as conn:
+        try:
+            yield async_sessionmaker(
+                conn,
+                expire_on_commit=False,
+                join_transaction_mode="create_savepoint",
+            )
+        finally:
+            await conn.rollback()
 
 
 @dataclass(kw_only=True)
@@ -167,10 +180,12 @@ class AuthController:
     user: User | None = None
     """The currently authenticated user. Can be mutated in-place."""
 
-    def get_user(self) -> User | None:
-        if self.enabled:
-            return self.user
-        raise NotImplementedError  # TODO: resolve get_user() with FastAPI's DI framework
+    async def get_user(self, session: AsyncSessionDep) -> User | None:
+        if not self.enabled:
+            raise NotImplementedError  # TODO: resolve get_user() with FastAPI's DI framework
+        if self.user is None:
+            return None
+        return await session.get(User, self.user.id)
 
 
 @pytest.fixture
@@ -210,7 +225,7 @@ def _base_app() -> FastAPI:
 @pytest.fixture(autouse=True)
 def asynctasq_dispatcher(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
     # https://github.com/adamrefaey/asynctasq/blob/ac6ca93cd2f04b1e03815c01ccf0404a11a6f773/tests/unit/tasks/types/test_function_task.py#L281-L301
-    mock_dispatcher = AsyncMock(Dispatcher)
+    mock_dispatcher = AsyncMock()  # Dispatcher
     mock_dispatcher.dispatch = AsyncMock(return_value="task-id-123")
     monkeypatch.setattr("asynctasq.core.dispatcher.get_dispatcher", lambda *_: mock_dispatcher)
     return mock_dispatcher
@@ -222,7 +237,7 @@ def asynctasq_driver(
     asynctasq_dispatcher: AsyncMock,
 ) -> MagicMock:
     # https://github.com/adamrefaey/asynctasq/blob/ac6ca93cd2f04b1e03815c01ccf0404a11a6f773/tests/unit/integrations/test_fastapi.py#L21-L27
-    mock_driver = MagicMock(BaseDriver)
+    mock_driver = MagicMock()  # BaseDriver
     mock_driver.connect = AsyncMock()
     mock_driver.disconnect = AsyncMock()
     integration = partial(AsyncTasQIntegration, driver=mock_driver)

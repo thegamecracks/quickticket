@@ -5,7 +5,8 @@
 // Datetimes are ISO 8601 strings, as the API will return them.
 // Money amounts are integers in the currency's smallest unit (cents).
 
-import type { User, Address, Notification } from "../features/account/types"
+import type { User, Address, Notification, ProfileOrganizationMember } from "../features/account/types"
+import { OrganizationMemberPermissions } from "../features/account/types"
 import type { Ticket } from "../features/tickets/types"
 import type { Event, Venue } from "../features/events/types"
 import type { Money } from "./types"
@@ -50,37 +51,56 @@ export const MockAddresses: Address[] = [
 // Users (from mockdata.sql `account`)
 // ---------------------------------------------------------------------------
 
+/** Build a profile membership row (routers.profile `ProfileOrganizationMember`). */
+const mockMembership = (
+  organizationId: string,
+  accountId: string,
+  permissions: number = OrganizationMemberPermissions.ADMINISTRATOR,
+): ProfileOrganizationMember => ({
+  organization_id: organizationId,
+  account_id: accountId,
+  permissions,
+  joined_at: '2026-08-01T12:00:00.000Z',
+})
+
 /** Primary mock user: James Smith, the first account in mockdata.sql. */
 export const MockUser: User = {
-  account_id: 'eec50538-0edc-469b-b441-01b95b2f86c1',
+  id: 'eec50538-0edc-469b-b441-01b95b2f86c1',
   created_at: '2026-09-01T12:00:00.000Z',
   display_name: 'James Smith',
   first_name: 'James',
   last_name: 'Smith',
   email: 'james.smith0@example.com',
   addresses: [MockAddresses[0]],
+  organization_members: [
+    mockMembership('2cbd7222-4fd3-4cef-9500-79746e76da89', 'eec50538-0edc-469b-b441-01b95b2f86c1'),
+  ],
 }
 
 /** Additional users for lists / ticket holders. */
 export const MockUsers: User[] = [
   MockUser,
   {
-    account_id: '0daec970-3840-4aad-b2fb-05c1e4fa635d',
+    id: '0daec970-3840-4aad-b2fb-05c1e4fa635d',
     created_at: '2026-09-02T12:00:00.000Z',
     display_name: 'Julia Lopez',
     first_name: 'Julia',
     last_name: 'Lopez',
     email: 'julia.lopez11@example.com',
     addresses: [MockAddresses[1]],
+    organization_members: [
+      mockMembership('8e21c0af-d7a0-4f06-940c-b23728ae59e1', '0daec970-3840-4aad-b2fb-05c1e4fa635d'),
+    ],
   },
   {
-    account_id: '3529c963-84c7-4e26-8017-b1805d0a4280',
+    id: '3529c963-84c7-4e26-8017-b1805d0a4280',
     created_at: '2026-09-03T12:00:00.000Z',
     display_name: 'Elijah Taylor',
     first_name: 'Elijah',
     last_name: 'Taylor',
     email: 'elijah.taylor16@example.com',
     addresses: [MockAddresses[2]],
+    organization_members: [],
   },
 ]
 
@@ -101,7 +121,7 @@ export const MockOrganizations: MockOrganization[] = [
     id: '2cbd7222-4fd3-4cef-9500-79746e76da89',
     created_at: '2026-08-01T12:00:00.000Z',
     display_name: 'Classy Affairs',
-    member_ids: ['2911b7f6-3d3f-4d03-a09e-0bfe013ef161', MockUser.account_id],
+    member_ids: ['2911b7f6-3d3f-4d03-a09e-0bfe013ef161', MockUser.id],
   },
   {
     id: '8e21c0af-d7a0-4f06-940c-b23728ae59e1',

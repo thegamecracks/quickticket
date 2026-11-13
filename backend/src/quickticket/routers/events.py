@@ -1,7 +1,6 @@
 import logging
 from datetime import timedelta
 from typing import Annotated, Any, ClassVar, Self
-from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import AfterValidator, AwareDatetime, BaseModel, Field, model_validator
@@ -16,13 +15,18 @@ from quickticket.dependencies.models import get_organization_controller
 from quickticket.errors import ORMEntityNotFound
 from quickticket.models import (
     Event,
+    EventID,
     Money,
     Organization,
+    OrganizationID,
     OrganizationMemberPermissions,
     Point,
     StorageObject,
+    StorageObjectID,
     Ticket,
+    TicketID,
     Venue,
+    VenueID,
 )
 from quickticket.paging import (
     DateTimeFilterParams,
@@ -41,21 +45,21 @@ log = logging.getLogger(__name__)
 
 
 class PartialTicket(BaseModel):
-    id: UUID
+    id: TicketID
 
 
 class PartialOrganization(BaseModel):
-    id: UUID
+    id: OrganizationID
     created_at: AwareDatetime
     display_name: str
 
 
 class PartialStorageObject(BaseModel):
-    id: UUID
+    id: StorageObjectID
 
 
 class PartialVenue(BaseModel):
-    id: UUID
+    id: VenueID
     created_at: AwareDatetime
     display_name: str
     description: str
@@ -69,7 +73,7 @@ class PartialVenue(BaseModel):
 
 
 class EventRead(BaseModel):
-    id: UUID
+    id: EventID
     created_at: AwareDatetime
     display_name: str
     description: str
@@ -92,7 +96,7 @@ async def get_events(
     page: Annotated[KeysetPageParams[DateTimeSortKey], Query()],
     dt_filter: Annotated[DateTimeFilterParams, Query()],
     organization_id: Annotated[
-        UUID | None,
+        OrganizationID | None,
         Query(
             description=(
                 "Filter events by organization ID. Nonexistent organizations return an empty list."
@@ -154,7 +158,7 @@ async def get_events(
 
 
 @router.get("/{event_id}", response_model=EventRead)
-async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: UUID) -> Any:
+async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: EventID) -> Any:
     """Get an event by ID."""
     event = await session.scalar(
         select(Event)
@@ -174,7 +178,7 @@ async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: U
 
 
 class EventCreate(BaseModel):
-    venue_id: UUID
+    venue_id: VenueID
     display_name: DisplayNameField
     description: Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
     theme: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
@@ -184,8 +188,8 @@ class EventCreate(BaseModel):
     max_attendees: Annotated[int, Field(ge=0, le=10000)]
     ticket_price: Money
     # ! TODO: implement thumbnails & banner support
-    # banner_id: UUID | None = None
-    # thumbnail_id: UUID | None = None
+    # banner_id: StorageObjectID | None = None
+    # thumbnail_id: StorageObjectID | None = None
 
     MIN_DURATION: ClassVar[timedelta] = timedelta(hours=1)
     MAX_DURATION: ClassVar[timedelta] = timedelta(days=7)
@@ -250,7 +254,7 @@ async def create_event(
 async def edit_event(
     user: RequiredUserDep,
     session: AsyncSessionDep,
-    event_id: UUID,
+    event_id: EventID,
 ) -> None:
     """Edit an event's details."""
     # TODO: check authorization by organization
@@ -263,7 +267,7 @@ async def edit_event(
 async def delete_event(
     user: RequiredUserDep,
     session: AsyncSessionDep,
-    event_id: UUID,
+    event_id: EventID,
 ) -> None:
     """Delete an event."""
     # TODO: check authorization by organization

@@ -1,11 +1,10 @@
 import logging
-from uuid import UUID
 
 from asynctasq import task
 from fastapi_injectable import injectable
 
 from quickticket.dependencies.db import AsyncSessionDep
-from quickticket.models import Event
+from quickticket.models import Event, EventID
 
 log = logging.getLogger(__name__)
 
@@ -21,7 +20,7 @@ async def example_task(x: int) -> int:
 @task
 @injectable
 async def example_task_sqlalchemy(
-    event_id: UUID,
+    event_id: EventID,
     session: AsyncSessionDep,
 ) -> str | None:
     # `task_id = await example_task_sqlalchemy(event.id).dispatch()`

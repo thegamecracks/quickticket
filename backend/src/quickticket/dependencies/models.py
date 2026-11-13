@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,7 +7,13 @@ from quickticket.errors import (
     ORMEntityNotFound,
     UnauthorizedOrganizationMember,
 )
-from quickticket.models import Organization, OrganizationMember, OrganizationMemberPermissions, User
+from quickticket.models import (
+    Organization,
+    OrganizationID,
+    OrganizationMember,
+    OrganizationMemberPermissions,
+    User,
+)
 
 __all__ = (
     "OrganizationController",
@@ -32,7 +37,7 @@ class OrganizationController:
 async def get_organization_controller(
     session: AsyncSession,
     user: User,
-    organization_id: UUID,
+    organization_id: OrganizationID,
 ) -> OrganizationController:
     organization = await session.get(Organization, organization_id)
     if organization is None:

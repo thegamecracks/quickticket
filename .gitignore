@@ -1,3 +1,6 @@
+# https://github.com/Graphify-Labs/graphify
+graphify-out/
+
 # Dependencies
 node_modules/
 
@@ -19,3 +22,7 @@ logs/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+
+#Graphify
+graphify-out/

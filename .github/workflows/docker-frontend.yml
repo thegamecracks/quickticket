@@ -31,7 +31,7 @@ on:
 
 # one build at a time per branch; a new push to main supersedes a stale build
 concurrency:
-  group: docker-frontend-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:

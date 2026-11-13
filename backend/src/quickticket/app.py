@@ -236,5 +236,5 @@ async def handle_entity_not_found(request: Request, exc: EntityNotFound) -> Resp
 
 
 async def handle_unauthorized_error(request: Request, exc: UnauthorizedError) -> Response:
-    http_exception = HTTPException(status_code=400, detail=str(exc))
+    http_exception = HTTPException(status_code=403, detail=str(exc))
     return await http_exception_handler(request, http_exception)

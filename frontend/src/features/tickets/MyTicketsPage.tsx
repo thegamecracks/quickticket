@@ -17,7 +17,7 @@ export default function MyTicketsPage() {
     // eventual const res = api.get("/tickets");
     const getTickets = (user: User | null): void => {
       if (user) {
-        const filteredTickets = MockTickets.filter((ticket: Ticket) => ticket.account_id === user.account_id)
+        const filteredTickets = MockTickets.filter((ticket: Ticket) => ticket.account_id === user.id)
         setTickets(filteredTickets);
       }
     }

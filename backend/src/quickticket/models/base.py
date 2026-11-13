@@ -2,12 +2,25 @@ from collections.abc import Mapping
 from datetime import datetime
 from typing import ClassVar
 
-from sqlalchemy import MetaData
+from sqlalchemy import MetaData, Uuid
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass
 
 from quickticket.models.money import Money, MoneySerializer
-from quickticket.models.types import Point, PointSerializer, TZDateTime
+from quickticket.models.types import (
+    AddressID,
+    EventID,
+    NotificationID,
+    OrganizationID,
+    Point,
+    PointSerializer,
+    StorageObjectID,
+    StorageProviderID,
+    TicketID,
+    TZDateTime,
+    UserID,
+    VenueID,
+)
 
 __all__ = ("Base",)
 
@@ -30,3 +43,16 @@ class Base(AsyncAttrs, MappedAsDataclass, DeclarativeBase, kw_only=True, repr=Fa
         Money: MoneySerializer,
         Point: PointSerializer,
     }
+    type_annotation_map.update(
+        {
+            AddressID: Uuid,
+            EventID: Uuid,
+            NotificationID: Uuid,
+            OrganizationID: Uuid,
+            StorageObjectID: Uuid,
+            StorageProviderID: Uuid,
+            TicketID: Uuid,
+            UserID: Uuid,
+            VenueID: Uuid,
+        },
+    )  # ty: ignore[no-matching-overload]
