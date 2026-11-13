@@ -10,8 +10,7 @@ from uuid import UUID
 import pytest
 import pytest_asyncio
 from asgi_lifespan import LifespanManager
-from asynctasq import AsyncTasQIntegration, Dispatcher
-from asynctasq.drivers import BaseDriver
+from asynctasq import AsyncTasQIntegration
 from fastapi import FastAPI
 from fastapi.datastructures import State
 from fastapi_injectable import cleanup_all_exit_stacks, clear_dependency_cache
@@ -226,7 +225,7 @@ def _base_app() -> FastAPI:
 @pytest.fixture(autouse=True)
 def asynctasq_dispatcher(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
     # https://github.com/adamrefaey/asynctasq/blob/ac6ca93cd2f04b1e03815c01ccf0404a11a6f773/tests/unit/tasks/types/test_function_task.py#L281-L301
-    mock_dispatcher = AsyncMock(Dispatcher)
+    mock_dispatcher = AsyncMock()  # Dispatcher
     mock_dispatcher.dispatch = AsyncMock(return_value="task-id-123")
     monkeypatch.setattr("asynctasq.core.dispatcher.get_dispatcher", lambda *_: mock_dispatcher)
     return mock_dispatcher
@@ -238,7 +237,7 @@ def asynctasq_driver(
     asynctasq_dispatcher: AsyncMock,
 ) -> MagicMock:
     # https://github.com/adamrefaey/asynctasq/blob/ac6ca93cd2f04b1e03815c01ccf0404a11a6f773/tests/unit/integrations/test_fastapi.py#L21-L27
-    mock_driver = MagicMock(BaseDriver)
+    mock_driver = MagicMock()  # BaseDriver
     mock_driver.connect = AsyncMock()
     mock_driver.disconnect = AsyncMock()
     integration = partial(AsyncTasQIntegration, driver=mock_driver)
