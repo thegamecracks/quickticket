@@ -13,6 +13,7 @@ from quickticket.dependencies.auth import RequiredUserDep
 from quickticket.dependencies.db import AsyncSessionDep
 from quickticket.dependencies.images import ImageServiceDep
 from quickticket.dependencies.models import get_organization_controller
+from quickticket.dependencies.store import ObjectStoreDep
 from quickticket.errors import ORMEntityNotFound
 from quickticket.models import (
     Base,
@@ -125,6 +126,7 @@ def create_banner_routes[T: BannerEntity](
     async def delete_banner(
         user: RequiredUserDep,
         session: AsyncSessionDep,
+        store: ObjectStoreDep,
         entity_id: UUID,
     ) -> None:
         """Delete this entity's banner."""
@@ -135,11 +137,12 @@ def create_banner_routes[T: BannerEntity](
         controller = await get_organization_controller(session, user, get_organization_id(entity))
         controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
 
-        if entity.banner is None:
+        banner = entity.banner
+        if banner is None:
             raise HTTPException(404, "Image not set")
 
-        # TODO: schedule image for deletion
-        entity.banner = None
+        await store.delete_async(banner.object_key)
+        await session.delete(banner)
 
     return router
 
@@ -222,6 +225,7 @@ def create_thumbnail_routes[T: ThumbnailEntity](
     async def delete_thumbnail(
         user: RequiredUserDep,
         session: AsyncSessionDep,
+        store: ObjectStoreDep,
         entity_id: UUID,
     ) -> None:
         """Delete this entity's thumbnail."""
@@ -232,10 +236,11 @@ def create_thumbnail_routes[T: ThumbnailEntity](
         controller = await get_organization_controller(session, user, get_organization_id(entity))
         controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
 
-        if entity.thumbnail is None:
+        thumbnail = entity.thumbnail
+        if thumbnail is None:
             raise HTTPException(404, "Image not set")
 
-        # TODO: schedule image for deletion
-        entity.thumbnail = None
+        await store.delete_async(thumbnail.object_key)
+        await session.delete(thumbnail)
 
     return router

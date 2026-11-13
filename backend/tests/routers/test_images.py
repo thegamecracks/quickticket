@@ -348,23 +348,41 @@ async def test_get_image_entity_not_found(
 
 
 @pytest.mark.asyncio
+@ENTITY_CLASSES
 @IMAGE_KINDS
 async def test_delete_image(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
+    store: Store,
     user: User,
+    entity_cls: type[Venue | Event],
     kind: str,
     image: UploadFile,
 ) -> None:
-    seeded = await seed_entity(make_session, Venue, user)
+    seeded = await seed_entity(make_session, entity_cls, user)
     put_response = await put_image(client, seeded.entity, kind, image)
     assert put_response.status_code == 200
+
+    stored = await get_stored_image(make_session, entity_cls, seeded.entity.id, kind)
+    assert stored is not None
+    object_id = stored.id
+    object_key = stored.object_key
 
     response = await client.delete(entity_image_url(seeded.entity, kind))
     assert response.status_code == 204
     assert response.content == b""
 
-    stored = await get_stored_image(make_session, Venue, seeded.entity.id, kind)
+    with pytest.raises(FileNotFoundError):
+        await store.head_async(object_key)
+
+    async with make_session.begin() as session:
+        deleted = await session.get(StorageObject, object_id)
+        entity = await session.get(entity_cls, seeded.entity.id)
+    assert deleted is None
+    assert entity is not None
+    assert getattr(entity, f"{kind}_id") is None
+
+    stored = await get_stored_image(make_session, entity_cls, seeded.entity.id, kind)
     assert stored is None
 
     response = await client.get(entity_image_url(seeded.entity, kind))
@@ -375,10 +393,86 @@ async def test_delete_image(
     assert response.status_code == 404
     assert response.json() == {"detail": "Image not set"}
 
+
+@pytest.mark.asyncio
+async def test_delete_image_preserves_other_image(
+    client: AsyncClient,
+    make_session: async_sessionmaker[AsyncSession],
+    store: Store,
+    user: User,
+    image: UploadFile,
+    alt_image: UploadFile,
+) -> None:
+    seeded = await seed_entity(make_session, Venue, user)
+
+    banner_response = await put_image(client, seeded.entity, "banner", image)
+    thumbnail_response = await put_image(client, seeded.entity, "thumbnail", alt_image)
+    assert banner_response.status_code == 200
+    assert thumbnail_response.status_code == 200
+
+    banner = await get_stored_image(make_session, Venue, seeded.entity.id, "banner")
+    thumbnail = await get_stored_image(make_session, Venue, seeded.entity.id, "thumbnail")
+    assert banner is not None
+    assert thumbnail is not None
+    thumbnail_id = thumbnail.id
+    thumbnail_key = thumbnail.object_key
+
+    response = await client.delete(entity_image_url(seeded.entity, "banner"))
+    assert response.status_code == 204
+
+    with pytest.raises(FileNotFoundError):
+        await store.head_async(banner.object_key)
+
     async with make_session.begin() as session:
-        # TODO: schedule image for deletion; the row is currently orphaned.
-        orphan = await session.get(StorageObject, StorageObjectID(UUID(put_response.json()["id"])))
-    assert orphan is not None
+        deleted = await session.get(StorageObject, banner.id)
+        remaining = await session.get(StorageObject, thumbnail_id)
+        entity = await session.get(Venue, seeded.entity.id)
+    assert deleted is None
+    assert remaining is not None
+    assert entity is not None
+    assert entity.banner_id is None
+    assert entity.thumbnail_id == thumbnail_id
+
+    head = await store.head_async(thumbnail_key)
+    assert head["size"] == thumbnail.filesize
+    stored = await get_stored_image(make_session, Venue, seeded.entity.id, "thumbnail")
+    assert stored is not None
+    assert stored.id == thumbnail_id
+
+
+@pytest.mark.asyncio
+async def test_delete_image_store_failure(
+    client: AsyncClient,
+    make_session: async_sessionmaker[AsyncSession],
+    store: Store,
+    user: User,
+    image: UploadFile,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seeded = await seed_entity(make_session, Venue, user)
+    put_response = await put_image(client, seeded.entity, "banner", image)
+    assert put_response.status_code == 200
+
+    stored = await get_stored_image(make_session, Venue, seeded.entity.id, "banner")
+    assert stored is not None
+    object_id = stored.id
+    object_key = stored.object_key
+
+    monkeypatch.setattr(store, "delete_async", AsyncMock(side_effect=FileNotFoundError))
+
+    with pytest.raises(FileNotFoundError):
+        await client.delete(entity_image_url(seeded.entity, "banner"))
+
+    async with make_session.begin() as session:
+        row = await session.get(StorageObject, object_id)
+        entity = await session.get(Venue, seeded.entity.id)
+    assert row is not None
+    assert row.id == object_id
+    assert entity is not None
+    assert entity.banner_id == object_id
+
+    head = await store.head_async(object_key)
+    assert head["size"] == stored.filesize
 
 
 @pytest.mark.asyncio
@@ -627,6 +721,7 @@ async def test_failed_set_image_counts_towards_ratelimit(
 async def test_delete_image_ratelimited(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
+    store: Store,
     user: User,
     image: UploadFile,
     override_image_limits: Callable[[str, str], None],
@@ -635,6 +730,11 @@ async def test_delete_image_ratelimited(
     put_response = await put_image(client, seeded.entity, "banner", image)
     assert put_response.status_code == 200
 
+    stored = await get_stored_image(make_session, Venue, seeded.entity.id, "banner")
+    assert stored is not None
+    object_id = stored.id
+    object_key = stored.object_key
+
     override_image_limits("DELETE", "1/minute")
 
     first = await client.delete(entity_image_url(seeded.entity, "banner"))
@@ -642,9 +742,19 @@ async def test_delete_image_ratelimited(
     assert first.headers["x-ratelimit-limit"] == "1"
     assert first.headers["x-ratelimit-remaining"] == "1"
 
+    with pytest.raises(FileNotFoundError):
+        await store.head_async(object_key)
+
     second = await client.delete(entity_image_url(seeded.entity, "banner"))
     assert second.status_code == 429
     assert second.headers["x-ratelimit-limit"] == "1"
+
+    with pytest.raises(FileNotFoundError):
+        await store.head_async(object_key)
+
+    async with make_session.begin() as session:
+        row = await session.get(StorageObject, object_id)
+    assert row is None
 
     stored = await get_stored_image(make_session, Venue, seeded.entity.id, "banner")
     assert stored is None
