@@ -43,6 +43,8 @@ __all__ = (
     "get_image_service",
 )
 
+Image.MAX_IMAGE_PIXELS = (2**30 // 4 // 3) // 2  # half of default
+
 # Careful on accepted formats, some are more prone to vulnerabilities
 MIME_TYPES_TO_EXTENSIONS = {
     MimeType("image/avif"): "avif",
