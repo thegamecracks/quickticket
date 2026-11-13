@@ -1,3 +1,4 @@
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from io import BytesIO
@@ -6,15 +7,19 @@ from unittest.mock import AsyncMock
 from uuid import UUID
 
 import pytest
-from fastapi import UploadFile
+from fastapi import FastAPI, Request, UploadFile
 from fastapi.datastructures import Headers
 from httpx2 import AsyncClient, Response
+from limits import RateLimitItem, parse
 from PIL import Image
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload
+from starlette.routing import get_route_path
 
+from quickticket.dependencies.auth import OptionalUserDep
 from quickticket.dependencies.images import ImageService
+from quickticket.dependencies.ratelimits import get_request_limits
 from quickticket.dependencies.store import Store
 from quickticket.models import (
     Event,
@@ -155,6 +160,28 @@ def alt_image() -> UploadFile:
     with BytesIO() as f:
         Image.new("L", (256, 128), color=255).save(f, "webp", quality=0, method=0)
         return make_upload_file(f.getvalue(), filename="alt.webp")
+
+
+@pytest.fixture
+def override_image_limits(
+    app: FastAPI,
+    monkeypatch: pytest.MonkeyPatch,
+) -> Callable[[str, str], None]:
+    """Replace image mutation limits with a tiny limit for a test."""
+
+    def install(method: str, limit: str) -> None:
+        async def override(
+            request: Request,
+            user: OptionalUserDep,
+        ) -> Sequence[RateLimitItem]:
+            path = get_route_path(request.scope)
+            if request.method == method and path.endswith(("/banner", "/thumbnail")):
+                return [parse(limit)]
+            return await get_request_limits(request, user)
+
+        monkeypatch.setitem(app.dependency_overrides, get_request_limits, override)
+
+    return install
 
 
 @pytest.fixture
@@ -542,3 +569,82 @@ async def test_set_image_animated(
     response = await put_image(client, seeded.entity, "banner", animated_image)
     assert response.status_code == 400
     assert response.json() == {"detail": "Animated image not accepted"}
+
+
+@pytest.mark.asyncio
+async def test_set_image_ratelimited(
+    client: AsyncClient,
+    make_session: async_sessionmaker[AsyncSession],
+    user: User,
+    image: UploadFile,
+    alt_image: UploadFile,
+    override_image_limits: Callable[[str, str], None],
+) -> None:
+    seeded = await seed_entity(make_session, Venue, user)
+    override_image_limits("PUT", "1/minute")
+
+    first = await put_image(client, seeded.entity, "banner", image)
+    assert first.status_code == 200
+    assert first.headers["x-ratelimit-limit"] == "1"
+    assert first.headers["x-ratelimit-remaining"] == "1"
+
+    second = await put_image(client, seeded.entity, "banner", alt_image)
+    assert second.status_code == 429
+    assert second.headers["x-ratelimit-limit"] == "1"
+    assert second.headers["x-ratelimit-remaining"] == "0"
+    assert second.headers["retry-after"] == second.headers["x-ratelimit-reset-after"]
+    assert second.json()["detail"].startswith("You are currently ratelimited for ")
+
+    async with make_session.begin() as session:
+        count = await session.scalar(select(func.count()).select_from(StorageObject))
+    assert count == 1
+
+
+@pytest.mark.asyncio
+async def test_failed_set_image_counts_towards_ratelimit(
+    client: AsyncClient,
+    make_session: async_sessionmaker[AsyncSession],
+    user: User,
+    image: UploadFile,
+    override_image_limits: Callable[[str, str], None],
+) -> None:
+    seeded = await seed_entity(make_session, Venue, user)
+    override_image_limits("PUT", "1/minute")
+    not_an_image = make_upload_file(
+        b"not an image",
+        filename="notes.txt",
+        content_type="text/plain",
+    )
+
+    failed = await put_image(client, seeded.entity, "banner", not_an_image)
+    assert failed.status_code == 415
+
+    limited = await put_image(client, seeded.entity, "banner", image)
+    assert limited.status_code == 429
+
+
+@pytest.mark.asyncio
+async def test_delete_image_ratelimited(
+    client: AsyncClient,
+    make_session: async_sessionmaker[AsyncSession],
+    user: User,
+    image: UploadFile,
+    override_image_limits: Callable[[str, str], None],
+) -> None:
+    seeded = await seed_entity(make_session, Venue, user)
+    put_response = await put_image(client, seeded.entity, "banner", image)
+    assert put_response.status_code == 200
+
+    override_image_limits("DELETE", "1/minute")
+
+    first = await client.delete(entity_image_url(seeded.entity, "banner"))
+    assert first.status_code == 204
+    assert first.headers["x-ratelimit-limit"] == "1"
+    assert first.headers["x-ratelimit-remaining"] == "1"
+
+    second = await client.delete(entity_image_url(seeded.entity, "banner"))
+    assert second.status_code == 429
+    assert second.headers["x-ratelimit-limit"] == "1"
+
+    stored = await get_stored_image(make_session, Venue, seeded.entity.id, "banner")
+    assert stored is None

@@ -2,6 +2,7 @@ import logging
 import re
 import time
 from collections.abc import Sequence
+from dataclasses import dataclass
 from math import ceil
 from re import Pattern
 from typing import Annotated, cast
@@ -26,12 +27,50 @@ __all__ = (
     "get_request_limits",
 )
 
+
+@dataclass(frozen=True, kw_only=True)
+class RateLimitRule:
+    """A rate limit rule matching a request method and path."""
+
+    path: Pattern[str]
+    limits: tuple[RateLimitItem, ...]
+    methods: frozenset[str] | None = None
+    """The HTTP methods this rule applies to, or None for all methods."""
+
+    def matches(self, method: str, path: str) -> bool:
+        if self.methods is not None and method not in self.methods:
+            return False
+        return self.path.match(path) is not None
+
+
+# Image routes are generated as /api/<entity>/<id>/<kind>.
+IMAGE_PATH_PATTERN = re.compile(r"^/api/[^/]+/[^/]+/(banner|thumbnail)$")
+
 # https://limits.readthedocs.io/en/stable/quickstart.html#rate-limit-string-notation
-RATELIMIT_ROUTES: dict[Pattern, list[RateLimitItem]] = {
-    re.compile(r"^/api/auth"): [parse("20/minute")],
-    re.compile(r"^/api"): [parse("2000/hour"), parse("1000/10 minute"), parse("200/minute")],
-    re.compile(r"^"): [parse("20/second")],
-}
+RATELIMIT_RULES: tuple[RateLimitRule, ...] = (
+    RateLimitRule(
+        path=re.compile(r"^/api/auth"),
+        limits=(parse("20/minute"),),
+    ),
+    RateLimitRule(
+        path=IMAGE_PATH_PATTERN,
+        methods=frozenset({"PUT"}),
+        limits=(parse("10/minute"), parse("100/hour")),
+    ),
+    RateLimitRule(
+        path=IMAGE_PATH_PATTERN,
+        methods=frozenset({"DELETE"}),
+        limits=(parse("30/minute"), parse("300/hour")),
+    ),
+    RateLimitRule(
+        path=re.compile(r"^/api"),
+        limits=(parse("2000/hour"), parse("1000/10 minute"), parse("200/minute")),
+    ),
+    RateLimitRule(
+        path=re.compile(r"^"),
+        limits=(parse("20/second"),),
+    ),
+)
 
 log = logging.getLogger(__name__)
 
@@ -65,6 +104,8 @@ async def get_request_identifier(request: Request, user: OptionalUserDep) -> tup
         log.warning("Missing request.client for ratelimit identifier")
         return ("",)
 
+    # TODO: normalize IPv6 addresses to their /48 subnet so that addresses
+    # within the same subnet share a bucket.
     return (address.host,)
 
 
@@ -72,7 +113,10 @@ async def get_request_limits(request: Request, user: OptionalUserDep) -> Sequenc
     # Optionally adjust limit by account type
     path = get_route_path(request.scope)
     return [
-        limit for route, limits in RATELIMIT_ROUTES.items() if route.match(path) for limit in limits
+        limit
+        for rule in RATELIMIT_RULES
+        if rule.matches(request.method, path)
+        for limit in rule.limits
     ]
 
 
