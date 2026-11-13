@@ -151,7 +151,6 @@ class ImageService:
         size: tuple[int, int],
     ) -> StorageObject:
         await self._check_file(file)
-        await self._check_ratelimit(user)
 
         image_bytes, mime_type = await anyio.to_thread.run_sync(
             partial(_process_image, file.file, size=size),
@@ -199,9 +198,6 @@ class ImageService:
         if file.content_type not in ACCEPTED_IMAGE_MIME_TYPES:
             raise ImageFormatNotAccepted(file.content_type, ACCEPTED_IMAGE_MIME_TYPES)
         FileSizeExceeded.raise_if_exceeded(file.size, max_filesize=MAX_FILESIZE)
-
-    async def _check_ratelimit(self, user: User) -> None:
-        pass  # TODO: per-user ratelimiting
 
     @staticmethod
     def _calculate_filename(data: bytes, mime_type: MimeType) -> str:
