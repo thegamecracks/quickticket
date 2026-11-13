@@ -289,28 +289,20 @@ async def test_replace_image_identical_bytes(
     user: User,
     black_image_bytes: bytes,
 ) -> None:
-    """Documents that identical uploads are not deduplicated.
-
-    TODO: uploading the same bytes twice should reuse the existing
-    StorageObject. Expect a unique constraint on
-    (storage_provider_id, object_key) so the second upload reuses the row.
-    """
+    """Uploading identical bytes reuses the existing StorageObject."""
     seeded = await seed_entity(make_session, Venue, user)
 
     first = await put_image(client, seeded.entity, "banner", make_upload_file(black_image_bytes))
     second = await put_image(client, seeded.entity, "banner", make_upload_file(black_image_bytes))
     assert first.status_code == 200
     assert second.status_code == 200
-    first_data, second_data = first.json(), second.json()
-    assert first_data["filename"] == second_data["filename"]
-    assert first_data["id"] != second_data["id"]
+    assert first.json() == second.json()
 
     async with make_session.begin() as session:
         objects = list(await session.scalars(select(StorageObject).order_by(StorageObject.id)))
 
-    assert len(objects) == 2
-    assert objects[0].object_key == objects[1].object_key
-    assert objects[0].id != objects[1].id
+    assert len(objects) == 1
+    assert objects[0].id == StorageObjectID(UUID(second.json()["id"]))
 
 
 @pytest.mark.asyncio

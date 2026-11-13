@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import timedelta
 from functools import partial
 from hashlib import sha3_256
 from io import BytesIO
-from typing import TYPE_CHECKING, Annotated, BinaryIO, Protocol
-from uuid import UUID
+from typing import TYPE_CHECKING, Annotated, Any, BinaryIO, Protocol
+from uuid import UUID, uuid7
 
 import anyio.to_thread
 import obstore
@@ -15,14 +16,23 @@ from fastapi import Depends, UploadFile
 from obstore.store import AzureStore, GCSStore, S3Store
 from PIL import Image, ImageOps
 from PIL.Image import Resampling
-from sqlalchemy import select
+from sqlalchemy import Insert, select
+from sqlalchemy.dialects.postgresql import insert as postgresql_insert
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from quickticket.dependencies.db import AsyncSessionMakerDep
 from quickticket.dependencies.state import SettingsDep
 from quickticket.dependencies.store import ObjectStoreDep
 from quickticket.errors import FileSizeExceeded, ImageAnimationNotAccepted, ImageFormatNotAccepted
-from quickticket.models import MimeType, StorageObject, StorageProvider, User
+from quickticket.models import (
+    MimeType,
+    StorageObject,
+    StorageObjectID,
+    StorageProvider,
+    User,
+)
 
 if TYPE_CHECKING:
     from obstore import GetResult
@@ -69,6 +79,22 @@ def _process_image(file: BinaryIO, *, size: tuple[int, int]) -> tuple[bytes, Mim
 def _check_not_animated(image: Image.Image) -> None:
     if getattr(image, "is_animated", False):
         raise ImageAnimationNotAccepted
+
+
+def _build_storage_object_upsert(
+    dialect_name: str,
+    values: Mapping[str, Any],
+) -> Insert:
+    if dialect_name == "sqlite":
+        insert = sqlite_insert(StorageObject)
+    elif dialect_name == "postgresql":
+        insert = postgresql_insert(StorageObject)
+    else:
+        raise NotImplementedError(f"Upsert not supported with dialect: {dialect_name}")
+
+    return insert.values(**values).on_conflict_do_nothing(
+        index_elements=["storage_provider_id", "object_key"],
+    )
 
 
 class Entity(Protocol):
@@ -139,15 +165,33 @@ class ImageService:
         # Intentionally use a separate session to commit early
         # and avoid rolling back if an exception is raised downstream.
         async with self.make_session.begin() as session:
-            obj = StorageObject(
-                object_key=key,
-                filename=filename,  # TODO: is this redundant? maybe turn into property
-                filesize=len(image_bytes),
-                mime_type=mime_type,
-                provider=await self._get_storage_provider(session),
-                account_id=user.id,  # can't set user directly when attached to another session
+            provider = await self._get_storage_provider(session)
+            stmt = _build_storage_object_upsert(
+                session.get_bind().dialect.name,
+                {
+                    "id": StorageObjectID(uuid7()),
+                    "object_key": key,
+                    "filename": filename,  # TODO: is this redundant? maybe turn into property
+                    "filesize": len(image_bytes),
+                    "mime_type": mime_type,
+                    "storage_provider_id": provider.id,
+                    "account_id": user.id,
+                },
             )
-            session.add(obj)
+            await session.execute(stmt)
+
+            obj = await session.scalar(
+                select(StorageObject)
+                .where(
+                    StorageObject.storage_provider_id == provider.id,
+                    StorageObject.object_key == key,
+                )
+                .options(selectinload(StorageObject.provider)),
+            )
+            if obj is None:  # pragma: no cover
+                raise RuntimeError(
+                    f"StorageObject missing after upsert: provider={provider.id!r}, key={key!r}",
+                )
 
         return obj
 
