@@ -47,10 +47,12 @@ class Venue(Base, kw_only=True, repr=False):
     banner_id: Mapped[StorageObjectID | None] = mapped_column(
         ForeignKey("storage_object.storage_object_id", ondelete="SET NULL"),
         default=None,
+        index=True,
     )
     thumbnail_id: Mapped[StorageObjectID | None] = mapped_column(
         ForeignKey("storage_object.storage_object_id", ondelete="SET NULL"),
         default=None,
+        index=True,
     )
 
     # Relationships
