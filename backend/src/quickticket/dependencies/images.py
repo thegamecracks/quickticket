@@ -145,7 +145,7 @@ class ImageService:
                 filesize=len(image_bytes),
                 mime_type=mime_type,
                 provider=await self._get_storage_provider(session),
-                user=user,
+                account_id=user.id,  # can't set user directly when attached to another session
             )
             session.add(obj)
 
