@@ -31,7 +31,7 @@ from quickticket.paging import (
     KeysetPagedResponse,
     KeysetPageParams,
 )
-from quickticket.routers.images import create_banner_routes
+from quickticket.routers.images import create_banner_routes, create_thumbnail_routes
 from quickticket.validators import DisplayNameField, filter_string_field
 
 VENUE_LIMIT = 5
@@ -259,6 +259,13 @@ async def delete_venue(
 
 router.include_router(
     create_banner_routes(
+        Venue,
+        get_organization_id=lambda venue: venue.organization_id,
+        options=(),
+    ),
+)
+router.include_router(
+    create_thumbnail_routes(
         Venue,
         get_organization_id=lambda venue: venue.organization_id,
         options=(),

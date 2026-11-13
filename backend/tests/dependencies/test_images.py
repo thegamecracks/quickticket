@@ -109,3 +109,11 @@ async def test_image_service_upload_banner(
     result = await store.head_async(obj.object_key)
     assert result["path"] == f"banners/{venue.id}/dba2914f55714cfeaa1ff877800f0cce.jpeg"
     assert result["size"] == obj.filesize
+
+
+# TODO: test create_banner_routes() and create_thumbnail_routes()
+#
+# async with make_session.begin() as session:
+#     venue = await session.get(Venue, venue.id)
+#     assert venue is not None
+#     assert venue.banner_id is not None

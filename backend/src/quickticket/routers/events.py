@@ -34,7 +34,7 @@ from quickticket.paging import (
     KeysetPagedResponse,
     KeysetPageParams,
 )
-from quickticket.routers.images import create_banner_routes
+from quickticket.routers.images import create_banner_routes, create_thumbnail_routes
 from quickticket.validators import (
     DisplayNameField,
     FutureAwareDatetime,
@@ -278,6 +278,13 @@ async def delete_event(
 
 router.include_router(
     create_banner_routes(
+        Event,
+        get_organization_id=lambda event: event.venue.organization_id,
+        options=(selectinload(Event.venue),),
+    ),
+)
+router.include_router(
+    create_thumbnail_routes(
         Event,
         get_organization_id=lambda event: event.venue.organization_id,
         options=(selectinload(Event.venue),),
