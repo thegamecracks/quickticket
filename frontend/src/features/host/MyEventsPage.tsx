@@ -7,85 +7,35 @@ import EventCard from '../../components/EventCard'
 import { Pagination, safePage } from '../../components/Pagination'
 
 import { useAuth } from '../../lib/auth'
+import { api } from '../../lib/api'
 import type { EventResponse } from '../events/types'
-
-import {
-  getMockAllEvents,
-  getMockVenue,
-  getMockOrganizationsForAccount,
-} from '../../lib/mocks'
-
-// Return events belonging to the logged-in user's organizations.
-// Uses existing mock data until backend integration is completed.
-function getOrganizerEvents(accountId: string): EventResponse[] {
-  const organizations = getMockOrganizationsForAccount(accountId)
-
-  const organizationMap = new Map(
-    organizations.map(org => [org.id, org])
-  )
-
-  return getMockAllEvents().flatMap((event): EventResponse[] => {
-    const venue = getMockVenue(event.venue_id)
-
-    if (!venue) return []
-
-    const organization = organizationMap.get(venue.organization_id)
-
-    // Exclude events belonging to other organizers.
-    if (!organization) return []
-
-    return [{
-      id: event.id,
-      created_at: event.created_at,
-      display_name: event.display_name,
-      description: event.description,
-      theme: event.theme,
-      thumbnail: null,
-      banner: null,
-      starts_at: event.starts_at,
-      ends_at: event.ends_at,
-      ticket_price: event.ticket_price,
-      max_attendees: event.max_attendees,
-      tickets: [],
-      venue: {
-        id: venue.id,
-        created_at: venue.created_at,
-        display_name: venue.display_name,
-        description: venue.description,
-        theme: venue.theme,
-        thumbnail: null,
-        banner: null,
-        location_name: venue.location_name,
-        location_coords: venue.location_coords,
-        organization: {
-          id: organization.id,
-          created_at: organization.created_at,
-          display_name: organization.display_name,
-        },
-      },
-    }]
-  })
-}
 
 export default function MyEventsPage() {
   const { user } = useAuth()
 
   const [searchParams, setSearchParams] = useSearchParams()
   const [currentPage, setCurrentPage] = useState(1)
+  const [events, setEvents] = useState<EventResponse[] | undefined>(undefined)
 
-  // Reset pagination when the logged-in user changes.
   useEffect(() => {
+    const getEvents = async (orgId: string | undefined): Promise<void> => {
+      const res = await api.get<{ items: EventResponse[] }>(`/events?organization_id=${orgId}`)
+      setEvents(res.data.items)
+    }
+
+    // Reset pagination when the logged-in user changes.
     setCurrentPage(1)
+    // have to get all organization_id by organization_members item's account_id = user.id 
+    // only want one organization_id though since we have 1-1 user to organization 
+    const orgId = user?.organization_members[0].organization_id;
+    getEvents(orgId);
+
   }, [user?.id])
 
-  // Get events for the logged-in account only.
-  const myEvents = user
-    ? getOrganizerEvents(user.id)
-    : []
 
   const search = searchParams.get('search') ?? ''
 
-  const filteredEvents = myEvents.filter(event => {
+  const filteredEvents = events?.filter(event => {
     const searchText = search.trim().toLowerCase()
 
     return (
@@ -97,12 +47,12 @@ export default function MyEventsPage() {
   // Pagination
   const eventsPerPage = 6
   const totalPages = Math.ceil(
-    filteredEvents.length / eventsPerPage
+    filteredEvents ? filteredEvents.length / eventsPerPage : 0
   )
 
   const page = safePage(currentPage, totalPages)
 
-  const paginatedEvents = filteredEvents.slice(
+  const paginatedEvents = filteredEvents?.slice(
     (page - 1) * eventsPerPage,
     page * eventsPerPage
   )
@@ -168,9 +118,9 @@ export default function MyEventsPage() {
           />
 
           {/* Existing event cards */}
-          {filteredEvents.length > 0 && (
+          {filteredEvents && filteredEvents.length > 0 && (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {paginatedEvents.map(event => (
+              {paginatedEvents?.map(event => (
                 <EventCard
                   key={event.id}
                   event={event}
@@ -180,7 +130,7 @@ export default function MyEventsPage() {
           )}
 
           {/* No matching search results */}
-          {filteredEvents.length === 0 && search.trim() && (
+          {filteredEvents && filteredEvents.length === 0 && search.trim() && (
             <div className="rounded-xl border border-base-300 bg-base-200 p-8 text-center">
               <p className="text-base-content/70">
                 No matching events found.
@@ -189,7 +139,7 @@ export default function MyEventsPage() {
           )}
 
           {/* No events created */}
-          {myEvents.length === 0 && !search.trim() && (
+          {events && events.length === 0 && !search.trim() && (
             <div className="rounded-xl border border-base-300 bg-base-200 px-6 py-12 text-center">
               <h2 className="text-xl font-semibold">
                 No Events Yet
