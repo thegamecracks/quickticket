@@ -40,10 +40,12 @@ class Organization(Base, kw_only=True, repr=False):
     members: Mapped[list[OrganizationMember]] = relationship(
         default_factory=list,
         back_populates="organization",
+        passive_deletes=True,
     )
     venues: Mapped[list[Venue]] = relationship(
         default_factory=list,
         back_populates="organization",
+        passive_deletes=True,
     )
 
 

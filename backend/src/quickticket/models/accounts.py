@@ -73,6 +73,7 @@ class User(Base, kw_only=True, repr=False):
     organization_members: Mapped[list[OrganizationMember]] = relationship(
         default_factory=list,
         back_populates="user",
+        passive_deletes=True,
         order_by="OrganizationMember.joined_at, OrganizationMember.organization_id",
     )
     storage_objects: Mapped[list[StorageObject]] = relationship(

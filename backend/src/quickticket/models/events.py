@@ -66,12 +66,10 @@ class Event(Base, kw_only=True, repr=False):
     banner: Mapped[StorageObject | None] = relationship(
         default=None,
         foreign_keys=[banner_id],
-        passive_deletes=True,
     )
     thumbnail: Mapped[StorageObject | None] = relationship(
         default=None,
         foreign_keys=[thumbnail_id],
-        passive_deletes=True,
     )
     tickets: Mapped[list[Ticket]] = relationship(
         default_factory=list,

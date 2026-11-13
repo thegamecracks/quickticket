@@ -57,11 +57,11 @@ class Venue(Base, kw_only=True, repr=False):
     banner: Mapped[StorageObject | None] = relationship(
         default=None,
         foreign_keys=[banner_id],
-        passive_deletes=True,
     )
     events: Mapped[list[Event]] = relationship(
         default_factory=list,
         back_populates="venue",
+        passive_deletes=True,
     )
     organization: Mapped[Organization] = relationship(
         default=None,
@@ -70,5 +70,4 @@ class Venue(Base, kw_only=True, repr=False):
     thumbnail: Mapped[StorageObject | None] = relationship(
         default=None,
         foreign_keys=[thumbnail_id],
-        passive_deletes=True,
     )
