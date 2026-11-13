@@ -315,8 +315,8 @@ async def client(app: FastAPI) -> AsyncGenerator[AsyncClient]:
 
 @pytest.fixture(scope="session")
 def black_image_bytes() -> bytes:
-    # Should be small, ~162 bytes
-    image = Image.new("L", (256, 128))
+    # Should be small, ~1000 bytes
+    image = Image.new("L", (640, 640))
     with BytesIO() as f:
         image.save(f, "webp", quality=0, method=0)
         return f.getvalue()

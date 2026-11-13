@@ -39,8 +39,8 @@ NOT_FOUND_ID = UUID("00000000-0000-0000-0000-000000000000")
 
 # The black image fixture is processed (and resized) by ImageService.
 EXPECTED_IMAGES = {
-    "banner": ("84f56137df1187ce507275dca3e850a9.jpeg", 12836),
-    "thumbnail": ("7f23efabb618aefc7f768efa37840fa8.jpeg", 1373),
+    "banner": ("89027eaa09acace3d55ed283e3007d64.jpeg", 6816),
+    "thumbnail": ("c1d63c1ff5a9ab109549495ff43f90f9.jpeg", 2103),
 }
 
 
@@ -158,7 +158,7 @@ def user(auth: AuthController) -> User:
 def alt_image() -> UploadFile:
     """An image whose bytes differ from the shared image fixture."""
     with BytesIO() as f:
-        Image.new("L", (256, 128), color=255).save(f, "webp", quality=0, method=0)
+        Image.new("L", (640, 640), color=255).save(f, "webp", quality=0, method=0)
         return make_upload_file(f.getvalue(), filename="alt.webp")
 
 
@@ -186,7 +186,7 @@ def override_image_limits(
 
 @pytest.fixture
 def animated_image() -> UploadFile:
-    frames = [Image.new("L", (64, 64), color=color) for color in (0, 255)]
+    frames = [Image.new("L", (640, 640), color=color) for color in (0, 255)]
     with BytesIO() as f:
         frames[0].save(
             f,

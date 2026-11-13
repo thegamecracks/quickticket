@@ -25,7 +25,12 @@ from sqlalchemy.orm import selectinload
 from quickticket.dependencies.db import AsyncSessionMakerDep
 from quickticket.dependencies.state import SettingsDep
 from quickticket.dependencies.store import ObjectStoreDep
-from quickticket.errors import FileSizeExceeded, ImageAnimationNotAccepted, ImageFormatNotAccepted
+from quickticket.errors import (
+    FileSizeExceeded,
+    FileSizeTooSmall,
+    ImageAnimationNotAccepted,
+    ImageFormatNotAccepted,
+)
 from quickticket.models import (
     MimeType,
     StorageObject,
@@ -56,6 +61,7 @@ MIME_TYPES_TO_EXTENSIONS = {
 }
 ACCEPTED_IMAGE_MIME_TYPES = tuple(MIME_TYPES_TO_EXTENSIONS)
 ACCEPTED_IMAGE_FORMATS = tuple(MIME_TYPES_TO_EXTENSIONS.values())
+MIN_FILESIZE = 1000
 MAX_FILESIZE = 2**20 * 10
 
 log = logging.getLogger(__name__)
@@ -199,7 +205,8 @@ class ImageService:
     async def _check_file(self, file: UploadFile) -> None:
         if file.content_type not in ACCEPTED_IMAGE_MIME_TYPES:
             raise ImageFormatNotAccepted(file.content_type, ACCEPTED_IMAGE_MIME_TYPES)
-        FileSizeExceeded.raise_if_exceeded(file.size, max_filesize=MAX_FILESIZE)
+        FileSizeTooSmall.raise_if_below(file.size, min_filesize=MIN_FILESIZE)
+        FileSizeExceeded.raise_if_above(file.size, max_filesize=MAX_FILESIZE)
 
     @staticmethod
     def _calculate_filename(data: bytes, mime_type: MimeType) -> str:
