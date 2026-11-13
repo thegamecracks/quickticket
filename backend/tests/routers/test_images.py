@@ -2,6 +2,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from io import BytesIO
+from os import urandom
 from typing import Any
 from unittest.mock import AsyncMock
 from uuid import UUID
@@ -62,6 +63,21 @@ def make_upload_file(
         size=len(data),
         headers=Headers({"Content-Type": content_type}),
     )
+
+
+def make_image(size: tuple[int, int], *, noise: bool = False) -> UploadFile:
+    """Build a webp upload with the given dimensions.
+
+    Noise is incompressible, so use it when the image must clear MIN_FILESIZE.
+    """
+    if noise:
+        image = Image.frombytes("L", size, urandom(size[0] * size[1]))
+    else:
+        image = Image.new("L", size)
+
+    with BytesIO() as f:
+        image.save(f, "webp", quality=0, method=0)
+        return make_upload_file(f.getvalue(), filename="image.webp")
 
 
 def entity_image_url(entity: Venue | Event, kind: str) -> str:
@@ -160,6 +176,18 @@ def alt_image() -> UploadFile:
     with BytesIO() as f:
         Image.new("L", (640, 640), color=255).save(f, "webp", quality=0, method=0)
         return make_upload_file(f.getvalue(), filename="alt.webp")
+
+
+@pytest.fixture
+def too_small_image() -> UploadFile:
+    """Width is within bounds, but the height is below MIN_DIMENSIONS."""
+    return make_image((400, 64), noise=True)
+
+
+@pytest.fixture
+def too_large_image() -> UploadFile:
+    """Width is within bounds, but the height exceeds MAX_DIMENSIONS."""
+    return make_image((128, 6685))
 
 
 @pytest.fixture
@@ -649,6 +677,77 @@ async def test_set_image_oversized(
     assert response.json() == {
         "detail": f"File size exceeded: {image.size:,d}B > 100B",
     }
+
+
+@pytest.mark.asyncio
+async def test_set_image_dimensions_too_small(
+    client: AsyncClient,
+    make_session: async_sessionmaker[AsyncSession],
+    store: Store,
+    user: User,
+    too_small_image: UploadFile,
+) -> None:
+    seeded = await seed_entity(make_session, Venue, user)
+
+    response = await put_image(client, seeded.entity, "banner", too_small_image)
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Image dimensions too small: 400x64 < 128x128"}
+
+    async with make_session.begin() as session:
+        count = await session.scalar(select(func.count()).select_from(StorageObject))
+    assert count == 0
+    assert [batch async for batch in store.list_async()] == []
+
+
+@pytest.mark.asyncio
+async def test_set_image_dimensions_too_large(
+    client: AsyncClient,
+    make_session: async_sessionmaker[AsyncSession],
+    store: Store,
+    user: User,
+    too_large_image: UploadFile,
+) -> None:
+    seeded = await seed_entity(make_session, Venue, user)
+
+    response = await put_image(client, seeded.entity, "banner", too_large_image)
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Image dimensions too large: 128x6685 > 6684x6684"}
+
+    async with make_session.begin() as session:
+        count = await session.scalar(select(func.count()).select_from(StorageObject))
+    assert count == 0
+    assert [batch async for batch in store.list_async()] == []
+
+
+@pytest.mark.asyncio
+async def test_set_image_unidentified(
+    client: AsyncClient,
+    make_session: async_sessionmaker[AsyncSession],
+    user: User,
+) -> None:
+    seeded = await seed_entity(make_session, Venue, user)
+    not_an_image = make_upload_file(b"not an image" * 200, filename="image.webp")
+
+    response = await put_image(client, seeded.entity, "banner", not_an_image)
+    assert response.status_code == 415
+    assert response.json() == {"detail": "Image format not accepted"}
+
+
+@pytest.mark.asyncio
+async def test_set_image_decompression_bomb(
+    client: AsyncClient,
+    make_session: async_sessionmaker[AsyncSession],
+    user: User,
+    image: UploadFile,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seeded = await seed_entity(make_session, Venue, user)
+    # The shared image is larger than this, but well under the real threshold
+    monkeypatch.setattr(Image, "MAX_IMAGE_PIXELS", 1000)
+
+    response = await put_image(client, seeded.entity, "banner", image)
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Image exceeds maximum pixel count"}
 
 
 @pytest.mark.asyncio

@@ -29,6 +29,8 @@ from quickticket.errors import (
     FileSizeExceeded,
     FileSizeTooSmall,
     ImageAnimationNotAccepted,
+    ImageDimensionsExceeded,
+    ImageDimensionsTooSmall,
     ImageFormatNotAccepted,
 )
 from quickticket.models import (
@@ -61,6 +63,8 @@ MIME_TYPES_TO_EXTENSIONS = {
 }
 ACCEPTED_IMAGE_MIME_TYPES = tuple(MIME_TYPES_TO_EXTENSIONS)
 ACCEPTED_IMAGE_FORMATS = tuple(MIME_TYPES_TO_EXTENSIONS.values())
+MIN_DIMENSIONS = (128, 128)
+MAX_DIMENSIONS = (6684, 6684)
 MIN_FILESIZE = 1000
 MAX_FILESIZE = 2**20 * 10
 
@@ -72,8 +76,9 @@ def _process_image(file: BinaryIO, *, size: tuple[int, int]) -> tuple[bytes, Mim
     fmt = MIME_TYPES_TO_EXTENSIONS[mime_type]
 
     with Image.open(file, formats=ACCEPTED_IMAGE_FORMATS) as image, BytesIO() as f:
-        # TODO: strict dimension assertions? minimum size, maximum size
         _check_not_animated(image)
+        ImageDimensionsTooSmall.raise_if_below(image.size, min_size=MIN_DIMENSIONS)
+        ImageDimensionsExceeded.raise_if_above(image.size, max_size=MAX_DIMENSIONS)
 
         # https://pillow.readthedocs.io/en/stable/reference/ImageOps.html#resize-relative-to-a-given-size
         resized = ImageOps.contain(image, size, Resampling.BICUBIC)
