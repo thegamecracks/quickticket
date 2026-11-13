@@ -34,17 +34,17 @@ class ORMEntityNotFound(EntityNotFound):
         self.ident = ident
 
 
-class OrganizationMemberNotFound(EntityNotFound):
+class UnauthorizedError(Exception):
+    """An entity is not permitted to perform an operation."""
+
+
+class OrganizationMemberNotFound(UnauthorizedError):
     """A user is not a member of an organization."""
 
     def __init__(self, organization: Organization, user: User) -> None:
         super().__init__(f"User ({user.id}) is not a member of organization ({organization.id})")
         self.organization = organization
         self.user = user
-
-
-class UnauthorizedError(Exception):
-    """An entity is not permitted to perform an operation."""
 
 
 class UnauthorizedUser(UnauthorizedError):

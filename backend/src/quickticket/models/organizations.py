@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from enum import IntFlag
 from typing import TYPE_CHECKING
-from uuid import UUID, uuid7
+from uuid import uuid7
 
 from sqlalchemy import BigInteger, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from quickticket.models.accounts import User
 from quickticket.models.base import Base
-from quickticket.models.types import current_timestamp, pk_uuid, str_128
+from quickticket.models.types import OrganizationID, UserID, current_timestamp, str_128
 
 if TYPE_CHECKING:
     from quickticket.models.events import Venue
@@ -24,7 +24,11 @@ __all__ = (
 class Organization(Base, kw_only=True, repr=False):
     __tablename__ = "organization"
 
-    id: Mapped[pk_uuid] = mapped_column("organization_id", default_factory=uuid7)
+    id: Mapped[OrganizationID] = mapped_column(
+        "organization_id",
+        primary_key=True,
+        default_factory=uuid7,
+    )
 
     # Required
     display_name: Mapped[str_128]
@@ -36,10 +40,12 @@ class Organization(Base, kw_only=True, repr=False):
     members: Mapped[list[OrganizationMember]] = relationship(
         default_factory=list,
         back_populates="organization",
+        passive_deletes=True,
     )
     venues: Mapped[list[Venue]] = relationship(
         default_factory=list,
         back_populates="organization",
+        passive_deletes=True,
     )
 
 
@@ -51,12 +57,12 @@ class OrganizationMember(Base, kw_only=True, repr=False):
     __tablename__ = "organization_member"
 
     # Required
-    organization_id: Mapped[UUID] = mapped_column(
+    organization_id: Mapped[OrganizationID] = mapped_column(
         ForeignKey("organization.organization_id", ondelete="CASCADE"),
         default=None,
         primary_key=True,
     )
-    account_id: Mapped[UUID] = mapped_column(
+    account_id: Mapped[UserID] = mapped_column(
         ForeignKey("account.account_id", ondelete="CASCADE"),
         default=None,
         primary_key=True,

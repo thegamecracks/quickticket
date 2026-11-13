@@ -1,6 +1,5 @@
 import logging
 from typing import Annotated, Any
-from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import AfterValidator, AwareDatetime, BaseModel, Field
@@ -14,12 +13,17 @@ from quickticket.dependencies.db import AsyncSessionDep
 from quickticket.dependencies.models import get_organization_controller
 from quickticket.models import (
     Event,
+    EventID,
     Money,
+    OrganizationID,
     OrganizationMemberPermissions,
     Point,
     StorageObject,
+    StorageObjectID,
     Ticket,
+    TicketID,
     Venue,
+    VenueID,
 )
 from quickticket.paging import (
     DateTimeFilterParams,
@@ -36,26 +40,26 @@ log = logging.getLogger(__name__)
 
 
 class PartialTicket(BaseModel):
-    id: UUID
+    id: TicketID
 
 
 class PartialEvent(BaseModel):
-    id: UUID
+    id: EventID
     tickets: list[PartialTicket]
 
 
 class PartialOrganization(BaseModel):
-    id: UUID
+    id: OrganizationID
     created_at: AwareDatetime
     display_name: str
 
 
 class PartialStorageObject(BaseModel):
-    id: UUID
+    id: StorageObjectID
 
 
 class PartialVenue(BaseModel):
-    id: UUID
+    id: VenueID
     created_at: AwareDatetime
     display_name: str
     description: str
@@ -117,7 +121,7 @@ async def get_venues(
 
 
 class VenueReadEvent(BaseModel):
-    id: UUID
+    id: VenueID
     created_at: AwareDatetime
     display_name: str
     description: str
@@ -133,7 +137,7 @@ class VenueReadEvent(BaseModel):
 
 
 class VenueRead(BaseModel):
-    id: UUID
+    id: VenueID
     created_at: AwareDatetime
     display_name: str
     description: str
@@ -148,7 +152,7 @@ class VenueRead(BaseModel):
 
 
 @router.get("/{venue_id}", response_model=VenueRead)
-async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: UUID) -> Any:
+async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: VenueID) -> Any:
     """Get a venue by ID."""
     venue = await session.scalar(
         select(Venue)
@@ -174,7 +178,7 @@ async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: U
 
 
 class VenueCreate(BaseModel):
-    organization_id: UUID
+    organization_id: OrganizationID
     display_name: DisplayNameField
     description: Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
     theme: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
@@ -182,8 +186,8 @@ class VenueCreate(BaseModel):
 
     location_coords: Point | None = None
     # TODO: allow uploading banner and thumbnail in separate endpoints (see #52)
-    # banner_id: UUID | None = None
-    # thumbnail_id: UUID | None = None
+    # banner_id: StorageObjectID | None = None
+    # thumbnail_id: StorageObjectID | None = None
 
 
 @router.post(
@@ -232,7 +236,7 @@ async def create_venue(
 async def edit_venue(
     user: RequiredUserDep,
     session: AsyncSessionDep,
-    venue_id: UUID,
+    venue_id: VenueID,
 ) -> None:
     """Edit a venue's details."""
     # TODO: check authorization by organization
@@ -244,7 +248,7 @@ async def edit_venue(
 async def delete_venue(
     user: RequiredUserDep,
     session: AsyncSessionDep,
-    venue_id: UUID,
+    venue_id: VenueID,
 ) -> None:
     """Delete a venue."""
     # TODO: check authorization by organization

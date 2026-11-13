@@ -14,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from quickticket.dependencies.auth import OpenIDProviderDep, OptionalAccessTokenDep, OptionalUserDep
+from quickticket.dependencies.db import AsyncSessionDep
 from quickticket.dependencies.state import SettingsDep
 from quickticket.routers.profile import profile_me
 
@@ -28,6 +29,7 @@ log = logging.getLogger(__name__)
 @router.get("/")
 async def frontend_root(
     request: Request,
+    session: AsyncSessionDep,
     settings: SettingsDep,
     access_token: OptionalAccessTokenDep,
     provider: OpenIDProviderDep,
@@ -46,12 +48,16 @@ async def frontend_root(
         "cors_origins": settings.frontend.origins,
         "default_redirect_uri": redirect_uri,
         # Database
-        "profile": user and await profile_me(user),
+        "profile": user and await profile_me(session, user),
     }
     return templates.TemplateResponse(request, "index.html.j2", context)
 
 
 @router.get("/events")
-async def frontend_events(request: Request, user: OptionalUserDep) -> HTMLResponse:
-    context = {"profile": user and await profile_me(user)}
+async def frontend_events(
+    request: Request,
+    session: AsyncSessionDep,
+    user: OptionalUserDep,
+) -> HTMLResponse:
+    context = {"profile": user and await profile_me(session, user)}
     return templates.TemplateResponse(request, "events.html.j2", context)

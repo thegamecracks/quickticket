@@ -13,12 +13,17 @@ from quickticket.dependencies.auth import OptionalUserDep, RequiredUserDep
 from quickticket.dependencies.db import AsyncSessionDep
 from quickticket.models import (
     Event,
+    EventID,
     Organization,
+    OrganizationID,
     OrganizationMember,
     OrganizationMemberPermissions,
     StorageObject,
+    StorageObjectID,
     Ticket,
+    UserID,
     Venue,
+    VenueID,
 )
 from quickticket.paging import (
     DateTimeFilterParams,
@@ -33,7 +38,7 @@ log = logging.getLogger(__name__)
 
 
 class PartialOrganization(BaseModel):
-    id: UUID
+    id: OrganizationID
     created_at: AwareDatetime
     display_name: str
 
@@ -68,11 +73,11 @@ async def get_organizations(
 
 
 class PartialStorageObject(BaseModel):
-    id: UUID
+    id: StorageObjectID
 
 
 class PartialEvent(BaseModel):
-    id: UUID
+    id: EventID
     created_at: AwareDatetime
     display_name: str
     description: str
@@ -86,7 +91,7 @@ class PartialEvent(BaseModel):
 
 
 class PartialVenue(BaseModel):
-    id: UUID
+    id: VenueID
     created_at: AwareDatetime
     display_name: str
     description: str
@@ -100,11 +105,11 @@ class PartialVenue(BaseModel):
 
 
 class PartialOrganizationMember(BaseModel):
-    account_id: UUID
+    account_id: UserID
 
 
 class OrganizationRead(BaseModel):
-    id: UUID
+    id: OrganizationID
     created_at: AwareDatetime
     display_name: str
 
@@ -116,7 +121,7 @@ class OrganizationRead(BaseModel):
 async def get_organization(
     user: OptionalUserDep,
     session: AsyncSessionDep,
-    organization_id: UUID,
+    organization_id: OrganizationID,
 ) -> Any:
     """Get an organization by ID."""
     organization = await session.scalar(
@@ -221,7 +226,7 @@ async def create_organization(
 async def edit_organization(
     user: RequiredUserDep,
     session: AsyncSessionDep,
-    organization_id: UUID,
+    organization_id: OrganizationID,
 ) -> None:
     """Edit an organization's details."""
     # TODO: check authorization by organization_member
@@ -234,7 +239,7 @@ async def edit_organization(
 async def delete_organization(
     user: RequiredUserDep,
     session: AsyncSessionDep,
-    organization_id: UUID,
+    organization_id: OrganizationID,
 ) -> None:
     """Delete an organization."""
     # TODO: check authorization by organization_member
@@ -246,8 +251,8 @@ async def delete_organization(
 async def edit_organization_member(
     user: RequiredUserDep,
     session: AsyncSessionDep,
-    organization_id: UUID,
-    account_id: UUID,
+    organization_id: OrganizationID,
+    account_id: UserID,
 ) -> None:
     """Edit an organization member."""
     # NOTE: not planned for release, leave empty!
@@ -261,8 +266,8 @@ async def edit_organization_member(
 async def delete_organization_member(
     user: RequiredUserDep,
     session: AsyncSessionDep,
-    organization_id: UUID,
-    account_id: UUID,
+    organization_id: OrganizationID,
+    account_id: UserID,
 ) -> None:
     """Remove an account from an organization."""
     # NOTE: not planned for release, leave empty!
@@ -274,8 +279,8 @@ async def delete_organization_member(
 async def invite_organization_member(
     user: RequiredUserDep,
     session: AsyncSessionDep,
-    organization_id: UUID,
-    account_id: UUID,
+    organization_id: OrganizationID,
+    account_id: UserID,
 ) -> None:
     """Invite an account to an organization."""
     # NOTE: not planned for release, leave empty!
@@ -291,7 +296,7 @@ async def invite_organization_member(
 async def get_organization_member_invite(
     user: RequiredUserDep,
     session: AsyncSessionDep,
-    organization_id: UUID,
+    organization_id: OrganizationID,
     invite_id: UUID,
 ) -> None:
     """Get an invite for an organization."""
@@ -305,7 +310,7 @@ async def get_organization_member_invite(
 async def accept_organization_member_invite(
     user: RequiredUserDep,
     session: AsyncSessionDep,
-    organization_id: UUID,
+    organization_id: OrganizationID,
     invite_id: UUID,
 ) -> None:
     """Accept an invite for an organization."""
@@ -319,7 +324,7 @@ async def accept_organization_member_invite(
 async def reject_organization_member_invite(
     user: RequiredUserDep,
     session: AsyncSessionDep,
-    organization_id: UUID,
+    organization_id: OrganizationID,
     invite_id: UUID,
 ) -> None:
     """Reject an invite for an organization."""

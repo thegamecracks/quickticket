@@ -10,6 +10,7 @@ from fastapi import Depends, HTTPException, Request, Response
 from limits import RateLimitItem, WindowStats, parse
 from limits.aio.storage import MemoryStorage, Storage
 from limits.aio.strategies import RateLimiter, SlidingWindowCounterRateLimiter
+from starlette.routing import get_route_path
 
 from quickticket.dependencies.auth import OptionalUserDep
 from quickticket.dependencies.state import StateDep
@@ -26,12 +27,10 @@ __all__ = (
 )
 
 # https://limits.readthedocs.io/en/stable/quickstart.html#rate-limit-string-notation
-RATELIMIT_ROUTES: dict[Pattern, RateLimitItem] = {
-    re.compile(r"^/api/auth"): parse("20/minute"),
-    re.compile(r"^/api"): parse("2000/hour"),
-    re.compile(r"^/api"): parse("1000/10 minute"),
-    re.compile(r"^/api"): parse("200/minute"),
-    re.compile(r"^"): parse("20/second"),
+RATELIMIT_ROUTES: dict[Pattern, list[RateLimitItem]] = {
+    re.compile(r"^/api/auth"): [parse("20/minute")],
+    re.compile(r"^/api"): [parse("2000/hour"), parse("1000/10 minute"), parse("200/minute")],
+    re.compile(r"^"): [parse("20/second")],
 }
 
 log = logging.getLogger(__name__)
@@ -71,12 +70,10 @@ async def get_request_identifier(request: Request, user: OptionalUserDep) -> tup
 
 async def get_request_limits(request: Request, user: OptionalUserDep) -> Sequence[RateLimitItem]:
     # Optionally adjust limit by account type
-    # log.debug(
-    #     "%s buckets: %s",
-    #     request.url.path,
-    #     ", ".join([repr(r.pattern) for r in RATELIMIT_ROUTES if r.match(request.url.path)]),
-    # )
-    return [limit for route, limit in RATELIMIT_ROUTES.items() if route.match(request.url.path)]
+    path = get_route_path(request.scope)
+    return [
+        limit for route, limits in RATELIMIT_ROUTES.items() if route.match(path) for limit in limits
+    ]
 
 
 async def apply_request_limit(
@@ -123,11 +120,13 @@ def _create_ratelimit_headers(
 ) -> dict[str, str]:
     reset_time = stats.reset_time
     reset_after = max(0, reset_time - timestamp)
+    retry_after = ceil(reset_after)
     return {
         "X-RateLimit-Limit": str(limit.amount),
         "X-RateLimit-Remaining": str(stats.remaining),
         "X-RateLimit-Reset": str(ceil(reset_time)),
-        "X-RateLimit-Reset-After": str(ceil(reset_after)),
+        "X-RateLimit-Reset-After": str(retry_after),
+        "Retry-After": str(retry_after),
     }
 
 

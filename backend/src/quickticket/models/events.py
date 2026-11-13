@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from uuid import UUID, uuid7
+from uuid import uuid7
 
 from sqlalchemy import CheckConstraint, ForeignKey, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -9,7 +9,14 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from quickticket.models.base import Base
 from quickticket.models.money import Money
 from quickticket.models.tickets import Ticket
-from quickticket.models.types import current_timestamp, pk_uuid, str_128, str_4096
+from quickticket.models.types import (
+    EventID,
+    StorageObjectID,
+    VenueID,
+    current_timestamp,
+    str_128,
+    str_4096,
+)
 from quickticket.models.venues import Venue
 
 if TYPE_CHECKING:
@@ -21,10 +28,10 @@ __all__ = ("Event",)
 class Event(Base, kw_only=True, repr=False):
     __tablename__ = "event"
 
-    id: Mapped[pk_uuid] = mapped_column("event_id", default_factory=uuid7)
+    id: Mapped[EventID] = mapped_column("event_id", primary_key=True, default_factory=uuid7)
 
     # Required
-    venue_id: Mapped[UUID] = mapped_column(
+    venue_id: Mapped[VenueID] = mapped_column(
         ForeignKey("venue.venue_id", ondelete="CASCADE"),
         default=None,
         index=True,
@@ -46,11 +53,11 @@ class Event(Base, kw_only=True, repr=False):
         default=Money(amount=0, currency="CAD"),
         server_default=text("""'{"amount": 0, "currency": "CAD"}'"""),
     )
-    banner_id: Mapped[UUID | None] = mapped_column(
+    banner_id: Mapped[StorageObjectID | None] = mapped_column(
         ForeignKey("storage_object.storage_object_id", ondelete="SET NULL"),
         default=None,
     )
-    thumbnail_id: Mapped[UUID | None] = mapped_column(
+    thumbnail_id: Mapped[StorageObjectID | None] = mapped_column(
         ForeignKey("storage_object.storage_object_id", ondelete="SET NULL"),
         default=None,
     )
@@ -59,12 +66,10 @@ class Event(Base, kw_only=True, repr=False):
     banner: Mapped[StorageObject | None] = relationship(
         default=None,
         foreign_keys=[banner_id],
-        passive_deletes=True,
     )
     thumbnail: Mapped[StorageObject | None] = relationship(
         default=None,
         foreign_keys=[thumbnail_id],
-        passive_deletes=True,
     )
     tickets: Mapped[list[Ticket]] = relationship(
         default_factory=list,

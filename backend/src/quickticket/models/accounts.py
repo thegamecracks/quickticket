@@ -2,16 +2,18 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import TYPE_CHECKING
-from uuid import UUID, uuid7
+from uuid import uuid7
 
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from quickticket.models.base import Base
 from quickticket.models.types import (
+    AddressID,
+    NotificationID,
+    UserID,
     can_cascade_delete,
     current_timestamp,
-    pk_uuid,
     str_128,
     str_256,
     str_1024,
@@ -34,7 +36,7 @@ __all__ = (
 class User(Base, kw_only=True, repr=False):
     __tablename__ = "account"
 
-    id: Mapped[pk_uuid] = mapped_column("account_id", default_factory=uuid7)
+    id: Mapped[UserID] = mapped_column("account_id", primary_key=True, default_factory=uuid7)
 
     # Required
     display_name: Mapped[str_128]
@@ -49,6 +51,7 @@ class User(Base, kw_only=True, repr=False):
     addresses: Mapped[list[Address]] = relationship(
         default_factory=list,
         back_populates="user",
+        order_by="Address.id",
         **can_cascade_delete,
     )
     notifications: Mapped[list[Notification]] = relationship(
@@ -70,6 +73,8 @@ class User(Base, kw_only=True, repr=False):
     organization_members: Mapped[list[OrganizationMember]] = relationship(
         default_factory=list,
         back_populates="user",
+        passive_deletes=True,
+        order_by="OrganizationMember.joined_at, OrganizationMember.organization_id",
     )
     storage_objects: Mapped[list[StorageObject]] = relationship(
         default_factory=list,
@@ -90,7 +95,7 @@ class OpenIDAccount(Base, kw_only=True, repr=False):
     """The OpenID provider that issued this account."""
     sub: Mapped[str] = mapped_column(String(2000), primary_key=True)
     """The provider's unique identifier for this account."""
-    account_id: Mapped[UUID] = mapped_column(
+    account_id: Mapped[UserID] = mapped_column(
         ForeignKey("account.account_id", ondelete="CASCADE"),
         default=None,
         index=True,
@@ -116,10 +121,10 @@ class OpenIDAccount(Base, kw_only=True, repr=False):
 class Address(Base, kw_only=True, repr=False):
     __tablename__ = "address"
 
-    id: Mapped[pk_uuid] = mapped_column("address_id", default_factory=uuid7)
+    id: Mapped[AddressID] = mapped_column("address_id", primary_key=True, default_factory=uuid7)
 
     # Required
-    account_id: Mapped[UUID] = mapped_column(
+    account_id: Mapped[UserID] = mapped_column(
         ForeignKey("account.account_id", ondelete="CASCADE"),
         default=None,
         index=True,
@@ -140,10 +145,14 @@ class Address(Base, kw_only=True, repr=False):
 class Notification(Base, kw_only=True, repr=False):
     __tablename__ = "notification"
 
-    id: Mapped[pk_uuid] = mapped_column("notification_id", default_factory=uuid7)
+    id: Mapped[NotificationID] = mapped_column(
+        "notification_id",
+        primary_key=True,
+        default_factory=uuid7,
+    )
 
     # Required
-    account_id: Mapped[UUID] = mapped_column(
+    account_id: Mapped[UserID] = mapped_column(
         ForeignKey("account.account_id", ondelete="CASCADE"),
         default=None,
         index=True,

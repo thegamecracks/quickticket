@@ -1,8 +1,8 @@
 import struct
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import Annotated, Any
-from uuid import UUID, uuid7
+from typing import Annotated, Any, NewType
+from uuid import UUID
 
 from pydantic import BaseModel
 from sqlalchemy import (
@@ -21,12 +21,20 @@ from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import mapped_column
 
 __all__ = (
+    "AddressID",
+    "EventID",
+    "NotificationID",
+    "OrganizationID",
     "Point",
     "PointSerializer",
+    "StorageObjectID",
+    "StorageProviderID",
     "TZDateTime",
+    "TicketID",
+    "UserID",
+    "VenueID",
     "can_cascade_delete",
     "current_timestamp",
-    "pk_uuid",
     "str_128",
     "str_256",
     "str_1024",
@@ -41,7 +49,15 @@ str_1024 = Annotated[str, mapped_column(String(1024), server_default=text("''"))
 str_2000 = Annotated[str, mapped_column(String(2000), server_default=text("''"))]
 str_4096 = Annotated[str, mapped_column(String(4096), server_default=text("''"))]
 
-pk_uuid = Annotated[UUID, mapped_column(primary_key=True, default=uuid7)]
+AddressID = NewType("AddressID", UUID)
+EventID = NewType("EventID", UUID)
+NotificationID = NewType("NotificationID", UUID)
+OrganizationID = NewType("OrganizationID", UUID)
+StorageObjectID = NewType("StorageObjectID", UUID)
+StorageProviderID = NewType("StorageProviderID", UUID)
+TicketID = NewType("TicketID", UUID)
+UserID = NewType("UserID", UUID)
+VenueID = NewType("VenueID", UUID)
 
 current_timestamp = Annotated[
     datetime,
