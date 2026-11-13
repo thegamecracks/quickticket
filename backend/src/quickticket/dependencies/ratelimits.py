@@ -26,12 +26,10 @@ __all__ = (
 )
 
 # https://limits.readthedocs.io/en/stable/quickstart.html#rate-limit-string-notation
-RATELIMIT_ROUTES: dict[Pattern, RateLimitItem] = {
-    re.compile(r"^/api/auth"): parse("20/minute"),
-    re.compile(r"^/api"): parse("2000/hour"),
-    re.compile(r"^/api"): parse("1000/10 minute"),
-    re.compile(r"^/api"): parse("200/minute"),
-    re.compile(r"^"): parse("20/second"),
+RATELIMIT_ROUTES: dict[Pattern, list[RateLimitItem]] = {
+    re.compile(r"^/api/auth"): [parse("20/minute")],
+    re.compile(r"^/api"): [parse("2000/hour"), parse("1000/10 minute"), parse("200/minute")],
+    re.compile(r"^"): [parse("20/second")],
 }
 
 log = logging.getLogger(__name__)
@@ -76,7 +74,12 @@ async def get_request_limits(request: Request, user: OptionalUserDep) -> Sequenc
     #     request.url.path,
     #     ", ".join([repr(r.pattern) for r in RATELIMIT_ROUTES if r.match(request.url.path)]),
     # )
-    return [limit for route, limit in RATELIMIT_ROUTES.items() if route.match(request.url.path)]
+    return [
+        limit
+        for route, limits in RATELIMIT_ROUTES.items()
+        if route.match(request.url.path)
+        for limit in limits
+    ]
 
 
 async def apply_request_limit(
