@@ -5,7 +5,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import timedelta
 from functools import partial
-from hashlib import sha3_256
+from hashlib import sha256
 from io import BytesIO
 from typing import TYPE_CHECKING, Annotated, Any, BinaryIO, Protocol
 from uuid import UUID, uuid7
@@ -206,7 +206,7 @@ class ImageService:
     @staticmethod
     def _calculate_filename(data: bytes, mime_type: MimeType) -> str:
         ext = MIME_TYPES_TO_EXTENSIONS[mime_type]
-        data_hash = sha3_256(data).hexdigest()[:32]
+        data_hash = sha256(data).hexdigest()[:32]
         return f"{data_hash}.{ext}"
 
     async def _get_storage_provider(self, session: AsyncSession) -> StorageProvider:
