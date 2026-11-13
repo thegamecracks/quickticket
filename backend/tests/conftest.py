@@ -25,7 +25,12 @@ from sqlalchemy.ext.asyncio import (
 
 from quickticket.app import create_app_from_settings
 from quickticket.dependencies.auth import get_user
-from quickticket.dependencies.db import AsyncEngineFactory, _engine_factory, get_async_sessionmaker
+from quickticket.dependencies.db import (
+    AsyncEngineFactory,
+    AsyncSessionDep,
+    _engine_factory,
+    get_async_sessionmaker,
+)
 from quickticket.dependencies.state import get_settings
 from quickticket.dependencies.store import Store, get_object_store
 from quickticket.models import Address, Base, User
@@ -167,10 +172,12 @@ class AuthController:
     user: User | None = None
     """The currently authenticated user. Can be mutated in-place."""
 
-    def get_user(self) -> User | None:
-        if self.enabled:
-            return self.user
-        raise NotImplementedError  # TODO: resolve get_user() with FastAPI's DI framework
+    async def get_user(self, session: AsyncSessionDep) -> User | None:
+        if not self.enabled:
+            raise NotImplementedError  # TODO: resolve get_user() with FastAPI's DI framework
+        if self.user is None:
+            return None
+        return await session.get(User, self.user.id)
 
 
 @pytest.fixture
