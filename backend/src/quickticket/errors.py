@@ -93,6 +93,23 @@ class ImageFormatNotAccepted(FileProcessingError):
         super().__init__(f"Image format not accepted: {content_type}")
 
 
+class FileSizeTooSmall(FileProcessingError):
+    """The file's size is below the minimum filesize allowed."""
+
+    def __init__(self, filesize: int, min_filesize: int) -> None:
+        self.filesize = filesize
+        self.min_filesize = min_filesize
+        super().__init__(f"File size too small: {filesize:,d}B < {min_filesize:,d}B")
+
+    @classmethod
+    def raise_if_below(cls, filesize: int | None, *, min_filesize: int) -> None:
+        # Intentional keyword-only parameter to avoid mis-ordering arguments
+        if filesize is None:
+            raise cls(0, min_filesize)
+        if filesize < min_filesize:
+            raise cls(filesize, min_filesize)
+
+
 class FileSizeExceeded(FileProcessingError):
     """The file's size exceeds the maximum filesize allowed."""
 
@@ -102,7 +119,7 @@ class FileSizeExceeded(FileProcessingError):
         super().__init__(f"File size exceeded: {filesize:,d}B > {max_filesize:,d}B")
 
     @classmethod
-    def raise_if_exceeded(cls, filesize: int | None, *, max_filesize: int) -> None:
+    def raise_if_above(cls, filesize: int | None, *, max_filesize: int) -> None:
         # Intentional keyword-only parameter to avoid mis-ordering arguments
         if filesize is None:
             raise cls(0, max_filesize)
