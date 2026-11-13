@@ -59,7 +59,7 @@ omit = ["src/quickticket/alembic/*"]
 entrypoint = "quickticket.app:app"
 
 [tool.pytest]
-asyncio_default_fixture_loop_scope = "function"
+asyncio_default_fixture_loop_scope = "fixture-scope"
 injectable_autouse_cleanup = false
 
 [tool.ruff]

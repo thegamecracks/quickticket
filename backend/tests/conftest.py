@@ -111,26 +111,35 @@ async def stack() -> AsyncGenerator[AsyncExitStack]:
         yield stack
 
 
-@pytest_asyncio.fixture
-async def engine(stack: AsyncExitStack, state: State) -> AsyncEngine:
+@pytest_asyncio.fixture(scope="session")
+async def engine() -> AsyncGenerator[AsyncEngine]:
     settings = Settings(
         _env_file=None,
         db=DatabaseSettings(url="sqlite+aiosqlite:///:memory:"),
     )
 
     engine_factory = AsyncEngineFactory()
-    engine = await engine_factory(settings=settings, stack=stack, state=state)
+    async with AsyncExitStack() as stack:
+        engine = await engine_factory(settings=settings, stack=stack, state=State())
 
-    # Generate schema from models instead of running the migration scripts
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        # Generate schema from models instead of running the migration scripts
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
 
-    return engine
+        yield engine
 
 
 @pytest_asyncio.fixture
-async def make_session(state: State, engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
-    return await get_async_sessionmaker(state, engine)
+async def make_session(engine: AsyncEngine) -> AsyncGenerator[async_sessionmaker[AsyncSession]]:
+    async with engine.begin() as conn:
+        try:
+            yield async_sessionmaker(
+                conn,
+                expire_on_commit=False,
+                join_transaction_mode="create_savepoint",
+            )
+        finally:
+            await conn.rollback()
 
 
 @dataclass(kw_only=True)
