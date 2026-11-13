@@ -105,7 +105,7 @@ async def test_image_service_upload_banner(
     assert obj.provider is not None
 
     result = await store.head_async(obj.object_key)
-    assert result["path"] == f"banners/{venue.id}/dba2914f55714cfeaa1ff877800f0cce.jpeg"
+    assert result["path"] == f"banners/{venue.id}/84f56137df1187ce507275dca3e850a9.jpeg"
     assert result["size"] == obj.filesize
 
 

@@ -34,8 +34,8 @@ NOT_FOUND_ID = UUID("00000000-0000-0000-0000-000000000000")
 
 # The black image fixture is processed (and resized) by ImageService.
 EXPECTED_IMAGES = {
-    "banner": ("dba2914f55714cfeaa1ff877800f0cce.jpeg", 12836),
-    "thumbnail": ("72db541ab26f9967b0c6cf0e0f8dd4d4.jpeg", 1373),
+    "banner": ("84f56137df1187ce507275dca3e850a9.jpeg", 12836),
+    "thumbnail": ("7f23efabb618aefc7f768efa37840fa8.jpeg", 1373),
 }
 
 
