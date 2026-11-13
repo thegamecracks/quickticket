@@ -93,6 +93,46 @@ class ImageFormatNotAccepted(FileProcessingError):
         super().__init__(f"Image format not accepted: {content_type}")
 
 
+def _format_dimensions(size: tuple[int, int]) -> str:
+    return f"{size[0]}x{size[1]}"
+
+
+class ImageDimensionsTooSmall(FileProcessingError):
+    """The image's dimensions are below the minimum dimensions allowed."""
+
+    def __init__(self, size: tuple[int, int], *, min_size: tuple[int, int]) -> None:
+        self.size = size
+        self.min_size = min_size
+        super().__init__(
+            f"Image dimensions too small: {_format_dimensions(size)} "
+            f"< {_format_dimensions(min_size)}",
+        )
+
+    @classmethod
+    def raise_if_below(cls, size: tuple[int, int], *, min_size: tuple[int, int]) -> None:
+        # Intentional keyword-only parameter to avoid mis-ordering arguments
+        if size[0] < min_size[0] or size[1] < min_size[1]:
+            raise cls(size, min_size=min_size)
+
+
+class ImageDimensionsExceeded(FileProcessingError):
+    """The image's dimensions are above the maximum dimensions allowed."""
+
+    def __init__(self, size: tuple[int, int], *, max_size: tuple[int, int]) -> None:
+        self.size = size
+        self.max_size = max_size
+        super().__init__(
+            f"Image dimensions too large: {_format_dimensions(size)} "
+            f"> {_format_dimensions(max_size)}",
+        )
+
+    @classmethod
+    def raise_if_above(cls, size: tuple[int, int], *, max_size: tuple[int, int]) -> None:
+        # Intentional keyword-only parameter to avoid mis-ordering arguments
+        if size[0] > max_size[0] or size[1] > max_size[1]:
+            raise cls(size, max_size=max_size)
+
+
 class FileSizeTooSmall(FileProcessingError):
     """The file's size is below the minimum filesize allowed."""
 
