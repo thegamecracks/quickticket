@@ -96,17 +96,17 @@ def create_banner_routes[T: BannerEntity](
 
     @router.put(
         "/{entity_id}/banner",
-        name=f"edit_{entity_name}_banner",
+        name=f"set_{entity_name}_banner",
         response_model=ImageRead,
     )
-    async def edit_banner(
+    async def set_banner(
         user: RequiredUserDep,
         session: AsyncSessionDep,
         images: ImageServiceDep,
         entity_id: UUID,
         file: UploadFile,
     ) -> StorageObject:
-        """Edit this entity's banner."""
+        """Set this entity's banner."""
         entity = await session.get(entity_cls, entity_id, options=options)
         if entity is None:
             raise ORMEntityNotFound(entity_cls, entity_id)
@@ -193,17 +193,17 @@ def create_thumbnail_routes[T: ThumbnailEntity](
 
     @router.put(
         "/{entity_id}/thumbnail",
-        name=f"edit_{entity_name}_thumbnail",
+        name=f"set_{entity_name}_thumbnail",
         response_model=ImageRead,
     )
-    async def edit_thumbnail(
+    async def set_thumbnail(
         user: RequiredUserDep,
         session: AsyncSessionDep,
         images: ImageServiceDep,
         entity_id: UUID,
         file: UploadFile,
     ) -> StorageObject:
-        """Edit this entity's thumbnail."""
+        """Set this entity's thumbnail."""
         entity = await session.get(entity_cls, entity_id, options=options)
         if entity is None:
             raise ORMEntityNotFound(entity_cls, entity_id)
