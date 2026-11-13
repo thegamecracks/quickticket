@@ -28,7 +28,7 @@ log = logging.getLogger(__name__)
 class ImageRead(BaseModel):
     id: UUID
     filename: str
-    filesize: str
+    filesize: int
     mime_type: MimeType
     created_at: AwareDatetime
 
