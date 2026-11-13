@@ -3,7 +3,7 @@ import pytest_asyncio
 from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from quickticket.dependencies.images import ImageService
+from quickticket.dependencies.images import MAX_FILESIZE, ImageService
 from quickticket.dependencies.store import Store
 from quickticket.models import (
     MimeType,
@@ -86,3 +86,7 @@ async def test_image_service_upload_banner(
     result = await store.head_async(obj.object_key)
     assert result["path"] == f"banners/{venue.id}/dba2914f55714cfeaa1ff877800f0cce.jpeg"
     assert result["size"] == obj.filesize
+
+
+def test_max_filesize() -> None:
+    assert MAX_FILESIZE == 2**20 * 10
