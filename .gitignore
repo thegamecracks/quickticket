@@ -22,3 +22,7 @@ logs/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+
+#Graphify
+graphify-out/
