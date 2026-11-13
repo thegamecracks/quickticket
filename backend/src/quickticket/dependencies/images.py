@@ -14,7 +14,6 @@ from fastapi import Depends, UploadFile
 from obstore.store import AzureStore, GCSStore, S3Store
 from PIL import Image, ImageOps
 from PIL.Image import Resampling
-from pydantic import AwareDatetime, BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -29,7 +28,6 @@ if TYPE_CHECKING:
 
 __all__ = (
     "BannerEntity",
-    "ImageRead",
     "ImageService",
     "ImageServiceDep",
     "get_image_service",
@@ -48,14 +46,6 @@ ACCEPTED_IMAGE_MIME_TYPES = tuple(MIME_TYPES_TO_EXTENSIONS)
 ACCEPTED_IMAGE_FORMATS = tuple(MIME_TYPES_TO_EXTENSIONS.values())
 
 log = logging.getLogger(__name__)
-
-
-class ImageRead(BaseModel):
-    id: UUID
-    filename: str
-    filesize: str
-    mime_type: MimeType
-    created_at: AwareDatetime
 
 
 def _process_banner(file: BinaryIO) -> tuple[bytes, MimeType]:
