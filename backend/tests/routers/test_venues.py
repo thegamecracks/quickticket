@@ -189,7 +189,7 @@ async def test_create_venue_non_member(
             "location_coords": {"lat": 48.8584, "long": 2.2945},
         },
     )
-    assert response.status_code == 400
+    assert response.status_code == 403
     assert response.json() == {
         "detail": f"User ({user.id}) is not a member of organization ({organization.id})",
     }
@@ -223,7 +223,7 @@ async def test_create_venue_member_insufficient_permissions(
             "location_coords": {"lat": 48.8584, "long": 2.2945},
         },
     )
-    assert response.status_code == 400
+    assert response.status_code == 403
     assert response.json() == {
         "detail": (
             f"Organization member ({organization.id}, {user.id}) missing permissions: ADMINISTRATOR"
