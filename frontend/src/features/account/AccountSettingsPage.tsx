@@ -5,7 +5,7 @@ export default function AccountSettingsPage() {
   return (
     <PageLayout title="Account Settings">
       <div className='flex flex-col text-accent space-y-5'>
-        <p>Id: {user?.account_id}</p>
+        <p>Id: {user?.id}</p>
         <p>Joined: {user?.created_at}</p>
         <p>Display Name: {user?.display_name}</p>
         <p>Email: {user?.email}</p>
