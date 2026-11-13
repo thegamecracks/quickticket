@@ -10,6 +10,7 @@ from fastapi import Depends, HTTPException, Request, Response
 from limits import RateLimitItem, WindowStats, parse
 from limits.aio.storage import MemoryStorage, Storage
 from limits.aio.strategies import RateLimiter, SlidingWindowCounterRateLimiter
+from starlette.routing import get_route_path
 
 from quickticket.dependencies.auth import OptionalUserDep
 from quickticket.dependencies.state import StateDep
@@ -69,16 +70,9 @@ async def get_request_identifier(request: Request, user: OptionalUserDep) -> tup
 
 async def get_request_limits(request: Request, user: OptionalUserDep) -> Sequence[RateLimitItem]:
     # Optionally adjust limit by account type
-    # log.debug(
-    #     "%s buckets: %s",
-    #     request.url.path,
-    #     ", ".join([repr(r.pattern) for r in RATELIMIT_ROUTES if r.match(request.url.path)]),
-    # )
+    path = get_route_path(request.scope)
     return [
-        limit
-        for route, limits in RATELIMIT_ROUTES.items()
-        if route.match(request.url.path)
-        for limit in limits
+        limit for route, limits in RATELIMIT_ROUTES.items() if route.match(path) for limit in limits
     ]
 
 
