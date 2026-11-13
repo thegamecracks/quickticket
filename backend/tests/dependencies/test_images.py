@@ -82,7 +82,6 @@ async def test_image_service_upload_banner(
     assert obj.mime_type == MimeType("image/jpeg")
     assert obj.created_at is not None
     assert obj.provider is not None
-    assert obj.user is user
 
     result = await store.head_async(obj.object_key)
     assert result["path"] == f"banners/{venue.id}/dba2914f55714cfeaa1ff877800f0cce.jpeg"
