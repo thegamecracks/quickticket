@@ -76,11 +76,11 @@ export default function MyEventsPage() {
   // Reset pagination when the logged-in user changes.
   useEffect(() => {
     setCurrentPage(1)
-  }, [user?.account_id])
+  }, [user?.id])
 
   // Get events for the logged-in account only.
   const myEvents = user
-    ? getOrganizerEvents(user.account_id)
+    ? getOrganizerEvents(user.id)
     : []
 
   const search = searchParams.get('search') ?? ''
