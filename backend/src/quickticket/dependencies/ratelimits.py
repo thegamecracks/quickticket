@@ -120,11 +120,13 @@ def _create_ratelimit_headers(
 ) -> dict[str, str]:
     reset_time = stats.reset_time
     reset_after = max(0, reset_time - timestamp)
+    retry_after = ceil(reset_after)
     return {
         "X-RateLimit-Limit": str(limit.amount),
         "X-RateLimit-Remaining": str(stats.remaining),
         "X-RateLimit-Reset": str(ceil(reset_time)),
-        "X-RateLimit-Reset-After": str(ceil(reset_after)),
+        "X-RateLimit-Reset-After": str(retry_after),
+        "Retry-After": str(retry_after),
     }
 
 
