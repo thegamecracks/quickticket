@@ -1,4 +1,5 @@
 import logging
+import sqlite3
 from collections.abc import AsyncGenerator, Mapping
 from typing import Annotated, Any, cast
 
@@ -25,6 +26,21 @@ __all__ = (
 log = logging.getLogger(__name__)
 
 
+class _SQLiteConnection(sqlite3.Connection):
+    """SQLite connection that enforces foreign keys.
+
+    ``PRAGMA foreign_keys`` is a no-op inside a transaction, so autocommit
+    must be temporarily enabled before executing it.
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        autocommit = self.autocommit
+        self.autocommit = True
+        self.execute("PRAGMA foreign_keys=ON")
+        self.autocommit = autocommit
+
+
 class AsyncEngineFactory:
     def __init__(self, *, engine_args: Mapping[str, Any] | None = None) -> None:
         if engine_args is None:
@@ -47,6 +63,7 @@ class AsyncEngineFactory:
         if url.startswith("sqlite"):
             # https://docs.sqlalchemy.org/en/21/dialects/sqlite.html#enabling-non-legacy-sqlite-transactional-modes-with-the-sqlite3-or-aiosqlite-driver
             connect_args["autocommit"] = False
+            connect_args["factory"] = _SQLiteConnection
 
         state.engine = create_async_engine(url, connect_args=connect_args, **self.engine_args)
         stack.push_async_callback(state.engine.dispose)
