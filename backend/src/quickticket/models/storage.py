@@ -24,7 +24,10 @@ __all__ = (
 
 class StorageProvider(Base, kw_only=True, repr=False):
     __tablename__ = "storage_provider"
-    __table_args__ = (UniqueConstraint("endpoint", "region"),)
+    __table_args__ = (
+        # uq_storage_provider_endpoint
+        UniqueConstraint("endpoint", "region"),
+    )
 
     id: Mapped[StorageProviderID] = mapped_column(
         "storage_provider_id",
@@ -51,6 +54,10 @@ class StorageProvider(Base, kw_only=True, repr=False):
 
 class StorageObject(Base, kw_only=True, repr=False):
     __tablename__ = "storage_object"
+    __table_args__ = (
+        # uq_storage_object_storage_provider_id
+        UniqueConstraint("storage_provider_id", "object_key"),
+    )
 
     id: Mapped[StorageObjectID] = mapped_column(
         "storage_object_id",
