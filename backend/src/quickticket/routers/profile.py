@@ -7,6 +7,8 @@ from quickticket.dependencies.auth import RequiredUserDep
 from quickticket.dependencies.db import AsyncSessionDep
 from quickticket.models import (
     AddressID,
+    OrganizationID,
+    OrganizationMemberPermissions,
     User,
     UserID,
 )
@@ -24,6 +26,13 @@ class ProfileAddress(BaseModel):
     postal_code: str
 
 
+class ProfileOrganizationMember(BaseModel):
+    organization_id: OrganizationID
+    account_id: UserID
+    permissions: OrganizationMemberPermissions
+    joined_at: AwareDatetime
+
+
 class Profile(BaseModel):
     id: UserID
     created_at: AwareDatetime
@@ -32,10 +41,11 @@ class Profile(BaseModel):
     last_name: str
     email: str
     addresses: list[ProfileAddress]
+    organization_members: list[ProfileOrganizationMember]
 
 
 @router.get("/@me", response_model=Profile)
 async def profile_me(session: AsyncSessionDep, user: RequiredUserDep) -> User:
     """Retrieve the current user."""
-    await session.refresh(user, ["addresses"])
+    await session.refresh(user, ["addresses", "organization_members"])
     return user
