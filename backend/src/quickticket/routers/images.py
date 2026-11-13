@@ -4,22 +4,32 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, UploadFile
 from fastapi.responses import RedirectResponse
+from pydantic import AwareDatetime, BaseModel
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm.interfaces import ORMOption
 
 from quickticket.dependencies.auth import RequiredUserDep
 from quickticket.dependencies.db import AsyncSessionDep
-from quickticket.dependencies.images import BannerEntity, ImageRead, ImageServiceDep
+from quickticket.dependencies.images import BannerEntity, ImageServiceDep
 from quickticket.dependencies.models import get_organization_controller
 from quickticket.errors import ORMEntityNotFound
 from quickticket.models import (
     Base,
+    MimeType,
     OrganizationID,
     OrganizationMemberPermissions,
     StorageObject,
 )
 
 log = logging.getLogger(__name__)
+
+
+class ImageRead(BaseModel):
+    id: UUID
+    filename: str
+    filesize: str
+    mime_type: MimeType
+    created_at: AwareDatetime
 
 
 def create_banner_routes[T: BannerEntity](
