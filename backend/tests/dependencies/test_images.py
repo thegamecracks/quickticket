@@ -1,10 +1,6 @@
-from io import BytesIO
-
 import pytest
 import pytest_asyncio
 from fastapi import UploadFile
-from fastapi.datastructures import Headers
-from PIL import Image
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from quickticket.dependencies.images import ImageService
@@ -30,24 +26,6 @@ def settings() -> Settings:
             access_key="test-access-key",
             secret_key="test-secret-key",  # noqa: S106
         ),
-    )
-
-
-@pytest.fixture(scope="session")
-def black_image_bytes() -> bytes:
-    # Should be small, ~162 bytes
-    image = Image.new("L", (256, 128))
-    with BytesIO() as f:
-        image.save(f, "webp", quality=0, method=0)
-        return f.getvalue()
-
-
-@pytest.fixture
-def black_image_file(black_image_bytes: bytes) -> UploadFile:
-    return UploadFile(
-        BytesIO(black_image_bytes),
-        size=len(black_image_bytes),
-        headers=Headers({"Content-Type": "image/webp"}),
     )
 
 
@@ -90,11 +68,11 @@ async def test_image_service_upload_banner(
     settings: Settings,
     user: User,
     venue: Venue,
-    black_image_file: UploadFile,
+    image: UploadFile,
 ) -> None:
     images = ImageService(make_session=make_session, settings=settings, store=store)
 
-    obj = await images.upload_banner(venue, black_image_file, user=user)
+    obj = await images.upload_banner(venue, image, user=user)
     assert obj.id is not None
     assert obj.storage_provider_id is not None
     assert obj.account_id == user.id
@@ -109,11 +87,3 @@ async def test_image_service_upload_banner(
     result = await store.head_async(obj.object_key)
     assert result["path"] == f"banners/{venue.id}/dba2914f55714cfeaa1ff877800f0cce.jpeg"
     assert result["size"] == obj.filesize
-
-
-# TODO: test create_banner_routes() and create_thumbnail_routes()
-#
-# async with make_session.begin() as session:
-#     venue = await session.get(Venue, venue.id)
-#     assert venue is not None
-#     assert venue.banner_id is not None
