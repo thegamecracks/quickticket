@@ -44,6 +44,7 @@ MIME_TYPES_TO_EXTENSIONS = {
 }
 ACCEPTED_IMAGE_MIME_TYPES = tuple(MIME_TYPES_TO_EXTENSIONS)
 ACCEPTED_IMAGE_FORMATS = tuple(MIME_TYPES_TO_EXTENSIONS.values())
+MAX_FILESIZE = 2**20 * 10
 
 log = logging.getLogger(__name__)
 
@@ -150,10 +151,10 @@ class ImageService:
 
         return obj
 
-    async def _check_file(self, file: UploadFile, *, max_filesize: int = 2**20 * 10) -> None:
+    async def _check_file(self, file: UploadFile) -> None:
         if file.content_type not in ACCEPTED_IMAGE_MIME_TYPES:
             raise ImageFormatNotAccepted(file.content_type, ACCEPTED_IMAGE_MIME_TYPES)
-        FileSizeExceeded.raise_if_exceeded(file.size, max_filesize=max_filesize)
+        FileSizeExceeded.raise_if_exceeded(file.size, max_filesize=MAX_FILESIZE)
 
     async def _check_ratelimit(self, user: User) -> None:
         pass  # TODO: per-user ratelimiting
