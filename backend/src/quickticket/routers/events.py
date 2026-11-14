@@ -188,9 +188,6 @@ class EventCreate(BaseModel):
 
     max_attendees: Annotated[int, Field(ge=0, le=10000)]
     ticket_price: Money
-    # ! TODO: implement thumbnails & banner support
-    # banner_id: StorageObjectID | None = None
-    # thumbnail_id: StorageObjectID | None = None
 
     MIN_DURATION: ClassVar[timedelta] = timedelta(hours=1)
     MAX_DURATION: ClassVar[timedelta] = timedelta(days=7)
@@ -232,7 +229,6 @@ async def create_event(
     controller = await get_organization_controller(session, user, venue.organization_id)
     controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
 
-    # ! TODO: add banner, thumbnail
     event_orm = Event(
         display_name=event.display_name,
         description=event.description,
