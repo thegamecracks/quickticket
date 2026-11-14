@@ -186,9 +186,6 @@ class VenueCreate(BaseModel):
     location_name: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
 
     location_coords: Point | None = None
-    # TODO: allow uploading banner and thumbnail in separate endpoints (see #52)
-    # banner_id: StorageObjectID | None = None
-    # thumbnail_id: StorageObjectID | None = None
 
 
 @router.post(
