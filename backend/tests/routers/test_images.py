@@ -760,7 +760,7 @@ async def test_set_image_animated(
     seeded = await seed_entity(make_session, Venue, user)
 
     response = await put_image(client, seeded.entity, "banner", animated_image)
-    assert response.status_code == 400
+    assert response.status_code == 415
     assert response.json() == {"detail": "Animated image not accepted"}
 
 
