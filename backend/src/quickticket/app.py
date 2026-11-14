@@ -19,13 +19,21 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi_injectable import register_app
+from PIL.Image import DecompressionBombError, UnidentifiedImageError
 from securecookies import SecureCookiesMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette_csrf.middleware import CSRFMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from quickticket.dependencies.ratelimits import apply_request_limit
-from quickticket.errors import EntityNotFound, ForcedResponse, UnauthorizedError
+from quickticket.errors import (
+    EntityNotFound,
+    FileProcessingError,
+    ForcedResponse,
+    ImageAnimationNotAccepted,
+    ImageFormatNotAccepted,
+    UnauthorizedError,
+)
 from quickticket.logging import setup_logging
 from quickticket.routers import auth, events, notifications, organizations, profile, venues
 from quickticket.settings import Settings
@@ -121,9 +129,14 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
         cookie_secure=True,
     )
 
-    app.add_exception_handler(ForcedResponse, handle_forced_response)  # ty: ignore[invalid-argument-type]
+    app.add_exception_handler(DecompressionBombError, handle_decompression_bomb)  # ty: ignore[invalid-argument-type]
     app.add_exception_handler(EntityNotFound, handle_entity_not_found)  # ty: ignore[invalid-argument-type]
+    app.add_exception_handler(FileProcessingError, handle_file_processing_error)  # ty: ignore[invalid-argument-type]
+    app.add_exception_handler(ForcedResponse, handle_forced_response)  # ty: ignore[invalid-argument-type]
+    app.add_exception_handler(ImageAnimationNotAccepted, handle_image_animation_not_accepted)  # ty: ignore[invalid-argument-type]
+    app.add_exception_handler(ImageFormatNotAccepted, handle_image_format_not_accepted)  # ty: ignore[invalid-argument-type]
     app.add_exception_handler(UnauthorizedError, handle_unauthorized_error)  # ty: ignore[invalid-argument-type]
+    app.add_exception_handler(UnidentifiedImageError, handle_unidentified_image)  # ty: ignore[invalid-argument-type]
 
     return app
 
@@ -232,6 +245,39 @@ def handle_forced_response(request: Request, exc: ForcedResponse) -> Response:
 # https://fastapi.tiangolo.com/tutorial/handling-errors/#reuse-fastapis-exception-handlers
 async def handle_entity_not_found(request: Request, exc: EntityNotFound) -> Response:
     http_exception = HTTPException(status_code=400, detail=str(exc))
+    return await http_exception_handler(request, http_exception)
+
+
+async def handle_file_processing_error(request: Request, exc: FileProcessingError) -> Response:
+    http_exception = HTTPException(status_code=400, detail=str(exc))
+    return await http_exception_handler(request, http_exception)
+
+
+async def handle_image_animation_not_accepted(
+    request: Request,
+    exc: ImageAnimationNotAccepted,
+) -> Response:
+    http_exception = HTTPException(status_code=415, detail=str(exc))
+    return await http_exception_handler(request, http_exception)
+
+
+async def handle_image_format_not_accepted(
+    request: Request,
+    exc: ImageFormatNotAccepted,
+) -> Response:
+    http_exception = HTTPException(status_code=415, detail=str(exc))
+    return await http_exception_handler(request, http_exception)
+
+
+async def handle_unidentified_image(request: Request, exc: UnidentifiedImageError) -> Response:
+    log.warning("Rejected unidentified image: %s", exc)
+    http_exception = HTTPException(status_code=415, detail="Image format not accepted")
+    return await http_exception_handler(request, http_exception)
+
+
+async def handle_decompression_bomb(request: Request, exc: DecompressionBombError) -> Response:
+    log.warning("Rejected decompression bomb: %s", exc)
+    http_exception = HTTPException(status_code=400, detail="Image exceeds maximum pixel count")
     return await http_exception_handler(request, http_exception)
 
 

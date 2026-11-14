@@ -5,8 +5,10 @@ from uuid import uuid7
 from sqlalchemy import BigInteger, CheckConstraint, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from quickticket.models.accounts import User
 from quickticket.models.base import Base
 from quickticket.models.types import (
+    MimeType,
     StorageObjectID,
     StorageProviderID,
     UserID,
@@ -22,7 +24,10 @@ __all__ = (
 
 class StorageProvider(Base, kw_only=True, repr=False):
     __tablename__ = "storage_provider"
-    __table_args__ = (UniqueConstraint("endpoint", "region"),)
+    __table_args__ = (
+        # uq_storage_provider_endpoint
+        UniqueConstraint("endpoint", "region"),
+    )
 
     id: Mapped[StorageProviderID] = mapped_column(
         "storage_provider_id",
@@ -49,6 +54,10 @@ class StorageProvider(Base, kw_only=True, repr=False):
 
 class StorageObject(Base, kw_only=True, repr=False):
     __tablename__ = "storage_object"
+    __table_args__ = (
+        # uq_storage_object_storage_provider_id
+        UniqueConstraint("storage_provider_id", "object_key"),
+    )
 
     id: Mapped[StorageObjectID] = mapped_column(
         "storage_object_id",
@@ -74,13 +83,17 @@ class StorageObject(Base, kw_only=True, repr=False):
         BigInteger,
         CheckConstraint("filesize >= 0", "filesize_positive"),
     )
-    mime_type: Mapped[str_2000]
+    mime_type: Mapped[MimeType]
 
     # Optional
     created_at: Mapped[current_timestamp] = mapped_column(default=None)
 
     # Relationships
     provider: Mapped[StorageProvider] = relationship(
+        default=None,
+        back_populates="storage_objects",
+    )
+    user: Mapped[User] = relationship(
         default=None,
         back_populates="storage_objects",
     )

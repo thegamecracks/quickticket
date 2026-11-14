@@ -34,6 +34,7 @@ from quickticket.paging import (
     KeysetPagedResponse,
     KeysetPageParams,
 )
+from quickticket.routers.images import create_banner_routes, create_thumbnail_routes
 from quickticket.validators import (
     DisplayNameField,
     FutureAwareDatetime,
@@ -187,9 +188,6 @@ class EventCreate(BaseModel):
 
     max_attendees: Annotated[int, Field(ge=0, le=10000)]
     ticket_price: Money
-    # ! TODO: implement thumbnails & banner support
-    # banner_id: StorageObjectID | None = None
-    # thumbnail_id: StorageObjectID | None = None
 
     MIN_DURATION: ClassVar[timedelta] = timedelta(hours=1)
     MAX_DURATION: ClassVar[timedelta] = timedelta(days=7)
@@ -231,7 +229,6 @@ async def create_event(
     controller = await get_organization_controller(session, user, venue.organization_id)
     controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
 
-    # ! TODO: add banner, thumbnail
     event_orm = Event(
         display_name=event.display_name,
         description=event.description,
@@ -273,3 +270,19 @@ async def delete_event(
     # TODO: check authorization by organization
     # TODO: block event deletion if any tickets are issued
     raise HTTPException(501)
+
+
+router.include_router(
+    create_banner_routes(
+        Event,
+        get_organization_id=lambda event: event.venue.organization_id,
+        options=(selectinload(Event.venue),),
+    ),
+)
+router.include_router(
+    create_thumbnail_routes(
+        Event,
+        get_organization_id=lambda event: event.venue.organization_id,
+        options=(selectinload(Event.venue),),
+    ),
+)

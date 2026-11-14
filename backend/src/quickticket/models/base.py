@@ -10,6 +10,8 @@ from quickticket.models.money import Money, MoneySerializer
 from quickticket.models.types import (
     AddressID,
     EventID,
+    MimeType,
+    MimeTypeSerializer,
     NotificationID,
     OrganizationID,
     Point,
@@ -40,6 +42,7 @@ class Base(AsyncAttrs, MappedAsDataclass, DeclarativeBase, kw_only=True, repr=Fa
     # https://docs.sqlalchemy.org/en/21/core/custom_types.html#linking-python-uuid-uuid-to-the-custom-type-for-orm-mappings
     type_annotation_map: ClassVar[Mapping[type, object]] = {
         datetime: TZDateTime,
+        MimeType: MimeTypeSerializer,
         Money: MoneySerializer,
         Point: PointSerializer,
     }

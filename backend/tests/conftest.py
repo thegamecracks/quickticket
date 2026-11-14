@@ -3,6 +3,7 @@ from contextlib import AsyncExitStack
 from dataclasses import dataclass
 from datetime import datetime
 from functools import partial
+from io import BytesIO
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID
@@ -11,11 +12,12 @@ import pytest
 import pytest_asyncio
 from asgi_lifespan import LifespanManager
 from asynctasq import AsyncTasQIntegration
-from fastapi import FastAPI
-from fastapi.datastructures import State
+from fastapi import FastAPI, UploadFile
+from fastapi.datastructures import Headers, State
 from fastapi_injectable import cleanup_all_exit_stacks, clear_dependency_cache
 from httpx2 import ASGITransport, AsyncClient
 from obstore.store import MemoryStore
+from PIL import Image
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -39,6 +41,7 @@ from quickticket.settings import (
     FrontendSettings,
     LogSettings,
     OpenAPISettings,
+    S3Settings,
     SecuritySettings,
     Settings,
 )
@@ -215,6 +218,12 @@ def _base_app() -> FastAPI:
         frontend=FrontendSettings(builtin=False),
         log=LogSettings(debug=False, profiling=False),
         openapi=OpenAPISettings(url=None),
+        s3=S3Settings(
+            url="memory:///",
+            region="us-east-1",
+            access_key="test-access-key",
+            secret_key="test-secret-key",  # noqa: S106
+        ),
         security=SecuritySettings(allowed_hosts=["*"]),
     )
     app = create_app_from_settings(settings)
@@ -302,3 +311,24 @@ async def app(
 async def client(app: FastAPI) -> AsyncGenerator[AsyncClient]:
     async with AsyncClient(transport=ASGITransport(app), base_url="http://test") as client:
         yield client
+
+
+@pytest.fixture(scope="session")
+def black_image_bytes() -> bytes:
+    # Should be small, ~1000 bytes
+    image = Image.new("L", (640, 640))
+    with BytesIO() as f:
+        image.save(f, "webp", quality=0, method=0)
+        return f.getvalue()
+
+
+@pytest.fixture
+def image(black_image_bytes: bytes) -> UploadFile:
+    return UploadFile(
+        BytesIO(black_image_bytes),
+        # Filename is required for uploads. Omitting will fail with
+        # `Value error, Expected UploadFile, received: <class 'str'>`.
+        filename="image.webp",
+        size=len(black_image_bytes),
+        headers=Headers({"Content-Type": "image/webp"}),
+    )

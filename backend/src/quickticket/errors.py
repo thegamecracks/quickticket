@@ -1,3 +1,5 @@
+from collections.abc import Collection
+
 from fastapi import Response
 
 from quickticket.models import (
@@ -69,3 +71,97 @@ class UnauthorizedOrganizationMember(UnauthorizedError):
     @property
     def missing(self) -> OrganizationMemberPermissions:
         return self.required & ~self.member.permissions
+
+
+class FileProcessingError(Exception):
+    """An input file cannot be processed."""
+
+
+class ImageAnimationNotAccepted(FileProcessingError):
+    """The image cannot be animated."""
+
+    def __init__(self) -> None:
+        super().__init__("Animated image not accepted")
+
+
+class ImageFormatNotAccepted(FileProcessingError):
+    """The image filetype does not match the accepted image formats."""
+
+    def __init__(self, content_type: str | None, accepted: Collection[str]) -> None:
+        self.content_type = content_type
+        self.accepted = accepted
+        super().__init__(f"Image format not accepted: {content_type}")
+
+
+def _format_dimensions(size: tuple[int, int]) -> str:
+    return f"{size[0]}x{size[1]}"
+
+
+class ImageDimensionsTooSmall(FileProcessingError):
+    """The image's dimensions are below the minimum dimensions allowed."""
+
+    def __init__(self, size: tuple[int, int], *, min_size: tuple[int, int]) -> None:
+        self.size = size
+        self.min_size = min_size
+        super().__init__(
+            f"Image dimensions too small: {_format_dimensions(size)} "
+            f"< {_format_dimensions(min_size)}",
+        )
+
+    @classmethod
+    def raise_if_below(cls, size: tuple[int, int], *, min_size: tuple[int, int]) -> None:
+        # Intentional keyword-only parameter to avoid mis-ordering arguments
+        if size[0] < min_size[0] or size[1] < min_size[1]:
+            raise cls(size, min_size=min_size)
+
+
+class ImageDimensionsExceeded(FileProcessingError):
+    """The image's dimensions are above the maximum dimensions allowed."""
+
+    def __init__(self, size: tuple[int, int], *, max_size: tuple[int, int]) -> None:
+        self.size = size
+        self.max_size = max_size
+        super().__init__(
+            f"Image dimensions too large: {_format_dimensions(size)} "
+            f"> {_format_dimensions(max_size)}",
+        )
+
+    @classmethod
+    def raise_if_above(cls, size: tuple[int, int], *, max_size: tuple[int, int]) -> None:
+        # Intentional keyword-only parameter to avoid mis-ordering arguments
+        if size[0] > max_size[0] or size[1] > max_size[1]:
+            raise cls(size, max_size=max_size)
+
+
+class FileSizeTooSmall(FileProcessingError):
+    """The file's size is below the minimum filesize allowed."""
+
+    def __init__(self, filesize: int, *, min_filesize: int) -> None:
+        self.filesize = filesize
+        self.min_filesize = min_filesize
+        super().__init__(f"File size too small: {filesize:,d}B < {min_filesize:,d}B")
+
+    @classmethod
+    def raise_if_below(cls, filesize: int | None, *, min_filesize: int) -> None:
+        # Intentional keyword-only parameter to avoid mis-ordering arguments
+        if filesize is None:
+            raise cls(0, min_filesize=min_filesize)
+        if filesize < min_filesize:
+            raise cls(filesize, min_filesize=min_filesize)
+
+
+class FileSizeExceeded(FileProcessingError):
+    """The file's size exceeds the maximum filesize allowed."""
+
+    def __init__(self, filesize: int, *, max_filesize: int) -> None:
+        self.filesize = filesize
+        self.max_filesize = max_filesize
+        super().__init__(f"File size exceeded: {filesize:,d}B > {max_filesize:,d}B")
+
+    @classmethod
+    def raise_if_above(cls, filesize: int | None, *, max_filesize: int) -> None:
+        # Intentional keyword-only parameter to avoid mis-ordering arguments
+        if filesize is None:
+            raise cls(0, max_filesize=max_filesize)
+        if filesize > max_filesize:
+            raise cls(filesize, max_filesize=max_filesize)
