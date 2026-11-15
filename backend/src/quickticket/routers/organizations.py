@@ -122,7 +122,7 @@ async def get_organization(
     user: OptionalUserDep,
     session: AsyncSessionDep,
     organization_id: OrganizationID,
-) -> Any:
+) -> Organization:
     """Get an organization by ID."""
     organization = await session.scalar(
         select(Organization)
@@ -184,7 +184,7 @@ async def create_organization(
     organization: OrganizationCreate,
     request: Request,
     response: Response,
-) -> Any:
+) -> Organization:
     """Create a new organization."""
 
     # HACK: in a future release an organization might allow multiple administrators.

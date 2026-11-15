@@ -153,7 +153,7 @@ class VenueRead(BaseModel):
 
 
 @router.get("/{venue_id}", response_model=VenueRead)
-async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: VenueID) -> Any:
+async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: VenueID) -> Venue:
     """Get a venue by ID."""
     venue = await session.scalar(
         select(Venue)

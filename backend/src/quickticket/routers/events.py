@@ -159,7 +159,7 @@ async def get_events(
 
 
 @router.get("/{event_id}", response_model=EventRead)
-async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: EventID) -> Any:
+async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: EventID) -> Event:
     """Get an event by ID."""
     event = await session.scalar(
         select(Event)
