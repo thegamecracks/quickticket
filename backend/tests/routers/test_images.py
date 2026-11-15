@@ -369,7 +369,24 @@ async def test_get_image_entity_not_found(
     kind: str,
 ) -> None:
     response = await client.get(f"/api/{entity_cls.__tablename__}s/{NOT_FOUND_ID}/{kind}")
-    assert response.status_code == 400
+    assert response.status_code == 404
+    assert response.json() == {
+        "detail": f"{entity_cls.__name__} not found: {NOT_FOUND_ID}",
+    }
+
+
+@pytest.mark.asyncio
+@ENTITY_CLASSES
+@IMAGE_KINDS
+async def test_get_image_entity_not_found_uppercase_id(
+    client: AsyncClient,
+    entity_cls: type[Venue | Event],
+    kind: str,
+) -> None:
+    response = await client.get(
+        f"/api/{entity_cls.__tablename__}s/{str(NOT_FOUND_ID).upper()}/{kind}",
+    )
+    assert response.status_code == 404
     assert response.json() == {
         "detail": f"{entity_cls.__name__} not found: {NOT_FOUND_ID}",
     }
@@ -527,7 +544,7 @@ async def test_delete_image_entity_not_found(
     kind: str,
 ) -> None:
     response = await client.delete(f"/api/{entity_cls.__tablename__}s/{NOT_FOUND_ID}/{kind}")
-    assert response.status_code == 400
+    assert response.status_code == 404
     assert response.json() == {
         "detail": f"{entity_cls.__name__} not found: {NOT_FOUND_ID}",
     }
@@ -636,7 +653,7 @@ async def test_set_image_entity_not_found(
         f"/api/{entity_cls.__tablename__}s/{NOT_FOUND_ID}/{kind}",
         files={"file": file},
     )
-    assert response.status_code == 400
+    assert response.status_code == 404
     assert response.json() == {
         "detail": f"{entity_cls.__name__} not found: {NOT_FOUND_ID}",
     }
