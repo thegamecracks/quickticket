@@ -235,8 +235,6 @@ class VenueUpdate(BaseModel):
     display_name: str | None
     description: str | None
     theme: str | None
-    thumbnail: PartialStorageObject | None
-    banner: PartialStorageObject | None
     location_name: str | None
     location_coords: Point | None
 
