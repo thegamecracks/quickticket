@@ -29,8 +29,6 @@ export default function CreateVenuePage() {
   const [message, setMessage] = useState('')
   const [isError, setIsError] = useState(false)
 
-  // Validate the form before future API integration
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
   const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
 
