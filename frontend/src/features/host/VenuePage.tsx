@@ -1,4 +1,4 @@
-import { useParams } from 'react-router'
+import { Link, useParams } from 'react-router'
 import { api } from '../../lib/api'
 import { useEffect, useState } from 'react'
 import type { VenueEventResponse, VenueResponse } from '../events/types'
@@ -7,9 +7,12 @@ import GoogleMap from '../../components/GoogleMap'
 
 import EventListItem from '../../components/EventListItem'
 import Markdown from '../../components/Markdown'
+import { useAuth } from '../../lib/auth'
+import { isAdministrator } from '../account/types'
 
 export default function VenuePage() {
   const { id } = useParams<{ id: string }>()
+  const { user } = useAuth()
 
   const [venue, setVenue] = useState<VenueResponse | undefined>(undefined)
 
@@ -32,6 +35,20 @@ export default function VenuePage() {
         <div>
           <span className="text-2xl font-semibold block">Venue owned by{" "}<a className="link link-primary" href={`/organization/${venue?.organization.id}`}>{venue.organization.display_name}</a>
           </span>
+          {user?.organization_members.some(
+  member =>
+    member.organization_id === venue.organization.id &&
+    isAdministrator(member)
+) && (
+  <div className="mt-4">
+    <Link
+      to={`/venue/${id}/edit`}
+      className="btn btn-primary btn-sm"
+    >
+      Edit Venue
+    </Link>
+  </div>
+)}
           <div className="mt-2">
             <div className="flex lg:flex-row flex-col gap-8">
               <div className="flex-1">

@@ -14,6 +14,7 @@ import TicketDetailPage from './features/tickets/TicketDetailPage'
 import EventCreationPage from './features/host/EventCreationPage'
 import VenuePage from './features/host/VenuePage'
 import CreateVenuePage from './features/host/CreateVenuePage'
+import EditVenuePage from './features/host/EditVenuePage'
 import OrganizationPage from './features/host/OrganizationPage'
 
 export default function App() {
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="myTickets" element={<MyTicketsPage />} />
           <Route path="myTickets/:id" element={<TicketDetailPage />} />
           <Route path="venue/:id" element={<VenuePage />} />
+          <Route path="venue/:id/edit" element={<EditVenuePage />} />
           <Route path="organization/:id" element={<OrganizationPage />} />
           <Route path="settings" element={<AccountSettingsPage />} />
         </Route>
