@@ -251,8 +251,6 @@ class EventUpdate(BaseModel):
     display_name: str | None
     description: str | None
     theme: str | None
-    location_name: str | None
-    location_coords: Point | None
 
 
 @router.patch("/{event_id}", response_model=EventUpdate)
