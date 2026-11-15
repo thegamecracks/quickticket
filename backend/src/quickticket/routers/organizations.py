@@ -11,6 +11,7 @@ from starlette.status import HTTP_201_CREATED
 
 from quickticket.dependencies.auth import OptionalUserDep, RequiredUserDep
 from quickticket.dependencies.db import AsyncSessionDep
+from quickticket.dependencies.models import get_organization_controller
 from quickticket.models import (
     Event,
     EventID,
@@ -222,17 +223,38 @@ async def create_organization(
     return created
 
 
-@router.patch("/{organization_id}", deprecated=True)
+class OrganizationUpdate(BaseModel):
+    display_name: str | None
+
+
+@router.patch("/{organization_id}")
 async def edit_organization(
     user: RequiredUserDep,
     session: AsyncSessionDep,
     organization_id: OrganizationID,
+    changes: OrganizationUpdate,
 ) -> None:
     """Edit an organization's details."""
-    # TODO: check authorization by organization_member
     # TODO: schedule notifications
-    # TODO: allow organization drafts?
-    raise HTTPException(501)
+    # TODO: allow event drafts?
+    organization = await session.get(Organization, organization_id)
+    if organization is None:
+        raise HTTPException(404, "Organization object for ID not found")
+
+    controller = await get_organization_controller(
+        session,
+        user,
+        organization.organization_id,
+    )
+    controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
+
+    if not changes.model_fields_set:
+        raise HTTPException(400, "No fields to update")
+
+    for name in changes.model_fields_set:
+        setattr(organization, name, getattr(changes, name))
+
+    return organization
 
 
 @router.delete("/{organization_id}", deprecated=True)

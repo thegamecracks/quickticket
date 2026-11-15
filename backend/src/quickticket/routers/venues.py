@@ -230,16 +230,47 @@ async def create_venue(
     return venue_orm
 
 
-@router.patch("/{venue_id}", deprecated=True)
+class VenueUpdate(BaseModel):
+    created_at: AwareDatetime | None
+    display_name: str | None
+    description: str | None
+    theme: str | None
+    thumbnail: PartialStorageObject | None
+    banner: PartialStorageObject | None
+    location_name: str | None
+    location_coords: Point | None
+
+    events: list[PartialEvent] | None
+    organization: PartialOrganization | None
+
+
+@router.patch("/{venue_id}")
 async def edit_venue(
     user: RequiredUserDep,
     session: AsyncSessionDep,
     venue_id: VenueID,
-) -> None:
+    changes: VenueUpdate,
+) -> Venue:
     """Edit a venue's details."""
-    # TODO: check authorization by organization
     # TODO: allow venue drafts?
-    raise HTTPException(501)
+    venue = await session.get(Venue, venue_id)
+    if venue is None:
+        raise HTTPException(404, "Venue object for ID not found")
+
+    controller = await get_organization_controller(
+        session,
+        user,
+        venue.organization_id,
+    )
+    controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
+
+    if not changes.model_fields_set:
+        raise HTTPException(400, "No fields to update")
+
+    for name in changes.model_fields_set:
+        setattr(venue, name, getattr(changes, name))
+
+    return venue
 
 
 @router.delete("/{venue_id}", deprecated=True)

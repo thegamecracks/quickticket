@@ -247,17 +247,45 @@ async def create_event(
     return event_orm
 
 
-@router.patch("/{event_id}", deprecated=True)
+class EventUpdate(BaseModel):
+    created_at: AwareDatetime | None
+    display_name: str | None
+    description: str | None
+    theme: str | None
+    thumbnail: PartialStorageObject | None
+    banner: PartialStorageObject | None
+    location_name: str | None
+    location_coords: Point | None
+
+
+@router.patch("/{event_id}")
 async def edit_event(
     user: RequiredUserDep,
     session: AsyncSessionDep,
     event_id: EventID,
+    changes: EventUpdate,
 ) -> None:
     """Edit an event's details."""
-    # TODO: check authorization by organization
     # TODO: schedule notifications
     # TODO: allow event drafts?
-    raise HTTPException(501)
+    event = await session.get(Event, event_id)
+    if event is None:
+        raise HTTPException(404, "event object for ID not found")
+
+    controller = await get_organization_controller(
+        session,
+        user,
+        event.organization_id,
+    )
+    controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
+
+    if not changes.model_fields_set:
+        raise HTTPException(400, "No fields to update")
+
+    for name in changes.model_fields_set:
+        setattr(event, name, getattr(changes, name))
+
+    return event
 
 
 @router.delete("/{event_id}", deprecated=True)
