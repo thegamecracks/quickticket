@@ -1,5 +1,5 @@
 
-import { useState, type FormEvent } from 'react'
+import { useState, type SubmitEvent } from 'react'
 import PageLayout from '../../components/PageLayout'
 
 type VenueType = 'physical' | 'virtual'
@@ -31,6 +31,7 @@ export default function CreateVenuePage() {
 
   // Validate the form before future API integration
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
 
     setMessage('')
