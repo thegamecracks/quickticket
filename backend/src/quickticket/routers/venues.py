@@ -244,7 +244,7 @@ class VenueUpdate(BaseModel):
     organization: PartialOrganization | None
 
 
-@router.patch("/{venue_id}")
+@router.patch("/{venue_id}", response_model=VenueUpdate)
 async def edit_venue(
     user: RequiredUserDep,
     session: AsyncSessionDep,

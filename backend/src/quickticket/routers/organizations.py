@@ -227,13 +227,13 @@ class OrganizationUpdate(BaseModel):
     display_name: str | None
 
 
-@router.patch("/{organization_id}")
+@router.patch("/{organization_id}", response_model=OrganizationUpdate)
 async def edit_organization(
     user: RequiredUserDep,
     session: AsyncSessionDep,
     organization_id: OrganizationID,
     changes: OrganizationUpdate,
-) -> None:
+) -> Organization:
     """Edit an organization's details."""
     # TODO: schedule notifications
     # TODO: allow event drafts?
@@ -244,7 +244,7 @@ async def edit_organization(
     controller = await get_organization_controller(
         session,
         user,
-        organization.organization_id,
+        organization.id,
     )
     controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
 

@@ -258,24 +258,28 @@ class EventUpdate(BaseModel):
     location_coords: Point | None
 
 
-@router.patch("/{event_id}")
+@router.patch("/{event_id}", response_model=EventUpdate)
 async def edit_event(
     user: RequiredUserDep,
     session: AsyncSessionDep,
     event_id: EventID,
     changes: EventUpdate,
-) -> None:
+) -> Event:
     """Edit an event's details."""
     # TODO: schedule notifications
     # TODO: allow event drafts?
-    event = await session.get(Event, event_id)
+    event = await session.get(
+        Event,
+        event_id,
+        options=[selectinload(Event.venue, Venue.organization)],
+    )
     if event is None:
         raise HTTPException(404, "event object for ID not found")
 
     controller = await get_organization_controller(
         session,
         user,
-        event.organization_id,
+        event.venue.organization_id,
     )
     controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
 
