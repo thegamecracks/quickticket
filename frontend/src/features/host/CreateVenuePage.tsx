@@ -1,95 +1,121 @@
 
 import { useState, type SubmitEvent } from 'react'
+import { APIProvider, useMapsLibrary } from '@vis.gl/react-google-maps'
 import PageLayout from '../../components/PageLayout'
+import type { Point } from '../../lib/types'
+import { useAuth } from '../../lib/auth'
+import { api } from '../../lib/api'
 
 type VenueType = 'physical' | 'virtual'
 
+type VenueFormState = {
+  displayName: string
+  description: string
+  theme: string
+  venueType: VenueType
+  streetAddress: string
+  unit: string
+  city: string
+  province: string
+  postalCode: string
+  country: string
+}
+
+const initialVenueState: VenueFormState = {
+  displayName: '',
+  description: '',
+  theme: '',
+  venueType: 'physical',
+  streetAddress: '',
+  unit: '',
+  city: '',
+  province: '',
+  postalCode: '',
+  country: 'Canada',
+}
+
+/** Returns an error message, or undefined when the form is valid. */
+const validateVenueForm = (form: VenueFormState): string | undefined => {
+  if (
+    !form.displayName.trim() ||
+    !form.description.trim() ||
+    !form.theme.trim()
+  ) {
+    return 'Please complete all required venue details.'
+  }
+
+  if (form.venueType === 'physical') {
+    if (
+      !form.streetAddress.trim() ||
+      !form.city.trim() ||
+      !form.province.trim() ||
+      !form.postalCode.trim() ||
+      !form.country.trim()
+    ) {
+      return 'Please complete the venue address.'
+    }
+  }
+
+  return undefined
+}
+
+/** Combines the form fields into the backend's location_name field. */
+const buildLocationName = (form: VenueFormState): string =>
+  form.venueType === 'physical'
+    ? [
+      form.streetAddress,
+      form.unit,
+      form.city,
+      form.province,
+      form.postalCode,
+      form.country,
+    ]
+      .map(field => field.trim())
+      .filter(Boolean)
+      .join(', ')
+    : ""
+
+
 export default function CreateVenuePage() {
-  // Basic venue information
-  const [displayName, setDisplayName] = useState('')
-  const [description, setDescription] = useState('')
-  const [theme, setTheme] = useState('')
+  const { user } = useAuth();
 
-  // Venue type
-  const [venueType, setVenueType] = useState<VenueType>('physical')
 
-  // Physical location
-  const [streetAddress, setStreetAddress] = useState('')
-  const [unit, setUnit] = useState('')
-  const [city, setCity] = useState('')
-  const [province, setProvince] = useState('')
-  const [postalCode, setPostalCode] = useState('')
-  const [country, setCountry] = useState('Canada')
+  const geocodingLib = useMapsLibrary('geocoding')
 
-  // Virtual location
-  const [platform, setPlatform] = useState('')
-  const [otherPlatform, setOtherPlatform] = useState('')
+  const [form, setForm] = useState<VenueFormState>(initialVenueState)
 
   // Form feedback
   const [message, setMessage] = useState('')
   const [isError, setIsError] = useState(false)
 
+  const updateState = (partial: Partial<VenueFormState>) => {
+    setForm(prev => ({ ...prev, ...partial }))
+  }
+
   const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    setMessage('')
-    setIsError(false)
-
-    if (
-      !displayName.trim() ||
-      !description.trim() ||
-      !theme.trim()
-    ) {
+    if (!user) {
       setIsError(true)
-      setMessage('Please complete all required venue details.')
+      setMessage('Not authenticated. Please log in.')
       return
     }
 
-    let locationName = ''
-
-    if (venueType === 'physical') {
-      if (
-        !streetAddress.trim() ||
-        !city.trim() ||
-        !province.trim() ||
-        !postalCode.trim() ||
-        !country.trim()
-      ) {
-        setIsError(true)
-        setMessage('Please complete the venue address.')
-        return
-      }
-
-      // Combine address fields into the backend's
-      // existing location_name field.
-      locationName = [
-        streetAddress.trim(),
-        unit.trim(),
-        city.trim(),
-        province.trim(),
-        postalCode.trim(),
-        country.trim(),
-      ]
-        .filter(Boolean)
-        .join(', ')
-    } else {
-      if (!platform) {
-        setIsError(true)
-        setMessage('Please select an online platform.')
-        return
-      }
-
-      if (platform === 'Other' && !otherPlatform.trim()) {
-        setIsError(true)
-        setMessage('Please enter the online platform name.')
-        return
-      }
-
-      locationName =
-        platform === 'Other'
-          ? otherPlatform.trim()
-          : platform
+    const organization_id = user.organization_members[0]?.organization_id
+    if (!organization_id) {
+      setIsError(true)
+      setMessage('You must belong to an organization to create a venue.')
+      return
     }
+
+    const error = validateVenueForm(form)
+    if (error) {
+      setIsError(true)
+      setMessage(error)
+      return
+    }
+
+    const locationName = buildLocationName(form)
 
     // The current API limits location_name to 128 characters.
     if (locationName.length > 128) {
@@ -100,38 +126,63 @@ export default function CreateVenuePage() {
       return
     }
 
-    // Frontend-only implementation for Issue #111.
-    // The organization ID and venue details will be
-    // submitted to the backend during API integration.
-    setIsError(false)
-    setMessage(
-      'Venue details validated successfully. This is a frontend preview; your venue has not been saved yet.'
-    )
+    // Physical venues are geocoded to a (lat, long) pair; geocoding
+    // failures fall back to null so the venue can still be saved.
+    const location_coords =
+      form.venueType === 'physical'
+        ? await geocodeAddress(locationName)
+        : null
+
+    try {
+      await api.post('/venues', {
+        organization_id,
+        display_name: form.displayName.trim(),
+        description: form.description.trim(),
+        theme: form.theme.trim(),
+        location_name: locationName,
+        location_coords,
+      })
+
+      setIsError(false)
+      setMessage('Venue created successfully.')
+      clearForm()
+    } catch (e) {
+      console.error(e)
+      setIsError(true)
+      setMessage('Failed to create the venue. Please try again.')
+    }
   }
 
   // Reset all form fields
-  const clearForm = () => {
-    setDisplayName('')
-    setDescription('')
-    setTheme('')
-    setVenueType('physical')
+  const clearForm = () => { setForm(initialVenueState) }
 
-    setStreetAddress('')
-    setUnit('')
-    setCity('')
-    setProvince('')
-    setPostalCode('')
-    setCountry('Canada')
+  const geocodeAddress = async (address: string): Promise<Point | null> => {
+    try {
+      // The hook can miss libraries that finished loading outside this
+      // provider's lifecycle, so fall back to the global loader.
+      const lib = geocodingLib ?? await google.maps.importLibrary('geocoding')
 
-    setPlatform('')
-    setOtherPlatform('')
+      const { results } = await new lib.Geocoder().geocode({ address })
+      const loc = results[0]?.geometry.location
 
-    setMessage('')
-    setIsError(false)
+      if (!loc) console.warn('Geocode returned no results for:', address)
+
+      return loc
+        ? { lat: loc.lat(), long: loc.lng() }
+        : null
+    } catch (e) {
+      console.error('Geocoding failed for:', address, e)
+      return null
+    }
   }
 
   return (
-    <PageLayout title="Create Venue">
+    <APIProvider
+      apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? ''}
+      libraries={['geocoding']}
+      onError={e => console.error('Google Maps failed to load:', e)}
+    >
+      <PageLayout title="Create Venue">
       <div className="space-y-6">
 
         <p className="text-base-content/70">
@@ -163,8 +214,8 @@ export default function CreateVenuePage() {
                   type="text"
                   className="input input-bordered w-full"
                   placeholder="e.g. Aurora Event Hall"
-                  value={displayName}
-                  onChange={e => setDisplayName(e.target.value)}
+                  value={form.displayName}
+                  onChange={e => updateState({ displayName: e.target.value })}
                   required
                 />
               </div>
@@ -183,14 +234,14 @@ export default function CreateVenuePage() {
                   id="venueDescription"
                   className="textarea textarea-bordered h-32 w-full"
                   placeholder="Describe your venue, its atmosphere, and the types of events it can host..."
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
+                  value={form.description}
+                  onChange={e => updateState({ description: e.target.value })}
                   maxLength={4096}
                   required
                 />
 
                 <p className="mt-1 text-right text-xs text-base-content/60">
-                  {description.length}/4096
+                  {form.description.length}/4096
                 </p>
               </div>
 
@@ -209,8 +260,8 @@ export default function CreateVenuePage() {
                   type="text"
                   className="input input-bordered w-full"
                   placeholder="e.g. Music, Conference, Art"
-                  value={theme}
-                  onChange={e => setTheme(e.target.value)}
+                  value={form.theme}
+                  onChange={e => updateState({ theme: e.target.value })}
                   maxLength={128}
                   required
                 />
@@ -247,9 +298,9 @@ export default function CreateVenuePage() {
                       type="radio"
                       name="venueType"
                       className="radio radio-primary radio-sm"
-                      checked={venueType === 'physical'}
+                      checked={form.venueType === 'physical'}
                       onChange={() => {
-                        setVenueType('physical')
+                        updateState({ venueType: 'physical' })
                         setMessage('')
                       }}
                     />
@@ -261,9 +312,9 @@ export default function CreateVenuePage() {
                       type="radio"
                       name="venueType"
                       className="radio radio-primary radio-sm"
-                      checked={venueType === 'virtual'}
+                      checked={form.venueType === 'virtual'}
                       onChange={() => {
-                        setVenueType('virtual')
+                        updateState({ venueType: 'virtual' })
                         setMessage('')
                       }}
                     />
@@ -274,7 +325,7 @@ export default function CreateVenuePage() {
               </div>
 
               {/* PHYSICAL VENUE FIELDS */}
-              {venueType === 'physical' && (
+              {form.venueType === 'physical' && (
                 <div className="space-y-5">
 
                   {/* Street Address */}
@@ -292,8 +343,8 @@ export default function CreateVenuePage() {
                       type="text"
                       className="input input-bordered w-full"
                       placeholder="e.g. 123 Yonge Street"
-                      value={streetAddress}
-                      onChange={e => setStreetAddress(e.target.value)}
+                      value={form.streetAddress}
+                      onChange={e => updateState({ streetAddress: e.target.value })}
                       required
                     />
                   </div>
@@ -315,8 +366,8 @@ export default function CreateVenuePage() {
                       type="text"
                       className="input input-bordered w-full"
                       placeholder="e.g. Unit 200"
-                      value={unit}
-                      onChange={e => setUnit(e.target.value)}
+                      value={form.unit}
+                      onChange={e => updateState({ unit: e.target.value })}
                     />
                   </div>
 
@@ -337,8 +388,8 @@ export default function CreateVenuePage() {
                         type="text"
                         className="input input-bordered w-full"
                         placeholder="e.g. Aurora"
-                        value={city}
-                        onChange={e => setCity(e.target.value)}
+                        value={form.city}
+                        onChange={e => updateState({ city: e.target.value })}
                         required
                       />
                     </div>
@@ -357,8 +408,8 @@ export default function CreateVenuePage() {
                         type="text"
                         className="input input-bordered w-full"
                         placeholder="e.g. Ontario"
-                        value={province}
-                        onChange={e => setProvince(e.target.value)}
+                        value={form.province}
+                        onChange={e => updateState({ province: e.target.value })}
                         required
                       />
                     </div>
@@ -382,8 +433,8 @@ export default function CreateVenuePage() {
                         type="text"
                         className="input input-bordered w-full"
                         placeholder="e.g. L4G 1N2"
-                        value={postalCode}
-                        onChange={e => setPostalCode(e.target.value)}
+                        value={form.postalCode}
+                        onChange={e => updateState({ postalCode: e.target.value })}
                         required
                       />
                     </div>
@@ -402,8 +453,8 @@ export default function CreateVenuePage() {
                         type="text"
                         className="input input-bordered w-full"
                         placeholder="e.g. Canada"
-                        value={country}
-                        onChange={e => setCountry(e.target.value)}
+                        value={form.country}
+                        onChange={e => updateState({ country: e.target.value })}
                         required
                       />
                     </div>
@@ -414,70 +465,11 @@ export default function CreateVenuePage() {
               )}
 
               {/* VIRTUAL VENUE FIELDS */}
-              {venueType === 'virtual' && (
+              {form.venueType === 'virtual' && (
                 <div className="space-y-5">
-
-                  <div>
-                    <label
-                      htmlFor="onlinePlatform"
-                      className="mb-2 block text-sm font-medium"
-                    >
-                      Online Platform
-                      <span className="text-error"> *</span>
-                    </label>
-
-                    <select
-                      id="onlinePlatform"
-                      className="select select-bordered w-full"
-                      value={platform}
-                      onChange={e => setPlatform(e.target.value)}
-                      required
-                    >
-                      <option value="">
-                        Select a platform
-                      </option>
-                      <option value="Zoom">
-                        Zoom
-                      </option>
-                      <option value="Microsoft Teams">
-                        Microsoft Teams
-                      </option>
-                      <option value="Google Meet">
-                        Google Meet
-                      </option>
-                      <option value="Other">
-                        Other
-                      </option>
-                    </select>
-                  </div>
-
-                  {platform === 'Other' && (
-                    <div>
-                      <label
-                        htmlFor="otherPlatform"
-                        className="mb-2 block text-sm font-medium"
-                      >
-                        Platform Name
-                        <span className="text-error"> *</span>
-                      </label>
-
-                      <input
-                        id="otherPlatform"
-                        type="text"
-                        className="input input-bordered w-full"
-                        placeholder="Enter the platform name"
-                        value={otherPlatform}
-                        onChange={e => setOtherPlatform(e.target.value)}
-                        maxLength={128}
-                        required
-                      />
-                    </div>
-                  )}
-
                   <p className="text-sm text-base-content/60">
-                    Virtual venues don't require a physical address.
+                    Virtual venues don't require a physical address. Please enter information into description.
                   </p>
-
                 </div>
               )}
 
@@ -488,9 +480,8 @@ export default function CreateVenuePage() {
           {message && (
             <div
               role={isError ? 'alert' : 'status'}
-              className={`alert ${
-                isError ? 'alert-error' : 'alert-info'
-              }`}
+              className={`alert ${isError ? 'alert-error' : 'alert-info'
+                }`}
             >
               <span>{message}</span>
             </div>
@@ -518,6 +509,7 @@ export default function CreateVenuePage() {
 
         </form>
       </div>
-    </PageLayout>
+      </PageLayout>
+    </APIProvider>
   )
 }
