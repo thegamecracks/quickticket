@@ -29,7 +29,12 @@ class ORMEntityNotFound(EntityNotFound):
     """A required ORM entity was not found."""
 
     def __init__(self, entity: type[Base], ident: object | tuple[object, ...]) -> None:
-        super().__init__(f"{entity.__name__} not found: {ident}")
+        if isinstance(ident, tuple):
+            ident_str = f"({', '.join(str(part) for part in ident)})"
+        else:
+            ident_str = str(ident)
+
+        super().__init__(f"{entity.__name__} not found: {ident_str}")
         self.entity = entity
         self.ident = ident
 
