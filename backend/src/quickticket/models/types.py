@@ -1,10 +1,12 @@
+import re
 import struct
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import Annotated, Any, NewType
+from typing import Annotated, Any, ClassVar, NewType, Self
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, GetCoreSchemaHandler, GetJsonSchemaHandler
+from pydantic_core import core_schema
 from sqlalchemy import (
     Column,
     DateTime,
@@ -23,6 +25,8 @@ from sqlalchemy.orm import mapped_column
 __all__ = (
     "AddressID",
     "EventID",
+    "MimeType",
+    "MimeTypeSerializer",
     "NotificationID",
     "OrganizationID",
     "Point",
@@ -113,6 +117,56 @@ class PointSerializer(TypeDecorator):
         if value is not None:
             lat, long = struct.unpack("<dd", value)
             return Point(lat=lat, long=long)
+        return None
+
+
+class MimeType(str):
+    __slots__ = ()
+    _pattern: ClassVar[re.Pattern] = re.compile(r"^\w+/[-+.\w]+$")
+
+    def __new__(cls, obj: object = "") -> Self:
+        ret = super().__new__(cls, obj)
+        if not cls._pattern.fullmatch(ret):
+            raise ValueError(f"Invalid mime type: {ret!r}")
+        return ret
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls,
+        source: type[Any],
+        handler: GetCoreSchemaHandler,
+    ) -> core_schema.AfterValidatorFunctionSchema:
+        return core_schema.with_info_after_validator_function(
+            lambda value, validation_info: cls(value),
+            core_schema.str_schema(),
+            serialization=core_schema.to_string_ser_schema(),
+        )
+
+    @classmethod
+    def __get_pydantic_json_schema__(
+        cls,
+        schema: core_schema.CoreSchema,
+        handler: GetJsonSchemaHandler,
+    ) -> dict[str, Any]:
+        json_schema = handler(schema)
+        json_schema.update({"pattern": cls._pattern.pattern})
+        return json_schema
+
+
+class MimeTypeSerializer(TypeDecorator):
+    """De/serialize the MimeType class to and from the database."""
+
+    impl = String(2000)
+    cache_ok = True
+
+    def process_bind_param(self, value: MimeType | None, dialect: Dialect) -> str | None:
+        if value is not None:
+            return value
+        return None
+
+    def process_result_value(self, value: str | None, dialect: Dialect) -> MimeType | None:
+        if value is not None:
+            return MimeType(value)
         return None
 
 

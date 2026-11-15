@@ -166,8 +166,10 @@ async def oauth_validate(settings: SettingsDep, access_token: RequiredAccessToke
 @router.post(
     "/logout",
     response_model=None,
-    responses={307: {"description": "The user is being redirected."}},
-    status_code=307,
+    responses={
+        303: {"description": "The user is being redirected."},
+        307: {"description": "The user is being redirected."},
+    },
 )
 async def oauth_logout(
     cookies: OAuthCookieControllerDep,

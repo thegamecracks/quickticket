@@ -31,6 +31,7 @@ from quickticket.paging import (
     KeysetPagedResponse,
     KeysetPageParams,
 )
+from quickticket.routers.images import create_banner_routes, create_thumbnail_routes
 from quickticket.validators import DisplayNameField, filter_string_field
 
 VENUE_LIMIT = 5
@@ -185,9 +186,6 @@ class VenueCreate(BaseModel):
     location_name: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
 
     location_coords: Point | None = None
-    # TODO: allow uploading banner and thumbnail in separate endpoints (see #52)
-    # banner_id: StorageObjectID | None = None
-    # thumbnail_id: StorageObjectID | None = None
 
 
 @router.post(
@@ -254,3 +252,19 @@ async def delete_venue(
     # TODO: check authorization by organization
     # TODO: block venue deletion if any tickets are issued
     raise HTTPException(501)
+
+
+router.include_router(
+    create_banner_routes(
+        Venue,
+        get_organization_id=lambda venue: venue.organization_id,
+        options=(),
+    ),
+)
+router.include_router(
+    create_thumbnail_routes(
+        Venue,
+        get_organization_id=lambda venue: venue.organization_id,
+        options=(),
+    ),
+)
