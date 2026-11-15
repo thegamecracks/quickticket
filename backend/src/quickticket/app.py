@@ -1,8 +1,9 @@
 import importlib.metadata
 import logging
 from collections.abc import AsyncGenerator, Awaitable, Callable
-from contextlib import AsyncExitStack, asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from typing import cast
+from uuid import UUID
 
 from asynctasq import AsyncTasQIntegration
 from fastapi import (
@@ -25,7 +26,12 @@ from starlette_csrf.middleware import CSRFMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from quickticket.dependencies.ratelimits import apply_request_limit
-from quickticket.errors import EntityNotFound, ForcedResponse, UnauthorizedError
+from quickticket.errors import (
+    EntityNotFound,
+    ForcedResponse,
+    ORMEntityNotFound,
+    UnauthorizedError,
+)
 from quickticket.logging import setup_logging
 from quickticket.routers import auth, events, notifications, organizations, profile, venues
 from quickticket.settings import Settings
@@ -121,8 +127,9 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
         cookie_secure=True,
     )
 
-    app.add_exception_handler(ForcedResponse, handle_forced_response)  # ty: ignore[invalid-argument-type]
     app.add_exception_handler(EntityNotFound, handle_entity_not_found)  # ty: ignore[invalid-argument-type]
+    app.add_exception_handler(ForcedResponse, handle_forced_response)  # ty: ignore[invalid-argument-type]
+    app.add_exception_handler(ORMEntityNotFound, handle_orm_entity_not_found)  # ty: ignore[invalid-argument-type]
     app.add_exception_handler(UnauthorizedError, handle_unauthorized_error)  # ty: ignore[invalid-argument-type]
 
     return app
@@ -233,6 +240,28 @@ def handle_forced_response(request: Request, exc: ForcedResponse) -> Response:
 async def handle_entity_not_found(request: Request, exc: EntityNotFound) -> Response:
     http_exception = HTTPException(status_code=400, detail=str(exc))
     return await http_exception_handler(request, http_exception)
+
+
+async def handle_orm_entity_not_found(request: Request, exc: ORMEntityNotFound) -> Response:
+    # Heuristic to determine appropriate status code based on whether identifier
+    # is present in path or not. Doesn't account for query parameters.
+    idents = exc.ident if isinstance(exc.ident, tuple) else (exc.ident,)
+    if idents:
+        params = tuple(_coerce_path_param(v) for v in request.path_params.values())
+        is_path_ident = all(any(ident == v for v in params) for ident in idents)
+        status_code = 404 if is_path_ident else 400
+    else:
+        log.warning("ORMEntityNotFound missing ident values, assuming 400")
+        status_code = 400
+
+    http_exception = HTTPException(status_code=status_code, detail=str(exc))
+    return await http_exception_handler(request, http_exception)
+
+
+def _coerce_path_param(value: object) -> object:
+    with suppress(ValueError):
+        return UUID(str(value))
+    return value
 
 
 async def handle_unauthorized_error(request: Request, exc: UnauthorizedError) -> Response:
