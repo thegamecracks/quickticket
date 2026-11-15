@@ -231,7 +231,6 @@ async def create_venue(
 
 
 class VenueUpdate(BaseModel):
-    created_at: AwareDatetime | None
     display_name: str | None
     description: str | None
     theme: str | None

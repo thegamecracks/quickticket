@@ -248,7 +248,6 @@ async def create_event(
 
 
 class EventUpdate(BaseModel):
-    created_at: AwareDatetime | None
     display_name: str | None
     description: str | None
     theme: str | None
