@@ -20,6 +20,25 @@ from tests.conftest import (
     isoformat,
 )
 
+EVENT_KEYS = frozenset(
+    {
+        "banner",
+        "created_at",
+        "description",
+        "display_name",
+        "ends_at",
+        "id",
+        "max_attendees",
+        "starts_at",
+        "theme",
+        "thumbnail",
+        "ticket_price",
+        "tickets",
+        "venue",
+    },
+)
+"""The keys served by :class:`quickticket.routers.events.EventRead`."""
+
 
 async def test_get_events(
     client: AsyncClient,
@@ -266,7 +285,7 @@ async def test_get_event(
     assert response.status_code == 200
     data = response.json()
 
-    assert len(data) == 13
+    assert set(data) == EVENT_KEYS
     assert data["id"] == str(event.id)
     assert data["created_at"] is not None
     assert data["display_name"] == event.display_name
@@ -280,7 +299,18 @@ async def test_get_event(
     assert data["max_attendees"] == event.max_attendees
     assert data["tickets"] == []
 
-    assert len(data["venue"]) == 10
+    assert set(data["venue"]) == {
+        "id",
+        "created_at",
+        "display_name",
+        "description",
+        "theme",
+        "thumbnail",
+        "banner",
+        "location_name",
+        "location_coords",
+        "organization",
+    }
     assert data["venue"]["id"] == str(venue.id)
     assert data["venue"]["created_at"] is not None
     assert data["venue"]["display_name"] == venue.display_name
@@ -291,7 +321,7 @@ async def test_get_event(
     assert data["venue"]["location_name"] == venue.location_name
     assert data["venue"]["location_coords"] == venue.location_coords.model_dump()
 
-    assert len(data["venue"]["organization"]) == 3
+    assert set(data["venue"]["organization"]) == {"id", "created_at", "display_name"}
     assert data["venue"]["organization"]["id"] == str(organization.id)
     assert data["venue"]["organization"]["created_at"] is not None
     assert data["venue"]["organization"]["display_name"] == organization.display_name
@@ -350,7 +380,7 @@ async def test_create_event(
     data = response.json()
     assert response.headers.get_list("location") == [f"http://test/api/events/{data['id']}"]
 
-    assert len(data) == 13
+    assert set(data) == EVENT_KEYS
     assert data["id"] is not None
     assert data["created_at"] is not None
     assert data["display_name"] == "Test Hockey Tournament"
@@ -363,10 +393,10 @@ async def test_create_event(
     assert data["venue"]["display_name"] == "Test Venue"
     assert data["venue"]["organization"]["display_name"] == "Test Organization"
 
-    # assert data["venue"]["description"] == "A venue for testing."
-    # assert data["venue"]["theme"] == "Sports"
-    # assert data["venue"]["location_name"] == "Test Stadium"
-    # assert data["venue"]["location_coords"] == {"lat": 48.8584, "long": 2.2945}
+    assert data["venue"]["description"] == "A venue for testing."
+    assert data["venue"]["theme"] == "Sports"
+    assert data["venue"]["location_name"] == "Test Stadium"
+    assert data["venue"]["location_coords"] is None
 
     async with make_session.begin() as session:
         persisted = await session.get(Event, UUID(data["id"]))
