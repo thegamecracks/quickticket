@@ -19,7 +19,7 @@ from sqlalchemy.orm import selectinload
 from starlette.routing import get_route_path
 
 from quickticket.dependencies.auth import OptionalUserDep
-from quickticket.dependencies.images import ImageService
+from quickticket.dependencies.images import MIN_FILESIZE, ImageService
 from quickticket.dependencies.ratelimits import get_request_limits
 from quickticket.dependencies.store import Store
 from quickticket.models import (
@@ -185,6 +185,12 @@ def too_small_image() -> UploadFile:
 
 
 @pytest.fixture
+def tiny_image() -> UploadFile:
+    """A valid image below MIN_FILESIZE, rejected before it is processed."""
+    return make_image((128, 128))
+
+
+@pytest.fixture
 def too_large_image() -> UploadFile:
     """Width is within bounds, but the height exceeds MAX_DIMENSIONS."""
     return make_image((128, 6685))
@@ -215,6 +221,22 @@ def override_image_limits(
 @pytest.fixture
 def animated_image() -> UploadFile:
     frames = [Image.new("L", (640, 640), color=color) for color in (0, 255)]
+    with BytesIO() as f:
+        frames[0].save(
+            f,
+            "webp",
+            save_all=True,
+            append_images=frames[1:],
+            duration=100,
+            loop=0,
+        )
+        return make_upload_file(f.getvalue(), filename="animated.webp")
+
+
+@pytest.fixture
+def oversized_animated_image() -> UploadFile:
+    """Animated and too large, so the animation check must win over the size check."""
+    frames = [Image.new("L", (6685, 128), color=color) for color in (0, 255)]
     with BytesIO() as f:
         frames[0].save(
             f,
@@ -677,6 +699,29 @@ async def test_set_image_oversized(
     }
 
 
+async def test_set_image_filesize_too_small(
+    client: AsyncClient,
+    make_session: async_sessionmaker[AsyncSession],
+    store: Store,
+    user: User,
+    tiny_image: UploadFile,
+) -> None:
+    # _check_file is shared by both kinds, so one kind suffices.
+    seeded = await seed_entity(make_session, Venue, user)
+    assert tiny_image.size is not None
+
+    response = await put_image(client, seeded.entity, "banner", tiny_image)
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": f"File size too small: {tiny_image.size:,d}B < {MIN_FILESIZE:,d}B",
+    }
+
+    async with make_session.begin() as session:
+        count = await session.scalar(select(func.count()).select_from(StorageObject))
+    assert count == 0
+    assert [batch async for batch in store.list_async()] == []
+
+
 async def test_set_image_dimensions_too_small(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -753,6 +798,19 @@ async def test_set_image_animated(
     seeded = await seed_entity(make_session, Venue, user)
 
     response = await put_image(client, seeded.entity, "banner", animated_image)
+    assert response.status_code == 415
+    assert response.json() == {"detail": "Animated image not accepted"}
+
+
+async def test_set_image_rejects_animation_before_dimensions(
+    client: AsyncClient,
+    make_session: async_sessionmaker[AsyncSession],
+    user: User,
+    oversized_animated_image: UploadFile,
+) -> None:
+    seeded = await seed_entity(make_session, Venue, user)
+
+    response = await put_image(client, seeded.entity, "banner", oversized_animated_image)
     assert response.status_code == 415
     assert response.json() == {"detail": "Animated image not accepted"}
 

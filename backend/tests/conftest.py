@@ -31,6 +31,7 @@ from quickticket.dependencies.db import (
     _engine_factory,
     get_async_sessionmaker,
 )
+from quickticket.dependencies.images import MIN_FILESIZE
 from quickticket.dependencies.state import get_settings
 from quickticket.dependencies.store import Store, get_object_store
 from quickticket.models import Address, Base, User
@@ -323,7 +324,12 @@ def black_image_bytes() -> bytes:
     image = Image.new("L", (640, 640))
     with BytesIO() as f:
         image.save(f, "webp", quality=0, method=0)
-        return f.getvalue()
+        data = f.getvalue()
+
+    # Happy-path uploads must clear the minimum filesize, otherwise they fail
+    # for the wrong reason in every test that uses this fixture.
+    assert len(data) >= MIN_FILESIZE
+    return data
 
 
 @pytest.fixture
