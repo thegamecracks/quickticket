@@ -26,10 +26,13 @@ internals:
 | Response field counts (`len(data) == 13`) | the response key set, or the fields that matter |
 | `inspect.signature`, `str(stmt.compile(...))` | the behavior the signature or SQL enables |
 
-Two accepted exceptions, where no seam observes the behavior:
+Three accepted exceptions, where no seam observes the behavior:
 `_create_ratelimit_headers` in `tests/dependencies/test_ratelimits.py` (pure
-header math) and `ordered_collection` in `tests/routers/test_paging.py`
-(re-derives the server's sort from hand-authored dataset rows).
+header math), `ordered_collection` in `tests/routers/test_paging.py`
+(re-derives the server's sort from hand-authored dataset rows), and the
+Postgres branch of `_build_storage_object_upsert` in
+`tests/dependencies/test_images.py` (production dialect; SQLite-backed tests
+never reach it).
 
 ### Not yet covered
 
