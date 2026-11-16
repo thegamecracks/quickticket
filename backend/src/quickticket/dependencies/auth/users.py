@@ -154,7 +154,7 @@ class RegistrationController:
                 id_token=id_token_raw,
             )
             self.session.add(openid_account)
-            await self.session.flush([openid_account])
+            await self.session.flush()
             await self.session.refresh(openid_account)
             return user, openid_account
 
@@ -173,7 +173,7 @@ class RegistrationController:
         self._update_user_with_id_token(user, token)
 
         self.session.add(user)
-        await self.session.flush([user, openid_account])  # Insert without commit
+        await self.session.flush()  # Insert without commit
         await self.session.refresh(user)  # Re-fetch attributes, including user ID
 
         return user, openid_account
