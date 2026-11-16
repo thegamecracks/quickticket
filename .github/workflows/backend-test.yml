@@ -6,11 +6,13 @@ on:
       - 'main'
     paths:
       - 'backend/**.py'
+      - 'backend/**.md'
       - 'backend/pyproject.toml'
       - 'backend/uv.lock'
   pull_request:
     paths:
       - 'backend/**.py'
+      - 'backend/**.md'
       - 'backend/pyproject.toml'
       - 'backend/uv.lock'
 

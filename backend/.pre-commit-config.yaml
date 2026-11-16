@@ -6,19 +6,19 @@ repos:
         name: ruff check
         entry: uv run ruff check --fix
         language: system
-        files: ^(src|tests)
+        files: ^(src|tests|docs|pyproject\.toml)
         pass_filenames: false
 
       - id: ruff-format
         name: ruff format
         entry: uv run ruff format
         language: system
-        files: ^(src|tests)
+        files: ^(src|tests|docs|pyproject\.toml)
         pass_filenames: false
 
       - id: ty
         name: ty check
         entry: uv run ty check
         language: system
-        files: ^(src|tests)
+        files: ^(src|tests|docs|pyproject\.toml)
         pass_filenames: false
