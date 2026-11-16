@@ -45,6 +45,7 @@ def assert_page(
     total: int,
 ) -> None:
     """Assert a single page of at most :data:`DEFAULT_LIMIT` items."""
+    # Expectations come from the seeded rows, never from the response.
     page = expected[:DEFAULT_LIMIT]
     assert [item["id"] for item in data["items"]] == [str(item.id) for item in page]
     # A full page continues at its last key; a partial page is the last page.
@@ -303,21 +304,6 @@ async def test_get_events_after_and_next(
     assert data["next"] is None
     # next narrows the page, not the total dataset
     assert data["total"] == len(ordered) - 4
-
-
-async def test_get_events_next_key_is_last_created_at(
-    client: AsyncClient,
-    dataset_loader: DatasetLoader,
-) -> None:
-    """The current contract: next is the sort key of the page's last item."""
-    await dataset_loader.load()
-
-    response = await client.get("/api/events")
-    assert response.status_code == 200
-    data = response.json()
-
-    assert len(data["items"]) == 10
-    assert data["next"] == data["items"][-1]["created_at"]
 
 
 async def test_get_events_last_page_has_no_next(
