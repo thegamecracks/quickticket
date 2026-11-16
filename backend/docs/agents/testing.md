@@ -40,7 +40,8 @@ Deliberate gaps, each a candidate seam when its area changes:
 
 - Auth: `AuthController` in `conftest.py` replaces the login flow, so no test
   drives `routers/auth.py` or `dependencies/auth/` end to end.
-- `tasks/`, `worker.py`, `cli.py`: mocked wholesale, no seam yet.
+- `tasks/`, `worker.py`, `cli.py`: no route dispatches a task yet, so the
+  autouse asynctasq fixtures below are the only coverage.
 - `models/tickets.py`: ticket sales have no behavior tests.
 
 ## Fixtures
@@ -76,3 +77,14 @@ Shared fixtures live in `tests/conftest.py`.
   print([user.id for user in dataset.users if user.id not in address_owners | member_accounts])
   PY
   ```
+
+### asynctasq
+
+`asynctasq_dispatcher` and `asynctasq_driver` are autouse so that no test
+connects a real driver or dispatches to a real queue.
+`tests/dependencies/test_tasks.py` asserts that wiring, so a change to either
+fixture fails there instead of reaching for a live driver.
+
+When a route starts dispatching tasks, assert the dispatch at the route seam
+and keep this guard alongside it: it is what keeps the task queue out of the
+suite until then.
