@@ -2,7 +2,7 @@ import logging
 from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
-from pydantic import AfterValidator, AwareDatetime, BaseModel, Field
+from pydantic import MISSING, AfterValidator, AwareDatetime, BaseModel, Field
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.functions import count
@@ -178,14 +178,26 @@ async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: V
     return venue
 
 
+VenueDescription = Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
+VenueTheme = Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
+VenueLocationName = Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
+
+
 class VenueCreate(BaseModel):
     organization_id: OrganizationID
     display_name: DisplayNameField
-    description: Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
-    theme: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
-    location_name: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
-
+    description: VenueDescription
+    theme: VenueTheme
+    location_name: VenueLocationName
     location_coords: Point | None = None
+
+
+class VenueUpdate(BaseModel):
+    display_name: DisplayNameField | MISSING = MISSING
+    description: VenueDescription | MISSING = MISSING
+    theme: VenueTheme | MISSING = MISSING
+    location_name: VenueLocationName | MISSING = MISSING
+    location_coords: Point | MISSING | None = MISSING
 
 
 @router.post(
@@ -228,17 +240,6 @@ async def create_venue(
 
     response.headers["Location"] = str(request.url_for("get_venue", venue_id=venue_orm.id))
     return venue_orm
-
-
-class VenueUpdate(BaseModel):
-    display_name: str | None
-    description: str | None
-    theme: str | None
-    location_name: str | None
-    location_coords: Point | None
-
-    events: list[PartialEvent] | None
-    organization: PartialOrganization | None
 
 
 @router.patch("/{venue_id}", response_model=VenueUpdate)

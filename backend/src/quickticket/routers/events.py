@@ -1,9 +1,9 @@
 import logging
-from datetime import timedelta
-from typing import Annotated, Any, ClassVar, Self
+from datetime import datetime, timedelta
+from typing import Annotated, Any, Self
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
-from pydantic import AfterValidator, AwareDatetime, BaseModel, Field, model_validator
+from pydantic import MISSING, AfterValidator, AwareDatetime, BaseModel, Field, model_validator
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.functions import count
@@ -40,6 +40,9 @@ from quickticket.validators import (
     FutureAwareDatetime,
     filter_string_field,
 )
+
+MIN_EVENT_DURATION = timedelta(hours=1)
+MAX_EVENT_DURATION = timedelta(days=7)
 
 router = APIRouter(tags=["Events"])
 log = logging.getLogger(__name__)
@@ -178,29 +181,54 @@ async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: E
     return event
 
 
+def check_event_duration(*, starts_at: datetime, ends_at: datetime) -> None:
+    duration = ends_at - starts_at
+    if duration < timedelta():
+        raise ValueError("starts_at must be before ends_at")
+    if not MIN_EVENT_DURATION <= duration <= MAX_EVENT_DURATION:
+        raise ValueError(
+            f"Event duration must be between {MIN_EVENT_DURATION} and {MAX_EVENT_DURATION}",
+        )
+
+
+EventDescription = Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
+EventTheme = Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
+EventMaxAttendees = Annotated[int, Field(ge=0, le=10000)]
+
+
 class EventCreate(BaseModel):
     venue_id: VenueID
     display_name: DisplayNameField
-    description: Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
-    theme: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
+    description: EventDescription
+    theme: EventTheme
     starts_at: FutureAwareDatetime
     ends_at: FutureAwareDatetime
-
-    max_attendees: Annotated[int, Field(ge=0, le=10000)]
+    max_attendees: EventMaxAttendees
     ticket_price: Money
-
-    MIN_DURATION: ClassVar[timedelta] = timedelta(hours=1)
-    MAX_DURATION: ClassVar[timedelta] = timedelta(days=7)
 
     @model_validator(mode="after")
     def check_event_duration(self) -> Self:
-        duration = self.ends_at - self.starts_at
-        if duration < timedelta():
-            raise ValueError("starts_at must be before ends_at")
-        if not self.MIN_DURATION <= duration <= self.MAX_DURATION:
-            raise ValueError(
-                f"Event duration must be between {self.MIN_DURATION} and {self.MAX_DURATION}",
-            )
+        check_event_duration(starts_at=self.starts_at, ends_at=self.ends_at)
+        return self
+
+
+class EventUpdate(BaseModel):
+    display_name: DisplayNameField | MISSING = MISSING
+    description: EventDescription | MISSING = MISSING
+    theme: EventTheme | MISSING = MISSING
+    starts_at: FutureAwareDatetime | MISSING = MISSING
+    ends_at: FutureAwareDatetime | MISSING = MISSING
+    max_attendees: EventMaxAttendees | MISSING = MISSING
+    ticket_price: Money | MISSING = MISSING
+
+    @model_validator(mode="after")
+    def check_event_duration(self) -> Self:
+        if self.starts_at is MISSING and self.ends_at is MISSING:
+            return self
+        if self.starts_at is MISSING or self.ends_at is MISSING:
+            raise ValueError("Must set starts_at and ends_at together")
+
+        check_event_duration(starts_at=self.starts_at, ends_at=self.ends_at)
         return self
 
 
@@ -245,12 +273,6 @@ async def create_event(
 
     response.headers["Location"] = str(request.url_for("get_event", event_id=event_orm.id))
     return event_orm
-
-
-class EventUpdate(BaseModel):
-    display_name: str | None
-    description: str | None
-    theme: str | None
 
 
 @router.patch("/{event_id}", response_model=EventUpdate)

@@ -3,7 +3,7 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
-from pydantic import AwareDatetime, BaseModel
+from pydantic import MISSING, AwareDatetime, BaseModel
 from sqlalchemy import exists, false, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.functions import count
@@ -173,6 +173,10 @@ class OrganizationCreate(BaseModel):
     display_name: DisplayNameField
 
 
+class OrganizationUpdate(BaseModel):
+    display_name: DisplayNameField | MISSING = MISSING
+
+
 @router.post(
     "",
     response_model=OrganizationRead,
@@ -221,10 +225,6 @@ async def create_organization(
         request.url_for("get_organization", organization_id=created.id),
     )
     return created
-
-
-class OrganizationUpdate(BaseModel):
-    display_name: str | None
 
 
 @router.patch("/{organization_id}", response_model=OrganizationUpdate)
