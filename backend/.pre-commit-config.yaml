@@ -6,19 +6,23 @@ repos:
         name: ruff check
         entry: uv run ruff check --fix
         language: system
-        files: ^(src|tests|docs|pyproject\.toml)
+        # ruff only lints Python files, so docs edits do not apply here.
+        files: ^(?:src|tests)/|^(?:pyproject\.toml|uv\.lock)$
         pass_filenames: false
 
       - id: ruff-format
         name: ruff format
         entry: uv run ruff format
         language: system
-        files: ^(src|tests|docs|pyproject\.toml)
+        # ruff format also reformats the Python fences inside markdown files,
+        # including the ones at the package root.
+        files: ^(?:src|tests)/|^(?:pyproject\.toml|uv\.lock)$|\.md$
         pass_filenames: false
 
       - id: ty
         name: ty check
         entry: uv run ty check
         language: system
-        files: ^(src|tests|docs|pyproject\.toml)
+        # ty only checks Python files, so docs edits do not apply here.
+        files: ^(?:src|tests)/|^(?:pyproject\.toml|uv\.lock)$
         pass_filenames: false
