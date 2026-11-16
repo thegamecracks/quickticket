@@ -9,7 +9,7 @@ seams, so a refactor that preserves behavior leaves the suite passing.
 | --- | --- | --- |
 | HTTP routes under `/api` | status codes, payloads, authorization, cookies | middleware order, app wiring |
 | `ImageService.upload_banner`, `upload_thumbnail`, `get_url` | image processing, dedupe, object key layout | request validation |
-| `get_request_limits` | which rate limits apply to a route | enforcement (covered by the 429 tests) |
+| `get_request_limits` | rule matching (method, route shape, root path) given a supplied rule table | enforcement (covered by the 429 tests) |
 | Paging params and `assert_keyset_walk` | filter bounds, keyset continuity, page invariants | per-endpoint ordering |
 
 Assert through a seam: read the response body, or the value the service method
