@@ -16,6 +16,14 @@ Assert through a seam: read the response body, or the value the service method
 returns. When a behavior is only visible behind a private helper, move the
 assertion up to the nearest seam in the table rather than importing the helper.
 
+To list the private imports from `src/` that the suite still makes:
+
+```sh
+uv run ruff check --preview --select PLC2701 tests/
+```
+
+Every hit is either a bug or one of the accepted exceptions below.
+
 Assert the behavior at the seam in the right column instead of at these
 internals:
 
@@ -77,6 +85,18 @@ Shared fixtures live in `tests/conftest.py`.
   print([user.id for user in dataset.users if user.id not in address_owners | member_accounts])
   PY
   ```
+
+### Inspecting a response
+
+To read a real response body, write a temporary test that uses the `client`
+fixture and run it with `-s`:
+
+```sh
+uv run pytest tests/tmp_probe.py -q -s
+```
+
+Delete the file once the assertion is written. This beats guessing at error
+messages or reading library source.
 
 ### asynctasq
 
