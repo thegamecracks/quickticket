@@ -20,7 +20,7 @@ from starlette.routing import get_route_path
 
 from quickticket.dependencies.auth import OptionalUserDep
 from quickticket.dependencies.images import MIN_FILESIZE, ImageService
-from quickticket.dependencies.ratelimits import get_request_limits
+from quickticket.dependencies.ratelimits import get_ratelimit_rules, get_request_limits
 from quickticket.dependencies.store import Store
 from quickticket.models import (
     Event,
@@ -211,7 +211,8 @@ def override_image_limits(
             path = get_route_path(request.scope)
             if request.method == method and path.endswith(("/banner", "/thumbnail")):
                 return [parse(limit)]
-            return await get_request_limits(request, user)
+            rules = await get_ratelimit_rules()
+            return await get_request_limits(request, user, rules)
 
         monkeypatch.setitem(app.dependency_overrides, get_request_limits, override)
 
