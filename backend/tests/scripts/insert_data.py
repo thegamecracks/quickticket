@@ -2,12 +2,12 @@
 # Invoke with `uv run python -m tests.scripts.insert_data`
 
 import argparse
-import asyncio
 import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from functools import cache
 
+import anyio
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from quickticket.logging import LogVerbosity, setup_logging
@@ -64,4 +64,4 @@ def get_database_url() -> str:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main)
