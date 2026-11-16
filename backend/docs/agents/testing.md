@@ -23,7 +23,7 @@ To list the private imports from `src/` that the suite still makes:
 uv run ruff check --preview --select PLC2701 tests/
 ```
 
-Every hit is either a bug or one of the accepted exceptions below.
+Every hit is either a bug or one of the two accepted exceptions below.
 
 Assert the behavior at the seam in the right column instead of at these
 internals:
@@ -36,13 +36,15 @@ internals:
 | `inspect.signature`, `str(stmt.compile(...))` | the behavior the signature or SQL enables |
 | `TokenValidator`, `OAuth2Client.fetch_token` | the auth flow's outcome, with the provider faked at discovery |
 
-Three accepted exceptions, where no seam observes the behavior:
+Two accepted exceptions, where no seam observes the behavior:
 `_create_ratelimit_headers` in `tests/dependencies/test_ratelimits.py` (pure
-header math), `ordered_collection` in `tests/routers/test_paging.py`
-(re-derives the server's sort from hand-authored dataset rows), and the
-Postgres branch of `_build_storage_object_upsert` in
+header math) and the Postgres branch of `_build_storage_object_upsert` in
 `tests/dependencies/test_images.py` (production dialect; SQLite-backed tests
 never reach it).
+
+`ordered_collection` in `tests/routers/test_paging.py` is not a private import,
+but it recomputes the server's sort from the dataset rows, so it is the one
+place where a paging assertion can agree with the code by construction.
 
 ### Not yet covered
 

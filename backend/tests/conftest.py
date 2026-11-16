@@ -28,7 +28,7 @@ from quickticket.dependencies.auth import get_user
 from quickticket.dependencies.db import (
     AsyncEngineFactory,
     AsyncSessionDep,
-    _engine_factory,
+    engine_factory,
     get_async_sessionmaker,
 )
 from quickticket.dependencies.images import MIN_FILESIZE
@@ -141,9 +141,9 @@ async def engine(anyio_backend: str) -> AsyncGenerator[AsyncEngine]:
         db=DatabaseSettings(url="sqlite+aiosqlite:///:memory:"),
     )
 
-    engine_factory = AsyncEngineFactory()
+    factory = AsyncEngineFactory()
     async with AsyncExitStack() as stack:
-        engine = await engine_factory(settings=settings, stack=stack, state=State())
+        engine = await factory(settings=settings, stack=stack, state=State())
 
         # Generate schema from models instead of running the migration scripts
         async with engine.begin() as conn:
@@ -295,7 +295,7 @@ async def app(
 ) -> AsyncGenerator[FastAPI]:
     monkeypatch.setattr(_base_app, "state", state)
     overrides = _base_app.dependency_overrides
-    monkeypatch.setitem(overrides, _engine_factory, lambda: engine)
+    monkeypatch.setitem(overrides, engine_factory, lambda: engine)
     monkeypatch.setitem(overrides, get_async_sessionmaker, lambda: make_session)
     monkeypatch.setitem(overrides, get_object_store, lambda: store)
     monkeypatch.setitem(overrides, get_user, auth.get_user)
