@@ -1,11 +1,9 @@
-import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from quickticket.models import StorageObject, StorageProvider
 from quickticket.models.types import MimeType
 
 
-@pytest.mark.asyncio
 async def test_mime_type_round_trip(
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:

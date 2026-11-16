@@ -14,13 +14,11 @@ from quickticket.dependencies.state import (
 )
 
 
-@pytest.mark.asyncio
 async def test_get_state(app: FastAPI, state: State) -> None:
     request = Request({"type": "http", "app": app})
     assert await get_state(request) is state
 
 
-@pytest.mark.asyncio
 async def test_get_settings_caches_settings(
     monkeypatch: pytest.MonkeyPatch,
     state: State,
@@ -37,12 +35,10 @@ async def test_get_settings_caches_settings(
     settings_mock.assert_called_once()
 
 
-@pytest.mark.asyncio
 async def test_get_async_exit_stack(app: FastAPI, stack: AsyncExitStack) -> None:
     assert await get_async_exit_stack(app.state) is stack
 
 
-@pytest.mark.asyncio
 async def test_get_http_client_closes_client() -> None:
     async with asynccontextmanager(get_http_client)() as client:
         assert isinstance(client, httpx2.AsyncClient)

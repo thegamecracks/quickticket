@@ -20,7 +20,6 @@ def make_request(method: str, path: str, *, root_path: str = "") -> Request:
     )
 
 
-@pytest.mark.asyncio
 async def test_get_request_limits_matches_root_path_relative_path() -> None:
     request = make_request("GET", "/api/foo", root_path="/prefix")
 
@@ -32,7 +31,6 @@ async def test_get_request_limits_matches_root_path_relative_path() -> None:
     assert parse("20/second") in limits
 
 
-@pytest.mark.asyncio
 async def test_general_api_limits_are_all_applied() -> None:
     limits = await get_request_limits(make_request("GET", "/api/foo"), user=None)
 
@@ -42,7 +40,6 @@ async def test_general_api_limits_are_all_applied() -> None:
     assert parse("20/second") in limits
 
 
-@pytest.mark.asyncio
 async def test_auth_limit_is_applied() -> None:
     limits = await get_request_limits(make_request("GET", "/api/auth/login"), user=None)
 
@@ -60,7 +57,6 @@ def test_create_ratelimit_headers_includes_retry_after() -> None:
     assert headers["X-RateLimit-Reset-After"] == "60"
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("method", "path"),
     [
@@ -77,7 +73,6 @@ async def test_image_put_limits(method: str, path: str) -> None:
     assert parse("20/second") in limits
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("method", "path"),
     [
@@ -94,7 +89,6 @@ async def test_image_delete_limits(method: str, path: str) -> None:
     assert parse("20/second") in limits
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("method", ["GET", "POST", "PATCH"])
 async def test_non_mutation_methods_skip_image_limits(method: str) -> None:
     path = f"/api/venues/{ENTITY_ID}/banner"
@@ -106,7 +100,6 @@ async def test_non_mutation_methods_skip_image_limits(method: str) -> None:
     assert parse("20/second") in limits
 
 
-@pytest.mark.asyncio
 async def test_image_limits_require_exact_route_shape() -> None:
     path = f"/api/venues/{ENTITY_ID}/banner/extra"
     limits = await get_request_limits(make_request("PUT", path), user=None)

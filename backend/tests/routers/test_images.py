@@ -235,7 +235,6 @@ def get_url_mock(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
     return mock
 
 
-@pytest.mark.asyncio
 @ENTITY_CLASSES
 @IMAGE_KINDS
 async def test_set_image(
@@ -271,7 +270,6 @@ async def test_set_image(
     assert head["size"] == filesize
 
 
-@pytest.mark.asyncio
 @ENTITY_CLASSES
 @IMAGE_KINDS
 async def test_get_image(
@@ -297,7 +295,6 @@ async def test_get_image(
     assert stored.id == StorageObjectID(UUID(put_response.json()["id"]))
 
 
-@pytest.mark.asyncio
 @ENTITY_CLASSES
 @IMAGE_KINDS
 async def test_get_image_not_set(
@@ -314,7 +311,6 @@ async def test_get_image_not_set(
     assert response.json() is None
 
 
-@pytest.mark.asyncio
 async def test_replace_image(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -337,7 +333,6 @@ async def test_replace_image(
     assert stored.id == StorageObjectID(UUID(second_data["id"]))
 
 
-@pytest.mark.asyncio
 async def test_replace_image_identical_bytes(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -360,7 +355,6 @@ async def test_replace_image_identical_bytes(
     assert objects[0].id == StorageObjectID(UUID(second.json()["id"]))
 
 
-@pytest.mark.asyncio
 @ENTITY_CLASSES
 @IMAGE_KINDS
 async def test_get_image_entity_not_found(
@@ -375,7 +369,6 @@ async def test_get_image_entity_not_found(
     }
 
 
-@pytest.mark.asyncio
 @ENTITY_CLASSES
 @IMAGE_KINDS
 async def test_get_image_entity_not_found_uppercase_id(
@@ -392,7 +385,6 @@ async def test_get_image_entity_not_found_uppercase_id(
     }
 
 
-@pytest.mark.asyncio
 @ENTITY_CLASSES
 @IMAGE_KINDS
 async def test_delete_image(
@@ -439,7 +431,6 @@ async def test_delete_image(
     assert response.json() == {"detail": "Image not set"}
 
 
-@pytest.mark.asyncio
 async def test_delete_image_preserves_other_image(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -485,7 +476,6 @@ async def test_delete_image_preserves_other_image(
     assert stored.id == thumbnail_id
 
 
-@pytest.mark.asyncio
 async def test_delete_image_store_failure(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -520,7 +510,6 @@ async def test_delete_image_store_failure(
     assert head["size"] == stored.filesize
 
 
-@pytest.mark.asyncio
 @IMAGE_KINDS
 async def test_delete_image_not_set(
     client: AsyncClient,
@@ -535,7 +524,6 @@ async def test_delete_image_not_set(
     assert response.json() == {"detail": "Image not set"}
 
 
-@pytest.mark.asyncio
 @ENTITY_CLASSES
 @IMAGE_KINDS
 async def test_delete_image_entity_not_found(
@@ -550,7 +538,6 @@ async def test_delete_image_entity_not_found(
     }
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("entity_cls", "kind"),
     [(Venue, "banner"), (Event, "thumbnail")],
@@ -573,7 +560,6 @@ async def test_set_image_unauthenticated(
     assert response.json() == {"detail": "Not authenticated"}
 
 
-@pytest.mark.asyncio
 @ENTITY_CLASSES
 async def test_set_image_non_member(
     client: AsyncClient,
@@ -591,7 +577,6 @@ async def test_set_image_non_member(
     }
 
 
-@pytest.mark.asyncio
 @ENTITY_CLASSES
 async def test_set_image_insufficient_permissions(
     client: AsyncClient,
@@ -617,7 +602,6 @@ async def test_set_image_insufficient_permissions(
     }
 
 
-@pytest.mark.asyncio
 async def test_set_image_forbidden_does_not_upload(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -636,7 +620,6 @@ async def test_set_image_forbidden_does_not_upload(
     assert [batch async for batch in store.list_async()] == []
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("entity_cls", "kind"),
     [(Venue, "banner"), (Event, "thumbnail")],
@@ -659,7 +642,6 @@ async def test_set_image_entity_not_found(
     }
 
 
-@pytest.mark.asyncio
 async def test_set_image_invalid_content_type(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -677,7 +659,6 @@ async def test_set_image_invalid_content_type(
     assert response.json() == {"detail": "Image format not accepted: text/plain"}
 
 
-@pytest.mark.asyncio
 async def test_set_image_oversized(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -696,7 +677,6 @@ async def test_set_image_oversized(
     }
 
 
-@pytest.mark.asyncio
 async def test_set_image_dimensions_too_small(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -716,7 +696,6 @@ async def test_set_image_dimensions_too_small(
     assert [batch async for batch in store.list_async()] == []
 
 
-@pytest.mark.asyncio
 async def test_set_image_dimensions_too_large(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -736,7 +715,6 @@ async def test_set_image_dimensions_too_large(
     assert [batch async for batch in store.list_async()] == []
 
 
-@pytest.mark.asyncio
 async def test_set_image_unidentified(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -750,7 +728,6 @@ async def test_set_image_unidentified(
     assert response.json() == {"detail": "Image format not accepted"}
 
 
-@pytest.mark.asyncio
 async def test_set_image_decompression_bomb(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -767,7 +744,6 @@ async def test_set_image_decompression_bomb(
     assert response.json() == {"detail": "Image exceeds maximum pixel count"}
 
 
-@pytest.mark.asyncio
 async def test_set_image_animated(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -781,7 +757,6 @@ async def test_set_image_animated(
     assert response.json() == {"detail": "Animated image not accepted"}
 
 
-@pytest.mark.asyncio
 async def test_set_image_ratelimited(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -810,7 +785,6 @@ async def test_set_image_ratelimited(
     assert count == 1
 
 
-@pytest.mark.asyncio
 async def test_failed_set_image_counts_towards_ratelimit(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -833,7 +807,6 @@ async def test_failed_set_image_counts_towards_ratelimit(
     assert limited.status_code == 429
 
 
-@pytest.mark.asyncio
 async def test_delete_image_ratelimited(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
