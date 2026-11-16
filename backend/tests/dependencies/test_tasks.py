@@ -1,12 +1,10 @@
 from typing import cast
 from unittest.mock import AsyncMock, MagicMock
 
-import pytest
 from asynctasq import AsyncTasQIntegration, task
 from fastapi import FastAPI
 
 
-@pytest.mark.asyncio
 async def test_asynctasq_mock_dispatcher(asynctasq_dispatcher: AsyncMock) -> None:
     @task
     async def my_task(x: int) -> None: ...
@@ -17,7 +15,6 @@ async def test_asynctasq_mock_dispatcher(asynctasq_dispatcher: AsyncMock) -> Non
     asynctasq_dispatcher.dispatch.assert_called_once()
 
 
-@pytest.mark.asyncio
 async def test_asynctasq_mock_integration(
     app: FastAPI,
     asynctasq_dispatcher: AsyncMock,

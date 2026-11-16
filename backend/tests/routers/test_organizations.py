@@ -1,6 +1,5 @@
 from uuid import UUID
 
-import pytest
 from httpx2 import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -14,7 +13,6 @@ from quickticket.models import (
 from tests.conftest import AuthController, DatasetLoader, isoformat
 
 
-@pytest.mark.asyncio
 async def test_get_organizations(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -42,7 +40,6 @@ async def test_get_organizations(
         }
 
 
-@pytest.mark.asyncio
 async def test_get_organizations_before_filters_total(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -64,7 +61,6 @@ async def test_get_organizations_before_filters_total(
     assert data["total"] == len(ordered) - 3
 
 
-@pytest.mark.asyncio
 async def test_create_organization(
     auth: AuthController,
     client: AsyncClient,
@@ -91,7 +87,6 @@ async def test_create_organization(
         assert member.permissions == OrganizationMemberPermissions.ADMINISTRATOR
 
 
-@pytest.mark.asyncio
 async def test_create_organization_one_owner_only(
     auth: AuthController,
     client: AsyncClient,
@@ -110,7 +105,6 @@ async def test_create_organization_one_owner_only(
         assert [organization.id for organization in organizations] == [UUID(first["id"])]
 
 
-@pytest.mark.asyncio
 async def test_create_organization_rejects_blank_display_name(
     auth: AuthController,
     client: AsyncClient,
@@ -119,7 +113,6 @@ async def test_create_organization_rejects_blank_display_name(
     assert response.status_code == 422
 
 
-@pytest.mark.asyncio
 async def test_create_organization_rejects_overlong_display_name(
     auth: AuthController,
     client: AsyncClient,
@@ -128,7 +121,6 @@ async def test_create_organization_rejects_overlong_display_name(
     assert response.status_code == 422
 
 
-@pytest.mark.asyncio
 async def test_create_organization_rejects_whitespace_only_display_name(
     auth: AuthController,
     client: AsyncClient,
@@ -137,7 +129,6 @@ async def test_create_organization_rejects_whitespace_only_display_name(
     assert response.status_code == 422
 
 
-@pytest.mark.asyncio
 async def test_create_organization_rejects_too_short_display_name(
     auth: AuthController,
     client: AsyncClient,
@@ -147,7 +138,6 @@ async def test_create_organization_rejects_too_short_display_name(
     assert response.status_code == 422
 
 
-@pytest.mark.asyncio
 async def test_create_organization_rejects_non_printable_display_name(
     auth: AuthController,
     client: AsyncClient,
@@ -157,7 +147,6 @@ async def test_create_organization_rejects_non_printable_display_name(
     assert response.status_code == 422
 
 
-@pytest.mark.asyncio
 async def test_create_organization_strips_whitespace_and_filters_non_printable_characters(
     auth: AuthController,
     client: AsyncClient,

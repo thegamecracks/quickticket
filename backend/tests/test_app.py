@@ -2,7 +2,6 @@ from collections.abc import AsyncGenerator
 from typing import NoReturn
 
 import pytest
-import pytest_asyncio
 from fastapi import Depends, FastAPI, Response
 from fastapi.responses import RedirectResponse
 from httpx2 import ASGITransport, AsyncClient
@@ -48,7 +47,7 @@ def create_middleware_test_app() -> FastAPI:
     return app
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 async def middleware_client() -> AsyncGenerator[AsyncClient]:
     async with AsyncClient(
         transport=ASGITransport(create_middleware_test_app()),
@@ -59,7 +58,6 @@ async def middleware_client() -> AsyncGenerator[AsyncClient]:
 
 # Regression test for b7a99d4, which de-duplicated headers with
 # `response.headers[k] = v` and thereby dropped all but one Set-Cookie header.
-@pytest.mark.asyncio
 async def test_preserve_headers_keeps_multiple_set_cookie_headers(
     middleware_client: AsyncClient,
 ) -> None:
@@ -74,7 +72,6 @@ async def test_preserve_headers_keeps_multiple_set_cookie_headers(
     ]
 
 
-@pytest.mark.asyncio
 async def test_preserve_headers_does_not_duplicate_transferred_headers(
     middleware_client: AsyncClient,
 ) -> None:
@@ -84,7 +81,6 @@ async def test_preserve_headers_does_not_duplicate_transferred_headers(
     assert response.headers.get_list("location") == ["http://test/created/1"]
 
 
-@pytest.mark.asyncio
 async def test_preserve_headers_does_not_duplicate_transferred_cookies(
     middleware_client: AsyncClient,
 ) -> None:
@@ -95,7 +91,6 @@ async def test_preserve_headers_does_not_duplicate_transferred_cookies(
     ]
 
 
-@pytest.mark.asyncio
 async def test_preserve_headers_transfers_missing_headers_to_returned_response(
     middleware_client: AsyncClient,
 ) -> None:

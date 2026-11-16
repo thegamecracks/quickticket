@@ -45,7 +45,6 @@ def assert_page(
     assert data["total"] == total
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("url", ENDPOINTS)
 async def test_after_filters_total(
     client: AsyncClient,
@@ -62,7 +61,6 @@ async def test_after_filters_total(
     assert_page(response.json(), ordered[:-1], total=len(ordered) - 1)
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("url", ENDPOINTS)
 async def test_after_is_exclusive(
     client: AsyncClient,
@@ -81,7 +79,6 @@ async def test_after_is_exclusive(
     assert data["total"] == 2
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("url", ENDPOINTS)
 async def test_after_newest_matches_nothing(
     client: AsyncClient,
@@ -96,7 +93,6 @@ async def test_after_newest_matches_nothing(
     assert response.json() == {"items": [], "next": None, "total": 0}
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("url", ENDPOINTS)
 async def test_after_far_past_matches_everything(
     client: AsyncClient,
@@ -113,7 +109,6 @@ async def test_after_far_past_matches_everything(
     assert_page(response.json(), ordered, total=len(ordered))
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("url", ENDPOINTS)
 async def test_after_and_before_window(
     client: AsyncClient,
@@ -139,7 +134,6 @@ async def test_after_and_before_window(
     assert data["total"] == len(expected)
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("url", ENDPOINTS)
 @pytest.mark.parametrize(
     ("after_index", "before_index"),
@@ -184,7 +178,6 @@ async def test_after_not_before_before_rejected(
     }
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("url", ENDPOINTS)
 @pytest.mark.parametrize("limit", [1, 2])
 async def test_after_pagination_walk(
@@ -207,7 +200,6 @@ async def test_after_pagination_walk(
     )
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("params", "expected_loc", "expected_type"),
     [
@@ -237,7 +229,6 @@ async def test_rejects_invalid_page_params(
     assert any(error["loc"] == expected_loc and error["type"] == expected_type for error in errors)
 
 
-@pytest.mark.asyncio
 async def test_get_events_after_and_organization_id(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -276,7 +267,6 @@ async def test_get_events_after_and_organization_id(
     assert data["total"] == 2
 
 
-@pytest.mark.asyncio
 async def test_get_events_after_and_next(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -302,7 +292,6 @@ async def test_get_events_after_and_next(
     assert data["total"] == len(ordered) - 4
 
 
-@pytest.mark.asyncio
 async def test_get_events_next_key_is_last_created_at(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -318,7 +307,6 @@ async def test_get_events_next_key_is_last_created_at(
     assert data["next"] == data["items"][-1]["created_at"]
 
 
-@pytest.mark.asyncio
 async def test_get_events_last_page_has_no_next(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -343,7 +331,6 @@ async def test_get_events_last_page_has_no_next(
     assert data["total"] == len(dataset.events)
 
 
-@pytest.mark.asyncio
 async def test_get_events_exact_multiple_ends_on_empty_page(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -368,7 +355,6 @@ async def test_get_events_exact_multiple_ends_on_empty_page(
             assert data["next"] is None
 
 
-@pytest.mark.asyncio
 async def test_get_events_next_is_exclusive(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -388,7 +374,6 @@ async def test_get_events_next_is_exclusive(
     assert data["total"] == len(dataset.events)
 
 
-@pytest.mark.asyncio
 async def test_get_events_next_between_keys(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -407,7 +392,6 @@ async def test_get_events_next_between_keys(
     assert data["total"] == len(dataset.events)
 
 
-@pytest.mark.asyncio
 async def test_get_events_next_oldest_key_returns_empty(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -425,7 +409,6 @@ async def test_get_events_next_oldest_key_returns_empty(
     }
 
 
-@pytest.mark.asyncio
 async def test_get_events_before_and_next(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -451,7 +434,6 @@ async def test_get_events_before_and_next(
     assert data["total"] == len(dataset.events) - 1
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("organization_id", "expected_total"),
     [
@@ -498,7 +480,6 @@ async def test_get_events_pagination_walk(
     )
 
 
-@pytest.mark.asyncio
 async def test_get_events_pagination_walk_with_before(
     client: AsyncClient,
     dataset_loader: DatasetLoader,

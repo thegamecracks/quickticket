@@ -3,7 +3,6 @@ from os import urandom
 from uuid import uuid7
 
 import pytest
-import pytest_asyncio
 from fastapi import UploadFile
 from fastapi.datastructures import Headers
 from PIL import Image
@@ -81,7 +80,7 @@ def make_image_bytes(size: tuple[int, int], *, noise: bool = False) -> bytes:
         return f.getvalue()
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 async def venue(make_session: async_sessionmaker[AsyncSession], user: User) -> Venue:
     organization = Organization(display_name="Test Organization")
     member = OrganizationMember(
@@ -103,7 +102,6 @@ async def venue(make_session: async_sessionmaker[AsyncSession], user: User) -> V
     return venue
 
 
-@pytest.mark.asyncio
 async def test_image_service_upload_banner(
     make_session: async_sessionmaker[AsyncSession],
     store: Store,
@@ -130,7 +128,6 @@ async def test_image_service_upload_banner(
     assert result["size"] == obj.filesize
 
 
-@pytest.mark.asyncio
 async def test_image_service_upload_banner_reuses_identical_bytes(
     make_session: async_sessionmaker[AsyncSession],
     store: Store,

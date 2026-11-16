@@ -1,7 +1,6 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
-import pytest
 from httpx2 import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -28,7 +27,6 @@ ORGANIZATION_A_ID = OrganizationID(UUID("00000000-0000-4000-8000-000000000011"))
 ORGANIZATION_B_ID = OrganizationID(UUID("00000000-0000-4000-8000-000000000012"))
 
 
-@pytest.mark.asyncio
 async def test_profile_me_unauthenticated(
     auth: AuthController,
     client: AsyncClient,
@@ -40,7 +38,6 @@ async def test_profile_me_unauthenticated(
     assert response.json() == {"detail": "Not authenticated"}
 
 
-@pytest.mark.asyncio
 async def test_profile_me_plain_user(
     auth: AuthController,
     client: AsyncClient,
@@ -71,7 +68,6 @@ async def test_profile_me_plain_user(
     }
 
 
-@pytest.mark.asyncio
 async def test_profile_me_with_addresses(
     auth: AuthController,
     client: AsyncClient,
@@ -154,7 +150,6 @@ async def test_profile_me_with_addresses(
     }
 
 
-@pytest.mark.asyncio
 async def test_profile_me_with_organization_memberships(
     auth: AuthController,
     client: AsyncClient,

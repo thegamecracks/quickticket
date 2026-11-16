@@ -41,6 +41,7 @@ class Event(Base, kw_only=True, repr=False):
     theme: Mapped[str_128]
     starts_at: Mapped[current_timestamp]  # requires user input
     ends_at: Mapped[current_timestamp]  # requires user input
+    # TODO: enforce starts_at <= ends_at at database level
 
     # Optional
     created_at: Mapped[current_timestamp] = mapped_column(default=None, index=True)

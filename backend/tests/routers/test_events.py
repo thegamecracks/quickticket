@@ -16,7 +16,6 @@ from quickticket.models import (
 from tests.conftest import AuthController, DatasetLoader, isoformat
 
 
-@pytest.mark.asyncio
 async def test_get_events(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -84,7 +83,6 @@ async def test_get_events(
             }
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("organization_id", "expected_ids"),
     [
@@ -127,7 +125,6 @@ async def test_get_events_filtered_by_organization(
     assert data["total"] == len(expected_ids)
 
 
-@pytest.mark.asyncio
 async def test_get_events_filtered_by_organization_with_no_events(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -147,7 +144,6 @@ async def test_get_events_filtered_by_organization_with_no_events(
     }
 
 
-@pytest.mark.asyncio
 async def test_get_events_filtered_by_nonexistent_organization(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -166,7 +162,6 @@ async def test_get_events_filtered_by_nonexistent_organization(
     }
 
 
-@pytest.mark.asyncio
 async def test_get_events_empty_database(client: AsyncClient) -> None:
     response = await client.get("/api/events")
     assert response.status_code == 200
@@ -177,7 +172,6 @@ async def test_get_events_empty_database(client: AsyncClient) -> None:
     }
 
 
-@pytest.mark.asyncio
 async def test_get_events_before_matches_nothing(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -194,7 +188,6 @@ async def test_get_events_before_matches_nothing(
     }
 
 
-@pytest.mark.asyncio
 async def test_get_events_before_is_exclusive(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -213,7 +206,6 @@ async def test_get_events_before_is_exclusive(
     assert data["total"] == len(dataset.events) - 1
 
 
-@pytest.mark.asyncio
 async def test_get_events_before_and_organization_id(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -252,7 +244,6 @@ async def test_get_events_before_and_organization_id(
     assert data["total"] == 2
 
 
-@pytest.mark.asyncio
 async def test_get_event(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -301,7 +292,6 @@ async def test_get_event(
     assert data["venue"]["organization"]["display_name"] == organization.display_name
 
 
-@pytest.mark.asyncio
 async def test_get_event_not_found(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -313,7 +303,6 @@ async def test_get_event_not_found(
     assert response.json() == {"detail": "Not found"}
 
 
-@pytest.mark.asyncio
 async def test_create_event(
     client: AsyncClient,
     auth: AuthController,
@@ -380,7 +369,6 @@ async def test_create_event(
         assert persisted.id == UUID(data["id"])
 
 
-@pytest.mark.asyncio
 async def test_create_event_no_permissions(
     client: AsyncClient,
     auth: AuthController,
@@ -427,7 +415,6 @@ async def test_create_event_no_permissions(
     }
 
 
-@pytest.mark.asyncio
 async def test_create_event_no_venue(
     client: AsyncClient,
     auth: AuthController,
@@ -463,7 +450,6 @@ async def test_create_event_no_venue(
     assert response.json() == {"detail": "Venue not found: 00000000-0000-0000-0000-000000000000"}
 
 
-@pytest.mark.asyncio
 async def test_create_event_rejects_max_attendees_below_minimum(
     client: AsyncClient,
 ) -> None:
@@ -485,7 +471,6 @@ async def test_create_event_rejects_max_attendees_below_minimum(
     assert response.status_code == 422
 
 
-@pytest.mark.asyncio
 async def test_create_event_rejects_max_attendees_above_maximum(
     client: AsyncClient,
 ) -> None:
@@ -507,7 +492,6 @@ async def test_create_event_rejects_max_attendees_above_maximum(
     assert response.status_code == 422
 
 
-@pytest.mark.asyncio
 async def test_create_event_rejects_naive_datetimes(
     client: AsyncClient,
 ) -> None:
@@ -545,7 +529,6 @@ async def test_create_event_rejects_naive_datetimes(
     }
 
 
-@pytest.mark.asyncio
 async def test_create_event_rejects_past_datetimes(
     client: AsyncClient,
 ) -> None:
@@ -583,7 +566,6 @@ async def test_create_event_rejects_past_datetimes(
     }
 
 
-@pytest.mark.asyncio
 async def test_create_event_rejects_ends_at_before_starts_at(
     client: AsyncClient,
 ) -> None:
@@ -625,7 +607,6 @@ async def test_create_event_rejects_ends_at_before_starts_at(
     }
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("offset", [timedelta(), timedelta(minutes=59)])
 async def test_create_event_rejects_duration_below_minimum(
     client: AsyncClient,
@@ -669,7 +650,6 @@ async def test_create_event_rejects_duration_below_minimum(
     }
 
 
-@pytest.mark.asyncio
 async def test_create_event_rejects_duration_above_maximum(
     client: AsyncClient,
 ) -> None:

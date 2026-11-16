@@ -9,7 +9,6 @@ from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID
 
 import pytest
-import pytest_asyncio
 from asgi_lifespan import LifespanManager
 from asynctasq import AsyncTasQIntegration
 from fastapi import FastAPI, UploadFile
@@ -107,14 +106,19 @@ def state() -> State:
     return State()
 
 
-@pytest_asyncio.fixture
+@pytest.fixture(scope="session")
+def anyio_backend() -> str:
+    return "asyncio"
+
+
+@pytest.fixture
 async def stack() -> AsyncGenerator[AsyncExitStack]:
     async with AsyncExitStack() as stack:
         yield stack
 
 
-@pytest_asyncio.fixture(scope="session")
-async def engine() -> AsyncGenerator[AsyncEngine]:
+@pytest.fixture(scope="session")
+async def engine(anyio_backend: str) -> AsyncGenerator[AsyncEngine]:
     settings = Settings(
         _env_file=None,
         db=DatabaseSettings(url="sqlite+aiosqlite:///:memory:"),
@@ -131,7 +135,7 @@ async def engine() -> AsyncGenerator[AsyncEngine]:
         yield engine
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 async def make_session(engine: AsyncEngine) -> AsyncGenerator[async_sessionmaker[AsyncSession]]:
     async with engine.begin() as conn:
         try:
@@ -259,7 +263,7 @@ def asynctasq_driver(
     return mock_driver
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 async def app(
     monkeypatch: pytest.MonkeyPatch,
     _base_app: FastAPI,
@@ -307,7 +311,7 @@ async def app(
 
 
 # https://fastapi.tiangolo.com/advanced/async-tests/
-@pytest_asyncio.fixture
+@pytest.fixture
 async def client(app: FastAPI) -> AsyncGenerator[AsyncClient]:
     async with AsyncClient(transport=ASGITransport(app), base_url="http://test") as client:
         yield client

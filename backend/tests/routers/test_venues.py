@@ -19,7 +19,6 @@ from quickticket.routers.venues import VENUE_LIMIT
 from tests.conftest import AuthController, DatasetLoader, isoformat
 
 
-@pytest.mark.asyncio
 async def test_get_venues(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -73,7 +72,6 @@ async def test_get_venues(
         }
 
 
-@pytest.mark.asyncio
 async def test_get_venues_before_filters_total(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -92,7 +90,6 @@ async def test_get_venues_before_filters_total(
     assert data["total"] == len(ordered) - 4
 
 
-@pytest.mark.asyncio
 async def test_get_venue(
     client: AsyncClient,
     auth: AuthController,
@@ -150,7 +147,6 @@ async def test_get_venue(
         }
 
 
-@pytest.mark.asyncio
 async def test_get_venue_not_found(client: AsyncClient, auth: AuthController) -> None:
     auth.user = None
 
@@ -160,7 +156,6 @@ async def test_get_venue_not_found(client: AsyncClient, auth: AuthController) ->
     assert response.json() == {"detail": "Not found"}
 
 
-@pytest.mark.asyncio
 async def test_create_venue(
     client: AsyncClient,
     auth: AuthController,
@@ -218,7 +213,6 @@ async def test_create_venue(
         assert persisted.location_coords == Point(lat=48.8584, long=2.2945)
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "field",
     ["organization_id", "display_name", "description", "theme", "location_name"],
@@ -257,7 +251,6 @@ async def test_create_venue_missing_required_field(
     assert ("body", field) in locations
 
 
-@pytest.mark.asyncio
 async def test_create_venue_without_location_coords(
     client: AsyncClient,
     auth: AuthController,
@@ -308,7 +301,6 @@ async def test_create_venue_without_location_coords(
     assert fetched_data["organization"]["id"] == str(organization.id)
 
 
-@pytest.mark.asyncio
 async def test_create_venue_unauthenticated(
     client: AsyncClient,
     auth: AuthController,
@@ -342,7 +334,6 @@ async def test_create_venue_unauthenticated(
     assert response.json() == {"detail": "Not authenticated"}
 
 
-@pytest.mark.asyncio
 async def test_create_venue_nonexistent_organization(
     client: AsyncClient,
     auth: AuthController,
@@ -365,7 +356,6 @@ async def test_create_venue_nonexistent_organization(
     }
 
 
-@pytest.mark.asyncio
 async def test_create_venue_non_member(
     client: AsyncClient,
     auth: AuthController,
@@ -394,7 +384,6 @@ async def test_create_venue_non_member(
     }
 
 
-@pytest.mark.asyncio
 async def test_create_venue_member_insufficient_permissions(
     client: AsyncClient,
     auth: AuthController,
@@ -430,7 +419,6 @@ async def test_create_venue_member_insufficient_permissions(
     }
 
 
-@pytest.mark.asyncio
 async def test_create_venue_reached_limit(
     client: AsyncClient,
     auth: AuthController,

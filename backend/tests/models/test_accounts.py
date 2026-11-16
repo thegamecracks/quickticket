@@ -1,12 +1,10 @@
 from datetime import UTC, datetime
 
-import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from quickticket.models import User
 
 
-@pytest.mark.asyncio
 async def test_uuid_default() -> None:
     user = User(
         display_name="Display Name",
@@ -17,7 +15,6 @@ async def test_uuid_default() -> None:
     assert user.id is not None
 
 
-@pytest.mark.asyncio
 async def test_current_timestamp_server_default(
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
@@ -37,7 +34,6 @@ async def test_current_timestamp_server_default(
         assert user.created_at is not None
 
 
-@pytest.mark.asyncio
 async def test_persisting_timezone_aware_datetime(
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
