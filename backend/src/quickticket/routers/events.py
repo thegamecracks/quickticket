@@ -285,8 +285,7 @@ async def edit_event(
     """Edit an event's details."""
     # TODO: schedule notifications
     # TODO: allow event drafts?
-    options = [selectinload(Event.venue, Venue.organization)]
-    event = await session.get(Event, event_id, options=options)
+    event = await session.get(Event, event_id, options=[selectinload(Event.venue)])
     if event is None:
         raise HTTPException(404, "event object for ID not found")
 
