@@ -7,12 +7,20 @@ import pytest
 from httpx2 import AsyncClient
 
 from quickticket.models import Event, Organization, Venue
-from tests.conftest import DatasetLoader, assert_keyset_walk, isoformat
+from tests.conftest import (
+    DatasetLoader,
+    assert_keyset_walk,
+    assert_validation_error,
+    isoformat,
+)
 
 ENDPOINTS = ["/api/events", "/api/venues", "/api/organizations"]
 """The paginated endpoints sharing :class:`DateTimeFilterParams`."""
 
 DEFAULT_LIMIT = 10
+
+DATETIME_PARSING = "Input should be a valid datetime or date"
+TIMEZONE_AWARE = "Input should have timezone info"
 
 
 def ordered_collection(
@@ -161,21 +169,12 @@ async def test_after_not_before_before_rejected(
             "before": isoformat(ordered[before_index].created_at),
         },
     )
-    assert response.status_code == 422
-    assert response.json() == {
-        "detail": [
-            {
-                "type": "value_error",
-                "loc": ["query"],
-                "msg": "Value error, after must be before before",
-                "input": {
-                    "after": isoformat(ordered[after_index].created_at),
-                    "before": isoformat(ordered[before_index].created_at),
-                },
-                "ctx": {"error": {}},
-            },
-        ],
-    }
+    assert_validation_error(
+        response,
+        loc=("query",),
+        error_type="value_error",
+        msg_contains="after must be before before",
+    )
 
 
 @pytest.mark.parametrize("url", ENDPOINTS)
@@ -201,17 +200,27 @@ async def test_after_pagination_walk(
 
 
 @pytest.mark.parametrize(
-    ("params", "expected_loc", "expected_type"),
+    ("params", "expected_loc", "expected_type", "expected_msg"),
     [
-        ({"next": "nope"}, ["query", "next"], "datetime_from_date_parsing"),
-        ({"after": "nope"}, ["query", "after"], "datetime_from_date_parsing"),
-        ({"before": "nope"}, ["query", "before"], "datetime_from_date_parsing"),
-        ({"next": "2026-10-20T00:00:00"}, ["query", "next"], "timezone_aware"),
-        ({"after": "2026-10-20T00:00:00"}, ["query", "after"], "timezone_aware"),
-        ({"before": "2026-10-20T00:00:00"}, ["query", "before"], "timezone_aware"),
-        ({"limit": "0"}, ["query", "limit"], "greater_than"),
-        ({"limit": "11"}, ["query", "limit"], "less_than_equal"),
-        ({"limit": "abc"}, ["query", "limit"], "int_parsing"),
+        ({"next": "nope"}, ("query", "next"), "datetime_from_date_parsing", DATETIME_PARSING),
+        ({"after": "nope"}, ("query", "after"), "datetime_from_date_parsing", DATETIME_PARSING),
+        ({"before": "nope"}, ("query", "before"), "datetime_from_date_parsing", DATETIME_PARSING),
+        ({"next": "2026-10-20T00:00:00"}, ("query", "next"), "timezone_aware", TIMEZONE_AWARE),
+        ({"after": "2026-10-20T00:00:00"}, ("query", "after"), "timezone_aware", TIMEZONE_AWARE),
+        ({"before": "2026-10-20T00:00:00"}, ("query", "before"), "timezone_aware", TIMEZONE_AWARE),
+        ({"limit": "0"}, ("query", "limit"), "greater_than", "Input should be greater than 0"),
+        (
+            {"limit": "11"},
+            ("query", "limit"),
+            "less_than_equal",
+            "Input should be less than or equal to 10",
+        ),
+        (
+            {"limit": "abc"},
+            ("query", "limit"),
+            "int_parsing",
+            "Input should be a valid integer",
+        ),
     ],
 )
 @pytest.mark.parametrize("url", ENDPOINTS)
@@ -219,14 +228,18 @@ async def test_rejects_invalid_page_params(
     client: AsyncClient,
     url: str,
     params: dict[str, str],
-    expected_loc: list[str],
+    expected_loc: tuple[str, ...],
     expected_type: str,
+    expected_msg: str,
 ) -> None:
     response = await client.get(url, params=params)
-    assert response.status_code == 422
 
-    errors = response.json()["detail"]
-    assert any(error["loc"] == expected_loc and error["type"] == expected_type for error in errors)
+    assert_validation_error(
+        response,
+        loc=expected_loc,
+        error_type=expected_type,
+        msg_contains=expected_msg,
+    )
 
 
 async def test_get_events_after_and_organization_id(

@@ -14,7 +14,7 @@ from asynctasq import AsyncTasQIntegration
 from fastapi import FastAPI, UploadFile
 from fastapi.datastructures import Headers, State
 from fastapi_injectable import cleanup_all_exit_stacks, clear_dependency_cache
-from httpx2 import ASGITransport, AsyncClient
+from httpx2 import ASGITransport, AsyncClient, Response
 from obstore.store import MemoryStore
 from PIL import Image
 from sqlalchemy.ext.asyncio import (
@@ -100,6 +100,22 @@ async def assert_keyset_walk(
     assert len(ids) == len(set(ids))
     assert ids == expected_ids
     return collected
+
+
+def assert_validation_error(
+    response: Response,
+    *,
+    loc: Sequence[str],
+    error_type: str,
+    msg_contains: str,
+) -> None:
+    """Assert a 422 whose detail includes an error for the given location."""
+    assert response.status_code == 422
+    errors = response.json()["detail"]
+    assert any(
+        error["loc"] == list(loc) and error["type"] == error_type and msg_contains in error["msg"]
+        for error in errors
+    ), errors
 
 
 @pytest.fixture
