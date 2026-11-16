@@ -30,7 +30,7 @@ internals:
 
 | Internal | Assert instead |
 | --- | --- |
-| `_process_image`, `_build_storage_object_upsert` | `ImageService` results, or the image route |
+| `_process_image` | `ImageService` results, or the image route |
 | `MAX_*` and `MIN_*` constants | the rejection the limit produces |
 | Response field counts (`len(data) == 13`) | the response key set, or the fields that matter |
 | `inspect.signature`, `str(stmt.compile(...))` | the behavior the signature or SQL enables |
@@ -40,7 +40,8 @@ Two accepted exceptions, where no seam observes the behavior:
 `_create_ratelimit_headers` in `tests/dependencies/test_ratelimits.py` (pure
 header math) and the Postgres branch of `_build_storage_object_upsert` in
 `tests/dependencies/test_images.py` (production dialect; SQLite-backed tests
-never reach it).
+never reach it, so the test asserts the compiled statement's `ON CONFLICT`
+clause instead).
 
 `ordered_collection` in `tests/routers/test_paging.py` is not a private import,
 but it recomputes the server's sort from the dataset rows, so it is the one

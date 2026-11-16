@@ -165,8 +165,8 @@ def test_storage_object_upsert_supports_postgresql() -> None:
         },
     )
 
-    compiled = stmt.compile(dialect=postgresql.dialect())
-    assert compiled.params["object_key"] == "banners/example/image.jpeg"
+    compiled = str(stmt.compile(dialect=postgresql.dialect()))
+    assert "ON CONFLICT (storage_provider_id, object_key) DO NOTHING" in compiled
 
 
 def test_max_dimensions_fit_pillow_pixel_limit() -> None:
