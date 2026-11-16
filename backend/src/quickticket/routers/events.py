@@ -285,19 +285,12 @@ async def edit_event(
     """Edit an event's details."""
     # TODO: schedule notifications
     # TODO: allow event drafts?
-    event = await session.get(
-        Event,
-        event_id,
-        options=[selectinload(Event.venue, Venue.organization)],
-    )
+    options = [selectinload(Event.venue, Venue.organization)]
+    event = await session.get(Event, event_id, options=options)
     if event is None:
         raise HTTPException(404, "event object for ID not found")
 
-    controller = await get_organization_controller(
-        session,
-        user,
-        event.venue.organization_id,
-    )
+    controller = await get_organization_controller(session, user, event.venue.organization_id)
     controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
 
     if not changes.model_fields_set:

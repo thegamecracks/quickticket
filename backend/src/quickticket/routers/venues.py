@@ -255,11 +255,7 @@ async def edit_venue(
     if venue is None:
         raise HTTPException(404, "Venue object for ID not found")
 
-    controller = await get_organization_controller(
-        session,
-        user,
-        venue.organization_id,
-    )
+    controller = await get_organization_controller(session, user, venue.organization_id)
     controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
 
     if not changes.model_fields_set:

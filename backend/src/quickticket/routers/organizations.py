@@ -236,16 +236,12 @@ async def edit_organization(
 ) -> Organization:
     """Edit an organization's details."""
     # TODO: schedule notifications
-    # TODO: allow event drafts?
+    # TODO: allow organization drafts?
     organization = await session.get(Organization, organization_id)
     if organization is None:
         raise HTTPException(404, "Organization object for ID not found")
 
-    controller = await get_organization_controller(
-        session,
-        user,
-        organization.id,
-    )
+    controller = await get_organization_controller(session, user, organization.id)
     controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
 
     if not changes.model_fields_set:
