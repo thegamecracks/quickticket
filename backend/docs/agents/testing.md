@@ -11,6 +11,7 @@ seams, so a refactor that preserves behavior leaves the suite passing.
 | `ImageService.upload_banner`, `upload_thumbnail`, `get_url` | image processing, dedupe, object key layout | request validation |
 | `get_request_limits` | rule matching (method, route shape, root path) given a supplied rule table | enforcement (covered by the 429 tests) |
 | Paging params and `assert_keyset_walk` | filter bounds, keyset continuity, page invariants | per-endpoint ordering |
+| Auth routes, driven with the client's cookie jar | PKCE verifier against its challenge, state/nonce binding, token and flow cookies, registration side effects | JWT signatures and claims (faked at `TokenValidator`) |
 
 Assert through a seam: read the response body, or the value the service method
 returns. When a behavior is only visible behind a private helper, move the
@@ -33,6 +34,7 @@ internals:
 | `MAX_*` and `MIN_*` constants | the rejection the limit produces |
 | Response field counts (`len(data) == 13`) | the response key set, or the fields that matter |
 | `inspect.signature`, `str(stmt.compile(...))` | the behavior the signature or SQL enables |
+| `TokenValidator`, `OAuth2Client.fetch_token` | the auth flow's outcome, with the provider faked at discovery |
 
 Three accepted exceptions, where no seam observes the behavior:
 `_create_ratelimit_headers` in `tests/dependencies/test_ratelimits.py` (pure
@@ -46,8 +48,8 @@ never reach it).
 
 Deliberate gaps, each a candidate seam when its area changes:
 
-- Auth: `AuthController` in `conftest.py` replaces the login flow, so no test
-  drives `routers/auth.py` or `dependencies/auth/` end to end.
+- Auth: JWT decoding and claim validation in `dependencies/auth/tokens.py` are
+  faked, as is the refresh-token branch of `get_or_refresh_access_token`.
 - `tasks/`, `worker.py`, `cli.py`: no route dispatches a task yet, so the
   autouse asynctasq fixtures below are the only coverage.
 - `models/tickets.py`: ticket sales have no behavior tests.
@@ -69,6 +71,9 @@ Shared fixtures live in `tests/conftest.py`.
   dataset (e.g. `00000000-0000-0000-0000-000000000000`).
 - Assert exact status codes (`assert response.status_code == 200`) rather than
   `raise_for_status()`; compare the response key set when validating payloads.
+- The `client` fixture speaks `https://test`. The app marks its cookies
+  `Secure`, and an http client silently drops them, so a multi-request flow
+  would fail at the second request with a missing cookie.
 - `tests/dataset.py` is large; don't read it end-to-end. The `dataset` fixture
   exposes `Dataset` sequences (`users`, `addresses`, `organizations`,
   `organization_members`, `venues`, `events`, `tickets`). Filter those in a
@@ -97,6 +102,19 @@ uv run pytest tests/tmp_probe.py -q -s
 
 Delete the file once the assertion is written. This beats guessing at error
 messages or reading library source.
+
+### Auth
+
+`tests/routers/test_auth.py` fakes the network boundary, not the client: the
+`openid_provider` fixture supplies a discovery document, so `OAuth2Client`
+really builds the authorization URL, and `auth_settings` adds the OpenID and
+frontend settings the flow reads. The post-login tests also fake
+`OAuth2Client.fetch_token` and `TokenValidator`, then assert what the route
+wrote: cookies, the cached verifier, and the registered rows.
+
+`AuthController` in `conftest.py` still replaces `get_user` for every other
+test. To exercise the real resolution, delete that override with
+`monkeypatch.delitem(app.dependency_overrides, get_user)`.
 
 ### asynctasq
 
