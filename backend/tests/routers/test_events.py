@@ -378,7 +378,7 @@ async def test_create_event(
     )
     assert response.status_code == 201
     data = response.json()
-    assert response.headers.get_list("location") == [f"http://test/api/events/{data['id']}"]
+    assert response.headers.get_list("location") == [f"https://test/api/events/{data['id']}"]
 
     assert set(data) == EVENT_KEYS
     assert data["id"] is not None

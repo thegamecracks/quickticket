@@ -332,7 +332,7 @@ async def app(
 # https://fastapi.tiangolo.com/advanced/async-tests/
 @pytest.fixture
 async def client(app: FastAPI) -> AsyncGenerator[AsyncClient]:
-    async with AsyncClient(transport=ASGITransport(app), base_url="http://test") as client:
+    async with AsyncClient(transport=ASGITransport(app), base_url="https://test") as client:
         yield client
 
 

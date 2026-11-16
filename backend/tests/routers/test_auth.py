@@ -59,7 +59,7 @@ async def test_login_redirects_to_provider(
     assert f"{url.scheme}://{url.netloc}{url.path}" == "https://idp.example/authorize"
     query = parse_qs(url.query)
     assert query["client_id"] == ["test-client"]
-    assert query["redirect_uri"] == ["http://test/api/auth/post-login"]
+    assert query["redirect_uri"] == ["https://test/api/auth/post-login"]
     assert query["code_challenge_method"] == ["S256"]
 
     # The cached verifier must be the one the challenge commits to.
@@ -85,5 +85,5 @@ async def test_login_skips_provider_for_authenticated_user(
 
     response = await client.post("/api/auth/login")
     assert response.status_code == 303
-    assert response.headers["location"] == "http://test/"
+    assert response.headers["location"] == "https://test/"
     assert set(response.cookies) == set()
