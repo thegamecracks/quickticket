@@ -1,3 +1,8 @@
+# This was originally another job in backend-test.yml.
+# However, ruff format uniquely scans through markdown files to validate code blocks.
+#
+# To avoid firing type-checking / tests on docs-only changes, this is kept in its
+# own workflow with **.md triggers.
 name: Backend format
 
 on:
