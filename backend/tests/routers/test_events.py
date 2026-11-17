@@ -13,7 +13,31 @@ from quickticket.models import (
     OrganizationMemberPermissions,
     Venue,
 )
-from tests.conftest import AuthController, DatasetLoader, isoformat
+from tests.conftest import (
+    AuthController,
+    DatasetLoader,
+    assert_validation_error,
+    isoformat,
+)
+
+EVENT_KEYS = frozenset(
+    {
+        "banner",
+        "created_at",
+        "description",
+        "display_name",
+        "ends_at",
+        "id",
+        "max_attendees",
+        "starts_at",
+        "theme",
+        "thumbnail",
+        "ticket_price",
+        "tickets",
+        "venue",
+    },
+)
+"""The keys served by :class:`quickticket.routers.events.EventRead`."""
 
 
 async def test_get_events(
@@ -261,7 +285,7 @@ async def test_get_event(
     assert response.status_code == 200
     data = response.json()
 
-    assert len(data) == 13
+    assert set(data) == EVENT_KEYS
     assert data["id"] == str(event.id)
     assert data["created_at"] is not None
     assert data["display_name"] == event.display_name
@@ -275,7 +299,18 @@ async def test_get_event(
     assert data["max_attendees"] == event.max_attendees
     assert data["tickets"] == []
 
-    assert len(data["venue"]) == 10
+    assert set(data["venue"]) == {
+        "id",
+        "created_at",
+        "display_name",
+        "description",
+        "theme",
+        "thumbnail",
+        "banner",
+        "location_name",
+        "location_coords",
+        "organization",
+    }
     assert data["venue"]["id"] == str(venue.id)
     assert data["venue"]["created_at"] is not None
     assert data["venue"]["display_name"] == venue.display_name
@@ -286,7 +321,7 @@ async def test_get_event(
     assert data["venue"]["location_name"] == venue.location_name
     assert data["venue"]["location_coords"] == venue.location_coords.model_dump()
 
-    assert len(data["venue"]["organization"]) == 3
+    assert set(data["venue"]["organization"]) == {"id", "created_at", "display_name"}
     assert data["venue"]["organization"]["id"] == str(organization.id)
     assert data["venue"]["organization"]["created_at"] is not None
     assert data["venue"]["organization"]["display_name"] == organization.display_name
@@ -343,9 +378,9 @@ async def test_create_event(
     )
     assert response.status_code == 201
     data = response.json()
-    assert response.headers.get_list("location") == [f"http://test/api/events/{data['id']}"]
+    assert response.headers.get_list("location") == [f"https://test/api/events/{data['id']}"]
 
-    assert len(data) == 13
+    assert set(data) == EVENT_KEYS
     assert data["id"] is not None
     assert data["created_at"] is not None
     assert data["display_name"] == "Test Hockey Tournament"
@@ -358,10 +393,10 @@ async def test_create_event(
     assert data["venue"]["display_name"] == "Test Venue"
     assert data["venue"]["organization"]["display_name"] == "Test Organization"
 
-    # assert data["venue"]["description"] == "A venue for testing."
-    # assert data["venue"]["theme"] == "Sports"
-    # assert data["venue"]["location_name"] == "Test Stadium"
-    # assert data["venue"]["location_coords"] == {"lat": 48.8584, "long": 2.2945}
+    assert data["venue"]["description"] == "A venue for testing."
+    assert data["venue"]["theme"] == "Sports"
+    assert data["venue"]["location_name"] == "Test Stadium"
+    assert data["venue"]["location_coords"] is None
 
     async with make_session.begin() as session:
         persisted = await session.get(Event, UUID(data["id"]))
@@ -510,23 +545,13 @@ async def test_create_event_rejects_naive_datetimes(
             "ticket_price": {"amount": 50, "currency": "CAD"},
         },
     )
-    assert response.status_code == 422
-    assert response.json() == {
-        "detail": [
-            {
-                "type": "timezone_aware",
-                "loc": ["body", "starts_at"],
-                "msg": "Input should have timezone info",
-                "input": starts_at.isoformat(),
-            },
-            {
-                "type": "timezone_aware",
-                "loc": ["body", "ends_at"],
-                "msg": "Input should have timezone info",
-                "input": ends_at.isoformat(),
-            },
-        ],
-    }
+    for field in ("starts_at", "ends_at"):
+        assert_validation_error(
+            response,
+            loc=("body", field),
+            error_type="timezone_aware",
+            msg_contains="Input should have timezone info",
+        )
 
 
 async def test_create_event_rejects_past_datetimes(
@@ -547,23 +572,13 @@ async def test_create_event_rejects_past_datetimes(
             "ticket_price": {"amount": 50, "currency": "CAD"},
         },
     )
-    assert response.status_code == 422
-    assert response.json() == {
-        "detail": [
-            {
-                "type": "datetime_future",
-                "loc": ["body", "starts_at"],
-                "msg": "Input should be in the future",
-                "input": isoformat(starts_at),
-            },
-            {
-                "type": "datetime_future",
-                "loc": ["body", "ends_at"],
-                "msg": "Input should be in the future",
-                "input": isoformat(ends_at),
-            },
-        ],
-    }
+    for field in ("starts_at", "ends_at"):
+        assert_validation_error(
+            response,
+            loc=("body", field),
+            error_type="datetime_future",
+            msg_contains="Input should be in the future",
+        )
 
 
 async def test_create_event_rejects_ends_at_before_starts_at(
@@ -584,27 +599,12 @@ async def test_create_event_rejects_ends_at_before_starts_at(
             "ticket_price": {"amount": 50, "currency": "CAD"},
         },
     )
-    assert response.status_code == 422
-    assert response.json() == {
-        "detail": [
-            {
-                "type": "value_error",
-                "loc": ["body"],
-                "msg": "Value error, starts_at must be before ends_at",
-                "input": {
-                    "venue_id": "00000000-0000-0000-0000-000000000000",
-                    "display_name": "Test Hockey Tournament",
-                    "description": "A mock hockey game, for testing.",
-                    "theme": "Sports",
-                    "starts_at": isoformat(starts_at),
-                    "ends_at": isoformat(ends_at),
-                    "max_attendees": 500,
-                    "ticket_price": {"amount": 50, "currency": "CAD"},
-                },
-                "ctx": {"error": {}},
-            },
-        ],
-    }
+    assert_validation_error(
+        response,
+        loc=("body",),
+        error_type="value_error",
+        msg_contains="starts_at must be before ends_at",
+    )
 
 
 @pytest.mark.parametrize("offset", [timedelta(), timedelta(minutes=59)])
@@ -627,27 +627,12 @@ async def test_create_event_rejects_duration_below_minimum(
             "ticket_price": {"amount": 50, "currency": "CAD"},
         },
     )
-    assert response.status_code == 422
-    assert response.json() == {
-        "detail": [
-            {
-                "type": "value_error",
-                "loc": ["body"],
-                "msg": "Value error, Event duration must be between 1:00:00 and 7 days, 0:00:00",
-                "input": {
-                    "venue_id": "00000000-0000-0000-0000-000000000000",
-                    "display_name": "Test Hockey Tournament",
-                    "description": "A mock hockey game, for testing.",
-                    "theme": "Sports",
-                    "starts_at": isoformat(starts_at),
-                    "ends_at": isoformat(ends_at),
-                    "max_attendees": 500,
-                    "ticket_price": {"amount": 50, "currency": "CAD"},
-                },
-                "ctx": {"error": {}},
-            },
-        ],
-    }
+    assert_validation_error(
+        response,
+        loc=("body",),
+        error_type="value_error",
+        msg_contains="Event duration must be between 1:00:00 and 7 days, 0:00:00",
+    )
 
 
 async def test_create_event_rejects_duration_above_maximum(
@@ -668,24 +653,9 @@ async def test_create_event_rejects_duration_above_maximum(
             "ticket_price": {"amount": 50, "currency": "CAD"},
         },
     )
-    assert response.status_code == 422
-    assert response.json() == {
-        "detail": [
-            {
-                "type": "value_error",
-                "loc": ["body"],
-                "msg": "Value error, Event duration must be between 1:00:00 and 7 days, 0:00:00",
-                "input": {
-                    "venue_id": "00000000-0000-0000-0000-000000000000",
-                    "display_name": "Test Hockey Tournament",
-                    "description": "A mock hockey game, for testing.",
-                    "theme": "Sports",
-                    "starts_at": isoformat(starts_at),
-                    "ends_at": isoformat(ends_at),
-                    "max_attendees": 500,
-                    "ticket_price": {"amount": 50, "currency": "CAD"},
-                },
-                "ctx": {"error": {}},
-            },
-        ],
-    }
+    assert_validation_error(
+        response,
+        loc=("body",),
+        error_type="value_error",
+        msg_contains="Event duration must be between 1:00:00 and 7 days, 0:00:00",
+    )

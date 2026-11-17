@@ -1,3 +1,10 @@
+"""Guards for the autouse asynctasq fixtures.
+
+These assert the mocked driver and dispatcher wiring in ``conftest.py``, which
+keeps the suite from connecting a real driver or queue. See
+``docs/agents/testing.md``.
+"""
+
 from typing import cast
 from unittest.mock import AsyncMock, MagicMock
 

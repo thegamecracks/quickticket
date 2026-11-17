@@ -21,9 +21,11 @@ __all__ = (
     "LimitsRequestLimitsDep",
     "LimitsStorageDep",
     "LimitsStrategyDep",
+    "RateLimitRulesDep",
     "apply_request_limit",
     "get_limits_storage",
     "get_limits_strategy",
+    "get_ratelimit_rules",
     "get_request_limits",
 )
 
@@ -75,6 +77,11 @@ RATELIMIT_RULES: tuple[RateLimitRule, ...] = (
 log = logging.getLogger(__name__)
 
 
+async def get_ratelimit_rules() -> Sequence[RateLimitRule]:
+    """Return the rules applied to each request, in declaration order."""
+    return RATELIMIT_RULES
+
+
 async def get_limits_storage(state: StateDep) -> Storage:
     # TODO: create a quickticket Cache-compatible adapter to act as storage
     storage = cast(Storage | None, getattr(state, "limits_storage", None))
@@ -109,15 +116,14 @@ async def get_request_identifier(request: Request, user: OptionalUserDep) -> tup
     return (address.host,)
 
 
-async def get_request_limits(request: Request, user: OptionalUserDep) -> Sequence[RateLimitItem]:
+async def get_request_limits(
+    request: Request,
+    user: OptionalUserDep,
+    rules: RateLimitRulesDep,
+) -> Sequence[RateLimitItem]:
     # Optionally adjust limit by account type
     path = get_route_path(request.scope)
-    return [
-        limit
-        for rule in RATELIMIT_RULES
-        if rule.matches(request.method, path)
-        for limit in rule.limits
-    ]
+    return [limit for rule in rules if rule.matches(request.method, path) for limit in rule.limits]
 
 
 async def apply_request_limit(
@@ -178,3 +184,4 @@ LimitsRequestIdentifierDep = Annotated[Sequence[str], Depends(get_request_identi
 LimitsRequestLimitsDep = Annotated[Sequence[RateLimitItem], Depends(get_request_limits)]
 LimitsStorageDep = Annotated[Storage, Depends(get_limits_storage)]
 LimitsStrategyDep = Annotated[RateLimiter, Depends(get_limits_strategy)]
+RateLimitRulesDep = Annotated[Sequence[RateLimitRule], Depends(get_ratelimit_rules)]

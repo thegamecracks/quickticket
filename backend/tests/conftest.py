@@ -14,7 +14,7 @@ from asynctasq import AsyncTasQIntegration
 from fastapi import FastAPI, UploadFile
 from fastapi.datastructures import Headers, State
 from fastapi_injectable import cleanup_all_exit_stacks, clear_dependency_cache
-from httpx2 import ASGITransport, AsyncClient
+from httpx2 import ASGITransport, AsyncClient, Response
 from obstore.store import MemoryStore
 from PIL import Image
 from sqlalchemy.ext.asyncio import (
@@ -28,9 +28,10 @@ from quickticket.dependencies.auth import get_user
 from quickticket.dependencies.db import (
     AsyncEngineFactory,
     AsyncSessionDep,
-    _engine_factory,
+    engine_factory,
     get_async_sessionmaker,
 )
+from quickticket.dependencies.images import MIN_FILESIZE
 from quickticket.dependencies.state import get_settings
 from quickticket.dependencies.store import Store, get_object_store
 from quickticket.models import Address, Base, User
@@ -101,6 +102,22 @@ async def assert_keyset_walk(
     return collected
 
 
+def assert_validation_error(
+    response: Response,
+    *,
+    loc: Sequence[str],
+    error_type: str,
+    msg_contains: str,
+) -> None:
+    """Assert a 422 whose detail includes an error for the given location."""
+    assert response.status_code == 422
+    errors = response.json()["detail"]
+    assert any(
+        error["loc"] == list(loc) and error["type"] == error_type and msg_contains in error["msg"]
+        for error in errors
+    ), errors
+
+
 @pytest.fixture
 def state() -> State:
     return State()
@@ -124,9 +141,9 @@ async def engine(anyio_backend: str) -> AsyncGenerator[AsyncEngine]:
         db=DatabaseSettings(url="sqlite+aiosqlite:///:memory:"),
     )
 
-    engine_factory = AsyncEngineFactory()
+    factory = AsyncEngineFactory()
     async with AsyncExitStack() as stack:
-        engine = await engine_factory(settings=settings, stack=stack, state=State())
+        engine = await factory(settings=settings, stack=stack, state=State())
 
         # Generate schema from models instead of running the migration scripts
         async with engine.begin() as conn:
@@ -237,6 +254,7 @@ def _base_app() -> FastAPI:
 
 @pytest.fixture(autouse=True)
 def asynctasq_dispatcher(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
+    """Replace the dispatcher so no test dispatches to a real queue."""
     # https://github.com/adamrefaey/asynctasq/blob/ac6ca93cd2f04b1e03815c01ccf0404a11a6f773/tests/unit/tasks/types/test_function_task.py#L281-L301
     mock_dispatcher = AsyncMock()  # Dispatcher
     mock_dispatcher.dispatch = AsyncMock(return_value="task-id-123")
@@ -249,6 +267,7 @@ def asynctasq_driver(
     monkeypatch: pytest.MonkeyPatch,
     asynctasq_dispatcher: AsyncMock,
 ) -> MagicMock:
+    """Replace the driver; without it the app lifespan connects a real one."""
     # https://github.com/adamrefaey/asynctasq/blob/ac6ca93cd2f04b1e03815c01ccf0404a11a6f773/tests/unit/integrations/test_fastapi.py#L21-L27
     mock_driver = MagicMock()  # BaseDriver
     mock_driver.connect = AsyncMock()
@@ -276,7 +295,7 @@ async def app(
 ) -> AsyncGenerator[FastAPI]:
     monkeypatch.setattr(_base_app, "state", state)
     overrides = _base_app.dependency_overrides
-    monkeypatch.setitem(overrides, _engine_factory, lambda: engine)
+    monkeypatch.setitem(overrides, engine_factory, lambda: engine)
     monkeypatch.setitem(overrides, get_async_sessionmaker, lambda: make_session)
     monkeypatch.setitem(overrides, get_object_store, lambda: store)
     monkeypatch.setitem(overrides, get_user, auth.get_user)
@@ -313,7 +332,7 @@ async def app(
 # https://fastapi.tiangolo.com/advanced/async-tests/
 @pytest.fixture
 async def client(app: FastAPI) -> AsyncGenerator[AsyncClient]:
-    async with AsyncClient(transport=ASGITransport(app), base_url="http://test") as client:
+    async with AsyncClient(transport=ASGITransport(app), base_url="https://test") as client:
         yield client
 
 
@@ -323,7 +342,12 @@ def black_image_bytes() -> bytes:
     image = Image.new("L", (640, 640))
     with BytesIO() as f:
         image.save(f, "webp", quality=0, method=0)
-        return f.getvalue()
+        data = f.getvalue()
+
+    # Happy-path uploads must clear the minimum filesize, otherwise they fail
+    # for the wrong reason in every test that uses this fixture.
+    assert len(data) >= MIN_FILESIZE
+    return data
 
 
 @pytest.fixture
