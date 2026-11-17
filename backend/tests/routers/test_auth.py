@@ -87,16 +87,26 @@ async def test_login_redirects_to_provider(
     }
 
 
-async def test_login_skips_provider_for_authenticated_user(
+async def test_login_does_not_skip_provider_for_authenticated_user(
     client: AsyncClient,
     auth: AuthController,
-    openid_provider: OpenIDProvider,
 ) -> None:
+    """An authenticated login must still fail when the provider is unreachable.
+
+    These are the expected facts of the underlying dependencies:
+    1. OptionalUserDep cannot return a user unless it has a valid access token
+    2. TokenValidator cannot return an access token without the provider's JWKs
+    3. OpenIDProviderJWKsDep cannot return JWKs unless fetched from the provider (or cached)
+    4. OpenIDProviderDep cannot return unless it responds to discovery URL (or cached)
+
+    It is highly improbable to produce an authenticated user with JWKs while the provider is down
+    unless the cached responses were poisoned, in which case we have bigger issues.
+    """
     assert auth.user is not None
 
     response = await client.post("/api/auth/login")
-    assert response.status_code == 303
-    assert response.headers["location"] == "https://test/"
+    assert response.status_code == 500
+    assert response.json() == {"detail": "OpenID is not configured (.env)"}
     assert set(response.cookies) == set()
 
 
