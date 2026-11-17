@@ -6,4 +6,6 @@ Ticket sales platform for small and medium-scale events, in two packages:
 
 - Working in `backend/` → read [`backend/AGENTS.md`](backend/AGENTS.md).
 - Working in `frontend/` → read [`frontend/AGENTS.md`](frontend/AGENTS.md).
+- Naming or renaming a domain concept in code, docs, or UI copy → read
+  [`GLOSSARY.md`](GLOSSARY.md).
 - Committing → follow [`docs/agents/git.md`](docs/agents/git.md).

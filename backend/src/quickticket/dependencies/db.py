@@ -19,6 +19,7 @@ __all__ = (
     "AsyncEngineFactory",
     "AsyncSessionDep",
     "AsyncSessionMakerDep",
+    "engine_factory",
     "get_async_session",
     "get_async_sessionmaker",
 )
@@ -97,7 +98,7 @@ async def get_async_session(
             raise
 
 
-_engine_factory = AsyncEngineFactory()
-AsyncEngineDep = Annotated[AsyncEngine, Depends(_engine_factory)]
+engine_factory = AsyncEngineFactory()
+AsyncEngineDep = Annotated[AsyncEngine, Depends(engine_factory)]
 AsyncSessionDep = Annotated[AsyncSession, Depends(get_async_session, scope="function")]
 AsyncSessionMakerDep = Annotated[async_sessionmaker[AsyncSession], Depends(get_async_sessionmaker)]
