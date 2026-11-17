@@ -87,11 +87,11 @@ async def test_login_redirects_to_provider(
     }
 
 
-async def test_login_redirects_authenticated_user_without_provider(
+async def test_login_skips_provider_for_authenticated_user(
     client: AsyncClient,
     auth: AuthController,
+    openid_provider: OpenIDProvider,
 ) -> None:
-    """An authenticated login must not require the provider to be reachable."""
     assert auth.user is not None
 
     response = await client.post("/api/auth/login")

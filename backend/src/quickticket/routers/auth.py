@@ -3,7 +3,7 @@ from datetime import timedelta
 from typing import Annotated, Any, NoReturn
 
 from authlib.common.security import generate_token
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
 from joserfc.errors import JoseError
 
@@ -34,21 +34,6 @@ router = APIRouter(tags=["Authentication"])
 log = logging.getLogger(__name__)
 
 
-async def redirect_if_authenticated(
-    user: OptionalUserDep,
-    redirect_uri: RedirectUriDep,
-    cookies: OAuthCookieControllerDep,
-) -> None:
-    """Redirect before the OpenID provider is resolved for an authenticated user.
-
-    Resolving the provider requires a reachable discovery URL, which an
-    authenticated request has no use for.
-
-    """
-    if user is not None:
-        cookies.force_redirect(redirect_uri, 303)
-
-
 # https://docs.authlib.org/en/latest/oauth2/client/http/index.html#oidc-session
 @router.post(
     "/login",
@@ -57,8 +42,7 @@ async def redirect_if_authenticated(
     status_code=303,
 )
 async def oauth_login(
-    # Must be resolved before `client`, which contacts the provider.
-    _authenticated: Annotated[None, Depends(redirect_if_authenticated)],
+    user: OptionalUserDep,
     redirect_uri: RedirectUriDep,
     request: Request,
     client: OAuth2ClientDep,
@@ -72,6 +56,9 @@ async def oauth_login(
     this redirects straight to ``redirect_uri``.
 
     """
+    if user is not None:
+        return cookies.force_redirect(redirect_uri, 303)
+
     # Proof Key for Code Exchange (PKCE)
     code_verifier = generate_token(48)
     # https://openid.net/specs/openid-connect-core-1_0.html#rfc.section.2
