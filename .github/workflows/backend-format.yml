@@ -1,0 +1,38 @@
+name: Backend format
+
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - 'backend/**.py'
+      - 'backend/**.md'
+      - 'backend/pyproject.toml'
+      - 'backend/uv.lock'
+  pull_request:
+    paths:
+      - 'backend/**.py'
+      - 'backend/**.md'
+      - 'backend/pyproject.toml'
+      - 'backend/uv.lock'
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  ruff-format:
+    name: ruff format
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/ruff-action@278981a28ce3188b1e39527901f38254bf3aac89 # v4.1.0
+        with:
+          args: format --check --diff
