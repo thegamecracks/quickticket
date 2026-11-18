@@ -215,7 +215,7 @@ async def create_venue(
 ) -> Venue:
     """Create a new venue in an organization."""
     controller = await get_organization_controller(session, user, venue.organization_id)
-    controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
+    controller.assert_permissions(OrganizationMemberPermissions.OWNER)
 
     venue_count = await session.scalar(
         select(count()).where(Venue.organization_id == controller.organization.id),
@@ -256,7 +256,7 @@ async def edit_venue(
         raise HTTPException(404, "Venue object for ID not found")
 
     controller = await get_organization_controller(session, user, venue.organization_id)
-    controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
+    controller.assert_permissions(OrganizationMemberPermissions.OWNER)
 
     if not changes.model_fields_set:
         raise HTTPException(400, "No fields to update")

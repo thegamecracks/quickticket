@@ -192,14 +192,12 @@ async def create_organization(
 ) -> Organization:
     """Create a new organization."""
 
-    # HACK: in a future release an organization might allow multiple administrators.
-    #       perhaps the flag should be renamed to OWNER?
     owns_organization = await session.scalar(
         select(
             exists().where(
                 OrganizationMember.account_id == user.id,
                 OrganizationMember.permissions.bitwise_and(
-                    OrganizationMemberPermissions.ADMINISTRATOR,
+                    OrganizationMemberPermissions.OWNER,
                 ),
             ),
         ),
@@ -212,7 +210,7 @@ async def create_organization(
         members=[
             OrganizationMember(
                 user=user,
-                permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+                permissions=OrganizationMemberPermissions.OWNER,
             ),
         ],
     )
@@ -242,7 +240,7 @@ async def edit_organization(
         raise HTTPException(404, "Organization object for ID not found")
 
     controller = await get_organization_controller(session, user, organization.id)
-    controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
+    controller.assert_permissions(OrganizationMemberPermissions.OWNER)
 
     if not changes.model_fields_set:
         raise HTTPException(400, "No fields to update")

@@ -350,7 +350,7 @@ async def test_create_event(
         member = OrganizationMember(
             organization_id=organization.id,
             account_id=user.id,
-            permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+            permissions=OrganizationMemberPermissions.OWNER,
         )
         venue = Venue(
             organization_id=organization.id,
@@ -445,7 +445,7 @@ async def test_create_event_no_permissions(
     assert response.status_code == 403
     assert response.json() == {
         "detail": (
-            f"Organization member ({organization.id}, {user.id}) missing permissions: ADMINISTRATOR"
+            f"Organization member ({organization.id}, {user.id}) missing permissions: OWNER"
         ),
     }
 
@@ -462,7 +462,7 @@ async def test_create_event_no_venue(
         member = OrganizationMember(
             organization_id=organization.id,
             account_id=user.id,
-            permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+            permissions=OrganizationMemberPermissions.OWNER,
         )
         session.add_all([organization, member])
 

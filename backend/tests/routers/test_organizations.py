@@ -84,7 +84,7 @@ async def test_create_organization(
     async with make_session.begin() as session:
         member = await session.get(OrganizationMember, (UUID(data["id"]), user.id))
         assert member is not None
-        assert member.permissions == OrganizationMemberPermissions.ADMINISTRATOR
+        assert member.permissions == OrganizationMemberPermissions.OWNER
 
 
 async def test_create_organization_one_owner_only(

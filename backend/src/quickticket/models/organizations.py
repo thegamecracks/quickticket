@@ -50,7 +50,11 @@ class Organization(Base, kw_only=True, repr=False):
 
 
 class OrganizationMemberPermissions(IntFlag):
-    ADMINISTRATOR = 1
+    # HACK:
+    # In a future release an organization might allow multiple managers,
+    # so calling this an owner permission is probably not correct.
+    # Consider role-based access control instead?
+    OWNER = 1
 
 
 class OrganizationMember(Base, kw_only=True, repr=False):

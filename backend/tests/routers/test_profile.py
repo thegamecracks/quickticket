@@ -184,7 +184,7 @@ async def test_profile_me_with_organization_memberships(
     membership_1 = OrganizationMember(
         organization_id=organization_1.id,
         account_id=user.id,
-        permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+        permissions=OrganizationMemberPermissions.OWNER,
         joined_at=datetime(2026, 1, 1, tzinfo=UTC),
     )
     membership_2 = OrganizationMember(
@@ -196,7 +196,7 @@ async def test_profile_me_with_organization_memberships(
     other_membership = OrganizationMember(
         organization_id=organization_1.id,
         account_id=other_user.id,
-        permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+        permissions=OrganizationMemberPermissions.OWNER,
         joined_at=datetime(2026, 1, 3, tzinfo=UTC),
     )
     async with make_session.begin() as session:

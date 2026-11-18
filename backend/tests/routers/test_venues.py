@@ -168,7 +168,7 @@ async def test_create_venue(
         member = OrganizationMember(
             organization_id=organization.id,
             account_id=user.id,
-            permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+            permissions=OrganizationMemberPermissions.OWNER,
         )
         session.add_all([organization, member])
 
@@ -230,7 +230,7 @@ async def test_create_venue_missing_required_field(
         member = OrganizationMember(
             organization_id=organization.id,
             account_id=user.id,
-            permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+            permissions=OrganizationMemberPermissions.OWNER,
         )
         session.add_all([organization, member])
 
@@ -263,7 +263,7 @@ async def test_create_venue_without_location_coords(
         member = OrganizationMember(
             organization_id=organization.id,
             account_id=user.id,
-            permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+            permissions=OrganizationMemberPermissions.OWNER,
         )
         session.add_all([organization, member])
 
@@ -313,7 +313,7 @@ async def test_create_venue_unauthenticated(
         member = OrganizationMember(
             organization_id=organization.id,
             account_id=user.id,
-            permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+            permissions=OrganizationMemberPermissions.OWNER,
         )
         session.add_all([organization, member])
 
@@ -414,7 +414,7 @@ async def test_create_venue_member_insufficient_permissions(
     assert response.status_code == 403
     assert response.json() == {
         "detail": (
-            f"Organization member ({organization.id}, {user.id}) missing permissions: ADMINISTRATOR"
+            f"Organization member ({organization.id}, {user.id}) missing permissions: OWNER"
         ),
     }
 
@@ -431,7 +431,7 @@ async def test_create_venue_reached_limit(
         member = OrganizationMember(
             organization_id=organization.id,
             account_id=user.id,
-            permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+            permissions=OrganizationMemberPermissions.OWNER,
         )
         session.add_all([organization, member])
 

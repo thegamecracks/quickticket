@@ -255,7 +255,7 @@ async def create_event(
         raise ORMEntityNotFound(Venue, event.venue_id)
 
     controller = await get_organization_controller(session, user, venue.organization_id)
-    controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
+    controller.assert_permissions(OrganizationMemberPermissions.OWNER)
 
     event_orm = Event(
         display_name=event.display_name,
@@ -290,7 +290,7 @@ async def edit_event(
         raise HTTPException(404, "event object for ID not found")
 
     controller = await get_organization_controller(session, user, event.venue.organization_id)
-    controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
+    controller.assert_permissions(OrganizationMemberPermissions.OWNER)
 
     if not changes.model_fields_set:
         raise HTTPException(400, "No fields to update")

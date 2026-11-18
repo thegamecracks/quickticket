@@ -65,7 +65,7 @@ async def venue(make_session: async_sessionmaker[AsyncSession], user: User) -> V
     member = OrganizationMember(
         organization_id=organization.id,
         account_id=user.id,
-        permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+        permissions=OrganizationMemberPermissions.OWNER,
     )
     venue = Venue(
         organization_id=organization.id,

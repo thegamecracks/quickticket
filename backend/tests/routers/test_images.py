@@ -100,9 +100,7 @@ async def seed_entity(
     entity_cls: type[Venue | Event],
     user: User,
     *,
-    permissions: OrganizationMemberPermissions | None = (
-        OrganizationMemberPermissions.ADMINISTRATOR
-    ),
+    permissions: OrganizationMemberPermissions | None = (OrganizationMemberPermissions.OWNER),
 ) -> SeededEntity:
     """Create an organization and one entity owned by it.
 
@@ -646,8 +644,7 @@ async def test_set_image_insufficient_permissions(
     assert response.status_code == 403
     assert response.json() == {
         "detail": (
-            f"Organization member ({seeded.organization.id}, {user.id}) "
-            "missing permissions: ADMINISTRATOR"
+            f"Organization member ({seeded.organization.id}, {user.id}) missing permissions: OWNER"
         ),
     }
 
