@@ -58,7 +58,7 @@ function EditVenueForm() {
         setForm({
           display_name: details.display_name,
           description: details.description,
-          theme: details.theme,
+          theme: details.category,
           location_name: details.location_name,
         })
       })
@@ -137,7 +137,7 @@ function EditVenueForm() {
           if (position) {
             locationCoords = {
               lat: position.lat(),
-              long: position.lng(),
+              lng: position.lng(),
             }
           }
         } catch (error) {
