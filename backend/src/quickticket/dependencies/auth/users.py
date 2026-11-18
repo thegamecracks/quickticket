@@ -17,12 +17,12 @@ from quickticket.dependencies.cookies import (
     OAuthRefreshTokenCookie,
 )
 from quickticket.dependencies.db import AsyncSessionDep
-from quickticket.models import OpenIDAccount, User
+from quickticket.models import OpenIDIdentity, User
 from quickticket.settings import OpenIDSettings
 
 __all__ = (
     "OptionalAccessTokenDep",
-    "OptionalOpenIDAccountDep",
+    "OptionalOpenIDIdentityDep",
     "OptionalUserDep",
     "RegistrationController",
     "RegistrationControllerDep",
@@ -60,8 +60,8 @@ class RegistrationController:
         refresh_token: str,
         refresh_expires_in: int,
         id_token: IdToken,
-    ) -> tuple[User, OpenIDAccount]:
-        user, openid_account = await self.select_user_by_token(id_token)
+    ) -> tuple[User, OpenIDIdentity]:
+        user, identity = await self.select_user_by_token(id_token)
         self.cookies.set_tokens(
             # id_token=id_token,
             access_token=access_token,
@@ -77,14 +77,14 @@ class RegistrationController:
         # response object is actually given to the ASGI server.
         # As such, redirecting here is not necessary.
         # return self.cookies.force_redirect(redirect_uri, status_code)
-        return user, openid_account
+        return user, identity
 
     async def select_user_by_token(
         self,
         token: AccessToken | IdToken,
-    ) -> tuple[User, OpenIDAccount]:
+    ) -> tuple[User, OpenIDIdentity]:
         """Get the user associated with an ID or access token along with the
-        OpenID account they used to login.
+        OpenID identity they used to login.
 
         If an ID token is passed, the user will be registered if necessary
         and their personal details will be updated.
@@ -99,18 +99,18 @@ class RegistrationController:
         user: User | None = None
         claims = token.claims
 
-        openid_account = await self.session.scalar(
-            select(OpenIDAccount)
-            .join(User, OpenIDAccount.user)
-            .where(OpenIDAccount.issuer == claims.iss, OpenIDAccount.sub == claims.sub)
-            .options(load_only(OpenIDAccount.user_id), selectinload(OpenIDAccount.user)),
+        identity = await self.session.scalar(
+            select(OpenIDIdentity)
+            .join(User, OpenIDIdentity.user)
+            .where(OpenIDIdentity.issuer == claims.iss, OpenIDIdentity.sub == claims.sub)
+            .options(load_only(OpenIDIdentity.user_id), selectinload(OpenIDIdentity.user)),
         )
-        if openid_account is not None:
-            user = openid_account.user
+        if identity is not None:
+            user = identity.user
             if isinstance(token, IdToken):
-                self._update_openid_account(openid_account, token)
+                self._update_openid_identity(identity, token)
                 self._update_user_with_id_token(user, token)
-            return user, openid_account
+            return user, identity
 
         if (email := getattr(claims, "email", None)) is not None and getattr(
             claims,
@@ -123,24 +123,24 @@ class RegistrationController:
 
         if user is not None:
             if isinstance(token, IdToken):
-                log.debug("Linking new OpenID account with ID token")
+                log.debug("Linking new OpenID identity with ID token")
                 id_token_raw = token.raw
             else:
                 # Access token is insufficient for RP-initiated logout.
                 # We'll need to get the ID token later by doing a refresh.
-                log.debug("Linking new OpenID account with access token")
+                log.debug("Linking new OpenID identity with access token")
                 id_token_raw = None
 
-            openid_account = OpenIDAccount(
+            identity = OpenIDIdentity(
                 issuer=claims.iss,
                 sub=claims.sub,
                 user_id=user.id,
                 id_token=id_token_raw,
             )
-            self.session.add(openid_account)
+            self.session.add(identity)
             await self.session.flush()  # May flush entities outside of our dependency
-            await self.session.refresh(openid_account)
-            return user, openid_account
+            await self.session.refresh(identity)
+            return user, identity
 
         if isinstance(token, AccessToken):
             # User is missing from database and registration was not expected.
@@ -151,16 +151,16 @@ class RegistrationController:
 
         log.debug("Registering new user from ID token (sub: %s)", claims.sub)
         user = User(display_name="", first_name="", last_name="", email="")
-        openid_account = OpenIDAccount(issuer=claims.iss, sub=claims.sub)
-        user.openid_accounts.append(openid_account)
-        self._update_openid_account(openid_account, token)
+        identity = OpenIDIdentity(issuer=claims.iss, sub=claims.sub)
+        user.openid_identities.append(identity)
+        self._update_openid_identity(identity, token)
         self._update_user_with_id_token(user, token)
 
         self.session.add(user)
         await self.session.flush()  # May flush entities outside of our dependency
         await self.session.refresh(user)  # Re-fetch attributes, including user ID
 
-        return user, openid_account
+        return user, identity
 
     def _update_user_with_id_token(self, user: User, id_token: IdToken) -> None:
         # https://openid.net/specs/openid-connect-basic-1_0.html#rfc.section.2.5
@@ -180,8 +180,8 @@ class RegistrationController:
             is_admin = None  # noqa: F841
         # TODO: set admin flag or enum on user
 
-    def _update_openid_account(self, openid_account: OpenIDAccount, id_token: IdToken) -> None:
-        openid_account.id_token = id_token.raw
+    def _update_openid_identity(self, identity: OpenIDIdentity, id_token: IdToken) -> None:
+        identity.id_token = id_token.raw
 
 
 async def get_or_refresh_access_token(
@@ -271,18 +271,18 @@ async def get_user_or_fail(user: OptionalUserDep) -> User:
     return user
 
 
-async def get_openid_account(
+async def get_openid_identity(
     access_token: OptionalAccessTokenDep,
     registration: RegistrationControllerDep,
-) -> OpenIDAccount | None:
+) -> OpenIDIdentity | None:
     if access_token is not None:
-        _, openid_account = await registration.select_user_by_token(access_token)
-        return openid_account
+        _, identity = await registration.select_user_by_token(access_token)
+        return identity
     return None
 
 
 OptionalAccessTokenDep = Annotated[AccessToken | None, Depends(get_or_refresh_access_token)]
-OptionalOpenIDAccountDep = Annotated[OpenIDAccount | None, Depends(get_openid_account)]
+OptionalOpenIDIdentityDep = Annotated[OpenIDIdentity | None, Depends(get_openid_identity)]
 OptionalUserDep = Annotated[User | None, Depends(get_user)]
 RegistrationControllerDep = Annotated[RegistrationController, Depends(RegistrationController)]
 RequiredAccessTokenDep = Annotated[AccessToken, Depends(get_valid_access_token)]

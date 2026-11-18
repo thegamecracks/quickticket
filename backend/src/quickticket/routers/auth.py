@@ -9,7 +9,7 @@ from joserfc.errors import JoseError
 
 from quickticket.dependencies.auth import (
     OAuth2ClientDep,
-    OptionalOpenIDAccountDep,
+    OptionalOpenIDIdentityDep,
     OptionalUserDep,
     PostRedirectUriDep,
     RedirectUriDep,
@@ -176,7 +176,7 @@ async def oauth_logout(
     redirect_uri: RedirectUriDep,
     client: OAuth2ClientDep,
     request: Request,
-    openid_account: OptionalOpenIDAccountDep,
+    identity: OptionalOpenIDIdentityDep,
 ) -> NoReturn:
     """Redirect the user to logout at the OpenID provider.
 
@@ -186,8 +186,8 @@ async def oauth_logout(
 
     """
     id_token_hint = None
-    if openid_account is not None:  # Token can be expired/invalid
-        id_token_hint = await openid_account.awaitable_attrs.id_token
+    if identity is not None:  # Token can be expired/invalid
+        id_token_hint = await identity.awaitable_attrs.id_token
 
     try:
         url, state = client.create_logout_url(

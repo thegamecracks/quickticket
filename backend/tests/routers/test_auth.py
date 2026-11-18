@@ -16,7 +16,7 @@ from quickticket.dependencies.auth.provider import get_openid_provider
 from quickticket.dependencies.auth.tokens import AccessToken, IdToken, TokenValidator
 from quickticket.dependencies.auth.users import get_user
 from quickticket.dependencies.state import get_settings
-from quickticket.models import OpenIDAccount, User
+from quickticket.models import OpenIDIdentity, User
 from quickticket.oauth import OAuth2Client, OpenIDProvider, TokenExchangeResponse
 from quickticket.settings import FrontendSettings, OpenIDSettings, Settings
 from tests.conftest import AuthController
@@ -255,12 +255,12 @@ async def test_post_login_registers_user(
         assert user.first_name == "Test"
         assert user.last_name == "User"
 
-        account = await session.scalar(
-            select(OpenIDAccount).where(OpenIDAccount.user_id == user.id),
+        identity = await session.scalar(
+            select(OpenIDIdentity).where(OpenIDIdentity.user_id == user.id),
         )
-        assert account is not None
-        assert account.issuer == "https://idp.example"
-        assert account.sub == "test-sub"
+        assert identity is not None
+        assert identity.issuer == "https://idp.example"
+        assert identity.sub == "test-sub"
 
 
 async def test_profile_returns_registered_user(
