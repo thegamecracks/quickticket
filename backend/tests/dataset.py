@@ -1012,7 +1012,7 @@ A beautiful event space featuring **floor-to-ceiling windows** and modern amenit
 
 ## Ideal for
 Weddings, corporate events, and private parties.""",
-            theme="",
+            category="",
             location_name="88 Granville St.",
             location_coords=Point(lat=42.9694548, long=-81.2127519),
             created_at=datetime(2026, 10, 3, 0, tzinfo=UTC),
@@ -1031,7 +1031,7 @@ A charming rustic venue with exposed brick walls and **warm lighting**.
 
 ## Ideal for
 Intimate weddings, birthday celebrations, and small conferences.""",
-            theme="",
+            category="",
             location_name="Sycamore Cres.",
             location_coords=Point(lat=42.9694548, long=-81.2127519),
             created_at=datetime(2026, 10, 3, 1, tzinfo=UTC),
@@ -1050,7 +1050,7 @@ A state-of-the-art conference center with **flexible seating** and cutting-edge 
 
 ## Ideal for
 Conferences, product launches, and large corporate gatherings.""",
-            theme="",
+            category="",
             location_name="505 Rue Laurier O.",
             location_coords=Point(lat=42.9694548, long=-81.2127519),
             created_at=datetime(2026, 10, 3, 2, tzinfo=UTC),
@@ -1069,7 +1069,7 @@ A stunning waterfront venue offering **panoramic views** and elegant décor.
 
 ## Ideal for
 Weddings, anniversary parties, and upscale dinners.""",
-            theme="",
+            category="",
             location_name="600 Rue Saint-Jean",
             location_coords=Point(lat=42.9694548, long=-81.2127519),
             created_at=datetime(2026, 10, 3, 3, tzinfo=UTC),
@@ -1088,7 +1088,7 @@ A versatile community hall with **customizable layouts** and affordable pricing.
 
 ## Ideal for
 Community events, workshops, and birthday parties.""",
-            theme="",
+            category="",
             location_name="77 Rue du Marché Champlain",
             location_coords=Point(lat=42.9694548, long=-81.2127519),
             created_at=datetime(2026, 10, 3, 4, tzinfo=UTC),
@@ -1107,7 +1107,7 @@ A beautiful event space featuring **floor-to-ceiling windows** and modern amenit
 
 ## Ideal for
 Weddings, corporate events, and private parties.""",
-            theme="",
+            category="",
             location_name="505 Rue Laurier O.",
             location_coords=Point(lat=42.9694548, long=-81.2127519),
             created_at=datetime(2026, 10, 3, 5, tzinfo=UTC),
@@ -1126,7 +1126,7 @@ A charming rustic venue with exposed brick walls and **warm lighting**.
 
 ## Ideal for
 Intimate weddings, birthday celebrations, and small conferences.""",
-            theme="",
+            category="",
             location_name="888 Robson St.",
             location_coords=Point(lat=42.9694548, long=-81.2127519),
             created_at=datetime(2026, 10, 3, 6, tzinfo=UTC),
@@ -1145,7 +1145,7 @@ A state-of-the-art conference center with **flexible seating** and cutting-edge 
 
 ## Ideal for
 Conferences, product launches, and large corporate gatherings.""",
-            theme="",
+            category="",
             location_name="888 Robson St.",
             location_coords=Point(lat=42.9694548, long=-81.2127519),
             created_at=datetime(2026, 10, 3, 7, tzinfo=UTC),
@@ -1167,7 +1167,7 @@ Join us for an **elegant evening** of dinner, dancing, and live entertainment.
 ## Tickets
 - General Admission: $75
 - VIP Table: $500 (seats 8)""",
-            theme="",
+            category="",
             created_at=datetime(2026, 10, 4, tzinfo=UTC),
             starts_at=datetime(2026, 10, 5, tzinfo=UTC),
             ends_at=datetime(2026, 10, 6, tzinfo=UTC),
@@ -1187,7 +1187,7 @@ A full-day conference featuring **industry leaders** and networking opportunitie
 - Digital Transformation
 - Sustainable Business
 - Leadership in Uncertain Times""",
-            theme="",
+            category="",
             created_at=datetime(2026, 10, 7, tzinfo=UTC),
             starts_at=datetime(2026, 10, 8, tzinfo=UTC),
             ends_at=datetime(2026, 10, 9, tzinfo=UTC),
@@ -1207,7 +1207,7 @@ Discover the latest trends in **wedding planning**, décor, and catering.
 - Live demonstrations
 - Vendor booths
 - Fashion show""",
-            theme="",
+            category="",
             created_at=datetime(2026, 10, 10, tzinfo=UTC),
             starts_at=datetime(2026, 10, 11, tzinfo=UTC),
             ends_at=datetime(2026, 10, 12, tzinfo=UTC),
@@ -1227,7 +1227,7 @@ An evening dedicated to supporting **local causes** through fine dining and auct
 - Children''s Hospital
 - Local Food Bank
 - Environmental Fund""",
-            theme="",
+            category="",
             created_at=datetime(2026, 10, 13, tzinfo=UTC),
             starts_at=datetime(2026, 10, 14, tzinfo=UTC),
             ends_at=datetime(2026, 10, 15, tzinfo=UTC),
@@ -1247,7 +1247,7 @@ Ring in the new year with **champagne, fireworks**, and dancing until midnight.
 - Open bar
 - Live DJ
 - Midnight toast""",
-            theme="",
+            category="",
             created_at=datetime(2026, 10, 16, tzinfo=UTC),
             starts_at=datetime(2026, 10, 17, tzinfo=UTC),
             ends_at=datetime(2026, 10, 18, tzinfo=UTC),
@@ -1266,7 +1266,7 @@ Join us for an **elegant evening** of dinner, dancing, and live entertainment.
 ## Tickets
 - General Admission: $75
 - VIP Table: $500 (seats 8)""",
-            theme="",
+            category="",
             created_at=datetime(2026, 10, 19, tzinfo=UTC),
             starts_at=datetime(2026, 10, 20, tzinfo=UTC),
             ends_at=datetime(2026, 10, 21, tzinfo=UTC),
@@ -1286,7 +1286,7 @@ A full-day conference featuring **industry leaders** and networking opportunitie
 - Digital Transformation
 - Sustainable Business
 - Leadership in Uncertain Times""",
-            theme="",
+            category="",
             created_at=datetime(2026, 10, 22, tzinfo=UTC),
             starts_at=datetime(2026, 10, 23, tzinfo=UTC),
             ends_at=datetime(2026, 10, 24, tzinfo=UTC),
@@ -1306,7 +1306,7 @@ Discover the latest trends in **wedding planning**, décor, and catering.
 - Live demonstrations
 - Vendor booths
 - Fashion show""",
-            theme="",
+            category="",
             created_at=datetime(2026, 10, 25, tzinfo=UTC),
             starts_at=datetime(2026, 10, 26, tzinfo=UTC),
             ends_at=datetime(2026, 10, 27, tzinfo=UTC),
@@ -1326,7 +1326,7 @@ An evening dedicated to supporting **local causes** through fine dining and auct
 - Children''s Hospital
 - Local Food Bank
 - Environmental Fund""",
-            theme="",
+            category="",
             created_at=datetime(2026, 10, 28, tzinfo=UTC),
             starts_at=datetime(2026, 10, 29, tzinfo=UTC),
             ends_at=datetime(2026, 10, 30, tzinfo=UTC),
@@ -1346,7 +1346,7 @@ Ring in the new year with **champagne, fireworks**, and dancing until midnight.
 - Open bar
 - Live DJ
 - Midnight toast""",
-            theme="",
+            category="",
             created_at=datetime(2026, 10, 31, tzinfo=UTC),
             starts_at=datetime(2026, 11, 1, tzinfo=UTC),
             ends_at=datetime(2026, 11, 2, tzinfo=UTC),
@@ -1365,7 +1365,7 @@ Join us for an **elegant evening** of dinner, dancing, and live entertainment.
 ## Tickets
 - General Admission: $75
 - VIP Table: $500 (seats 8)""",
-            theme="",
+            category="",
             created_at=datetime(2026, 11, 3, tzinfo=UTC),
             starts_at=datetime(2026, 11, 4, tzinfo=UTC),
             ends_at=datetime(2026, 11, 5, tzinfo=UTC),
@@ -1385,7 +1385,7 @@ A full-day conference featuring **industry leaders** and networking opportunitie
 - Digital Transformation
 - Sustainable Business
 - Leadership in Uncertain Times""",
-            theme="",
+            category="",
             created_at=datetime(2026, 11, 6, tzinfo=UTC),
             starts_at=datetime(2026, 11, 7, tzinfo=UTC),
             ends_at=datetime(2026, 11, 8, tzinfo=UTC),

@@ -67,7 +67,7 @@ class PartialVenue(BaseModel):
     created_at: AwareDatetime
     display_name: str
     description: str
-    theme: str
+    category: str
     thumbnail: PartialStorageObject | None
     banner: PartialStorageObject | None
     location_name: str
@@ -81,7 +81,7 @@ class EventRead(BaseModel):
     created_at: AwareDatetime
     display_name: str
     description: str
-    theme: str
+    category: str
     thumbnail: PartialStorageObject | None
     banner: PartialStorageObject | None
     starts_at: AwareDatetime
@@ -139,7 +139,7 @@ async def get_events(
             Venue.created_at,
             Venue.display_name,
             Venue.description,
-            Venue.theme,
+            Venue.category,
             Venue.location_name,
             Venue.location_coords,
         ),
@@ -192,7 +192,7 @@ def check_event_duration(*, starts_at: datetime, ends_at: datetime) -> None:
 
 
 EventDescription = Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
-EventTheme = Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
+EventCategory = Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
 EventMaxAttendees = Annotated[int, Field(ge=0, le=10000)]
 
 
@@ -200,7 +200,7 @@ class EventCreate(BaseModel):
     venue_id: VenueID
     display_name: DisplayNameField
     description: EventDescription
-    theme: EventTheme
+    category: EventCategory
     starts_at: FutureAwareDatetime
     ends_at: FutureAwareDatetime
     max_attendees: EventMaxAttendees
@@ -215,7 +215,7 @@ class EventCreate(BaseModel):
 class EventUpdate(BaseModel):
     display_name: DisplayNameField | MISSING = MISSING
     description: EventDescription | MISSING = MISSING
-    theme: EventTheme | MISSING = MISSING
+    category: EventCategory | MISSING = MISSING
     starts_at: FutureAwareDatetime | MISSING = MISSING
     ends_at: FutureAwareDatetime | MISSING = MISSING
     max_attendees: EventMaxAttendees | MISSING = MISSING
@@ -263,7 +263,7 @@ async def create_event(
         venue_id=event.venue_id,
         starts_at=event.starts_at,
         ends_at=event.ends_at,
-        theme=event.theme,
+        category=event.category,
         ticket_price=event.ticket_price,
         max_attendees=event.max_attendees,
     )

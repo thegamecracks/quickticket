@@ -161,7 +161,7 @@ export const MockVenues: Venue[] = [
     display_name: 'Classy Affairs - Venue 1',
     description:
       '## About\nA beautiful event space featuring **floor-to-ceiling windows** and modern amenities.\n\n## Features\n- Capacity: 200 guests\n- AV equipment included\n- On-site parking\n\n## Ideal for\nWeddings, corporate events, and private parties.',
-    theme: 'Banquet Hall',
+    category: 'Banquet Hall',
     thumbnail_url: '/images/music.jpg',
     banner_url: '/images/music.jpg',
     location_name: '88 Granville St.',
@@ -174,7 +174,7 @@ export const MockVenues: Venue[] = [
     display_name: "Suzy's Event Planning and Decor - Venue 1",
     description:
       '## About\nA charming rustic venue with exposed brick walls and **warm lighting**.\n\n## Features\n- Capacity: 150 guests\n- Outdoor courtyard\n- Full kitchen access\n\n## Ideal for\nIntimate weddings, birthday celebrations, and small conferences.',
-    theme: 'Rustic',
+    category: 'Rustic',
     thumbnail_url: '/images/art.jpg',
     banner_url: '/images/art.jpg',
     location_name: 'Sycamore Cres.',
@@ -187,7 +187,7 @@ export const MockVenues: Venue[] = [
     display_name: "Suzy's Event Planning and Decor - Venue 2",
     description:
       '## About\nA state-of-the-art conference center with **flexible seating** and cutting-edge technology.\n\n## Features\n- Capacity: 500 guests\n- Breakout rooms\n- Business center\n\n## Ideal for\nConferences, product launches, and large corporate gatherings.',
-    theme: 'Conference Center',
+    category: 'Conference Center',
     thumbnail_url: '/images/tech.jpg',
     banner_url: '/images/tech.jpg',
     location_name: '505 Rue Laurier O.',
@@ -200,7 +200,7 @@ export const MockVenues: Venue[] = [
     display_name: 'Golden Hour Gatherings - Venue 1',
     description:
       '## About\nA stunning waterfront venue offering **panoramic views** and elegant décor.\n\n## Features\n- Capacity: 300 guests\n- Outdoor terrace\n- Bridal suite\n\n## Ideal for\nWeddings, anniversary parties, and upscale dinners.',
-    theme: 'Waterfront',
+    category: 'Waterfront',
     thumbnail_url: '/images/jazz.jpg',
     banner_url: '/images/jazz.jpg',
     location_name: '600 Rue Saint-Jean',
@@ -213,7 +213,7 @@ export const MockVenues: Venue[] = [
     display_name: 'Golden Hour Gatherings - Venue 2',
     description:
       '## About\nA versatile community hall with **customizable layouts** and affordable pricing.\n\n## Features\n- Capacity: 100 guests\n- Stage available\n- Kitchen facilities\n\n## Ideal for\nCommunity events, workshops, and birthday parties.',
-    theme: 'Community Hall',
+    category: 'Community Hall',
     thumbnail_url: '/images/food.jpg',
     banner_url: '/images/food.jpg',
     location_name: '77 Rue du Marché Champlain',
@@ -226,7 +226,7 @@ export const MockVenues: Venue[] = [
     display_name: 'The Grand Occasion Co. - Venue 1',
     description:
       '## About\nA beautiful event space featuring **floor-to-ceiling windows** and modern amenities.\n\n## Features\n- Capacity: 200 guests\n- AV equipment included\n- On-site parking\n\n## Ideal for\nWeddings, corporate events, and private parties.',
-    theme: 'Banquet Hall',
+    category: 'Banquet Hall',
     thumbnail_url: '/images/comedy.jpg',
     banner_url: '/images/comedy.jpg',
     location_name: '505 Rue Laurier O.',
@@ -239,7 +239,7 @@ export const MockVenues: Venue[] = [
     display_name: 'Evergreen Celebrations Ltd. - Venue 1',
     description:
       '## About\nA charming rustic venue with exposed brick walls and **warm lighting**.\n\n## Features\n- Capacity: 150 guests\n- Outdoor courtyard\n- Full kitchen access\n\n## Ideal for\nIntimate weddings, birthday celebrations, and small conferences.',
-    theme: 'Rustic',
+    category: 'Rustic',
     thumbnail_url: '/images/art.jpg',
     banner_url: '/images/art.jpg',
     location_name: '888 Robson St.',
@@ -252,7 +252,7 @@ export const MockVenues: Venue[] = [
     display_name: 'Evergreen Celebrations Ltd. - Venue 2',
     description:
       '## About\nA state-of-the-art conference center with **flexible seating** and cutting-edge technology.\n\n## Features\n- Capacity: 500 guests\n- Breakout rooms\n- Business center\n\n## Ideal for\nConferences, product launches, and large corporate gatherings.',
-    theme: 'Conference Center',
+    category: 'Conference Center',
     thumbnail_url: '/images/tech.jpg',
     banner_url: '/images/tech.jpg',
     location_name: '888 Robson St.',
@@ -274,7 +274,7 @@ export const MockEvents: Event[] = [
     display_name: 'Event 1 at Classy Affairs',
     description:
       '## Annual Gala\nJoin us for an **elegant evening** of dinner, dancing, and live entertainment.\n\n- **Date:** Saturday, March 15th\n- **Time:** 6:00 PM - 11:00 PM\n- **Dress code:** Black tie optional\n\n## Tickets\n- General Admission: $75\n- VIP Table: $500 (seats 8)',
-    theme: 'Gala',
+    category: 'Gala',
     thumbnail_url: '/images/music.jpg',
     banner_url: '/images/music.jpg',
     starts_at: '2027-03-15T18:00:00.000Z',
@@ -289,7 +289,7 @@ export const MockEvents: Event[] = [
     display_name: 'Event 2 at Classy Affairs',
     description:
       '## Corporate Conference 2024\nA full-day conference featuring **industry leaders** and networking opportunities.\n\n- **Date:** Thursday, April 22nd\n- **Time:** 9:00 AM - 5:00 PM\n- **Lunch:** Included\n\n## Topics\n- Digital Transformation\n- Sustainable Business\n- Leadership in Uncertain Times',
-    theme: 'Conference',
+    category: 'Conference',
     thumbnail_url: '/images/tech.jpg',
     banner_url: '/images/tech.jpg',
     starts_at: '2027-04-22T09:00:00.000Z',
@@ -304,7 +304,7 @@ export const MockEvents: Event[] = [
     display_name: "Event 3 at Suzy's Event Planning and Decor",
     description:
       '## Summer Wedding Expo\nDiscover the latest trends in **wedding planning**, décor, and catering.\n\n- **Date:** Saturday, June 8th\n- **Time:** 11:00 AM - 4:00 PM\n- **Admission:** Free\n\n## Features\n- Live demonstrations\n- Vendor booths\n- Fashion show',
-    theme: 'Expo',
+    category: 'Expo',
     thumbnail_url: '/images/art.jpg',
     banner_url: '/images/art.jpg',
     starts_at: '2027-06-08T11:00:00.000Z',
@@ -319,7 +319,7 @@ export const MockEvents: Event[] = [
     display_name: "Event 4 at Suzy's Event Planning and Decor",
     description:
       '## Charity Dinner\nAn evening dedicated to supporting **local causes** through fine dining and auctions.\n\n- **Date:** Friday, September 20th\n- **Time:** 7:00 PM - 10:00 PM\n- **Ticket Price:** $120\n\n## Proceeds benefit\n- Children\'s Hospital\n- Local Food Bank\n- Environmental Fund',
-    theme: 'Charity',
+    category: 'Charity',
     thumbnail_url: '/images/food.jpg',
     banner_url: '/images/food.jpg',
     starts_at: '2027-09-20T19:00:00.000Z',
@@ -334,7 +334,7 @@ export const MockEvents: Event[] = [
     display_name: "Event 5 at Suzy's Event Planning and Decor",
     description:
       "## New Year's Eve Party\nRing in the new year with **champagne, fireworks**, and dancing until midnight.\n\n- **Date:** December 31st\n- **Time:** 9:00 PM - 2:00 AM\n- **Ticket Price:** $150\n\n## Includes\n- Open bar\n- Live DJ\n- Midnight toast",
-    theme: 'Party',
+    category: 'Party',
     thumbnail_url: '/images/music.jpg',
     banner_url: '/images/music.jpg',
     starts_at: '2026-12-31T21:00:00.000Z',
@@ -349,7 +349,7 @@ export const MockEvents: Event[] = [
     display_name: "Event 6 at Suzy's Event Planning and Decor",
     description:
       '## Annual Gala\nJoin us for an **elegant evening** of dinner, dancing, and live entertainment.\n\n- **Date:** Saturday, March 15th\n- **Time:** 6:00 PM - 11:00 PM\n- **Dress code:** Black tie optional\n\n## Tickets\n- General Admission: $75\n- VIP Table: $500 (seats 8)',
-    theme: 'Gala',
+    category: 'Gala',
     thumbnail_url: '/images/jazz.jpg',
     banner_url: '/images/jazz.jpg',
     starts_at: '2027-03-15T18:00:00.000Z',
@@ -364,7 +364,7 @@ export const MockEvents: Event[] = [
     display_name: "Event 7 at Suzy's Event Planning and Decor",
     description:
       '## Corporate Conference 2024\nA full-day conference featuring **industry leaders** and networking opportunities.\n\n- **Date:** Thursday, April 22nd\n- **Time:** 9:00 AM - 5:00 PM\n- **Lunch:** Included\n\n## Topics\n- Digital Transformation\n- Sustainable Business\n- Leadership in Uncertain Times',
-    theme: 'Conference',
+    category: 'Conference',
     thumbnail_url: '/images/tech.jpg',
     banner_url: '/images/tech.jpg',
     starts_at: '2027-04-22T09:00:00.000Z',
@@ -379,7 +379,7 @@ export const MockEvents: Event[] = [
     display_name: 'Event 8 at The Grand Occasion Co.',
     description:
       '## Summer Wedding Expo\nDiscover the latest trends in **wedding planning**, décor, and catering.\n\n- **Date:** Saturday, June 8th\n- **Time:** 11:00 AM - 4:00 PM\n- **Admission:** Free\n\n## Features\n- Live demonstrations\n- Vendor booths\n- Fashion show',
-    theme: 'Expo',
+    category: 'Expo',
     thumbnail_url: '/images/art.jpg',
     banner_url: '/images/art.jpg',
     starts_at: '2027-06-08T11:00:00.000Z',
@@ -394,7 +394,7 @@ export const MockEvents: Event[] = [
     display_name: 'Event 9 at The Grand Occasion Co.',
     description:
       '## Charity Dinner\nAn evening dedicated to supporting **local causes** through fine dining and auctions.\n\n- **Date:** Friday, September 20th\n- **Time:** 7:00 PM - 10:00 PM\n- **Ticket Price:** $120\n\n## Proceeds benefit\n- Children\'s Hospital\n- Local Food Bank\n- Environmental Fund',
-    theme: 'Charity',
+    category: 'Charity',
     thumbnail_url: '/images/food.jpg',
     banner_url: '/images/food.jpg',
     starts_at: '2027-09-20T19:00:00.000Z',
@@ -409,7 +409,7 @@ export const MockEvents: Event[] = [
     display_name: 'Event 10 at Evergreen Celebrations Ltd.',
     description:
       "## New Year's Eve Party\nRing in the new year with **champagne, fireworks**, and dancing until midnight.\n\n- **Date:** December 31st\n- **Time:** 9:00 PM - 2:00 AM\n- **Ticket Price:** $150\n\n## Includes\n- Open bar\n- Live DJ\n- Midnight toast",
-    theme: 'Party',
+    category: 'Party',
     thumbnail_url: '/images/music.jpg',
     banner_url: '/images/music.jpg',
     starts_at: '2026-12-31T21:00:00.000Z',
@@ -424,7 +424,7 @@ export const MockEvents: Event[] = [
     display_name: 'Event 11 at Evergreen Celebrations Ltd.',
     description:
       '## Annual Gala\nJoin us for an **elegant evening** of dinner, dancing, and live entertainment.\n\n- **Date:** Saturday, March 15th\n- **Time:** 6:00 PM - 11:00 PM\n- **Dress code:** Black tie optional\n\n## Tickets\n- General Admission: $75\n- VIP Table: $500 (seats 8)',
-    theme: 'Gala',
+    category: 'Gala',
     thumbnail_url: '/images/jazz.jpg',
     banner_url: '/images/jazz.jpg',
     starts_at: '2027-03-15T18:00:00.000Z',
@@ -439,7 +439,7 @@ export const MockEvents: Event[] = [
     display_name: 'Event 12 at Evergreen Celebrations Ltd.',
     description:
       '## Corporate Conference 2024\nA full-day conference featuring **industry leaders** and networking opportunities.\n\n- **Date:** Thursday, April 22nd\n- **Time:** 9:00 AM - 5:00 PM\n- **Lunch:** Included\n\n## Topics\n- Digital Transformation\n- Sustainable Business\n- Leadership in Uncertain Times',
-    theme: 'Conference',
+    category: 'Conference',
     thumbnail_url: '/images/tech.jpg',
     banner_url: '/images/tech.jpg',
     starts_at: '2027-04-22T09:00:00.000Z',

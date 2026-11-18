@@ -64,7 +64,7 @@ class PartialVenue(BaseModel):
     created_at: AwareDatetime
     display_name: str
     description: str
-    theme: str
+    category: str
     thumbnail: PartialStorageObject | None
     banner: PartialStorageObject | None
     location_name: str
@@ -126,7 +126,7 @@ class VenueReadEvent(BaseModel):
     created_at: AwareDatetime
     display_name: str
     description: str
-    theme: str
+    category: str
     thumbnail: PartialStorageObject | None
     banner: PartialStorageObject | None
     starts_at: AwareDatetime
@@ -142,7 +142,7 @@ class VenueRead(BaseModel):
     created_at: AwareDatetime
     display_name: str
     description: str
-    theme: str
+    category: str
     thumbnail: PartialStorageObject | None
     banner: PartialStorageObject | None
     location_name: str
@@ -179,7 +179,7 @@ async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: V
 
 
 VenueDescription = Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
-VenueTheme = Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
+VenueCategory = Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
 VenueLocationName = Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
 
 
@@ -187,7 +187,7 @@ class VenueCreate(BaseModel):
     organization_id: OrganizationID
     display_name: DisplayNameField
     description: VenueDescription
-    theme: VenueTheme
+    category: VenueCategory
     location_name: VenueLocationName
     location_coords: Point | None = None
 
@@ -195,7 +195,7 @@ class VenueCreate(BaseModel):
 class VenueUpdate(BaseModel):
     display_name: DisplayNameField | MISSING = MISSING
     description: VenueDescription | MISSING = MISSING
-    theme: VenueTheme | MISSING = MISSING
+    category: VenueCategory | MISSING = MISSING
     location_name: VenueLocationName | MISSING = MISSING
     location_coords: Point | MISSING | None = MISSING
 
@@ -229,7 +229,7 @@ async def create_venue(
         organization_id=controller.organization.id,
         display_name=venue.display_name,
         description=venue.description,
-        theme=venue.theme,
+        category=venue.category,
         location_name=venue.location_name,
         location_coords=venue.location_coords,
     )

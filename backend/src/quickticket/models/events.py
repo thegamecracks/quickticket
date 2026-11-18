@@ -38,7 +38,7 @@ class Event(Base, kw_only=True, repr=False):
     )
     display_name: Mapped[str_128]
     description: Mapped[str_4096]
-    theme: Mapped[str_128]
+    category: Mapped[str_128]
     starts_at: Mapped[current_timestamp]  # requires user input
     ends_at: Mapped[current_timestamp]  # requires user input
     # TODO: enforce starts_at <= ends_at at database level

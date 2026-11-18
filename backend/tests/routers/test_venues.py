@@ -57,7 +57,7 @@ async def test_get_venues(
             "created_at": isoformat(venue.created_at),
             "display_name": venue.display_name,
             "description": venue.description,
-            "theme": venue.theme,
+            "category": venue.category,
             "thumbnail": None,
             "banner": None,
             "location_name": venue.location_name,
@@ -114,7 +114,7 @@ async def test_get_venue(
         "created_at": isoformat(venue.created_at),
         "display_name": venue.display_name,
         "description": venue.description,
-        "theme": venue.theme,
+        "category": venue.category,
         "thumbnail": None,
         "banner": None,
         "location_name": venue.location_name,
@@ -136,7 +136,7 @@ async def test_get_venue(
             "created_at": isoformat(expected.created_at),
             "display_name": expected.display_name,
             "description": expected.description,
-            "theme": expected.theme,
+            "category": expected.category,
             "thumbnail": None,
             "banner": None,
             "starts_at": isoformat(expected.starts_at),
@@ -178,7 +178,7 @@ async def test_create_venue(
             "organization_id": str(organization.id),
             "display_name": "Test Venue",
             "description": "A venue for testing.",
-            "theme": "Sports",
+            "category": "Sports",
             "location_name": "Test Stadium",
             "location_coords": {"lat": 48.8584, "long": 2.2945},
         },
@@ -192,7 +192,7 @@ async def test_create_venue(
     assert data["created_at"] is not None
     assert data["display_name"] == "Test Venue"
     assert data["description"] == "A venue for testing."
-    assert data["theme"] == "Sports"
+    assert data["category"] == "Sports"
     assert data["location_name"] == "Test Stadium"
     assert data["location_coords"] == {"lat": 48.8584, "long": 2.2945}
     assert data["thumbnail"] is None
@@ -208,14 +208,14 @@ async def test_create_venue(
         assert persisted.organization_id == organization.id
         assert persisted.display_name == "Test Venue"
         assert persisted.description == "A venue for testing."
-        assert persisted.theme == "Sports"
+        assert persisted.category == "Sports"
         assert persisted.location_name == "Test Stadium"
         assert persisted.location_coords == Point(lat=48.8584, long=2.2945)
 
 
 @pytest.mark.parametrize(
     "field",
-    ["organization_id", "display_name", "description", "theme", "location_name"],
+    ["organization_id", "display_name", "description", "category", "location_name"],
 )
 async def test_create_venue_missing_required_field(
     client: AsyncClient,
@@ -238,7 +238,7 @@ async def test_create_venue_missing_required_field(
         "organization_id": str(organization.id),
         "display_name": "Test Venue",
         "description": "A venue for testing.",
-        "theme": "Sports",
+        "category": "Sports",
         "location_name": "Test Stadium",
         "location_coords": {"lat": 48.8584, "long": 2.2945},
     }
@@ -273,7 +273,7 @@ async def test_create_venue_without_location_coords(
             "organization_id": str(organization.id),
             "display_name": "Virtual Venue",
             "description": "A venue for testing online events.",
-            "theme": "Music",
+            "category": "Music",
             "location_name": "Zoom",
             "location_coords": None,
         },
@@ -324,7 +324,7 @@ async def test_create_venue_unauthenticated(
             "organization_id": str(organization.id),
             "display_name": "Test Venue",
             "description": "A venue for testing.",
-            "theme": "Sports",
+            "category": "Sports",
             "location_name": "Test Stadium",
             "location_coords": {"lat": 48.8584, "long": 2.2945},
         },
@@ -345,7 +345,7 @@ async def test_create_venue_nonexistent_organization(
             "organization_id": "00000000-0000-0000-0000-000000000000",
             "display_name": "Test Venue",
             "description": "A venue for testing.",
-            "theme": "Sports",
+            "category": "Sports",
             "location_name": "Test Stadium",
             "location_coords": {"lat": 48.8584, "long": 2.2945},
         },
@@ -373,7 +373,7 @@ async def test_create_venue_non_member(
             "organization_id": str(organization.id),
             "display_name": "Test Venue",
             "description": "A venue for testing.",
-            "theme": "Sports",
+            "category": "Sports",
             "location_name": "Test Stadium",
             "location_coords": {"lat": 48.8584, "long": 2.2945},
         },
@@ -406,7 +406,7 @@ async def test_create_venue_member_insufficient_permissions(
             "organization_id": str(organization.id),
             "display_name": "Test Venue",
             "description": "A venue for testing.",
-            "theme": "Sports",
+            "category": "Sports",
             "location_name": "Test Stadium",
             "location_coords": {"lat": 48.8584, "long": 2.2945},
         },
@@ -442,7 +442,7 @@ async def test_create_venue_reached_limit(
                 "organization_id": str(organization.id),
                 "display_name": f"Test Venue {i}",
                 "description": "A venue for testing.",
-                "theme": "Sports",
+                "category": "Sports",
                 "location_name": "Test Stadium",
                 "location_coords": {"lat": 48.8584, "long": 2.2945},
             },
@@ -455,7 +455,7 @@ async def test_create_venue_reached_limit(
             "organization_id": str(organization.id),
             "display_name": "One Venue Too Many",
             "description": "A venue for testing.",
-            "theme": "Sports",
+            "category": "Sports",
             "location_name": "Test Stadium",
             "location_coords": {"lat": 48.8584, "long": 2.2945},
         },

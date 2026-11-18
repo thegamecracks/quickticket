@@ -71,7 +71,7 @@ async def venue(make_session: async_sessionmaker[AsyncSession], user: User) -> V
         organization_id=organization.id,
         display_name="Test Venue",
         description="A venue for testing.",
-        theme="Sports",
+        category="Sports",
         location_name="Test Stadium",
     )
 

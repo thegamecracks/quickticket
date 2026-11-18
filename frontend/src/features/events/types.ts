@@ -13,7 +13,7 @@ export interface Venue {
   created_at: string; // ISO 8601 datetime
   display_name: string;
   description: string; // markdown
-  theme: string;
+  category: string;
   thumbnail_url: string;
   banner_url: string;
   location_name: string;
@@ -26,7 +26,7 @@ export type Event = {
   created_at: string; // ISO 8601 datetime
   display_name: string;
   description: string; // markdown
-  theme: string;
+  category: string;
   thumbnail_url: string;
   banner_url: string;
   starts_at: string; // ISO 8601 datetime of event start
@@ -44,7 +44,7 @@ export interface VenueBase {
   created_at: string; // ISO 8601 datetime
   display_name: string;
   description: string; // markdown
-  theme: string;
+  category: string;
   thumbnail: StorageObjectRef | null;
   banner: StorageObjectRef | null;
   location_name: string;
@@ -57,7 +57,7 @@ export type EventResponse = {
   created_at: string; // ISO 8601 datetime
   display_name: string;
   description: string; // markdown
-  theme: string;
+  category: string;
   thumbnail: StorageObjectRef | null;
   banner: StorageObjectRef | null;
   starts_at: string; // ISO 8601 datetime of event start

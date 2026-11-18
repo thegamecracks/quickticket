@@ -113,7 +113,7 @@ async def seed_entity(
         organization_id=organization.id,
         display_name="Test Venue",
         description="A venue for testing.",
-        theme="Sports",
+        category="Sports",
         location_name="Test Stadium",
     )
     models: list[Any] = [organization, venue]
@@ -135,7 +135,7 @@ async def seed_entity(
             venue_id=venue.id,
             display_name="Test Event",
             description="An event for testing.",
-            theme="Sports",
+            category="Sports",
             starts_at=datetime.now(UTC) + timedelta(days=1),
             ends_at=datetime.now(UTC) + timedelta(days=2),
         )

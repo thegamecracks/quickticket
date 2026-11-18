@@ -13,7 +13,7 @@ export interface OrganizationEvent {
   created_at: string; // ISO 8601 datetime
   display_name: string;
   description: string; // markdown
-  theme: string;
+  category: string;
   thumbnail: StorageObjectRef | null;
   banner: StorageObjectRef | null;
 }
@@ -24,7 +24,7 @@ export interface OrganizationVenue {
   created_at: string; // ISO 8601 datetime
   display_name: string;
   description: string; // markdown
-  theme: string;
+  category: string;
   thumbnail: StorageObjectRef | null;
   banner: StorageObjectRef | null;
   events: OrganizationEvent[];

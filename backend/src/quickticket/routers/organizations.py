@@ -82,7 +82,7 @@ class PartialEvent(BaseModel):
     created_at: AwareDatetime
     display_name: str
     description: str
-    theme: str
+    category: str
     thumbnail: PartialStorageObject | None
     banner: PartialStorageObject | None
     # starts_at: AwareDatetime
@@ -96,7 +96,7 @@ class PartialVenue(BaseModel):
     created_at: AwareDatetime
     display_name: str
     description: str
-    theme: str
+    category: str
     thumbnail: PartialStorageObject | None
     banner: PartialStorageObject | None
     # location_name: str
@@ -136,7 +136,7 @@ async def get_organization(
                 Venue.created_at,
                 Venue.display_name,
                 Venue.description,
-                Venue.theme,
+                Venue.category,
             )
             .selectinload(Venue.events)
             .load_only(
@@ -144,7 +144,7 @@ async def get_organization(
                 Event.created_at,
                 Event.display_name,
                 Event.description,
-                Event.theme,
+                Event.category,
             )
             .selectinload(
                 # TODO: return all tickets if user has permission from organization

@@ -30,7 +30,7 @@ EVENT_KEYS = frozenset(
         "id",
         "max_attendees",
         "starts_at",
-        "theme",
+        "category",
         "thumbnail",
         "ticket_price",
         "tickets",
@@ -79,7 +79,7 @@ async def test_get_events(
                 "created_at": isoformat(expected.created_at),
                 "display_name": expected.display_name,
                 "description": expected.description,
-                "theme": expected.theme,
+                "category": expected.category,
                 "thumbnail": None,
                 "banner": None,
                 "starts_at": isoformat(expected.starts_at),
@@ -92,7 +92,7 @@ async def test_get_events(
                     "created_at": isoformat(expected.venue.created_at),
                     "display_name": expected.venue.display_name,
                     "description": expected.venue.description,
-                    "theme": expected.venue.theme,
+                    "category": expected.venue.category,
                     "thumbnail": None,
                     "banner": None,
                     "location_name": expected.venue.location_name,
@@ -290,7 +290,7 @@ async def test_get_event(
     assert data["created_at"] is not None
     assert data["display_name"] == event.display_name
     assert data["description"] == event.description
-    assert data["theme"] == event.theme
+    assert data["category"] == event.category
     assert data["thumbnail"] is None
     assert data["banner"] is None
     assert datetime.fromisoformat(data["starts_at"]) == event.starts_at
@@ -304,7 +304,7 @@ async def test_get_event(
         "created_at",
         "display_name",
         "description",
-        "theme",
+        "category",
         "thumbnail",
         "banner",
         "location_name",
@@ -315,7 +315,7 @@ async def test_get_event(
     assert data["venue"]["created_at"] is not None
     assert data["venue"]["display_name"] == venue.display_name
     assert data["venue"]["description"] == venue.description
-    assert data["venue"]["theme"] == venue.theme
+    assert data["venue"]["category"] == venue.category
     assert data["venue"]["thumbnail"] is None
     assert data["venue"]["banner"] is None
     assert data["venue"]["location_name"] == venue.location_name
@@ -356,7 +356,7 @@ async def test_create_event(
             organization_id=organization.id,
             display_name="Test Venue",
             description="A venue for testing.",
-            theme="Sports",
+            category="Sports",
             location_name="Test Stadium",
         )
         session.add_all([organization, member, venue])
@@ -369,7 +369,7 @@ async def test_create_event(
             "venue_id": str(venue.id),
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
-            "theme": "Sports",
+            "category": "Sports",
             "starts_at": isoformat(starts_at),
             "ends_at": isoformat(ends_at),
             "max_attendees": 500,
@@ -394,7 +394,7 @@ async def test_create_event(
     assert data["venue"]["organization"]["display_name"] == "Test Organization"
 
     assert data["venue"]["description"] == "A venue for testing."
-    assert data["venue"]["theme"] == "Sports"
+    assert data["venue"]["category"] == "Sports"
     assert data["venue"]["location_name"] == "Test Stadium"
     assert data["venue"]["location_coords"] is None
 
@@ -422,7 +422,7 @@ async def test_create_event_no_permissions(
             organization_id=organization.id,
             display_name="Test Venue",
             description="A venue for testing.",
-            theme="Sports",
+            category="Sports",
             location_name="Test Stadium",
         )
         session.add_all([organization, member, venue])
@@ -435,7 +435,7 @@ async def test_create_event_no_permissions(
             "venue_id": str(venue.id),
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
-            "theme": "Sports",
+            "category": "Sports",
             "starts_at": isoformat(starts_at),
             "ends_at": isoformat(ends_at),
             "max_attendees": 500,
@@ -474,7 +474,7 @@ async def test_create_event_no_venue(
             "venue_id": "00000000-0000-0000-0000-000000000000",
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
-            "theme": "Sports",
+            "category": "Sports",
             "starts_at": isoformat(starts_at),
             "ends_at": isoformat(ends_at),
             "max_attendees": 500,
@@ -496,7 +496,7 @@ async def test_create_event_rejects_max_attendees_below_minimum(
             "venue_id": "00000000-0000-0000-0000-000000000000",
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
-            "theme": "Sports",
+            "category": "Sports",
             "starts_at": isoformat(starts_at),
             "ends_at": isoformat(ends_at),
             "max_attendees": -1,
@@ -517,7 +517,7 @@ async def test_create_event_rejects_max_attendees_above_maximum(
             "venue_id": "00000000-0000-0000-0000-000000000000",
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
-            "theme": "Sports",
+            "category": "Sports",
             "starts_at": isoformat(starts_at),
             "ends_at": isoformat(ends_at),
             "max_attendees": 10001,
@@ -538,7 +538,7 @@ async def test_create_event_rejects_naive_datetimes(
             "venue_id": "00000000-0000-0000-0000-000000000000",
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
-            "theme": "Sports",
+            "category": "Sports",
             "starts_at": starts_at.isoformat(),
             "ends_at": ends_at.isoformat(),
             "max_attendees": 500,
@@ -565,7 +565,7 @@ async def test_create_event_rejects_past_datetimes(
             "venue_id": "00000000-0000-0000-0000-000000000000",
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
-            "theme": "Sports",
+            "category": "Sports",
             "starts_at": isoformat(starts_at),
             "ends_at": isoformat(ends_at),
             "max_attendees": 500,
@@ -592,7 +592,7 @@ async def test_create_event_rejects_ends_at_before_starts_at(
             "venue_id": "00000000-0000-0000-0000-000000000000",
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
-            "theme": "Sports",
+            "category": "Sports",
             "starts_at": isoformat(starts_at),
             "ends_at": isoformat(ends_at),
             "max_attendees": 500,
@@ -620,7 +620,7 @@ async def test_create_event_rejects_duration_below_minimum(
             "venue_id": "00000000-0000-0000-0000-000000000000",
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
-            "theme": "Sports",
+            "category": "Sports",
             "starts_at": isoformat(starts_at),
             "ends_at": isoformat(ends_at),
             "max_attendees": 500,
@@ -646,7 +646,7 @@ async def test_create_event_rejects_duration_above_maximum(
             "venue_id": "00000000-0000-0000-0000-000000000000",
             "display_name": "Test Hockey Tournament",
             "description": "A mock hockey game, for testing.",
-            "theme": "Sports",
+            "category": "Sports",
             "starts_at": isoformat(starts_at),
             "ends_at": isoformat(ends_at),
             "max_attendees": 500,

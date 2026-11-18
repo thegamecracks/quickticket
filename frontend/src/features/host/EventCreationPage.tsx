@@ -8,7 +8,7 @@ import {
   getMockVenuesForOrganization,
 } from '../../lib/mocks'
 
-const themes = [
+const categories = [
   'Music',
   'Comedy',
   'Art',
@@ -46,8 +46,8 @@ export default function EventCreationPage({
   // TODO: consolidate useStates
   const [displayName, setDisplayName] = useState('')
   const [description, setDescription] = useState('')
-  const [theme, setTheme] = useState('')
-  const [otherTheme, setOtherTheme] = useState('')
+  const [category, setCategory] = useState('')
+  const [otherCategory, setOtherCategory] = useState('')
   const [venueId, setVenueId] = useState(wizardVenueId ?? '')
   const [startsAt, setStartsAt] = useState('')
   const [endsAt, setEndsAt] = useState('')
@@ -77,8 +77,8 @@ export default function EventCreationPage({
   const clearForm = () => {
     setDisplayName('')
     setDescription('')
-    setTheme('')
-    setOtherTheme('')
+    setCategory('')
+    setOtherCategory('')
     setVenueId(wizardVenueId ?? '')
     setStartsAt('')
     setEndsAt('')
@@ -94,9 +94,9 @@ export default function EventCreationPage({
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    if (theme === 'Other' && !otherTheme.trim()) {
+    if (category === 'Other' && !otherCategory.trim()) {
       setIsError(true)
-      setMessage('Please enter the event theme.')
+      setMessage('Please enter the event category.')
       return
     }
 
@@ -106,14 +106,14 @@ export default function EventCreationPage({
       return
     }
 
-    const finalTheme =
-      theme === 'Other' ? otherTheme.trim() : theme
+    const finalCategory =
+      category === 'Other' ? otherCategory.trim() : category
 
     const mockEvent: Omit<Event, 'id' | 'created_at'> = {
       venue_id: venueId,
       display_name: displayName,
       description,
-      theme: finalTheme,
+      category: finalCategory,
       // Fall back to the shared placeholder so cards never render a broken image.
       thumbnail_url:
         thumbnailUrl ||
@@ -202,33 +202,33 @@ export default function EventCreationPage({
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
               <div>
                 <label
-                  htmlFor="theme"
+                  htmlFor="category"
                   className="mb-2 block text-sm font-medium"
                 >
-                  Theme
+                  Category
                 </label>
 
                 <select
-                  id="theme"
+                  id="category"
                   className="select select-bordered w-full"
-                  value={theme}
+                  value={category}
                   onChange={(e) => {
-                    const selectedTheme = e.target.value
-                    setTheme(selectedTheme)
+                    const selectedCategory = e.target.value
+                    setCategory(selectedCategory)
 
-                    if (selectedTheme !== 'Other') {
-                      setOtherTheme('')
+                    if (selectedCategory !== 'Other') {
+                      setOtherCategory('')
                     }
                   }}
                   required
                 >
                   <option value="" disabled>
-                    Select a theme
+                    Select a category
                   </option>
 
-                  {themes.map((eventTheme) => (
-                    <option key={eventTheme} value={eventTheme}>
-                      {eventTheme}
+                  {categories.map((eventCategory) => (
+                    <option key={eventCategory} value={eventCategory}>
+                      {eventCategory}
                     </option>
                   ))}
                 </select>
@@ -262,22 +262,22 @@ export default function EventCreationPage({
               </div>
             </div>
 
-            {theme === 'Other' && (
+            {category === 'Other' && (
               <div>
                 <label
-                  htmlFor="otherTheme"
+                  htmlFor="otherCategory"
                   className="mb-2 block text-sm font-medium"
                 >
-                  Specify Theme
+                  Specify Category
                 </label>
 
                 <input
-                  id="otherTheme"
+                  id="otherCategory"
                   type="text"
                   className="input input-bordered w-full"
                   placeholder="Example: Fashion, Gaming, Education..."
-                  value={otherTheme}
-                  onChange={(e) => setOtherTheme(e.target.value)}
+                  value={otherCategory}
+                  onChange={(e) => setOtherCategory(e.target.value)}
                   maxLength={128}
                   required
                 />
