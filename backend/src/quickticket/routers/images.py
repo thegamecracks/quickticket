@@ -113,7 +113,7 @@ def create_banner_routes[T: BannerEntity](
             raise ORMEntityNotFound(entity_cls, entity_id)
 
         controller = await get_organization_controller(session, user, get_organization_id(entity))
-        controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
+        controller.assert_permissions(OrganizationMemberPermissions.OWNER)
 
         entity.banner = await images.upload_banner(entity, file, user=user)
         return entity.banner
@@ -135,7 +135,7 @@ def create_banner_routes[T: BannerEntity](
             raise ORMEntityNotFound(entity_cls, entity_id)
 
         controller = await get_organization_controller(session, user, get_organization_id(entity))
-        controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
+        controller.assert_permissions(OrganizationMemberPermissions.OWNER)
 
         banner = entity.banner
         if banner is None:
@@ -212,7 +212,7 @@ def create_thumbnail_routes[T: ThumbnailEntity](
             raise ORMEntityNotFound(entity_cls, entity_id)
 
         controller = await get_organization_controller(session, user, get_organization_id(entity))
-        controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
+        controller.assert_permissions(OrganizationMemberPermissions.OWNER)
 
         entity.thumbnail = await images.upload_thumbnail(entity, file, user=user)
         return entity.thumbnail
@@ -234,7 +234,7 @@ def create_thumbnail_routes[T: ThumbnailEntity](
             raise ORMEntityNotFound(entity_cls, entity_id)
 
         controller = await get_organization_controller(session, user, get_organization_id(entity))
-        controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
+        controller.assert_permissions(OrganizationMemberPermissions.OWNER)
 
         thumbnail = entity.thumbnail
         if thumbnail is None:

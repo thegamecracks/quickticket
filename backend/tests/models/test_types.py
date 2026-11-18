@@ -2,8 +2,10 @@ from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
 from pydantic import BaseModel, ValidationError
-from sqlalchemy.dialects import postgresql
+from sqlalchemy import JSON, TypeDecorator
+from sqlalchemy.dialects import mysql, postgresql
 
+from quickticket.models import MoneySerializer, PointSerializer
 from quickticket.models.types import MimeType, MimeTypeSerializer, TZDateTime
 
 
@@ -96,3 +98,17 @@ def test_mime_type_result_value_str() -> None:
 
 def test_mime_type_result_value_none() -> None:
     assert MimeTypeSerializer().process_result_value(None, postgresql.dialect()) is None
+
+
+@pytest.mark.parametrize("cls", [MoneySerializer, PointSerializer])
+def test_type_decorator_json_dialects(cls: type[TypeDecorator]) -> None:
+    serializer = cls()
+
+    impl = serializer.load_dialect_impl(mysql.dialect())
+    assert isinstance(impl, JSON)
+
+    impl = serializer.load_dialect_impl(postgresql.dialect())
+    assert isinstance(impl, postgresql.JSONB)
+
+    # impl = serializer.load_dialect_impl(sqlite.dialect())
+    # assert isinstance(impl, sqlite.JSONB)

@@ -17,7 +17,6 @@ from quickticket.models import User
 from quickticket.settings import DatabaseSettings, Settings
 
 
-@pytest.mark.asyncio
 async def test_engine_factory_reuses_engine(stack: AsyncExitStack, state: State) -> None:
     settings = Settings(
         _env_file=None,
@@ -31,7 +30,6 @@ async def test_engine_factory_reuses_engine(stack: AsyncExitStack, state: State)
     assert engine_1 is engine_2
 
 
-@pytest.mark.asyncio
 async def test_get_async_sessionmaker_reuses_sessionmaker(
     state: State,
     engine: AsyncEngine,
@@ -59,7 +57,6 @@ async def count_users(session: AsyncSession) -> int:
     return ret
 
 
-@pytest.mark.asyncio
 async def test_get_async_session_commits(
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
@@ -70,7 +67,6 @@ async def test_get_async_session_commits(
         assert await count_users(session) == 1
 
 
-@pytest.mark.asyncio
 async def test_get_async_session_rolls_back_on_error(
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
@@ -83,7 +79,6 @@ async def test_get_async_session_rolls_back_on_error(
         assert await count_users(session) == 0
 
 
-@pytest.mark.asyncio
 async def test_get_async_session_commits_on_forced_response(
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:
@@ -99,7 +94,6 @@ async def test_get_async_session_commits_on_forced_response(
         assert await count_users(session) == 1
 
 
-@pytest.mark.asyncio
 async def test_get_async_session_returns_aware_datetimes(
     make_session: async_sessionmaker[AsyncSession],
 ) -> None:

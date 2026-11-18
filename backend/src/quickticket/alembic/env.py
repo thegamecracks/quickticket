@@ -2,6 +2,7 @@ import asyncio
 import sys
 from logging.config import fileConfig
 
+import anyio
 from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
@@ -93,7 +94,11 @@ def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
 
     loop_factory = None if sys.platform != "win32" else asyncio.SelectorEventLoop
-    asyncio.run(run_async_migrations(), loop_factory=loop_factory)
+    anyio.run(
+        run_async_migrations,
+        backend="asyncio",
+        backend_options={"loop_factory": loop_factory},
+    )
 
 
 if context.is_offline_mode():

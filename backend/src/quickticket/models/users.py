@@ -28,15 +28,15 @@ if TYPE_CHECKING:
 __all__ = (
     "Address",
     "Notification",
-    "OpenIDAccount",
+    "OpenIDIdentity",
     "User",
 )
 
 
 class User(Base, kw_only=True, repr=False):
-    __tablename__ = "account"
+    __tablename__ = "users"
 
-    id: Mapped[UserID] = mapped_column("account_id", primary_key=True, default_factory=uuid7)
+    id: Mapped[UserID] = mapped_column("user_id", primary_key=True, default_factory=uuid7)
 
     # Required
     display_name: Mapped[str_128]
@@ -59,7 +59,7 @@ class User(Base, kw_only=True, repr=False):
         back_populates="user",
         **can_cascade_delete,
     )
-    openid_accounts: Mapped[list[OpenIDAccount]] = relationship(
+    openid_identities: Mapped[list[OpenIDIdentity]] = relationship(
         default_factory=list,
         back_populates="user",
         **can_cascade_delete,
@@ -88,20 +88,20 @@ class User(Base, kw_only=True, repr=False):
     )
 
 
-class OpenIDAccount(Base, kw_only=True, repr=False):
-    __tablename__ = "account_openid"
+class OpenIDIdentity(Base, kw_only=True, repr=False):
+    __tablename__ = "openid_identity"
 
     # Required
     issuer: Mapped[str] = mapped_column(String(2000), primary_key=True)
-    """The OpenID provider that issued this account."""
+    """The OpenID provider that issued this identity."""
     sub: Mapped[str] = mapped_column(String(2000), primary_key=True)
-    """The provider's unique identifier for this account."""
-    account_id: Mapped[UserID] = mapped_column(
-        ForeignKey("account.account_id", ondelete="CASCADE"),
+    """The provider's unique identifier for this user."""
+    user_id: Mapped[UserID] = mapped_column(
+        ForeignKey("users.user_id", ondelete="CASCADE"),
         default=None,
         index=True,
     )
-    """The account that linked this provider's identity."""
+    """The user that linked this provider's identity."""
 
     # Optional
     id_token: Mapped[str | None] = mapped_column(default=None)
@@ -115,7 +115,7 @@ class OpenIDAccount(Base, kw_only=True, repr=False):
     # Relationships
     user: Mapped[User] = relationship(
         default=None,
-        back_populates="openid_accounts",
+        back_populates="openid_identities",
     )
 
 
@@ -125,8 +125,8 @@ class Address(Base, kw_only=True, repr=False):
     id: Mapped[AddressID] = mapped_column("address_id", primary_key=True, default_factory=uuid7)
 
     # Required
-    account_id: Mapped[UserID] = mapped_column(
-        ForeignKey("account.account_id", ondelete="CASCADE"),
+    user_id: Mapped[UserID] = mapped_column(
+        ForeignKey("users.user_id", ondelete="CASCADE"),
         default=None,
         index=True,
     )
@@ -153,8 +153,8 @@ class Notification(Base, kw_only=True, repr=False):
     )
 
     # Required
-    account_id: Mapped[UserID] = mapped_column(
-        ForeignKey("account.account_id", ondelete="CASCADE"),
+    user_id: Mapped[UserID] = mapped_column(
+        ForeignKey("users.user_id", ondelete="CASCADE"),
         default=None,
         index=True,
     )

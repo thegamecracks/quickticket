@@ -11,7 +11,7 @@ type VenueType = 'physical' | 'virtual'
 type VenueFormState = {
   displayName: string
   description: string
-  theme: string
+  category: string
   venueType: VenueType
   streetAddress: string
   unit: string
@@ -24,7 +24,7 @@ type VenueFormState = {
 const initialVenueState: VenueFormState = {
   displayName: '',
   description: '',
-  theme: '',
+  category: '',
   venueType: 'physical',
   streetAddress: '',
   unit: '',
@@ -39,7 +39,7 @@ const validateVenueForm = (form: VenueFormState): string | undefined => {
   if (
     !form.displayName.trim() ||
     !form.description.trim() ||
-    !form.theme.trim()
+    !form.category.trim()
   ) {
     return 'Please complete all required venue details.'
   }
@@ -126,7 +126,7 @@ export default function CreateVenuePage() {
       return
     }
 
-    // Physical venues are geocoded to a (lat, long) pair; geocoding
+    // Physical venues are geocoded to a (lat, lng) pair; geocoding
     // failures fall back to null so the venue can still be saved.
     const location_coords =
       form.venueType === 'physical'
@@ -138,7 +138,7 @@ export default function CreateVenuePage() {
         organization_id,
         display_name: form.displayName.trim(),
         description: form.description.trim(),
-        theme: form.theme.trim(),
+        category: form.category.trim(),
         location_name: locationName,
         location_coords,
       })
@@ -168,7 +168,7 @@ export default function CreateVenuePage() {
       if (!loc) console.warn('Geocode returned no results for:', address)
 
       return loc
-        ? { lat: loc.lat(), long: loc.lng() }
+        ? { lat: loc.lat(), lng: loc.lng() }
         : null
     } catch (e) {
       console.error('Geocoding failed for:', address, e)
@@ -245,23 +245,23 @@ export default function CreateVenuePage() {
                 </p>
               </div>
 
-              {/* Theme */}
+              {/* Category */}
               <div>
                 <label
-                  htmlFor="venueTheme"
+                  htmlFor="venueCategory"
                   className="mb-2 block text-sm font-medium"
                 >
-                  Theme
+                  Category
                   <span className="text-error"> *</span>
                 </label>
 
                 <input
-                  id="venueTheme"
+                  id="venueCategory"
                   type="text"
                   className="input input-bordered w-full"
                   placeholder="e.g. Music, Conference, Art"
-                  value={form.theme}
-                  onChange={e => updateState({ theme: e.target.value })}
+                  value={form.category}
+                  onChange={e => updateState({ category: e.target.value })}
                   maxLength={128}
                   required
                 />

@@ -2,12 +2,12 @@
 # Invoke with `uv run python -m tests.scripts.insert_data`
 
 import argparse
-import asyncio
 import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from functools import cache
 
+import anyio
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from quickticket.logging import LogVerbosity, setup_logging
@@ -43,7 +43,11 @@ async def run_queries(session: AsyncSession) -> None:
 async def start_sessionmaker() -> AsyncGenerator[async_sessionmaker]:
     engine = create_async_engine(get_database_url())
     try:
-        yield async_sessionmaker(engine, expire_on_commit=False)
+        yield async_sessionmaker(
+            engine,
+            expire_on_commit=False,
+            join_transaction_mode="create_savepoint",
+        )
     finally:
         await engine.dispose()
 
@@ -64,4 +68,4 @@ def get_database_url() -> str:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main)

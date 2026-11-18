@@ -174,7 +174,6 @@ Alternatively, you can use [Docker Compose](#docker) which runs a worker for you
 | [pydantic-settings](https://pydantic.dev/docs/validation/latest/concepts/pydantic_settings/) | Settings management |
 | [pyinstrument](https://pyinstrument.readthedocs.io/en/latest/guide.html#profile-a-web-request-in-fastapi) | Sampling profiler |
 | [pytest](https://docs.pytest.org/en/stable/) | Test framework |
-| [pytest-asyncio](https://pytest-asyncio.readthedocs.io/en/stable/) | Async tests |
 | [redis](https://redis.io/docs/latest/develop/clients/redis-py/) | Redis client |
 | [rich](https://rich.readthedocs.io/en/stable/) | Rich text formatting |
 | [ruff](https://docs.astral.sh/ruff/) | Lint and format |

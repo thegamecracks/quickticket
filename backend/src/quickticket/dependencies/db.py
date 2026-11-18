@@ -19,6 +19,7 @@ __all__ = (
     "AsyncEngineFactory",
     "AsyncSessionDep",
     "AsyncSessionMakerDep",
+    "engine_factory",
     "get_async_session",
     "get_async_sessionmaker",
 )
@@ -38,6 +39,7 @@ class _SQLiteConnection(sqlite3.Connection):
         autocommit = self.autocommit
         self.autocommit = True
         self.execute("PRAGMA foreign_keys=ON")
+        self.execute("PRAGMA journal_mode=WAL")
         self.autocommit = autocommit
 
 
@@ -81,7 +83,11 @@ async def get_async_sessionmaker(
     if make_session is not None:
         return make_session
 
-    state.make_session = async_sessionmaker(engine, expire_on_commit=False)
+    state.make_session = async_sessionmaker(
+        engine,
+        expire_on_commit=False,
+        join_transaction_mode="create_savepoint",
+    )
     return state.make_session
 
 
@@ -97,7 +103,7 @@ async def get_async_session(
             raise
 
 
-_engine_factory = AsyncEngineFactory()
-AsyncEngineDep = Annotated[AsyncEngine, Depends(_engine_factory)]
+engine_factory = AsyncEngineFactory()
+AsyncEngineDep = Annotated[AsyncEngine, Depends(engine_factory)]
 AsyncSessionDep = Annotated[AsyncSession, Depends(get_async_session, scope="function")]
 AsyncSessionMakerDep = Annotated[async_sessionmaker[AsyncSession], Depends(get_async_sessionmaker)]

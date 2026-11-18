@@ -19,8 +19,8 @@ from sqlalchemy.orm import selectinload
 from starlette.routing import get_route_path
 
 from quickticket.dependencies.auth import OptionalUserDep
-from quickticket.dependencies.images import ImageService
-from quickticket.dependencies.ratelimits import get_request_limits
+from quickticket.dependencies.images import MIN_FILESIZE, ImageService
+from quickticket.dependencies.ratelimits import get_ratelimit_rules, get_request_limits
 from quickticket.dependencies.store import Store
 from quickticket.models import (
     Event,
@@ -38,10 +38,11 @@ ENTITY_CLASSES = pytest.mark.parametrize("entity_cls", [Venue, Event], ids=["ven
 IMAGE_KINDS = pytest.mark.parametrize("kind", ["banner", "thumbnail"])
 NOT_FOUND_ID = UUID("00000000-0000-0000-0000-000000000000")
 
-# The black image fixture is processed (and resized) by ImageService.
-EXPECTED_IMAGES = {
-    "banner": ("89027eaa09acace3d55ed283e3007d64.jpeg", 6816),
-    "thumbnail": ("c1d63c1ff5a9ab109549495ff43f90f9.jpeg", 2103),
+# ImageOps.contain() results for the 640x640 black image fixture, which is
+# upscaled to fill the configured maximum box for each image kind.
+EXPECTED_SIZES = {
+    "banner": (1024, 1024),
+    "thumbnail": (512, 512),
 }
 
 
@@ -99,9 +100,7 @@ async def seed_entity(
     entity_cls: type[Venue | Event],
     user: User,
     *,
-    permissions: OrganizationMemberPermissions | None = (
-        OrganizationMemberPermissions.ADMINISTRATOR
-    ),
+    permissions: OrganizationMemberPermissions | None = (OrganizationMemberPermissions.OWNER),
 ) -> SeededEntity:
     """Create an organization and one entity owned by it.
 
@@ -114,7 +113,7 @@ async def seed_entity(
         organization_id=organization.id,
         display_name="Test Venue",
         description="A venue for testing.",
-        theme="Sports",
+        category="Sports",
         location_name="Test Stadium",
     )
     models: list[Any] = [organization, venue]
@@ -123,7 +122,7 @@ async def seed_entity(
         models.append(
             OrganizationMember(
                 organization_id=organization.id,
-                account_id=user.id,
+                user_id=user.id,
                 permissions=permissions,
             ),
         )
@@ -136,7 +135,7 @@ async def seed_entity(
             venue_id=venue.id,
             display_name="Test Event",
             description="An event for testing.",
-            theme="Sports",
+            category="Sports",
             starts_at=datetime.now(UTC) + timedelta(days=1),
             ends_at=datetime.now(UTC) + timedelta(days=2),
         )
@@ -185,6 +184,12 @@ def too_small_image() -> UploadFile:
 
 
 @pytest.fixture
+def tiny_image() -> UploadFile:
+    """A valid image below MIN_FILESIZE, rejected before it is processed."""
+    return make_image((128, 128))
+
+
+@pytest.fixture
 def too_large_image() -> UploadFile:
     """Width is within bounds, but the height exceeds MAX_DIMENSIONS."""
     return make_image((128, 6685))
@@ -205,7 +210,8 @@ def override_image_limits(
             path = get_route_path(request.scope)
             if request.method == method and path.endswith(("/banner", "/thumbnail")):
                 return [parse(limit)]
-            return await get_request_limits(request, user)
+            rules = await get_ratelimit_rules()
+            return await get_request_limits(request, user, rules)
 
         monkeypatch.setitem(app.dependency_overrides, get_request_limits, override)
 
@@ -228,6 +234,22 @@ def animated_image() -> UploadFile:
 
 
 @pytest.fixture
+def oversized_animated_image() -> UploadFile:
+    """Animated and too large, so the animation check must win over the size check."""
+    frames = [Image.new("L", (6685, 128), color=color) for color in (0, 255)]
+    with BytesIO() as f:
+        frames[0].save(
+            f,
+            "webp",
+            save_all=True,
+            append_images=frames[1:],
+            duration=100,
+            loop=0,
+        )
+        return make_upload_file(f.getvalue(), filename="animated.webp")
+
+
+@pytest.fixture
 def get_url_mock(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
     """Fake signed URLs; the real implementation requires a cloud object store."""
     mock = AsyncMock(return_value="https://example.com/image.jpeg")
@@ -235,7 +257,6 @@ def get_url_mock(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
     return mock
 
 
-@pytest.mark.asyncio
 @ENTITY_CLASSES
 @IMAGE_KINDS
 async def test_set_image(
@@ -253,25 +274,50 @@ async def test_set_image(
     assert response.status_code == 200
     data = response.json()
 
-    filename, filesize = EXPECTED_IMAGES[kind]
     assert set(data) == {"id", "filename", "filesize", "mime_type", "created_at"}
     assert data["id"] is not None
-    assert data["filename"] == filename
-    assert data["filesize"] == filesize
+    assert data["filename"].endswith(".jpeg")
     assert data["mime_type"] == "image/jpeg"
     assert data["created_at"] is not None
+
+    object_key = f"{kind}s/{seeded.entity.id}/{data['filename']}"
+    stored_bytes = bytes((await store.get_async(object_key)).bytes())
+    with Image.open(BytesIO(stored_bytes)) as processed:
+        assert processed.format == "JPEG"
+        assert processed.size == EXPECTED_SIZES[kind]
 
     stored = await get_stored_image(make_session, entity_cls, seeded.entity.id, kind)
     assert stored is not None
     assert stored.id == StorageObjectID(UUID(data["id"]))
-    assert stored.account_id == user.id
-    assert stored.filesize == filesize
+    assert stored.user_id == user.id
+    assert stored.filesize == len(stored_bytes)
+    assert data["filesize"] == len(stored_bytes)
 
-    head = await store.head_async(f"{kind}s/{seeded.entity.id}/{filename}")
-    assert head["size"] == filesize
+    head = await store.head_async(object_key)
+    assert head["size"] == len(stored_bytes)
 
 
-@pytest.mark.asyncio
+async def test_set_image_filename_is_content_addressed(
+    client: AsyncClient,
+    make_session: async_sessionmaker[AsyncSession],
+    user: User,
+    black_image_bytes: bytes,
+    alt_image: UploadFile,
+) -> None:
+    seeded = await seed_entity(make_session, Venue, user)
+
+    uploads = [
+        await put_image(client, seeded.entity, "banner", make_upload_file(black_image_bytes))
+        for _ in range(2)
+    ]
+    assert [response.status_code for response in uploads] == [200, 200]
+    assert uploads[0].json()["filename"] == uploads[1].json()["filename"]
+
+    alt = await put_image(client, seeded.entity, "banner", alt_image)
+    assert alt.status_code == 200
+    assert alt.json()["filename"] != uploads[0].json()["filename"]
+
+
 @ENTITY_CLASSES
 @IMAGE_KINDS
 async def test_get_image(
@@ -297,7 +343,6 @@ async def test_get_image(
     assert stored.id == StorageObjectID(UUID(put_response.json()["id"]))
 
 
-@pytest.mark.asyncio
 @ENTITY_CLASSES
 @IMAGE_KINDS
 async def test_get_image_not_set(
@@ -314,7 +359,6 @@ async def test_get_image_not_set(
     assert response.json() is None
 
 
-@pytest.mark.asyncio
 async def test_replace_image(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -337,7 +381,6 @@ async def test_replace_image(
     assert stored.id == StorageObjectID(UUID(second_data["id"]))
 
 
-@pytest.mark.asyncio
 async def test_replace_image_identical_bytes(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -360,7 +403,6 @@ async def test_replace_image_identical_bytes(
     assert objects[0].id == StorageObjectID(UUID(second.json()["id"]))
 
 
-@pytest.mark.asyncio
 @ENTITY_CLASSES
 @IMAGE_KINDS
 async def test_get_image_entity_not_found(
@@ -375,7 +417,6 @@ async def test_get_image_entity_not_found(
     }
 
 
-@pytest.mark.asyncio
 @ENTITY_CLASSES
 @IMAGE_KINDS
 async def test_get_image_entity_not_found_uppercase_id(
@@ -392,7 +433,6 @@ async def test_get_image_entity_not_found_uppercase_id(
     }
 
 
-@pytest.mark.asyncio
 @ENTITY_CLASSES
 @IMAGE_KINDS
 async def test_delete_image(
@@ -439,7 +479,6 @@ async def test_delete_image(
     assert response.json() == {"detail": "Image not set"}
 
 
-@pytest.mark.asyncio
 async def test_delete_image_preserves_other_image(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -485,7 +524,6 @@ async def test_delete_image_preserves_other_image(
     assert stored.id == thumbnail_id
 
 
-@pytest.mark.asyncio
 async def test_delete_image_store_failure(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -520,7 +558,6 @@ async def test_delete_image_store_failure(
     assert head["size"] == stored.filesize
 
 
-@pytest.mark.asyncio
 @IMAGE_KINDS
 async def test_delete_image_not_set(
     client: AsyncClient,
@@ -535,7 +572,6 @@ async def test_delete_image_not_set(
     assert response.json() == {"detail": "Image not set"}
 
 
-@pytest.mark.asyncio
 @ENTITY_CLASSES
 @IMAGE_KINDS
 async def test_delete_image_entity_not_found(
@@ -550,7 +586,6 @@ async def test_delete_image_entity_not_found(
     }
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("entity_cls", "kind"),
     [(Venue, "banner"), (Event, "thumbnail")],
@@ -573,7 +608,6 @@ async def test_set_image_unauthenticated(
     assert response.json() == {"detail": "Not authenticated"}
 
 
-@pytest.mark.asyncio
 @ENTITY_CLASSES
 async def test_set_image_non_member(
     client: AsyncClient,
@@ -591,7 +625,6 @@ async def test_set_image_non_member(
     }
 
 
-@pytest.mark.asyncio
 @ENTITY_CLASSES
 async def test_set_image_insufficient_permissions(
     client: AsyncClient,
@@ -611,13 +644,11 @@ async def test_set_image_insufficient_permissions(
     assert response.status_code == 403
     assert response.json() == {
         "detail": (
-            f"Organization member ({seeded.organization.id}, {user.id}) "
-            "missing permissions: ADMINISTRATOR"
+            f"Organization member ({seeded.organization.id}, {user.id}) missing permissions: OWNER"
         ),
     }
 
 
-@pytest.mark.asyncio
 async def test_set_image_forbidden_does_not_upload(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -636,7 +667,6 @@ async def test_set_image_forbidden_does_not_upload(
     assert [batch async for batch in store.list_async()] == []
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("entity_cls", "kind"),
     [(Venue, "banner"), (Event, "thumbnail")],
@@ -659,7 +689,6 @@ async def test_set_image_entity_not_found(
     }
 
 
-@pytest.mark.asyncio
 async def test_set_image_invalid_content_type(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -677,7 +706,6 @@ async def test_set_image_invalid_content_type(
     assert response.json() == {"detail": "Image format not accepted: text/plain"}
 
 
-@pytest.mark.asyncio
 async def test_set_image_oversized(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -696,7 +724,29 @@ async def test_set_image_oversized(
     }
 
 
-@pytest.mark.asyncio
+async def test_set_image_filesize_too_small(
+    client: AsyncClient,
+    make_session: async_sessionmaker[AsyncSession],
+    store: Store,
+    user: User,
+    tiny_image: UploadFile,
+) -> None:
+    # _check_file is shared by both kinds, so one kind suffices.
+    seeded = await seed_entity(make_session, Venue, user)
+    assert tiny_image.size is not None
+
+    response = await put_image(client, seeded.entity, "banner", tiny_image)
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": f"File size too small: {tiny_image.size:,d}B < {MIN_FILESIZE:,d}B",
+    }
+
+    async with make_session.begin() as session:
+        count = await session.scalar(select(func.count()).select_from(StorageObject))
+    assert count == 0
+    assert [batch async for batch in store.list_async()] == []
+
+
 async def test_set_image_dimensions_too_small(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -716,7 +766,6 @@ async def test_set_image_dimensions_too_small(
     assert [batch async for batch in store.list_async()] == []
 
 
-@pytest.mark.asyncio
 async def test_set_image_dimensions_too_large(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -736,7 +785,6 @@ async def test_set_image_dimensions_too_large(
     assert [batch async for batch in store.list_async()] == []
 
 
-@pytest.mark.asyncio
 async def test_set_image_unidentified(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -750,7 +798,6 @@ async def test_set_image_unidentified(
     assert response.json() == {"detail": "Image format not accepted"}
 
 
-@pytest.mark.asyncio
 async def test_set_image_decompression_bomb(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -767,7 +814,6 @@ async def test_set_image_decompression_bomb(
     assert response.json() == {"detail": "Image exceeds maximum pixel count"}
 
 
-@pytest.mark.asyncio
 async def test_set_image_animated(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -781,7 +827,19 @@ async def test_set_image_animated(
     assert response.json() == {"detail": "Animated image not accepted"}
 
 
-@pytest.mark.asyncio
+async def test_set_image_rejects_animation_before_dimensions(
+    client: AsyncClient,
+    make_session: async_sessionmaker[AsyncSession],
+    user: User,
+    oversized_animated_image: UploadFile,
+) -> None:
+    seeded = await seed_entity(make_session, Venue, user)
+
+    response = await put_image(client, seeded.entity, "banner", oversized_animated_image)
+    assert response.status_code == 415
+    assert response.json() == {"detail": "Animated image not accepted"}
+
+
 async def test_set_image_ratelimited(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -810,7 +868,6 @@ async def test_set_image_ratelimited(
     assert count == 1
 
 
-@pytest.mark.asyncio
 async def test_failed_set_image_counts_towards_ratelimit(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],
@@ -833,7 +890,6 @@ async def test_failed_set_image_counts_towards_ratelimit(
     assert limited.status_code == 429
 
 
-@pytest.mark.asyncio
 async def test_delete_image_ratelimited(
     client: AsyncClient,
     make_session: async_sessionmaker[AsyncSession],

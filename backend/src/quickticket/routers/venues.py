@@ -2,9 +2,10 @@ import logging
 from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
-from pydantic import AfterValidator, AwareDatetime, BaseModel, Field
+from pydantic import MISSING, AfterValidator, AwareDatetime, BaseModel, ConfigDict, Field
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.interfaces import ORMOption
 from sqlalchemy.sql.functions import count
 from starlette.status import HTTP_201_CREATED
 
@@ -22,6 +23,7 @@ from quickticket.models import (
     StorageObjectID,
     Ticket,
     TicketID,
+    User,
     Venue,
     VenueID,
 )
@@ -64,7 +66,7 @@ class PartialVenue(BaseModel):
     created_at: AwareDatetime
     display_name: str
     description: str
-    theme: str
+    category: str
     thumbnail: PartialStorageObject | None
     banner: PartialStorageObject | None
     location_name: str
@@ -105,7 +107,7 @@ async def get_venues(
         .load_only(Event.id)
         .selectinload(
             # TODO: return all tickets if user has permission from organization
-            Event.tickets.and_(Ticket.account_id == user.id if user is not None else false()),
+            Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
         )
         .load_only(Ticket.id),
         # Venue => Organization
@@ -126,7 +128,7 @@ class VenueReadEvent(BaseModel):
     created_at: AwareDatetime
     display_name: str
     description: str
-    theme: str
+    category: str
     thumbnail: PartialStorageObject | None
     banner: PartialStorageObject | None
     starts_at: AwareDatetime
@@ -142,7 +144,7 @@ class VenueRead(BaseModel):
     created_at: AwareDatetime
     display_name: str
     description: str
-    theme: str
+    category: str
     thumbnail: PartialStorageObject | None
     banner: PartialStorageObject | None
     location_name: str
@@ -152,40 +154,56 @@ class VenueRead(BaseModel):
     organization: PartialOrganization
 
 
-@router.get("/{venue_id}", response_model=VenueRead)
-async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: VenueID) -> Any:
-    """Get a venue by ID."""
-    venue = await session.scalar(
-        select(Venue)
-        .where(Venue.id == venue_id)
-        .options(
-            selectinload(Venue.banner).load_only(StorageObject.id),
-            selectinload(Venue.thumbnail).load_only(StorageObject.id),
-            # Venue => Events => Tickets
-            selectinload(Venue.events)
-            .selectinload(
-                # TODO: return all tickets if user has permission from organization
-                Event.tickets.and_(Ticket.account_id == user.id if user is not None else false()),
-            )
-            .load_only(Ticket.id),
-            # Venue => Organization
-            selectinload(Venue.organization),
-        ),
+def _create_options_for_get_venue(user: User | None) -> tuple[ORMOption, ...]:
+    return (
+        selectinload(Venue.banner).load_only(StorageObject.id),
+        selectinload(Venue.thumbnail).load_only(StorageObject.id),
+        # Venue => Events => Tickets
+        selectinload(Venue.events)
+        .selectinload(
+            # TODO: return all tickets if user has permission from organization
+            Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
+        )
+        .load_only(Ticket.id),
+        # Venue => Organization
+        selectinload(Venue.organization),
     )
+
+
+@router.get("/{venue_id}", response_model=VenueRead)
+async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: VenueID) -> Venue:
+    """Get a venue by ID."""
+    venue = await session.get(Venue, venue_id, options=_create_options_for_get_venue(user))
     if venue is None:
         raise HTTPException(404, "Not found")
 
     return venue
 
 
+VenueDescription = Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
+VenueCategory = Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
+VenueLocationName = Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
+
+
 class VenueCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     organization_id: OrganizationID
     display_name: DisplayNameField
-    description: Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
-    theme: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
-    location_name: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
-
+    description: VenueDescription
+    category: VenueCategory
+    location_name: VenueLocationName
     location_coords: Point | None = None
+
+
+class VenueUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    display_name: DisplayNameField | MISSING = MISSING
+    description: VenueDescription | MISSING = MISSING
+    category: VenueCategory | MISSING = MISSING
+    location_name: VenueLocationName | MISSING = MISSING
+    location_coords: Point | MISSING | None = MISSING
 
 
 @router.post(
@@ -203,7 +221,7 @@ async def create_venue(
 ) -> Venue:
     """Create a new venue in an organization."""
     controller = await get_organization_controller(session, user, venue.organization_id)
-    controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
+    controller.assert_permissions(OrganizationMemberPermissions.OWNER)
 
     venue_count = await session.scalar(
         select(count()).where(Venue.organization_id == controller.organization.id),
@@ -217,7 +235,7 @@ async def create_venue(
         organization_id=controller.organization.id,
         display_name=venue.display_name,
         description=venue.description,
-        theme=venue.theme,
+        category=venue.category,
         location_name=venue.location_name,
         location_coords=venue.location_coords,
     )
@@ -230,16 +248,29 @@ async def create_venue(
     return venue_orm
 
 
-@router.patch("/{venue_id}", deprecated=True)
+@router.patch("/{venue_id}", response_model=VenueRead)
 async def edit_venue(
     user: RequiredUserDep,
     session: AsyncSessionDep,
     venue_id: VenueID,
-) -> None:
+    changes: VenueUpdate,
+) -> Venue:
     """Edit a venue's details."""
-    # TODO: check authorization by organization
     # TODO: allow venue drafts?
-    raise HTTPException(501)
+    venue = await session.get(Venue, venue_id, options=_create_options_for_get_venue(user))
+    if venue is None:
+        raise HTTPException(404, "Not found")
+
+    controller = await get_organization_controller(session, user, venue.organization_id)
+    controller.assert_permissions(OrganizationMemberPermissions.OWNER)
+
+    if not changes.model_fields_set:
+        raise HTTPException(400, "No fields to update")
+
+    for name in changes.model_fields_set:
+        setattr(venue, name, getattr(changes, name))
+
+    return venue
 
 
 @router.delete("/{venue_id}", deprecated=True)

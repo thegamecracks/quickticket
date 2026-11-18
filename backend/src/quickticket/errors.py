@@ -55,7 +55,7 @@ class OrganizationMemberNotFound(UnauthorizedError):
 
 
 class UnauthorizedUser(UnauthorizedError):
-    """An account is not permitted to perform an operation."""
+    """A user is not permitted to perform an operation."""
 
     def __init__(self, user: User) -> None:
         super().__init__(f"User ({user.id}) is unauthorized")
@@ -69,7 +69,7 @@ class UnauthorizedOrganizationMember(UnauthorizedError):
         self.member = member
         self.required = required
         super().__init__(
-            f"Organization member ({member.organization_id}, {member.account_id}) "
+            f"Organization member ({member.organization_id}, {member.user_id}) "
             f"missing permissions: {', '.join(m._name_ for m in self.missing)}",
         )
 

@@ -38,7 +38,7 @@ class Venue(Base, kw_only=True, repr=False):
     )
     display_name: Mapped[str_128]
     description: Mapped[str_4096]
-    theme: Mapped[str_128]
+    category: Mapped[str_128]
     location_name: Mapped[str_128]
 
     # Optional

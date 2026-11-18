@@ -1,11 +1,20 @@
 import logging
-from datetime import timedelta
-from typing import Annotated, Any, ClassVar, Self
+from datetime import datetime, timedelta
+from typing import Annotated, Any, Self
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
-from pydantic import AfterValidator, AwareDatetime, BaseModel, Field, model_validator
+from pydantic import (
+    MISSING,
+    AfterValidator,
+    AwareDatetime,
+    BaseModel,
+    ConfigDict,
+    Field,
+    model_validator,
+)
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.interfaces import ORMOption
 from sqlalchemy.sql.functions import count
 from starlette.status import HTTP_201_CREATED
 
@@ -25,6 +34,7 @@ from quickticket.models import (
     StorageObjectID,
     Ticket,
     TicketID,
+    User,
     Venue,
     VenueID,
 )
@@ -40,6 +50,9 @@ from quickticket.validators import (
     FutureAwareDatetime,
     filter_string_field,
 )
+
+MIN_EVENT_DURATION = timedelta(hours=1)
+MAX_EVENT_DURATION = timedelta(days=7)
 
 router = APIRouter(tags=["Events"])
 log = logging.getLogger(__name__)
@@ -64,7 +77,7 @@ class PartialVenue(BaseModel):
     created_at: AwareDatetime
     display_name: str
     description: str
-    theme: str
+    category: str
     thumbnail: PartialStorageObject | None
     banner: PartialStorageObject | None
     location_name: str
@@ -78,7 +91,7 @@ class EventRead(BaseModel):
     created_at: AwareDatetime
     display_name: str
     description: str
-    theme: str
+    category: str
     thumbnail: PartialStorageObject | None
     banner: PartialStorageObject | None
     starts_at: AwareDatetime
@@ -136,7 +149,7 @@ async def get_events(
             Venue.created_at,
             Venue.display_name,
             Venue.description,
-            Venue.theme,
+            Venue.category,
             Venue.location_name,
             Venue.location_coords,
         ),
@@ -145,7 +158,7 @@ async def get_events(
         selectinload(Event.venue, Venue.organization),
         selectinload(
             # TODO: return all tickets if user has permission from organization
-            Event.tickets.and_(Ticket.account_id == user.id if user is not None else false()),
+            Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
         ).load_only(Ticket.id),
     )
 
@@ -158,49 +171,78 @@ async def get_events(
     return {"items": items, "next": next_key, "total": total}
 
 
-@router.get("/{event_id}", response_model=EventRead)
-async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: EventID) -> Any:
-    """Get an event by ID."""
-    event = await session.scalar(
-        select(Event)
-        .where(Event.id == event_id)
-        .options(
-            selectinload(Event.venue).selectinload(Venue.organization),
-            selectinload(
-                # TODO: return all tickets if user has permission from organization
-                Event.tickets.and_(Ticket.account_id == user.id if user is not None else false()),
-            ).load_only(Ticket.id),
-        ),
+def _create_options_for_get_event(user: User | None) -> tuple[ORMOption, ...]:
+    return (
+        selectinload(Event.venue).selectinload(Venue.organization),
+        selectinload(
+            # TODO: return all tickets if user has permission from organization
+            Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
+        ).load_only(Ticket.id),
     )
+
+
+@router.get("/{event_id}", response_model=EventRead)
+async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: EventID) -> Event:
+    """Get an event by ID."""
+    event = await session.get(Event, event_id, options=_create_options_for_get_event(user))
     if event is None:
         raise HTTPException(404, "Not found")
 
     return event
 
 
+def check_event_duration(*, starts_at: datetime, ends_at: datetime) -> None:
+    duration = ends_at - starts_at
+    if duration < timedelta():
+        raise ValueError("starts_at must be before ends_at")
+    if not MIN_EVENT_DURATION <= duration <= MAX_EVENT_DURATION:
+        raise ValueError(
+            f"Event duration must be between {MIN_EVENT_DURATION} and {MAX_EVENT_DURATION}",
+        )
+
+
+EventDescription = Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
+EventCategory = Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
+EventMaxAttendees = Annotated[int, Field(ge=0, le=10000)]
+
+
 class EventCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     venue_id: VenueID
     display_name: DisplayNameField
-    description: Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
-    theme: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
+    description: EventDescription
+    category: EventCategory
     starts_at: FutureAwareDatetime
     ends_at: FutureAwareDatetime
-
-    max_attendees: Annotated[int, Field(ge=0, le=10000)]
+    max_attendees: EventMaxAttendees
     ticket_price: Money
-
-    MIN_DURATION: ClassVar[timedelta] = timedelta(hours=1)
-    MAX_DURATION: ClassVar[timedelta] = timedelta(days=7)
 
     @model_validator(mode="after")
     def check_event_duration(self) -> Self:
-        duration = self.ends_at - self.starts_at
-        if duration < timedelta():
-            raise ValueError("starts_at must be before ends_at")
-        if not self.MIN_DURATION <= duration <= self.MAX_DURATION:
-            raise ValueError(
-                f"Event duration must be between {self.MIN_DURATION} and {self.MAX_DURATION}",
-            )
+        check_event_duration(starts_at=self.starts_at, ends_at=self.ends_at)
+        return self
+
+
+class EventUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    display_name: DisplayNameField | MISSING = MISSING
+    description: EventDescription | MISSING = MISSING
+    category: EventCategory | MISSING = MISSING
+    starts_at: FutureAwareDatetime | MISSING = MISSING
+    ends_at: FutureAwareDatetime | MISSING = MISSING
+    max_attendees: EventMaxAttendees | MISSING = MISSING
+    ticket_price: Money | MISSING = MISSING
+
+    @model_validator(mode="after")
+    def check_event_duration(self) -> Self:
+        if self.starts_at is MISSING and self.ends_at is MISSING:
+            return self
+        if self.starts_at is MISSING or self.ends_at is MISSING:
+            raise ValueError("Must set starts_at and ends_at together")
+
+        check_event_duration(starts_at=self.starts_at, ends_at=self.ends_at)
         return self
 
 
@@ -227,7 +269,7 @@ async def create_event(
         raise ORMEntityNotFound(Venue, event.venue_id)
 
     controller = await get_organization_controller(session, user, venue.organization_id)
-    controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
+    controller.assert_permissions(OrganizationMemberPermissions.OWNER)
 
     event_orm = Event(
         display_name=event.display_name,
@@ -235,7 +277,7 @@ async def create_event(
         venue_id=event.venue_id,
         starts_at=event.starts_at,
         ends_at=event.ends_at,
-        theme=event.theme,
+        category=event.category,
         ticket_price=event.ticket_price,
         max_attendees=event.max_attendees,
     )
@@ -247,17 +289,30 @@ async def create_event(
     return event_orm
 
 
-@router.patch("/{event_id}", deprecated=True)
+@router.patch("/{event_id}", response_model=EventRead)
 async def edit_event(
     user: RequiredUserDep,
     session: AsyncSessionDep,
     event_id: EventID,
-) -> None:
+    changes: EventUpdate,
+) -> Event:
     """Edit an event's details."""
-    # TODO: check authorization by organization
     # TODO: schedule notifications
     # TODO: allow event drafts?
-    raise HTTPException(501)
+    event = await session.get(Event, event_id, options=_create_options_for_get_event(user))
+    if event is None:
+        raise HTTPException(404, "Not found")
+
+    controller = await get_organization_controller(session, user, event.venue.organization_id)
+    controller.assert_permissions(OrganizationMemberPermissions.OWNER)
+
+    if not changes.model_fields_set:
+        raise HTTPException(400, "No fields to update")
+
+    for name in changes.model_fields_set:
+        setattr(event, name, getattr(changes, name))
+
+    return event
 
 
 @router.delete("/{event_id}", deprecated=True)

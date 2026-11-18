@@ -1,10 +1,10 @@
 from enum import StrEnum
 from typing import Any
 
-from pydantic import BaseModel
-from sqlalchemy import JSON, Dialect, TypeDecorator
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.types import TypeEngine
+from pydantic import BaseModel, ConfigDict
+from sqlalchemy import Dialect
+
+from quickticket.models.types import JSONBSerializer
 
 __all__ = (
     "Currency",
@@ -158,27 +158,23 @@ class Currency(StrEnum):
 
 
 class Money(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     amount: int
     currency: Currency
 
 
-class MoneySerializer(TypeDecorator):
+class MoneySerializer(JSONBSerializer[Money, dict[str, Any]]):
     """De/serialize the Money class to and from the database."""
 
-    impl = JSON
     cache_ok = True
-
-    def load_dialect_impl(self, dialect: Dialect) -> TypeEngine[JSON | JSONB]:
-        if dialect.name == "postgresql":
-            return dialect.type_descriptor(JSONB(none_as_null=True))
-        return dialect.type_descriptor(JSON(none_as_null=True))
 
     def process_bind_param(self, value: Money | None, dialect: Dialect) -> dict[str, Any] | None:
         if value is not None:
             return value.model_dump()
         return None
 
-    def process_result_value(self, value: Any | None, dialect: Dialect) -> Money | None:
+    def process_result_value(self, value: dict[str, Any] | None, dialect: Dialect) -> Money | None:
         if value is not None:
             return Money.model_validate(value)
         return None

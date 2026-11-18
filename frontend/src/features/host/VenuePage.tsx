@@ -58,7 +58,7 @@ export default function VenuePage() {
               <div className="flex-1">
                 <h3 className="font-semibold text-xl"><span className="text-secondary">Location:</span> {venue.location_name}</h3>
                 {venue.location_coords ? (
-                  <GoogleMap latitude={venue.location_coords.lat} longitude={venue.location_coords.long} />
+                  <GoogleMap latitude={venue.location_coords.lat} longitude={venue.location_coords.lng} />
                 ) : (
                   <p>not valid location</p>
                 )}

@@ -42,7 +42,7 @@ async def run_worker() -> None:
 
 @asynccontextmanager
 async def create_app_for_dependency_injection() -> AsyncGenerator[FastAPI]:
-    db._engine_factory = AsyncEngineFactory(  # noqa: SLF001
+    db.engine_factory = AsyncEngineFactory(
         engine_args={
             "poolclass": NullPool,
             "pool_pre_ping": True,

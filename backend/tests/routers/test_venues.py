@@ -12,14 +12,20 @@ from quickticket.models import (
     OrganizationMember,
     OrganizationMemberPermissions,
     Point,
+    User,
     Venue,
     VenueID,
 )
 from quickticket.routers.venues import VENUE_LIMIT
-from tests.conftest import AuthController, DatasetLoader, isoformat
+from tests.conftest import (
+    AuthController,
+    DatasetLoader,
+    assert_validation_error,
+    isoformat,
+)
+from tests.dataset import Dataset
 
 
-@pytest.mark.asyncio
 async def test_get_venues(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -58,7 +64,7 @@ async def test_get_venues(
             "created_at": isoformat(venue.created_at),
             "display_name": venue.display_name,
             "description": venue.description,
-            "theme": venue.theme,
+            "category": venue.category,
             "thumbnail": None,
             "banner": None,
             "location_name": venue.location_name,
@@ -73,7 +79,6 @@ async def test_get_venues(
         }
 
 
-@pytest.mark.asyncio
 async def test_get_venues_before_filters_total(
     client: AsyncClient,
     dataset_loader: DatasetLoader,
@@ -92,7 +97,6 @@ async def test_get_venues_before_filters_total(
     assert data["total"] == len(ordered) - 4
 
 
-@pytest.mark.asyncio
 async def test_get_venue(
     client: AsyncClient,
     auth: AuthController,
@@ -117,7 +121,7 @@ async def test_get_venue(
         "created_at": isoformat(venue.created_at),
         "display_name": venue.display_name,
         "description": venue.description,
-        "theme": venue.theme,
+        "category": venue.category,
         "thumbnail": None,
         "banner": None,
         "location_name": venue.location_name,
@@ -139,7 +143,7 @@ async def test_get_venue(
             "created_at": isoformat(expected.created_at),
             "display_name": expected.display_name,
             "description": expected.description,
-            "theme": expected.theme,
+            "category": expected.category,
             "thumbnail": None,
             "banner": None,
             "starts_at": isoformat(expected.starts_at),
@@ -150,7 +154,6 @@ async def test_get_venue(
         }
 
 
-@pytest.mark.asyncio
 async def test_get_venue_not_found(client: AsyncClient, auth: AuthController) -> None:
     auth.user = None
 
@@ -160,7 +163,26 @@ async def test_get_venue_not_found(client: AsyncClient, auth: AuthController) ->
     assert response.json() == {"detail": "Not found"}
 
 
-@pytest.mark.asyncio
+def _create_venue_payload(
+    *,
+    organization_id: UUID | str = "00000000-0000-0000-0000-000000000000",
+    display_name: str = "Test Venue",
+    description: str = "A venue for testing.",
+    category: str = "Sports",
+    location_name: str = "Test Stadium",
+    location_coords: dict[str, object] | None = None,
+) -> dict[str, object]:
+    """Build a venue creation payload, defaulting to an otherwise valid body."""
+    return {
+        "organization_id": str(organization_id),
+        "display_name": display_name,
+        "description": description,
+        "category": category,
+        "location_name": location_name,
+        "location_coords": location_coords,
+    }
+
+
 async def test_create_venue(
     client: AsyncClient,
     auth: AuthController,
@@ -172,34 +194,30 @@ async def test_create_venue(
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
-            account_id=user.id,
-            permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+            user_id=user.id,
+            permissions=OrganizationMemberPermissions.OWNER,
         )
         session.add_all([organization, member])
 
     response = await client.post(
         "/api/venues",
-        json={
-            "organization_id": str(organization.id),
-            "display_name": "Test Venue",
-            "description": "A venue for testing.",
-            "theme": "Sports",
-            "location_name": "Test Stadium",
-            "location_coords": {"lat": 48.8584, "long": 2.2945},
-        },
+        json=_create_venue_payload(
+            organization_id=organization.id,
+            location_coords={"lat": 48.8584, "lng": 2.2945},
+        ),
     )
     assert response.status_code == 201
     data = response.json()
-    assert response.headers.get_list("location") == [f"http://test/api/venues/{data['id']}"]
+    assert response.headers.get_list("location") == [f"https://test/api/venues/{data['id']}"]
 
     assert len(data) == 11
     assert data["id"] is not None
     assert data["created_at"] is not None
     assert data["display_name"] == "Test Venue"
     assert data["description"] == "A venue for testing."
-    assert data["theme"] == "Sports"
+    assert data["category"] == "Sports"
     assert data["location_name"] == "Test Stadium"
-    assert data["location_coords"] == {"lat": 48.8584, "long": 2.2945}
+    assert data["location_coords"] == {"lat": 48.8584, "lng": 2.2945}
     assert data["thumbnail"] is None
     assert data["banner"] is None
     assert data["events"] == []
@@ -213,15 +231,14 @@ async def test_create_venue(
         assert persisted.organization_id == organization.id
         assert persisted.display_name == "Test Venue"
         assert persisted.description == "A venue for testing."
-        assert persisted.theme == "Sports"
+        assert persisted.category == "Sports"
         assert persisted.location_name == "Test Stadium"
-        assert persisted.location_coords == Point(lat=48.8584, long=2.2945)
+        assert persisted.location_coords == Point(lat=48.8584, lng=2.2945)
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "field",
-    ["organization_id", "display_name", "description", "theme", "location_name"],
+    ["organization_id", "display_name", "description", "category", "location_name"],
 )
 async def test_create_venue_missing_required_field(
     client: AsyncClient,
@@ -235,19 +252,15 @@ async def test_create_venue_missing_required_field(
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
-            account_id=user.id,
-            permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+            user_id=user.id,
+            permissions=OrganizationMemberPermissions.OWNER,
         )
         session.add_all([organization, member])
 
-    payload = {
-        "organization_id": str(organization.id),
-        "display_name": "Test Venue",
-        "description": "A venue for testing.",
-        "theme": "Sports",
-        "location_name": "Test Stadium",
-        "location_coords": {"lat": 48.8584, "long": 2.2945},
-    }
+    payload = _create_venue_payload(
+        organization_id=organization.id,
+        location_coords={"lat": 48.8584, "lng": 2.2945},
+    )
     payload.pop(field)
 
     response = await client.post("/api/venues", json=payload)
@@ -257,7 +270,6 @@ async def test_create_venue_missing_required_field(
     assert ("body", field) in locations
 
 
-@pytest.mark.asyncio
 async def test_create_venue_without_location_coords(
     client: AsyncClient,
     auth: AuthController,
@@ -269,21 +281,21 @@ async def test_create_venue_without_location_coords(
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
-            account_id=user.id,
-            permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+            user_id=user.id,
+            permissions=OrganizationMemberPermissions.OWNER,
         )
         session.add_all([organization, member])
 
     response = await client.post(
         "/api/venues",
-        json={
-            "organization_id": str(organization.id),
-            "display_name": "Virtual Venue",
-            "description": "A venue for testing online events.",
-            "theme": "Music",
-            "location_name": "Zoom",
-            "location_coords": None,
-        },
+        json=_create_venue_payload(
+            organization_id=organization.id,
+            display_name="Virtual Venue",
+            description="A venue for testing online events.",
+            category="Music",
+            location_name="Zoom",
+            location_coords=None,
+        ),
     )
     assert response.status_code == 201
     data = response.json()
@@ -308,7 +320,6 @@ async def test_create_venue_without_location_coords(
     assert fetched_data["organization"]["id"] == str(organization.id)
 
 
-@pytest.mark.asyncio
 async def test_create_venue_unauthenticated(
     client: AsyncClient,
     auth: AuthController,
@@ -320,29 +331,24 @@ async def test_create_venue_unauthenticated(
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
-            account_id=user.id,
-            permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+            user_id=user.id,
+            permissions=OrganizationMemberPermissions.OWNER,
         )
         session.add_all([organization, member])
 
     auth.user = None
     response = await client.post(
         "/api/venues",
-        json={
-            "organization_id": str(organization.id),
-            "display_name": "Test Venue",
-            "description": "A venue for testing.",
-            "theme": "Sports",
-            "location_name": "Test Stadium",
-            "location_coords": {"lat": 48.8584, "long": 2.2945},
-        },
+        json=_create_venue_payload(
+            organization_id=organization.id,
+            location_coords={"lat": 48.8584, "lng": 2.2945},
+        ),
     )
 
     assert response.status_code == 401
     assert response.json() == {"detail": "Not authenticated"}
 
 
-@pytest.mark.asyncio
 async def test_create_venue_nonexistent_organization(
     client: AsyncClient,
     auth: AuthController,
@@ -350,14 +356,7 @@ async def test_create_venue_nonexistent_organization(
 ) -> None:
     response = await client.post(
         "/api/venues",
-        json={
-            "organization_id": "00000000-0000-0000-0000-000000000000",
-            "display_name": "Test Venue",
-            "description": "A venue for testing.",
-            "theme": "Sports",
-            "location_name": "Test Stadium",
-            "location_coords": {"lat": 48.8584, "long": 2.2945},
-        },
+        json=_create_venue_payload(location_coords={"lat": 48.8584, "lng": 2.2945}),
     )
     assert response.status_code == 400
     assert response.json() == {
@@ -365,7 +364,6 @@ async def test_create_venue_nonexistent_organization(
     }
 
 
-@pytest.mark.asyncio
 async def test_create_venue_non_member(
     client: AsyncClient,
     auth: AuthController,
@@ -379,14 +377,10 @@ async def test_create_venue_non_member(
 
     response = await client.post(
         "/api/venues",
-        json={
-            "organization_id": str(organization.id),
-            "display_name": "Test Venue",
-            "description": "A venue for testing.",
-            "theme": "Sports",
-            "location_name": "Test Stadium",
-            "location_coords": {"lat": 48.8584, "long": 2.2945},
-        },
+        json=_create_venue_payload(
+            organization_id=organization.id,
+            location_coords={"lat": 48.8584, "lng": 2.2945},
+        ),
     )
     assert response.status_code == 403
     assert response.json() == {
@@ -394,7 +388,6 @@ async def test_create_venue_non_member(
     }
 
 
-@pytest.mark.asyncio
 async def test_create_venue_member_insufficient_permissions(
     client: AsyncClient,
     auth: AuthController,
@@ -406,31 +399,26 @@ async def test_create_venue_member_insufficient_permissions(
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
-            account_id=user.id,
+            user_id=user.id,
             permissions=OrganizationMemberPermissions(0),
         )
         session.add_all([organization, member])
 
     response = await client.post(
         "/api/venues",
-        json={
-            "organization_id": str(organization.id),
-            "display_name": "Test Venue",
-            "description": "A venue for testing.",
-            "theme": "Sports",
-            "location_name": "Test Stadium",
-            "location_coords": {"lat": 48.8584, "long": 2.2945},
-        },
+        json=_create_venue_payload(
+            organization_id=organization.id,
+            location_coords={"lat": 48.8584, "lng": 2.2945},
+        ),
     )
     assert response.status_code == 403
     assert response.json() == {
         "detail": (
-            f"Organization member ({organization.id}, {user.id}) missing permissions: ADMINISTRATOR"
+            f"Organization member ({organization.id}, {user.id}) missing permissions: OWNER"
         ),
     }
 
 
-@pytest.mark.asyncio
 async def test_create_venue_reached_limit(
     client: AsyncClient,
     auth: AuthController,
@@ -442,35 +430,426 @@ async def test_create_venue_reached_limit(
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
-            account_id=user.id,
-            permissions=OrganizationMemberPermissions.ADMINISTRATOR,
+            user_id=user.id,
+            permissions=OrganizationMemberPermissions.OWNER,
         )
         session.add_all([organization, member])
 
     for i in range(VENUE_LIMIT):
         allowed = await client.post(
             "/api/venues",
-            json={
-                "organization_id": str(organization.id),
-                "display_name": f"Test Venue {i}",
-                "description": "A venue for testing.",
-                "theme": "Sports",
-                "location_name": "Test Stadium",
-                "location_coords": {"lat": 48.8584, "long": 2.2945},
-            },
+            json=_create_venue_payload(
+                organization_id=organization.id,
+                display_name=f"Test Venue {i}",
+                location_coords={"lat": 48.8584, "lng": 2.2945},
+            ),
         )
         assert allowed.status_code == 201
 
     response = await client.post(
         "/api/venues",
-        json={
-            "organization_id": str(organization.id),
-            "display_name": "One Venue Too Many",
-            "description": "A venue for testing.",
-            "theme": "Sports",
-            "location_name": "Test Stadium",
-            "location_coords": {"lat": 48.8584, "long": 2.2945},
-        },
+        json=_create_venue_payload(
+            organization_id=organization.id,
+            display_name="One Venue Too Many",
+            location_coords={"lat": 48.8584, "lng": 2.2945},
+        ),
     )
     assert response.status_code == 400
     assert response.json() == {"detail": f"Reached maximum venue limit: {VENUE_LIMIT}"}
+
+
+async def test_create_venue_rejects_unknown_field(client: AsyncClient) -> None:
+    payload = _create_venue_payload(location_coords={"lat": 48.8584, "lng": 2.2945})
+    payload["bogus"] = "x"
+
+    response = await client.post("/api/venues", json=payload)
+
+    assert_validation_error(
+        response,
+        loc=("body", "bogus"),
+        error_type="extra_forbidden",
+        msg_contains="Extra inputs are not permitted",
+    )
+
+
+async def test_create_venue_rejects_unknown_location_coords_field(client: AsyncClient) -> None:
+    payload = _create_venue_payload(
+        location_coords={"lat": 48.8584, "lng": 2.2945, "bogus": 1},
+    )
+
+    response = await client.post("/api/venues", json=payload)
+
+    assert_validation_error(
+        response,
+        loc=("body", "location_coords", "bogus"),
+        error_type="extra_forbidden",
+        msg_contains="Extra inputs are not permitted",
+    )
+
+
+VENUE_KEYS = frozenset(
+    {
+        "banner",
+        "category",
+        "created_at",
+        "description",
+        "display_name",
+        "events",
+        "id",
+        "location_coords",
+        "location_name",
+        "organization",
+        "thumbnail",
+    },
+)
+"""The keys served by :class:`quickticket.routers.venues.VenueRead`."""
+
+
+def _owner_of_venue(dataset: Dataset, venue: Venue) -> User:
+    """Return the owner of the organization that holds the venue."""
+    member = next(
+        item
+        for item in dataset.organization_members
+        if item.organization_id == venue.organization_id
+    )
+    return next(user for user in dataset.users if user.id == member.user_id)
+
+
+async def test_edit_venue(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    organization = next(item for item in dataset.organizations if item.id == venue.organization_id)
+    expected_events = [item for item in dataset.events if item.venue_id == venue.id]
+    auth.user = _owner_of_venue(dataset, venue)
+
+    response = await client.patch(
+        f"/api/venues/{venue.id}",
+        json={
+            "display_name": "Edited Venue",
+            "description": "An edited venue.",
+            "category": "Comedy",
+            "location_name": "Edited Hall",
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+
+    assert set(data) == VENUE_KEYS
+    assert data["id"] == str(venue.id)
+    assert data["display_name"] == "Edited Venue"
+    assert data["description"] == "An edited venue."
+    assert data["category"] == "Comedy"
+    assert data["location_name"] == "Edited Hall"
+
+    # Fields absent from the payload keep their seeded values.
+    assert venue.location_coords is not None
+    assert data["location_coords"] == venue.location_coords.model_dump()
+    assert data["thumbnail"] is None
+    assert data["banner"] is None
+    assert {event["id"] for event in data["events"]} == {str(event.id) for event in expected_events}
+    assert all(event["tickets"] == [] for event in data["events"])
+    assert data["organization"]["id"] == str(organization.id)
+
+    fetched = await client.get(f"/api/venues/{venue.id}")
+    assert fetched.status_code == 200
+    assert fetched.json() == data
+
+
+async def test_edit_venue_location_coords(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    auth.user = _owner_of_venue(dataset, venue)
+
+    response = await client.patch(
+        f"/api/venues/{venue.id}",
+        json={"location_coords": {"lat": 48.8584, "lng": 2.2945}},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["location_coords"] == {"lat": 48.8584, "lng": 2.2945}
+
+    fetched = await client.get(f"/api/venues/{venue.id}")
+    assert fetched.status_code == 200
+    assert fetched.json() == data
+
+
+async def test_edit_venue_clears_location_coords(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    assert venue.location_coords is not None
+    auth.user = _owner_of_venue(dataset, venue)
+
+    response = await client.patch(
+        f"/api/venues/{venue.id}",
+        json={"location_coords": None},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["location_coords"] is None
+
+    fetched = await client.get(f"/api/venues/{venue.id}")
+    assert fetched.status_code == 200
+    assert fetched.json()["location_coords"] is None
+
+
+async def test_edit_venue_not_found(client: AsyncClient) -> None:
+    response = await client.patch(
+        "/api/venues/00000000-0000-0000-0000-000000000000",
+        json={"display_name": "Edited Venue"},
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Not found"}
+
+
+async def test_edit_venue_unauthenticated(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    auth.user = None
+
+    response = await client.patch(
+        f"/api/venues/{venue.id}",
+        json={"display_name": "Edited Venue"},
+    )
+
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Not authenticated"}
+
+
+async def test_edit_venue_non_member(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    member_ids = {member.user_id for member in dataset.organization_members}
+    auth.user = next(user for user in dataset.users if user.id not in member_ids)
+
+    response = await client.patch(
+        f"/api/venues/{venue.id}",
+        json={"display_name": "Edited Venue"},
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": (
+            f"User ({auth.user.id}) is not a member of organization ({venue.organization_id})"
+        ),
+    }
+
+
+async def test_edit_venue_member_without_owner(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    member = next(
+        item
+        for item in dataset.organization_members
+        if item.organization_id == venue.organization_id
+    )
+    # Downgrade the member before loading so the request authenticates as a
+    # member that lacks the OWNER permission.
+    member.permissions = OrganizationMemberPermissions(0)
+    await dataset_loader.load()
+    auth.user = next(user for user in dataset.users if user.id == member.user_id)
+
+    response = await client.patch(
+        f"/api/venues/{venue.id}",
+        json={"display_name": "Edited Venue"},
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": (
+            f"Organization member ({venue.organization_id}, {auth.user.id}) "
+            "missing permissions: OWNER"
+        ),
+    }
+
+
+async def test_edit_venue_cross_organization(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    other_member = next(
+        member
+        for member in dataset.organization_members
+        if member.organization_id != venue.organization_id
+    )
+    auth.user = next(user for user in dataset.users if user.id == other_member.user_id)
+
+    response = await client.patch(
+        f"/api/venues/{venue.id}",
+        json={"display_name": "Edited Venue"},
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": (
+            f"User ({auth.user.id}) is not a member of organization ({venue.organization_id})"
+        ),
+    }
+
+
+async def test_edit_venue_no_fields(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    auth.user = _owner_of_venue(dataset, venue)
+
+    response = await client.patch(f"/api/venues/{venue.id}", json={})
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "No fields to update"}
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("display_name", ""),
+        ("display_name", "  ab "),
+        ("display_name", "x" * 129),
+        ("category", "x" * 129),
+        ("description", "x" * 4097),
+        ("location_name", "x" * 129),
+    ],
+)
+async def test_edit_venue_rejects_invalid_fields(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+    field: str,
+    value: str,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    auth.user = _owner_of_venue(dataset, venue)
+
+    response = await client.patch(f"/api/venues/{venue.id}", json={field: value})
+
+    assert response.status_code == 422
+    locations = {tuple(error["loc"]) for error in response.json()["detail"]}
+    assert ("body", field) in locations
+
+
+@pytest.mark.parametrize("field", ["display_name", "description", "category", "location_name"])
+async def test_edit_venue_rejects_null_fields(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+    field: str,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    auth.user = _owner_of_venue(dataset, venue)
+
+    response = await client.patch(f"/api/venues/{venue.id}", json={field: None})
+
+    assert response.status_code == 422
+    locations = {tuple(error["loc"]) for error in response.json()["detail"]}
+    assert ("body", field) in locations
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"bogus": "x"},
+        {"display_name": "Changed", "bogus": "x"},
+    ],
+)
+async def test_edit_venue_rejects_unknown_field(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+    changes: dict[str, object],
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    auth.user = _owner_of_venue(dataset, venue)
+
+    response = await client.patch(f"/api/venues/{venue.id}", json=changes)
+
+    assert_validation_error(
+        response,
+        loc=("body", "bogus"),
+        error_type="extra_forbidden",
+        msg_contains="Extra inputs are not permitted",
+    )
+
+    fetched = await client.get(f"/api/venues/{venue.id}")
+    assert fetched.status_code == 200
+    assert fetched.json()["display_name"] == venue.display_name
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"location_coords": {"lat": 48.8584, "lng": 2.2945, "bogus": 1}},
+        {
+            "display_name": "Changed",
+            "location_coords": {"lat": 48.8584, "lng": 2.2945, "bogus": 1},
+        },
+    ],
+)
+async def test_edit_venue_rejects_unknown_location_coords_field(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+    changes: dict[str, object],
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    assert venue.location_coords is not None
+    auth.user = _owner_of_venue(dataset, venue)
+
+    response = await client.patch(f"/api/venues/{venue.id}", json=changes)
+
+    assert_validation_error(
+        response,
+        loc=("body", "location_coords", "bogus"),
+        error_type="extra_forbidden",
+        msg_contains="Extra inputs are not permitted",
+    )
+
+    fetched = await client.get(f"/api/venues/{venue.id}")
+    assert fetched.status_code == 200
+    data = fetched.json()
+    assert data["display_name"] == venue.display_name
+    assert data["location_coords"] == venue.location_coords.model_dump()

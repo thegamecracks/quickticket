@@ -24,8 +24,8 @@ line numbers.
 - `routers/` — thin handlers: business logic in dedicated modules or
   dependencies, request/response shapes via Pydantic models.
 - `dependencies/` — DI: db, cache, cookies, models, ratelimits, state, auth.
-- `models/` — SQLAlchemy ORM: base, accounts, events, organizations, storage,
-  tickets, venues, money.
+- `models/` — SQLAlchemy ORM: base, events, organizations, storage,
+  tickets, users, venues, money.
 - `tasks/` — functions delegated to worker processes; `alembic/` — migrations;
   `settings.py` (`BACKEND__*` envvars), `cli.py`, `worker.py`, `app.py`.
 - `frontend/` — throwaway page for testing auth; real frontend work belongs in
@@ -37,5 +37,6 @@ line numbers.
 ## Deeper docs
 
 - Changing a model → [`docs/agents/migrations.md`](docs/agents/migrations.md).
-- Writing or debugging tests → [`docs/agents/testing.md`](docs/agents/testing.md).
+- Planning, writing, or debugging tests → [`docs/agents/testing.md`](docs/agents/testing.md).
+- Writing a dependency → [`docs/agents/dependencies.md`](docs/agents/dependencies.md).
 - Running the app, SQLite/OpenID setup, Docker, worker → [`README.md`](README.md).

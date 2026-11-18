@@ -14,6 +14,7 @@ requires-python = ">=3.14"
 dependencies = [
     "aiosqlite>=0.22.1",
     "alembic>=1.20.0",
+    "anyio>=4.16.0",
     "asgi-lifespan>=2.1.0",
     "asynctasq[fastapi,redis,sqlalchemy]>=1.7.0",
     "authlib>=1.8.0",
@@ -46,7 +47,6 @@ quickticket = "quickticket.cli:main"
 dev = [
     "coverage>=7.17.0",
     "pytest>=9.1.1",
-    "pytest-asyncio>=1.4.0",
     "ruff>=0.17.1",
     "ty>=0.0.95",
 ]
@@ -59,7 +59,7 @@ omit = ["src/quickticket/alembic/*"]
 entrypoint = "quickticket.app:app"
 
 [tool.pytest]
-asyncio_default_fixture_loop_scope = "fixture-scope"
+anyio_mode = "auto"
 injectable_autouse_cleanup = false
 
 [tool.ruff]

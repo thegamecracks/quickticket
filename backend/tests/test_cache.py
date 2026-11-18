@@ -9,7 +9,6 @@ from quickticket.dependencies.cache import get_cache
 from quickticket.settings import CacheSettings, Settings
 
 
-@pytest.mark.asyncio
 async def test_sqlite_cache() -> None:
     async with AsyncExitStack() as stack:
         cache = await get_cache(
