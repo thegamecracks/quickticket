@@ -1,5 +1,4 @@
 import re
-import struct
 from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import Annotated, Any, ClassVar, NewType, Self
@@ -8,19 +7,21 @@ from uuid import UUID
 from pydantic import BaseModel, GetCoreSchemaHandler, GetJsonSchemaHandler
 from pydantic_core import core_schema
 from sqlalchemy import (
+    JSON,
     Column,
     DateTime,
     DefaultClause,
     Dialect,
-    LargeBinary,
     String,
     TypeDecorator,
     Uuid,
     func,
     text,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import mapped_column
+from sqlalchemy.types import TypeEngine
 
 __all__ = (
     "AddressID",
@@ -105,18 +106,22 @@ class Point(BaseModel):
 class PointSerializer(TypeDecorator):
     """De/serialize the Point class to and from the database."""
 
-    impl = LargeBinary
+    impl = JSON
     cache_ok = True
 
-    def process_bind_param(self, value: Point | None, dialect: Dialect) -> bytes | None:
+    def load_dialect_impl(self, dialect: Dialect) -> TypeEngine[JSON | JSONB]:
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(JSONB(none_as_null=True))
+        return dialect.type_descriptor(JSON(none_as_null=True))
+
+    def process_bind_param(self, value: Point | None, dialect: Dialect) -> dict[str, Any] | None:
         if value is not None:
-            return struct.pack("<dd", value.lat, value.lng)
+            return value.model_dump()
         return None
 
-    def process_result_value(self, value: bytes | None, dialect: Dialect) -> Point | None:
+    def process_result_value(self, value: Any | None, dialect: Dialect) -> Point | None:
         if value is not None:
-            lat, lng = struct.unpack("<dd", value)
-            return Point(lat=lat, lng=lng)
+            return Point.model_validate(value)
         return None
 
 
