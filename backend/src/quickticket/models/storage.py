@@ -71,7 +71,7 @@ class StorageObject(Base, kw_only=True, repr=False):
         default=None,
     )
     user_id: Mapped[UserID | None] = mapped_column(
-        ForeignKey("account.user_id", ondelete="SET NULL"),
+        ForeignKey("users.user_id", ondelete="SET NULL"),
         default=None,
         index=True,
     )

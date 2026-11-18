@@ -67,7 +67,7 @@ class OrganizationMember(Base, kw_only=True, repr=False):
         primary_key=True,
     )
     user_id: Mapped[UserID] = mapped_column(
-        ForeignKey("account.user_id", ondelete="CASCADE"),
+        ForeignKey("users.user_id", ondelete="CASCADE"),
         default=None,
         primary_key=True,
         index=True,

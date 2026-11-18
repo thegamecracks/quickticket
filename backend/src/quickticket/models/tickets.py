@@ -29,7 +29,7 @@ class Ticket(Base, kw_only=True, repr=False):
         index=True,
     )
     user_id: Mapped[UserID] = mapped_column(
-        ForeignKey("account.user_id", ondelete="CASCADE"),
+        ForeignKey("users.user_id", ondelete="CASCADE"),
         default=None,
         index=True,
     )

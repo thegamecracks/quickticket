@@ -34,7 +34,7 @@ __all__ = (
 
 
 class User(Base, kw_only=True, repr=False):
-    __tablename__ = "account"
+    __tablename__ = "users"
 
     id: Mapped[UserID] = mapped_column("user_id", primary_key=True, default_factory=uuid7)
 
@@ -89,7 +89,7 @@ class User(Base, kw_only=True, repr=False):
 
 
 class OpenIDAccount(Base, kw_only=True, repr=False):
-    __tablename__ = "account_openid"
+    __tablename__ = "users_openid"
 
     # Required
     issuer: Mapped[str] = mapped_column(String(2000), primary_key=True)
@@ -97,7 +97,7 @@ class OpenIDAccount(Base, kw_only=True, repr=False):
     sub: Mapped[str] = mapped_column(String(2000), primary_key=True)
     """The provider's unique identifier for this account."""
     user_id: Mapped[UserID] = mapped_column(
-        ForeignKey("account.user_id", ondelete="CASCADE"),
+        ForeignKey("users.user_id", ondelete="CASCADE"),
         default=None,
         index=True,
     )
@@ -126,7 +126,7 @@ class Address(Base, kw_only=True, repr=False):
 
     # Required
     user_id: Mapped[UserID] = mapped_column(
-        ForeignKey("account.user_id", ondelete="CASCADE"),
+        ForeignKey("users.user_id", ondelete="CASCADE"),
         default=None,
         index=True,
     )
@@ -154,7 +154,7 @@ class Notification(Base, kw_only=True, repr=False):
 
     # Required
     user_id: Mapped[UserID] = mapped_column(
-        ForeignKey("account.user_id", ondelete="CASCADE"),
+        ForeignKey("users.user_id", ondelete="CASCADE"),
         default=None,
         index=True,
     )
