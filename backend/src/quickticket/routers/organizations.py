@@ -3,7 +3,7 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
-from pydantic import AwareDatetime, BaseModel
+from pydantic import MISSING, AwareDatetime, BaseModel
 from sqlalchemy import exists, false, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.functions import count
@@ -11,6 +11,7 @@ from starlette.status import HTTP_201_CREATED
 
 from quickticket.dependencies.auth import OptionalUserDep, RequiredUserDep
 from quickticket.dependencies.db import AsyncSessionDep
+from quickticket.dependencies.models import get_organization_controller
 from quickticket.models import (
     Event,
     EventID,
@@ -172,6 +173,10 @@ class OrganizationCreate(BaseModel):
     display_name: DisplayNameField
 
 
+class OrganizationUpdate(BaseModel):
+    display_name: DisplayNameField | MISSING = MISSING
+
+
 @router.post(
     "",
     response_model=OrganizationRead,
@@ -222,17 +227,30 @@ async def create_organization(
     return created
 
 
-@router.patch("/{organization_id}", deprecated=True)
+@router.patch("/{organization_id}", response_model=OrganizationUpdate)
 async def edit_organization(
     user: RequiredUserDep,
     session: AsyncSessionDep,
     organization_id: OrganizationID,
-) -> None:
+    changes: OrganizationUpdate,
+) -> Organization:
     """Edit an organization's details."""
-    # TODO: check authorization by organization_member
     # TODO: schedule notifications
     # TODO: allow organization drafts?
-    raise HTTPException(501)
+    organization = await session.get(Organization, organization_id)
+    if organization is None:
+        raise HTTPException(404, "Organization object for ID not found")
+
+    controller = await get_organization_controller(session, user, organization.id)
+    controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
+
+    if not changes.model_fields_set:
+        raise HTTPException(400, "No fields to update")
+
+    for name in changes.model_fields_set:
+        setattr(organization, name, getattr(changes, name))
+
+    return organization
 
 
 @router.delete("/{organization_id}", deprecated=True)

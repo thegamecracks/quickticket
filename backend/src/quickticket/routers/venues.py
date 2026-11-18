@@ -2,7 +2,7 @@ import logging
 from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
-from pydantic import AfterValidator, AwareDatetime, BaseModel, Field
+from pydantic import MISSING, AfterValidator, AwareDatetime, BaseModel, Field
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.functions import count
@@ -178,14 +178,26 @@ async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: V
     return venue
 
 
+VenueDescription = Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
+VenueTheme = Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
+VenueLocationName = Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
+
+
 class VenueCreate(BaseModel):
     organization_id: OrganizationID
     display_name: DisplayNameField
-    description: Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
-    theme: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
-    location_name: Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
-
+    description: VenueDescription
+    theme: VenueTheme
+    location_name: VenueLocationName
     location_coords: Point | None = None
+
+
+class VenueUpdate(BaseModel):
+    display_name: DisplayNameField | MISSING = MISSING
+    description: VenueDescription | MISSING = MISSING
+    theme: VenueTheme | MISSING = MISSING
+    location_name: VenueLocationName | MISSING = MISSING
+    location_coords: Point | MISSING | None = MISSING
 
 
 @router.post(
@@ -230,16 +242,29 @@ async def create_venue(
     return venue_orm
 
 
-@router.patch("/{venue_id}", deprecated=True)
+@router.patch("/{venue_id}", response_model=VenueUpdate)
 async def edit_venue(
     user: RequiredUserDep,
     session: AsyncSessionDep,
     venue_id: VenueID,
-) -> None:
+    changes: VenueUpdate,
+) -> Venue:
     """Edit a venue's details."""
-    # TODO: check authorization by organization
     # TODO: allow venue drafts?
-    raise HTTPException(501)
+    venue = await session.get(Venue, venue_id)
+    if venue is None:
+        raise HTTPException(404, "Venue object for ID not found")
+
+    controller = await get_organization_controller(session, user, venue.organization_id)
+    controller.assert_permissions(OrganizationMemberPermissions.ADMINISTRATOR)
+
+    if not changes.model_fields_set:
+        raise HTTPException(400, "No fields to update")
+
+    for name in changes.model_fields_set:
+        setattr(venue, name, getattr(changes, name))
+
+    return venue
 
 
 @router.delete("/{venue_id}", deprecated=True)
