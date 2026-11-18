@@ -1,4 +1,5 @@
 import re
+from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import Annotated, Any, ClassVar, NewType, Self
@@ -18,14 +19,17 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects import postgresql, sqlite
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import mapped_column
+from sqlalchemy.sql.operators import OperatorType
+from sqlalchemy.sql.sqltypes import _JSON_VALUE
 from sqlalchemy.types import TypeEngine
 
 __all__ = (
     "AddressID",
     "EventID",
+    "JSONBSerializer",
     "MimeType",
     "MimeTypeSerializer",
     "NotificationID",
@@ -103,23 +107,48 @@ class Point(BaseModel):
     lng: float
 
 
-class PointSerializer(TypeDecorator):
-    """De/serialize the Point class to and from the database."""
+class JSONBSerializer[T, R](TypeDecorator, ABC):
+    """A JSONB-serializable type."""
 
     impl = JSON
-    cache_ok = True
+    # cache_ok = True  # must be manually set per subclass
 
-    def load_dialect_impl(self, dialect: Dialect) -> TypeEngine[JSON | JSONB]:
+    _default_type = JSON(none_as_null=True)
+
+    def load_dialect_impl(self, dialect: Dialect) -> TypeEngine[_JSON_VALUE]:
         if dialect.name == "postgresql":
-            return dialect.type_descriptor(JSONB(none_as_null=True))
-        return dialect.type_descriptor(JSON(none_as_null=True))
+            return dialect.type_descriptor(postgresql.JSONB(none_as_null=True))
+        if dialect.name == "sqlite":
+            return dialect.type_descriptor(sqlite.JSONB(none_as_null=True))
+        return dialect.type_descriptor(JSON())
+
+    def coerce_compared_value(
+        self,
+        op: OperatorType | None,
+        value: dict[str, Any],
+    ) -> TypeEngine[Any]:
+        return self._default_type.coerce_compared_value(op, value)
+
+    @abstractmethod
+    def process_bind_param(self, value: T | None, dialect: Dialect) -> R | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def process_result_value(self, value: R | None, dialect: Dialect) -> T | None:
+        raise NotImplementedError
+
+
+class PointSerializer(JSONBSerializer[Point, dict[str, Any]]):
+    """De/serialize the Point class to and from the database."""
+
+    cache_ok = True
 
     def process_bind_param(self, value: Point | None, dialect: Dialect) -> dict[str, Any] | None:
         if value is not None:
             return value.model_dump()
         return None
 
-    def process_result_value(self, value: Any | None, dialect: Dialect) -> Point | None:
+    def process_result_value(self, value: dict[str, Any] | None, dialect: Dialect) -> Point | None:
         if value is not None:
             return Point.model_validate(value)
         return None
