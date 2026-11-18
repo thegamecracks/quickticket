@@ -148,7 +148,7 @@ async def get_events(
         selectinload(Event.venue, Venue.organization),
         selectinload(
             # TODO: return all tickets if user has permission from organization
-            Event.tickets.and_(Ticket.account_id == user.id if user is not None else false()),
+            Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
         ).load_only(Ticket.id),
     )
 
@@ -171,7 +171,7 @@ async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: E
             selectinload(Event.venue).selectinload(Venue.organization),
             selectinload(
                 # TODO: return all tickets if user has permission from organization
-                Event.tickets.and_(Ticket.account_id == user.id if user is not None else false()),
+                Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
             ).load_only(Ticket.id),
         ),
     )

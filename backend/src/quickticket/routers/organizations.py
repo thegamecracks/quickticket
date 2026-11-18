@@ -106,7 +106,7 @@ class PartialVenue(BaseModel):
 
 
 class PartialOrganizationMember(BaseModel):
-    account_id: UserID
+    user_id: UserID
 
 
 class OrganizationRead(BaseModel):
@@ -148,7 +148,7 @@ async def get_organization(
             )
             .selectinload(
                 # TODO: return all tickets if user has permission from organization
-                Event.tickets.and_(Ticket.account_id == user.id if user is not None else false()),
+                Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
             )
             .load_only(Ticket.id),
             selectinload(Organization.venues, Venue.banner).load_only(StorageObject.id),
@@ -160,7 +160,7 @@ async def get_organization(
                 StorageObject.id,
             ),
             # Organization => OrganizationMembers
-            selectinload(Organization.members).load_only(OrganizationMember.account_id),
+            selectinload(Organization.members).load_only(OrganizationMember.user_id),
         ),
     )
     if organization is None:
@@ -195,7 +195,7 @@ async def create_organization(
     owns_organization = await session.scalar(
         select(
             exists().where(
-                OrganizationMember.account_id == user.id,
+                OrganizationMember.user_id == user.id,
                 OrganizationMember.permissions.bitwise_and(
                     OrganizationMemberPermissions.OWNER,
                 ),
@@ -263,12 +263,12 @@ async def delete_organization(
     raise HTTPException(501)
 
 
-@router.patch("/{organization_id}/{account_id}", deprecated=True)
+@router.patch("/{organization_id}/{user_id}", deprecated=True)
 async def edit_organization_member(
     user: RequiredUserDep,
     session: AsyncSessionDep,
     organization_id: OrganizationID,
-    account_id: UserID,
+    user_id: UserID,
 ) -> None:
     """Edit an organization member."""
     # NOTE: not planned for release, leave empty!
@@ -278,27 +278,27 @@ async def edit_organization_member(
     raise HTTPException(501)
 
 
-@router.delete("/{organization_id}/{account_id}", deprecated=True)
+@router.delete("/{organization_id}/{user_id}", deprecated=True)
 async def delete_organization_member(
     user: RequiredUserDep,
     session: AsyncSessionDep,
     organization_id: OrganizationID,
-    account_id: UserID,
+    user_id: UserID,
 ) -> None:
-    """Remove an account from an organization."""
+    """Remove a member from an organization."""
     # NOTE: not planned for release, leave empty!
     # - check authorization by organization_member
     raise HTTPException(501)
 
 
-@router.post("/{organization_id}/{account_id}", deprecated=True)
+@router.post("/{organization_id}/{user_id}", deprecated=True)
 async def invite_organization_member(
     user: RequiredUserDep,
     session: AsyncSessionDep,
     organization_id: OrganizationID,
-    account_id: UserID,
+    user_id: UserID,
 ) -> None:
-    """Invite an account to an organization."""
+    """Invite a user to an organization."""
     # NOTE: not planned for release, leave empty!
     # - check authorization by organization_member
     # - fail if member already exists

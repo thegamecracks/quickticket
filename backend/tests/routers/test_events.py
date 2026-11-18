@@ -349,7 +349,7 @@ async def test_create_event(
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
-            account_id=user.id,
+            user_id=user.id,
             permissions=OrganizationMemberPermissions.OWNER,
         )
         venue = Venue(
@@ -415,7 +415,7 @@ async def test_create_event_no_permissions(
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
-            account_id=user.id,
+            user_id=user.id,
             permissions=OrganizationMemberPermissions(0),
         )
         venue = Venue(
@@ -461,7 +461,7 @@ async def test_create_event_no_venue(
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
-            account_id=user.id,
+            user_id=user.id,
             permissions=OrganizationMemberPermissions.OWNER,
         )
         session.add_all([organization, member])

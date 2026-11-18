@@ -6,10 +6,10 @@ from uuid import uuid7
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from quickticket.models.accounts import User
 from quickticket.models.base import Base
 from quickticket.models.money import Money
 from quickticket.models.types import EventID, TicketID, UserID, current_timestamp
+from quickticket.models.users import User
 
 if TYPE_CHECKING:
     from quickticket.models.events import Event
@@ -28,8 +28,8 @@ class Ticket(Base, kw_only=True, repr=False):
         default=None,
         index=True,
     )
-    account_id: Mapped[UserID] = mapped_column(
-        ForeignKey("account.account_id", ondelete="CASCADE"),
+    user_id: Mapped[UserID] = mapped_column(
+        ForeignKey("account.user_id", ondelete="CASCADE"),
         default=None,
         index=True,
     )

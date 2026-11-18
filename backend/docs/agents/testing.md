@@ -87,9 +87,9 @@ Shared fixtures live in `tests/conftest.py`.
   from tests.dataset import create_test_models
 
   dataset = create_test_models()
-  address_owners = {address.account_id for address in dataset.addresses}
-  member_accounts = {member.account_id for member in dataset.organization_members}
-  print([user.id for user in dataset.users if user.id not in address_owners | member_accounts])
+  address_owners = {address.user_id for address in dataset.addresses}
+  members = {member.user_id for member in dataset.organization_members}
+  print([user.id for user in dataset.users if user.id not in address_owners | members])
   PY
   ```
 

@@ -167,7 +167,7 @@ async def test_create_venue(
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
-            account_id=user.id,
+            user_id=user.id,
             permissions=OrganizationMemberPermissions.OWNER,
         )
         session.add_all([organization, member])
@@ -229,7 +229,7 @@ async def test_create_venue_missing_required_field(
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
-            account_id=user.id,
+            user_id=user.id,
             permissions=OrganizationMemberPermissions.OWNER,
         )
         session.add_all([organization, member])
@@ -262,7 +262,7 @@ async def test_create_venue_without_location_coords(
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
-            account_id=user.id,
+            user_id=user.id,
             permissions=OrganizationMemberPermissions.OWNER,
         )
         session.add_all([organization, member])
@@ -312,7 +312,7 @@ async def test_create_venue_unauthenticated(
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
-            account_id=user.id,
+            user_id=user.id,
             permissions=OrganizationMemberPermissions.OWNER,
         )
         session.add_all([organization, member])
@@ -395,7 +395,7 @@ async def test_create_venue_member_insufficient_permissions(
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
-            account_id=user.id,
+            user_id=user.id,
             permissions=OrganizationMemberPermissions(0),
         )
         session.add_all([organization, member])
@@ -430,7 +430,7 @@ async def test_create_venue_reached_limit(
         organization = Organization(display_name="Test Organization")
         member = OrganizationMember(
             organization_id=organization.id,
-            account_id=user.id,
+            user_id=user.id,
             permissions=OrganizationMemberPermissions.OWNER,
         )
         session.add_all([organization, member])

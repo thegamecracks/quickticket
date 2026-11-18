@@ -7,9 +7,9 @@ from uuid import uuid7
 from sqlalchemy import BigInteger, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from quickticket.models.accounts import User
 from quickticket.models.base import Base
 from quickticket.models.types import OrganizationID, UserID, current_timestamp, str_128
+from quickticket.models.users import User
 
 if TYPE_CHECKING:
     from quickticket.models.events import Venue
@@ -66,8 +66,8 @@ class OrganizationMember(Base, kw_only=True, repr=False):
         default=None,
         primary_key=True,
     )
-    account_id: Mapped[UserID] = mapped_column(
-        ForeignKey("account.account_id", ondelete="CASCADE"),
+    user_id: Mapped[UserID] = mapped_column(
+        ForeignKey("account.user_id", ondelete="CASCADE"),
         default=None,
         primary_key=True,
         index=True,

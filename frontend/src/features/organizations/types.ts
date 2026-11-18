@@ -32,7 +32,7 @@ export interface OrganizationVenue {
 
 /** routers.organizations `PartialOrganizationMember`. */
 export interface OrganizationMember {
-  account_id: string; // UUID FK -> account
+  user_id: string; // UUID FK -> account
 }
 
 /** GET /organizations/{id} — routers.organizations `OrganizationRead`. */

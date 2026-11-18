@@ -102,7 +102,7 @@ async def get_limits_strategy(state: StateDep, storage: LimitsStorageDep) -> Rat
 
 
 async def get_request_identifier(request: Request, user: OptionalUserDep) -> tuple[str, ...]:
-    # Maybe key the limit by account type, "user" vs. "admin" vs. "bot"
+    # Maybe key the limit by user type, "user" vs. "admin" vs. "bot"
     if user is not None:
         return (str(user.id),)
 
@@ -121,7 +121,7 @@ async def get_request_limits(
     user: OptionalUserDep,
     rules: RateLimitRulesDep,
 ) -> Sequence[RateLimitItem]:
-    # Optionally adjust limit by account type
+    # Optionally adjust limit by user type
     path = get_route_path(request.scope)
     return [limit for rule in rules if rule.matches(request.method, path) for limit in rule.limits]
 

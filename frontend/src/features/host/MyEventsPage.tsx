@@ -25,7 +25,7 @@ export default function MyEventsPage() {
 
     // Reset pagination when the logged-in user changes.
     setCurrentPage(1)
-    // have to get all organization_id by organization_members item's account_id = user.id
+    // have to get all organization_id by organization_members item's user_id = user.id
     // only want one organization_id though since we have 1-1 user to organization
     const orgId = user?.organization_members[0].organization_id;
     getEvents(orgId);

@@ -91,7 +91,7 @@ async def test_profile_me_with_addresses(
     )
     address_1 = Address(
         id=ADDRESS_A1_ID,
-        account_id=user.id,
+        user_id=user.id,
         line_1="1 First Street",
         line_2="Unit 1",
         city="Testville",
@@ -100,7 +100,7 @@ async def test_profile_me_with_addresses(
     )
     address_2 = Address(
         id=ADDRESS_A2_ID,
-        account_id=user.id,
+        user_id=user.id,
         line_1="2 Second Street",
         line_2="Unit 2",
         city="Testville",
@@ -109,7 +109,7 @@ async def test_profile_me_with_addresses(
     )
     other_address = Address(
         id=ADDRESS_B1_ID,
-        account_id=other_user.id,
+        user_id=other_user.id,
         line_1="3 Third Street",
         line_2="Unit 3",
         city="Otherville",
@@ -183,19 +183,19 @@ async def test_profile_me_with_organization_memberships(
     )
     membership_1 = OrganizationMember(
         organization_id=organization_1.id,
-        account_id=user.id,
+        user_id=user.id,
         permissions=OrganizationMemberPermissions.OWNER,
         joined_at=datetime(2026, 1, 1, tzinfo=UTC),
     )
     membership_2 = OrganizationMember(
         organization_id=organization_2.id,
-        account_id=user.id,
+        user_id=user.id,
         permissions=OrganizationMemberPermissions(0),
         joined_at=datetime(2026, 1, 2, tzinfo=UTC),
     )
     other_membership = OrganizationMember(
         organization_id=organization_1.id,
-        account_id=other_user.id,
+        user_id=other_user.id,
         permissions=OrganizationMemberPermissions.OWNER,
         joined_at=datetime(2026, 1, 3, tzinfo=UTC),
     )
@@ -216,13 +216,13 @@ async def test_profile_me_with_organization_memberships(
         "organization_members": [
             {
                 "organization_id": str(membership_1.organization_id),
-                "account_id": str(membership_1.account_id),
+                "user_id": str(membership_1.user_id),
                 "permissions": int(membership_1.permissions),
                 "joined_at": isoformat(membership_1.joined_at),
             },
             {
                 "organization_id": str(membership_2.organization_id),
-                "account_id": str(membership_2.account_id),
+                "user_id": str(membership_2.user_id),
                 "permissions": int(membership_2.permissions),
                 "joined_at": isoformat(membership_2.joined_at),
             },

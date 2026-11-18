@@ -1,6 +1,6 @@
 // Mirrors quickticket.models.accounts + routers.profile.
 
-/** routers.profile `ProfileAddress`. Note: no `account_id` on the wire. */
+/** routers.profile `ProfileAddress`. Note: no `user_id` on the wire. */
 export interface ProfileAddress {
   id: string; // UUID (address_id)
   line_1: string;
@@ -13,14 +13,14 @@ export interface ProfileAddress {
 /** routers.profile `ProfileOrganizationMember`. */
 export interface ProfileOrganizationMember {
   organization_id: string; // UUID FK -> organization
-  account_id: string; // UUID FK -> account
+  user_id: string; // UUID FK -> account
   permissions: number; // IntFlag: 1 = ADMINISTRATOR
   joined_at: string; // ISO 8601 datetime
 }
 
 /** GET /profile/@me — routers.profile `Profile`. */
 export interface User {
-  id: string; // UUID (account_id)
+  id: string; // UUID (user_id)
   created_at: string; // ISO 8601 datetime
   display_name: string;
   first_name: string;
@@ -40,14 +40,14 @@ export function isAdministrator(member: ProfileOrganizationMember): boolean {
   return (member.permissions & OrganizationMemberPermissions.ADMINISTRATOR) !== 0;
 }
 
-/** Mirrors quickticket.models.accounts.Address — the ORM row, includes `account_id`. */
+/** Mirrors quickticket.models.accounts.Address — the ORM row, includes `user_id`. */
 export interface Address extends ProfileAddress {
-  account_id: string; // UUID FK -> account
+  user_id: string; // UUID FK -> account
 }
 
 export interface Notification {
   id: string; // UUID (notification_id)
-  account_id: string; // UUID FK -> account
+  user_id: string; // UUID FK -> account
   created_at: string; // ISO 8601 datetime
   expires_at: string; // ISO 8601 datetime
   email_at: string | null; // ISO 8601 datetime
@@ -60,6 +60,6 @@ export interface Notification {
 export interface OpenIDAccount {
   issuer: string;
   sub: string;
-  account_id: string; // UUID FK -> account
+  user_id: string; // UUID FK -> account
   id_token: string | null;
 }

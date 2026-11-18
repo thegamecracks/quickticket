@@ -5,7 +5,6 @@ from uuid import uuid7
 from sqlalchemy import BigInteger, CheckConstraint, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from quickticket.models.accounts import User
 from quickticket.models.base import Base
 from quickticket.models.types import (
     MimeType,
@@ -15,6 +14,7 @@ from quickticket.models.types import (
     current_timestamp,
     str_2000,
 )
+from quickticket.models.users import User
 
 __all__ = (
     "StorageObject",
@@ -70,8 +70,8 @@ class StorageObject(Base, kw_only=True, repr=False):
         ForeignKey("storage_provider.storage_provider_id"),
         default=None,
     )
-    account_id: Mapped[UserID | None] = mapped_column(
-        ForeignKey("account.account_id", ondelete="SET NULL"),
+    user_id: Mapped[UserID | None] = mapped_column(
+        ForeignKey("account.user_id", ondelete="SET NULL"),
         default=None,
         index=True,
     )

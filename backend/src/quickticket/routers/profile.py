@@ -28,7 +28,7 @@ class ProfileAddress(BaseModel):
 
 class ProfileOrganizationMember(BaseModel):
     organization_id: OrganizationID
-    account_id: UserID
+    user_id: UserID
     permissions: OrganizationMemberPermissions
     joined_at: AwareDatetime
 

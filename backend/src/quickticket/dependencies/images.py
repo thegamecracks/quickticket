@@ -187,7 +187,7 @@ class ImageService:
                     "filesize": len(image_bytes),
                     "mime_type": mime_type,
                     "storage_provider_id": provider.id,
-                    "account_id": user.id,
+                    "user_id": user.id,
                 },
             )
             await session.execute(stmt)

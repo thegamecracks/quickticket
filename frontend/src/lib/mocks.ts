@@ -20,7 +20,7 @@ const CAD = (amount: number): Money => ({ amount, currency: "CAD" })
 export const MockAddresses: Address[] = [
   {
     id: 'fdb0140f-fee0-4ffc-a0ca-1cbaaff1294e',
-    account_id: 'eec50538-0edc-469b-b441-01b95b2f86c1',
+    user_id: 'eec50538-0edc-469b-b441-01b95b2f86c1',
     line_1: '200 Bloor St. E.',
     line_2: '',
     city: 'Whitehorse',
@@ -29,7 +29,7 @@ export const MockAddresses: Address[] = [
   },
   {
     id: '9b1554f1-e8fe-40f6-977d-6f7fef50efa9',
-    account_id: '0daec970-3840-4aad-b2fb-05c1e4fa635d',
+    user_id: '0daec970-3840-4aad-b2fb-05c1e4fa635d',
     line_1: '4201 Bank St.',
     line_2: '',
     city: 'Toronto',
@@ -38,7 +38,7 @@ export const MockAddresses: Address[] = [
   },
   {
     id: 'deed70ce-32c8-4bdf-b3a5-3722615ef91d',
-    account_id: '3529c963-84c7-4e26-8017-b1805d0a4280',
+    user_id: '3529c963-84c7-4e26-8017-b1805d0a4280',
     line_1: '200 Bloor St. E.',
     line_2: '',
     city: 'Victoria',
@@ -58,7 +58,7 @@ const mockMembership = (
   permissions: number = OrganizationMemberPermissions.ADMINISTRATOR,
 ): ProfileOrganizationMember => ({
   organization_id: organizationId,
-  account_id: accountId,
+  user_id: accountId,
   permissions,
   joined_at: '2026-08-01T12:00:00.000Z',
 })
@@ -112,7 +112,7 @@ export interface MockOrganization {
   id: string // UUID (organization_id)
   created_at: string // ISO 8601 datetime
   display_name: string
-  /** account_ids of members (mockdata.sql `organization_member`). */
+  /** user_ids of members (mockdata.sql `organization_member`). */
   member_ids: string[]
 }
 
@@ -458,56 +458,56 @@ export const MockTickets: Ticket[] = [
   {
     id: '1f0a3b2c-1111-4a2b-9c3d-0123456789a1',
     event_id: '0c1ed79b-e063-45de-bfce-7283f5247bc3',
-    account_id: 'eec50538-0edc-469b-b441-01b95b2f86c1',
+    user_id: 'eec50538-0edc-469b-b441-01b95b2f86c1',
     created_at: '2026-10-01T14:30:00.000Z',
     paid_cost: CAD(40.32),
   },
   {
     id: '2b1c4d3e-2222-4b3c-8d4e-1234567890b2',
     event_id: '8f691e68-a0b5-452e-9e27-4b0161dcc62a',
-    account_id: 'eec50538-0edc-469b-b441-01b95b2f86c1',
+    user_id: 'eec50538-0edc-469b-b441-01b95b2f86c1',
     created_at: '2026-10-02T09:15:00.000Z',
     paid_cost: CAD(18.32),
   },
   {
     id: '3c2d5e4f-3333-4c4d-9e5f-2345678901c3',
     event_id: 'ecca0ef6-390c-4b3e-9ec5-d7c307b642c5',
-    account_id: 'bf90f3a5-e204-4373-acd1-dd24e1eb58f3',
+    user_id: 'bf90f3a5-e204-4373-acd1-dd24e1eb58f3',
     created_at: '2026-10-02T16:45:00.000Z',
     paid_cost: CAD(430),
   },
   {
     id: '4d3e6f5a-4444-4d5e-8f6a-3456789012d4',
     event_id: 'ecca0ef6-390c-4b3e-9ec5-d7c307b642c5',
-    account_id: 'f9a12ff2-21ca-4ad5-b3ea-80911709726c',
+    user_id: 'f9a12ff2-21ca-4ad5-b3ea-80911709726c',
     created_at: '2026-10-03T11:20:00.000Z',
     paid_cost: CAD(50.43),
   },
   {
     id: '5e4f7a6b-5555-4e6f-9a7b-4567890123e5',
     event_id: '697102d3-6f53-4c93-b65b-f87a36a9b301',
-    account_id: '0837cf2f-c000-4d8c-8ec1-7aa38af5e236',
+    user_id: '0837cf2f-c000-4d8c-8ec1-7aa38af5e236',
     created_at: '2026-10-03T18:05:00.000Z',
     paid_cost: CAD(0),
   },
   {
     id: '6f5a8b7c-6666-4f7a-8b8c-5678901234f6',
     event_id: '21afa1a9-a4ed-4d2f-8908-93b743027fec',
-    account_id: '35c42278-c7ee-4680-b67b-65658e2438e6',
+    user_id: '35c42278-c7ee-4680-b67b-65658e2438e6',
     created_at: '2026-10-04T13:40:00.000Z',
     paid_cost: CAD(12000),
   },
   {
     id: '7a6b9c8d-7777-4a8b-9c9d-6789012345a7',
     event_id: 'df8af935-6315-4a0f-9723-e4b031458a4d',
-    account_id: '7ca2be93-1698-419a-9d8e-066dc81deb7c',
+    user_id: '7ca2be93-1698-419a-9d8e-066dc81deb7c',
     created_at: '2026-10-04T20:10:00.000Z',
     paid_cost: CAD(12000),
   },
   {
     id: '8b7cad9e-8888-4b9c-8d0e-7890123456b8',
     event_id: '97067d2e-7a1c-4451-ac3a-a8e974e1c6e3',
-    account_id: 'e7eb73ec-c6ac-48ca-b781-6492307a5eb2',
+    user_id: 'e7eb73ec-c6ac-48ca-b781-6492307a5eb2',
     created_at: '2026-10-05T10:25:00.000Z',
     paid_cost: CAD(7500),
   },
@@ -520,7 +520,7 @@ export const MockTickets: Ticket[] = [
 export const MockNotifications: Notification[] = [
   {
     id: '9c8dbe0f-9999-4c0d-9e1f-8901234567c9',
-    account_id: 'eec50538-0edc-469b-b441-01b95b2f86c1',
+    user_id: 'eec50538-0edc-469b-b441-01b95b2f86c1',
     created_at: '2026-10-05T09:00:00.000Z',
     expires_at: '2026-11-05T09:00:00.000Z',
     email_at: null,
@@ -531,7 +531,7 @@ export const MockNotifications: Notification[] = [
   },
   {
     id: '0d9eaf1a-0000-4d1e-8f2a-9012345678d0',
-    account_id: 'eec50538-0edc-469b-b441-01b95b2f86c1',
+    user_id: 'eec50538-0edc-469b-b441-01b95b2f86c1',
     created_at: '2026-10-04T15:30:00.000Z',
     expires_at: '2026-11-04T15:30:00.000Z',
     email_at: '2026-10-04T16:00:00.000Z',

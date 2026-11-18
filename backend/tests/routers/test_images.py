@@ -122,7 +122,7 @@ async def seed_entity(
         models.append(
             OrganizationMember(
                 organization_id=organization.id,
-                account_id=user.id,
+                user_id=user.id,
                 permissions=permissions,
             ),
         )
@@ -289,7 +289,7 @@ async def test_set_image(
     stored = await get_stored_image(make_session, entity_cls, seeded.entity.id, kind)
     assert stored is not None
     assert stored.id == StorageObjectID(UUID(data["id"]))
-    assert stored.account_id == user.id
+    assert stored.user_id == user.id
     assert stored.filesize == len(stored_bytes)
     assert data["filesize"] == len(stored_bytes)
 

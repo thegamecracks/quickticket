@@ -64,7 +64,7 @@ async def venue(make_session: async_sessionmaker[AsyncSession], user: User) -> V
     organization = Organization(display_name="Test Organization")
     member = OrganizationMember(
         organization_id=organization.id,
-        account_id=user.id,
+        user_id=user.id,
         permissions=OrganizationMemberPermissions.OWNER,
     )
     venue = Venue(
@@ -94,7 +94,7 @@ async def test_image_service_upload_banner(
     obj = await images.upload_banner(venue, image, user=user)
     assert obj.id is not None
     assert obj.storage_provider_id is not None
-    assert obj.account_id == user.id
+    assert obj.user_id == user.id
     assert obj.object_key.startswith(f"banners/{venue.id}/")
     assert obj.object_key.endswith(obj.filename)
     assert obj.filesize == 6816
@@ -133,7 +133,7 @@ async def test_image_service_upload_banner_reuses_identical_bytes(
     )
 
     assert second.id == first.id
-    assert second.account_id == user.id
+    assert second.user_id == user.id
     assert second.object_key == first.object_key
 
     async with make_session.begin() as session:

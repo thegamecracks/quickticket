@@ -256,7 +256,7 @@ async def test_post_login_registers_user(
         assert user.last_name == "User"
 
         account = await session.scalar(
-            select(OpenIDAccount).where(OpenIDAccount.account_id == user.id),
+            select(OpenIDAccount).where(OpenIDAccount.user_id == user.id),
         )
         assert account is not None
         assert account.issuer == "https://idp.example"

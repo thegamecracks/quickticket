@@ -79,7 +79,7 @@ async def test_create_organization(
     assert data["created_at"] is not None
     assert data["display_name"] == "Test Organization"
     assert data["venues"] == []
-    assert UUID(data["members"][0]["account_id"]) == user.id
+    assert UUID(data["members"][0]["user_id"]) == user.id
 
     async with make_session.begin() as session:
         member = await session.get(OrganizationMember, (UUID(data["id"]), user.id))

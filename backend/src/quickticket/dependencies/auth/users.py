@@ -86,8 +86,8 @@ class RegistrationController:
         """Get the user associated with an ID or access token along with the
         OpenID account they used to login.
 
-        If an ID token is passed, the user will be registered for a new account
-        if necessary and their personal details will be updated.
+        If an ID token is passed, the user will be registered if necessary
+        and their personal details will be updated.
         If an access token is passed and the user does not exist, an HTTP 401
         will be raised with their token cookies deleted to force re-authentication.
 
@@ -99,27 +99,11 @@ class RegistrationController:
         user: User | None = None
         claims = token.claims
 
-        # get openid account
-        # if account is present
-        #     update user
-        #     return user and account
-
-        # get user by email
-        # if user is present
-        #     create openid account
-        #     return user and account
-
-        # if not registering
-        #     fail login
-
-        # create user and account
-        # return user and account
-
         openid_account = await self.session.scalar(
             select(OpenIDAccount)
             .join(User, OpenIDAccount.user)
             .where(OpenIDAccount.issuer == claims.iss, OpenIDAccount.sub == claims.sub)
-            .options(load_only(OpenIDAccount.account_id), selectinload(OpenIDAccount.user)),
+            .options(load_only(OpenIDAccount.user_id), selectinload(OpenIDAccount.user)),
         )
         if openid_account is not None:
             user = openid_account.user
@@ -150,7 +134,7 @@ class RegistrationController:
             openid_account = OpenIDAccount(
                 issuer=claims.iss,
                 sub=claims.sub,
-                account_id=user.id,
+                user_id=user.id,
                 id_token=id_token_raw,
             )
             self.session.add(openid_account)
@@ -159,7 +143,7 @@ class RegistrationController:
             return user, openid_account
 
         if isinstance(token, AccessToken):
-            # User is missing from database and account registration was not expected.
+            # User is missing from database and registration was not expected.
             # Perhaps the backend has changed databases or a sysadmin deleted the user?
             log.warning("Received access token for non-existent user (sub: %s)", claims.sub)
             self.cookies.delete_all()
