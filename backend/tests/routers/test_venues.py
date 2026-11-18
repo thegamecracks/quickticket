@@ -180,7 +180,7 @@ async def test_create_venue(
             "description": "A venue for testing.",
             "category": "Sports",
             "location_name": "Test Stadium",
-            "location_coords": {"lat": 48.8584, "long": 2.2945},
+            "location_coords": {"lat": 48.8584, "lng": 2.2945},
         },
     )
     assert response.status_code == 201
@@ -194,7 +194,7 @@ async def test_create_venue(
     assert data["description"] == "A venue for testing."
     assert data["category"] == "Sports"
     assert data["location_name"] == "Test Stadium"
-    assert data["location_coords"] == {"lat": 48.8584, "long": 2.2945}
+    assert data["location_coords"] == {"lat": 48.8584, "lng": 2.2945}
     assert data["thumbnail"] is None
     assert data["banner"] is None
     assert data["events"] == []
@@ -210,7 +210,7 @@ async def test_create_venue(
         assert persisted.description == "A venue for testing."
         assert persisted.category == "Sports"
         assert persisted.location_name == "Test Stadium"
-        assert persisted.location_coords == Point(lat=48.8584, long=2.2945)
+        assert persisted.location_coords == Point(lat=48.8584, lng=2.2945)
 
 
 @pytest.mark.parametrize(
@@ -240,7 +240,7 @@ async def test_create_venue_missing_required_field(
         "description": "A venue for testing.",
         "category": "Sports",
         "location_name": "Test Stadium",
-        "location_coords": {"lat": 48.8584, "long": 2.2945},
+        "location_coords": {"lat": 48.8584, "lng": 2.2945},
     }
     payload.pop(field)
 
@@ -326,7 +326,7 @@ async def test_create_venue_unauthenticated(
             "description": "A venue for testing.",
             "category": "Sports",
             "location_name": "Test Stadium",
-            "location_coords": {"lat": 48.8584, "long": 2.2945},
+            "location_coords": {"lat": 48.8584, "lng": 2.2945},
         },
     )
 
@@ -347,7 +347,7 @@ async def test_create_venue_nonexistent_organization(
             "description": "A venue for testing.",
             "category": "Sports",
             "location_name": "Test Stadium",
-            "location_coords": {"lat": 48.8584, "long": 2.2945},
+            "location_coords": {"lat": 48.8584, "lng": 2.2945},
         },
     )
     assert response.status_code == 400
@@ -375,7 +375,7 @@ async def test_create_venue_non_member(
             "description": "A venue for testing.",
             "category": "Sports",
             "location_name": "Test Stadium",
-            "location_coords": {"lat": 48.8584, "long": 2.2945},
+            "location_coords": {"lat": 48.8584, "lng": 2.2945},
         },
     )
     assert response.status_code == 403
@@ -408,7 +408,7 @@ async def test_create_venue_member_insufficient_permissions(
             "description": "A venue for testing.",
             "category": "Sports",
             "location_name": "Test Stadium",
-            "location_coords": {"lat": 48.8584, "long": 2.2945},
+            "location_coords": {"lat": 48.8584, "lng": 2.2945},
         },
     )
     assert response.status_code == 403
@@ -444,7 +444,7 @@ async def test_create_venue_reached_limit(
                 "description": "A venue for testing.",
                 "category": "Sports",
                 "location_name": "Test Stadium",
-                "location_coords": {"lat": 48.8584, "long": 2.2945},
+                "location_coords": {"lat": 48.8584, "lng": 2.2945},
             },
         )
         assert allowed.status_code == 201
@@ -457,7 +457,7 @@ async def test_create_venue_reached_limit(
             "description": "A venue for testing.",
             "category": "Sports",
             "location_name": "Test Stadium",
-            "location_coords": {"lat": 48.8584, "long": 2.2945},
+            "location_coords": {"lat": 48.8584, "lng": 2.2945},
         },
     )
     assert response.status_code == 400

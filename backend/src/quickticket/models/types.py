@@ -99,7 +99,7 @@ class Point(BaseModel):
     """A (latitiude, longitude) coordinate pair."""
 
     lat: float
-    long: float
+    lng: float
 
 
 class PointSerializer(TypeDecorator):
@@ -110,13 +110,13 @@ class PointSerializer(TypeDecorator):
 
     def process_bind_param(self, value: Point | None, dialect: Dialect) -> bytes | None:
         if value is not None:
-            return struct.pack("<dd", value.lat, value.long)
+            return struct.pack("<dd", value.lat, value.lng)
         return None
 
     def process_result_value(self, value: bytes | None, dialect: Dialect) -> Point | None:
         if value is not None:
-            lat, long = struct.unpack("<dd", value)
-            return Point(lat=lat, long=long)
+            lat, lng = struct.unpack("<dd", value)
+            return Point(lat=lat, lng=lng)
         return None
 
 

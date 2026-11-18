@@ -59,7 +59,7 @@ export default function EventDetailPage() {
                 </span>
               </h3>
               {event.venue.location_coords ? (
-                <GoogleMap latitude={event.venue.location_coords?.lat} longitude={event.venue.location_coords?.long} />
+                <GoogleMap latitude={event.venue.location_coords?.lat} longitude={event.venue.location_coords?.lng} />
               ) : (
                 <p>not valid location</p>
               )}

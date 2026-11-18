@@ -126,7 +126,7 @@ export default function CreateVenuePage() {
       return
     }
 
-    // Physical venues are geocoded to a (lat, long) pair; geocoding
+    // Physical venues are geocoded to a (lat, lng) pair; geocoding
     // failures fall back to null so the venue can still be saved.
     const location_coords =
       form.venueType === 'physical'
@@ -168,7 +168,7 @@ export default function CreateVenuePage() {
       if (!loc) console.warn('Geocode returned no results for:', address)
 
       return loc
-        ? { lat: loc.lat(), long: loc.lng() }
+        ? { lat: loc.lat(), lng: loc.lng() }
         : null
     } catch (e) {
       console.error('Geocoding failed for:', address, e)

@@ -165,7 +165,7 @@ export const MockVenues: Venue[] = [
     thumbnail_url: '/images/music.jpg',
     banner_url: '/images/music.jpg',
     location_name: '88 Granville St.',
-    location_coords: { lat: 44.6488, long: -63.5752 },
+    location_coords: { lat: 44.6488, lng: -63.5752 },
   },
   {
     id: 'd60f59fc-721d-42bb-8a35-821de7cdc7d8',
@@ -191,7 +191,7 @@ export const MockVenues: Venue[] = [
     thumbnail_url: '/images/tech.jpg',
     banner_url: '/images/tech.jpg',
     location_name: '505 Rue Laurier O.',
-    location_coords: { lat: 46.8139, long: -71.208 },
+    location_coords: { lat: 46.8139, lng: -71.208 },
   },
   {
     id: '1fb94585-3991-4d5b-817f-8aed59c3218d',
@@ -230,7 +230,7 @@ export const MockVenues: Venue[] = [
     thumbnail_url: '/images/comedy.jpg',
     banner_url: '/images/comedy.jpg',
     location_name: '505 Rue Laurier O.',
-    location_coords: { lat: 46.8139, long: -71.208 },
+    location_coords: { lat: 46.8139, lng: -71.208 },
   },
   {
     id: 'bc96927a-7495-415f-965a-ca00ffda7fc0',

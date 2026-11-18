@@ -9,5 +9,5 @@ export type Money = {
 /** Mirrors quickticket.models.types.Point. */
 export type Point = {
   lat: number;
-  long: number;
+  lng: number;
 };
