@@ -51,8 +51,7 @@ place where a paging assertion can agree with the code by construction.
 
 Deliberate gaps, each a candidate seam when its area changes:
 
-- Auth: JWT decoding and claim validation in `dependencies/auth/tokens.py` are
-  faked, as is the refresh-token branch of `get_or_refresh_access_token`.
+- Auth: JWT decoding and claim validation in `dependencies/auth/tokens.py` are faked.
 - `tasks/`, `worker.py`, `cli.py`: no route dispatches a task yet, so the
   autouse asynctasq fixtures below are the only coverage.
 - `models/tickets.py`: ticket sales have no behavior tests.
