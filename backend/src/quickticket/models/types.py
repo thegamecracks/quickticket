@@ -19,7 +19,7 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.dialects import postgresql, sqlite
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.sql.operators import OperatorType
@@ -118,8 +118,6 @@ class JSONBSerializer[T, R](TypeDecorator, ABC):
     def load_dialect_impl(self, dialect: Dialect) -> TypeEngine[_JSON_VALUE]:
         if dialect.name == "postgresql":
             return dialect.type_descriptor(postgresql.JSONB(none_as_null=True))
-        if dialect.name == "sqlite":
-            return dialect.type_descriptor(sqlite.JSONB(none_as_null=True))
         return dialect.type_descriptor(JSON())
 
     def coerce_compared_value(
