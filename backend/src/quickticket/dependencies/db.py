@@ -39,6 +39,7 @@ class _SQLiteConnection(sqlite3.Connection):
         autocommit = self.autocommit
         self.autocommit = True
         self.execute("PRAGMA foreign_keys=ON")
+        self.execute("PRAGMA journal_mode=WAL")
         self.autocommit = autocommit
 
 
