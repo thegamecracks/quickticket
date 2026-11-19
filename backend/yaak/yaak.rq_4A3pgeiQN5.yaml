@@ -1,0 +1,36 @@
+type: http_request
+model: http_request
+id: rq_4A3pgeiQN5
+createdAt: 2026-11-19T13:42:32.135765672
+updatedAt: 2026-11-19T13:42:32.135766344
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_UhKgCgv3xq
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: 404. The organization does not exist.
+headers: []
+method: GET
+name: Get organization 404
+sortPriority: 1.0
+url: ${[ base_url ]}/api/organizations/00000000-0000-0000-0000-000000000000
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

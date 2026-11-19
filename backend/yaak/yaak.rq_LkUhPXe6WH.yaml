@@ -1,0 +1,36 @@
+type: http_request
+model: http_request
+id: rq_LkUhPXe6WH
+createdAt: 2026-11-19T13:42:32.954158517
+updatedAt: 2026-11-19T13:42:32.954158858
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_Gui45uvh4w
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: 303. Redirects to the OpenID provider logout.
+headers: []
+method: POST
+name: Logout
+sortPriority: 1.0
+url: ${[ base_url ]}/api/auth/logout?redirect_uri=${[ base_url ]}/
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: true
+  value: false
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

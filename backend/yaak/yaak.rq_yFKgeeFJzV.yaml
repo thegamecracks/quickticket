@@ -1,0 +1,36 @@
+type: http_request
+model: http_request
+id: rq_yFKgeeFJzV
+createdAt: 2026-11-19T13:42:31.607987354
+updatedAt: 2026-11-19T13:42:31.607987574
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_RDjDMpddXk
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: 200. Lists events, newest first.
+headers: []
+method: GET
+name: List events
+sortPriority: 1.0
+url: ${[ base_url ]}/api/events?limit=10
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

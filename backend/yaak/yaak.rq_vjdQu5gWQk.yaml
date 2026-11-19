@@ -1,0 +1,36 @@
+type: http_request
+model: http_request
+id: rq_vjdQu5gWQk
+createdAt: 2026-11-19T13:42:32.682640502
+updatedAt: 2026-11-19T13:42:32.682640702
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_UhKgCgv3xq
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: 404. The event does not exist.
+headers: []
+method: GET
+name: Get event banner entity 404
+sortPriority: 25.0
+url: ${[ base_url ]}/api/events/00000000-0000-0000-0000-000000000000/banner
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: true
+  value: false
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

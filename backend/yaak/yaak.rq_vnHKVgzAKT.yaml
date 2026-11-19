@@ -1,0 +1,36 @@
+type: http_request
+model: http_request
+id: rq_vnHKVgzAKT
+createdAt: 2026-11-19T13:42:32.910244698
+updatedAt: 2026-11-19T13:42:32.910244908
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_a3uW2rAJiE
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: 303. Starts the OAuth2 login flow. Run only when establishing a new session.
+headers: []
+method: POST
+name: Start login
+sortPriority: 1.0
+url: ${[ base_url ]}/api/auth/login?redirect_uri=${[ base_url ]}/
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: true
+  value: false
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

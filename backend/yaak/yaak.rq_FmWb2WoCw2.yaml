@@ -1,0 +1,41 @@
+type: http_request
+model: http_request
+id: rq_FmWb2WoCw2
+createdAt: 2026-11-19T13:42:32.558215516
+updatedAt: 2026-11-19T13:42:32.558215757
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_UhKgCgv3xq
+authentication: {}
+authenticationType: null
+body:
+  text: '{}'
+bodyType: application/json
+description: 400. No fields to update.
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: null
+method: PATCH
+name: Patch event empty body
+sortPriority: 19.0
+url: ${[ base_url ]}/api/events/${[ response.body.path(request='rq_h9sE8Xs5Ln', path='$.id') ]}
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

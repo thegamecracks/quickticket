@@ -1,0 +1,34 @@
+type: folder
+model: folder
+id: fl_kWtwKxPaGv
+createdAt: 2026-11-19T13:42:31.018070166
+updatedAt: 2026-11-19T13:42:31.018070477
+workspaceId: wk_3xuzadZJ9F
+folderId: null
+authentication: {}
+authenticationType: null
+description: Run order 4. Creates its own venue, then walks get/update and the banner/thumbnail lifecycles.
+headers: []
+name: 30 Venues
+sortPriority: 4.0
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingRequestMessageSize:
+  enabled: false
+  value: 67108864
+settingHttpVersion:
+  enabled: false
+  value: auto

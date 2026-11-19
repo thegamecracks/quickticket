@@ -1,0 +1,36 @@
+type: http_request
+model: http_request
+id: rq_PJDA7dWQdL
+createdAt: 2026-11-19T13:42:31.813512093
+updatedAt: 2026-11-19T13:42:31.813512323
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_RDjDMpddXk
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: 404. The banner was deleted.
+headers: []
+method: GET
+name: Get event banner after delete
+sortPriority: 9.0
+url: ${[ base_url ]}/api/events/${[ response.body.path(request='rq_h9sE8Xs5Ln', path='$.id') ]}/banner
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: true
+  value: false
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

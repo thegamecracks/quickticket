@@ -1,0 +1,44 @@
+type: http_request
+model: http_request
+id: rq_oxPpY79khX
+createdAt: 2026-11-19T13:42:31.161961914
+updatedAt: 2026-11-19T13:42:31.161962375
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_u4cNYf2stX
+authentication: {}
+authenticationType: null
+body:
+  text: |-
+    {
+      "display_name": "QuickTicket Yaak"
+    }
+bodyType: application/json
+description: 201. Run once per fresh database/user. Reruns return 400 because the user already owns an organization; the routine folders use the profile instead.
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: null
+method: POST
+name: Create organization
+sortPriority: 2.0
+url: ${[ base_url ]}/api/organizations
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

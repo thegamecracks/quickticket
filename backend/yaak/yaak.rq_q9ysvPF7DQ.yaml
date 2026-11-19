@@ -1,0 +1,54 @@
+type: http_request
+model: http_request
+id: rq_q9ysvPF7DQ
+createdAt: 2026-11-19T13:42:32.849186403
+updatedAt: 2026-11-19T13:42:32.849186733
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_UhKgCgv3xq
+authentication: {}
+authenticationType: null
+body:
+  text: |-
+    {
+      "venue_id": "00000000-0000-0000-0000-000000000000",
+      "display_name": "Unauthenticated Event",
+      "description": "An event for testing.",
+      "category": "Testing",
+      "starts_at": "${[ timestamp.iso8601(timestamp.offset(expression='+1d')) ]}",
+      "ends_at": "${[ timestamp.iso8601(timestamp.offset(expression='+1d +4h')) ]}",
+      "max_attendees": 10,
+      "ticket_price": {
+        "amount": 100,
+        "currency": "CAD"
+      }
+    }
+bodyType: application/json
+description: 401. No token cookies are sent.
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: null
+method: POST
+name: Create event unauthenticated
+sortPriority: 33.0
+url: ${[ base_url ]}/api/events
+urlParameters: []
+settingSendCookies:
+  enabled: true
+  value: false
+settingStoreCookies:
+  enabled: true
+  value: false
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

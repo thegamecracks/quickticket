@@ -1,0 +1,52 @@
+type: http_request
+model: http_request
+id: rq_FuPZYxcYTQ
+createdAt: 2026-11-19T13:42:31.291648994
+updatedAt: 2026-11-19T13:42:31.291649354
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_kWtwKxPaGv
+authentication: {}
+authenticationType: null
+body:
+  text: |-
+    {
+      "organization_id": "${[ response.body.path(request='rq_rdDHfkDZyS', path='$.organization_members[0].organization_id') ]}",
+      "display_name": "QuickTicket Yaak Venue",
+      "description": "A venue created by the Yaak workspace smoke test.",
+      "category": "Testing",
+      "location_name": "127.0.0.1",
+      "location_coords": {
+        "lat": 43.6532,
+        "lng": -79.3832
+      }
+    }
+bodyType: application/json
+description: 201. Creates the venue fixture used by the event folder.
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: null
+method: POST
+name: Create venue
+sortPriority: 2.0
+url: ${[ base_url ]}/api/venues
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

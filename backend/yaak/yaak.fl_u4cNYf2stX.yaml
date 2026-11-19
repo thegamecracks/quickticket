@@ -1,0 +1,34 @@
+type: folder
+model: folder
+id: fl_u4cNYf2stX
+createdAt: 2026-11-19T13:42:30.956335400
+updatedAt: 2026-11-19T13:42:30.956335690
+workspaceId: wk_3xuzadZJ9F
+folderId: null
+authentication: {}
+authenticationType: null
+description: Manual, run once per fresh database/user. Bootstrap the Yaak cookie jar, then create the test organization. The routine folders start at 10 Profile and do not depend on this folder's create response.
+headers: []
+name: 00 Setup
+sortPriority: 1.0
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingRequestMessageSize:
+  enabled: false
+  value: 67108864
+settingHttpVersion:
+  enabled: false
+  value: auto

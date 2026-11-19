@@ -1,0 +1,54 @@
+type: http_request
+model: http_request
+id: rq_h9sE8Xs5Ln
+createdAt: 2026-11-19T13:42:31.631653318
+updatedAt: 2026-11-19T13:42:31.631653539
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_RDjDMpddXk
+authentication: {}
+authenticationType: null
+body:
+  text: |-
+    {
+      "venue_id": "${[ response.body.path(request='rq_FuPZYxcYTQ', path='$.id') ]}",
+      "display_name": "QuickTicket Yaak Event",
+      "description": "An event created by the Yaak workspace smoke test.",
+      "category": "Testing",
+      "starts_at": "${[ timestamp.iso8601(timestamp.offset(expression='+1d')) ]}",
+      "ends_at": "${[ timestamp.iso8601(timestamp.offset(expression='+1d +4h')) ]}",
+      "max_attendees": 100,
+      "ticket_price": {
+        "amount": 2500,
+        "currency": "CAD"
+      }
+    }
+bodyType: application/json
+description: 201. Creates the event fixture used by the image and 501 requests.
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: null
+method: POST
+name: Create event
+sortPriority: 2.0
+url: ${[ base_url ]}/api/events
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

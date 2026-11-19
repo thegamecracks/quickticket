@@ -1,0 +1,36 @@
+type: http_request
+model: http_request
+id: rq_sQPpLGrReJ
+createdAt: 2026-11-19T13:42:32.932488404
+updatedAt: 2026-11-19T13:42:32.932488614
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_a3uW2rAJiE
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: 303. Paste the code from the browser callback URL after Start login.
+headers: []
+method: GET
+name: Complete login
+sortPriority: 2.0
+url: ${[ base_url ]}/api/auth/post-login?state=${[ regex.match(input=response.header(request='rq_vnHKVgzAKT', header='Location'), regex='[?&]state=([^&]+)') ]}&code=${[ prompt.text(label='OAuth authorization code') ]}
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: true
+  value: false
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

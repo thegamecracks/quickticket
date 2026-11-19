@@ -1,0 +1,36 @@
+type: http_request
+model: http_request
+id: rq_Mbb3oCvJAB
+createdAt: 2026-11-19T13:42:31.836999427
+updatedAt: 2026-11-19T13:42:31.836999638
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_RDjDMpddXk
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: 404. No thumbnail is set yet.
+headers: []
+method: GET
+name: Get event thumbnail before upload
+sortPriority: 10.0
+url: ${[ base_url ]}/api/events/${[ response.body.path(request='rq_h9sE8Xs5Ln', path='$.id') ]}/thumbnail
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: true
+  value: false
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

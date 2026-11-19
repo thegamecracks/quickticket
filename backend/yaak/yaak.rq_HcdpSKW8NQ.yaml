@@ -1,0 +1,41 @@
+type: http_request
+model: http_request
+id: rq_HcdpSKW8NQ
+createdAt: 2026-11-19T13:42:31.721310242
+updatedAt: 2026-11-19T13:42:31.721310884
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_RDjDMpddXk
+authentication: {}
+authenticationType: null
+body:
+  form:
+  - contentType: image/jpeg
+    enabled: true
+    file: /home/thegamecracks/Documents/GitHub/quickticket/frontend/public/images/music.jpg
+    name: file
+bodyType: multipart/form-data
+description: 200. Uploads frontend/public/images/music.jpg as the event banner.
+headers: []
+method: PUT
+name: Set event banner
+sortPriority: 6.0
+url: ${[ base_url ]}/api/events/${[ response.body.path(request='rq_h9sE8Xs5Ln', path='$.id') ]}/banner
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

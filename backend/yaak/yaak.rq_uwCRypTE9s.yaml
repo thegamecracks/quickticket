@@ -1,0 +1,36 @@
+type: http_request
+model: http_request
+id: rq_uwCRypTE9s
+createdAt: 2026-11-19T13:42:31.791103763
+updatedAt: 2026-11-19T13:42:31.791104174
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_RDjDMpddXk
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: 204. Deletes the banner image.
+headers: []
+method: DELETE
+name: Delete event banner
+sortPriority: 8.0
+url: ${[ base_url ]}/api/events/${[ response.body.path(request='rq_h9sE8Xs5Ln', path='$.id') ]}/banner
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

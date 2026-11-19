@@ -1,0 +1,44 @@
+type: http_request
+model: http_request
+id: rq_viNKhMUSsp
+createdAt: 2026-11-19T13:42:32.599620979
+updatedAt: 2026-11-19T13:42:32.599621180
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_UhKgCgv3xq
+authentication: {}
+authenticationType: null
+body:
+  text: |-
+    {
+      "display_name": "No Such Venue"
+    }
+bodyType: application/json
+description: 404. The venue does not exist.
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: null
+method: PATCH
+name: Patch venue 404
+sortPriority: 21.0
+url: ${[ base_url ]}/api/venues/00000000-0000-0000-0000-000000000000
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

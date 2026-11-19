@@ -1,0 +1,48 @@
+type: http_request
+model: http_request
+id: rq_f3mhchkvgv
+createdAt: 2026-11-19T13:42:32.394757195
+updatedAt: 2026-11-19T13:42:32.394757445
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_UhKgCgv3xq
+authentication: {}
+authenticationType: null
+body:
+  text: |-
+    {
+      "organization_id": "00000000-0000-0000-0000-000000000000",
+      "display_name": "No Such Organization Venue",
+      "description": "A venue for testing.",
+      "category": "Testing",
+      "location_name": "Nowhere"
+    }
+bodyType: application/json
+description: 400. The organization does not exist.
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: null
+method: POST
+name: Create venue nonexistent organization
+sortPriority: 11.0
+url: ${[ base_url ]}/api/venues
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

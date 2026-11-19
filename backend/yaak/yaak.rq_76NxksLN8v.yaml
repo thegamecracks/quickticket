@@ -1,0 +1,36 @@
+type: http_request
+model: http_request
+id: rq_76NxksLN8v
+createdAt: 2026-11-19T13:42:32.304460595
+updatedAt: 2026-11-19T13:42:32.304460946
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_UhKgCgv3xq
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: 422. The next keyset value is not a datetime.
+headers: []
+method: GET
+name: List events malformed next
+sortPriority: 7.0
+url: ${[ base_url ]}/api/events?next=not-a-date
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

@@ -1,0 +1,40 @@
+type: http_request
+model: http_request
+id: rq_CrUxraU8jh
+createdAt: 2026-11-19T13:42:31.141648634
+updatedAt: 2026-11-19T13:42:31.141649115
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_u4cNYf2stX
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: '200. One-time auth bootstrap: paste the encrypted oauth-refresh-token cookie from a logged-in browser. The server refreshes it and Yaak stores the new token cookies. Skip once the cookie jar is populated.'
+headers:
+- enabled: true
+  name: Cookie
+  value: oauth-refresh-token=${[ prompt.text(label='oauth-refresh-token cookie', password=true) ]}
+  id: null
+method: GET
+name: Bootstrap session
+sortPriority: 1.0
+url: ${[ base_url ]}/api/profile/@me
+urlParameters: []
+settingSendCookies:
+  enabled: true
+  value: false
+settingStoreCookies:
+  enabled: true
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

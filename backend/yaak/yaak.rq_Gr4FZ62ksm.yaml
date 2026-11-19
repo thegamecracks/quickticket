@@ -1,0 +1,41 @@
+type: http_request
+model: http_request
+id: rq_Gr4FZ62ksm
+createdAt: 2026-11-19T13:42:31.525519679
+updatedAt: 2026-11-19T13:42:31.525520060
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_kWtwKxPaGv
+authentication: {}
+authenticationType: null
+body:
+  form:
+  - contentType: image/jpeg
+    enabled: true
+    file: /home/thegamecracks/Documents/GitHub/quickticket/frontend/public/images/music.jpg
+    name: file
+bodyType: multipart/form-data
+description: 200. Uploads frontend/public/images/music.jpg as the venue thumbnail.
+headers: []
+method: PUT
+name: Set venue thumbnail
+sortPriority: 11.0
+url: ${[ base_url ]}/api/venues/${[ response.body.path(request='rq_FuPZYxcYTQ', path='$.id') ]}/thumbnail
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

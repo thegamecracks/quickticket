@@ -1,0 +1,41 @@
+type: http_request
+model: http_request
+id: rq_jPQPu2RRr7
+createdAt: 2026-11-19T13:42:32.516710694
+updatedAt: 2026-11-19T13:42:32.516710895
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_UhKgCgv3xq
+authentication: {}
+authenticationType: null
+body:
+  text: '{}'
+bodyType: application/json
+description: 400. No fields to update.
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: null
+method: PATCH
+name: Patch organization empty body
+sortPriority: 17.0
+url: ${[ base_url ]}/api/organizations/${[ response.body.path(request='rq_rdDHfkDZyS', path='$.organization_members[0].organization_id') ]}
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

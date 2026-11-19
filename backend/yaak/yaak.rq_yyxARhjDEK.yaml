@@ -1,0 +1,36 @@
+type: http_request
+model: http_request
+id: rq_yyxARhjDEK
+createdAt: 2026-11-19T13:42:32.215683960
+updatedAt: 2026-11-19T13:42:32.215684481
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_UhKgCgv3xq
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: 422. The path ID is not a UUID.
+headers: []
+method: GET
+name: Get organization malformed ID
+sortPriority: 4.0
+url: ${[ base_url ]}/api/organizations/not-a-uuid
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

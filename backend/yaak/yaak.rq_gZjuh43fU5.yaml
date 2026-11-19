@@ -1,0 +1,44 @@
+type: http_request
+model: http_request
+id: rq_gZjuh43fU5
+createdAt: 2026-11-19T13:42:32.807267593
+updatedAt: 2026-11-19T13:42:32.807267803
+workspaceId: wk_3xuzadZJ9F
+folderId: fl_UhKgCgv3xq
+authentication: {}
+authenticationType: null
+body:
+  text: |-
+    {
+      "display_name": "Unauthenticated Organization"
+    }
+bodyType: application/json
+description: 401. No token cookies are sent.
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: null
+method: POST
+name: Create organization unauthenticated
+sortPriority: 31.0
+url: ${[ base_url ]}/api/organizations
+urlParameters: []
+settingSendCookies:
+  enabled: true
+  value: false
+settingStoreCookies:
+  enabled: true
+  value: false
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto
