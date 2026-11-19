@@ -83,7 +83,11 @@ async def get_async_sessionmaker(
     if make_session is not None:
         return make_session
 
-    state.make_session = async_sessionmaker(engine, expire_on_commit=False)
+    state.make_session = async_sessionmaker(
+        engine,
+        expire_on_commit=False,
+        join_transaction_mode="create_savepoint",
+    )
     return state.make_session
 
 

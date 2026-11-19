@@ -43,7 +43,11 @@ async def run_queries(session: AsyncSession) -> None:
 async def start_sessionmaker() -> AsyncGenerator[async_sessionmaker]:
     engine = create_async_engine(get_database_url())
     try:
-        yield async_sessionmaker(engine, expire_on_commit=False)
+        yield async_sessionmaker(
+            engine,
+            expire_on_commit=False,
+            join_transaction_mode="create_savepoint",
+        )
     finally:
         await engine.dispose()
 
