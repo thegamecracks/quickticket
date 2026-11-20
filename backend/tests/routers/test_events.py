@@ -340,6 +340,34 @@ async def test_get_event_not_found(
     assert response.json() == {"detail": "Not found"}
 
 
+def _create_event_payload(
+    *,
+    venue_id: UUID | str = "00000000-0000-0000-0000-000000000000",
+    display_name: str = "Test Hockey Tournament",
+    description: str = "A mock hockey game, for testing.",
+    category: str = "Sports",
+    starts_at: datetime | None = None,
+    ends_at: datetime | None = None,
+    max_attendees: int = 500,
+    ticket_price: dict[str, object] | None = None,
+) -> dict[str, object]:
+    """Build an event creation payload, defaulting to an otherwise valid body."""
+    if starts_at is None:
+        starts_at = datetime.now(UTC) + timedelta(days=1)
+    if ends_at is None:
+        ends_at = starts_at + timedelta(hours=4)
+    return {
+        "venue_id": str(venue_id),
+        "display_name": display_name,
+        "description": description,
+        "category": category,
+        "starts_at": isoformat(starts_at),
+        "ends_at": isoformat(ends_at),
+        "max_attendees": max_attendees,
+        "ticket_price": {"amount": 50, "currency": "CAD"} if ticket_price is None else ticket_price,
+    }
+
+
 async def test_create_event(
     client: AsyncClient,
     auth: AuthController,
@@ -367,16 +395,7 @@ async def test_create_event(
     ends_at = starts_at + timedelta(hours=4)
     response = await client.post(
         "/api/events",
-        json={
-            "venue_id": str(venue.id),
-            "display_name": "Test Hockey Tournament",
-            "description": "A mock hockey game, for testing.",
-            "category": "Sports",
-            "starts_at": isoformat(starts_at),
-            "ends_at": isoformat(ends_at),
-            "max_attendees": 500,
-            "ticket_price": {"amount": 50, "currency": "CAD"},
-        },
+        json=_create_event_payload(venue_id=venue.id, starts_at=starts_at, ends_at=ends_at),
     )
     assert response.status_code == 201
     data = response.json()
@@ -429,20 +448,9 @@ async def test_create_event_no_permissions(
         )
         session.add_all([organization, member, venue])
 
-    starts_at = datetime.now(UTC) + timedelta(days=1)
-    ends_at = starts_at + timedelta(hours=4)
     response = await client.post(
         "/api/events",
-        json={
-            "venue_id": str(venue.id),
-            "display_name": "Test Hockey Tournament",
-            "description": "A mock hockey game, for testing.",
-            "category": "Sports",
-            "starts_at": isoformat(starts_at),
-            "ends_at": isoformat(ends_at),
-            "max_attendees": 500,
-            "ticket_price": {"amount": 50, "currency": "CAD"},
-        },
+        json=_create_event_payload(venue_id=venue.id),
     )
     assert response.status_code == 403
     assert response.json() == {
@@ -468,20 +476,9 @@ async def test_create_event_no_venue(
         )
         session.add_all([organization, member])
 
-    starts_at = datetime.now(UTC) + timedelta(days=1)
-    ends_at = starts_at + timedelta(hours=4)
     response = await client.post(
         "/api/events",
-        json={
-            "venue_id": "00000000-0000-0000-0000-000000000000",
-            "display_name": "Test Hockey Tournament",
-            "description": "A mock hockey game, for testing.",
-            "category": "Sports",
-            "starts_at": isoformat(starts_at),
-            "ends_at": isoformat(ends_at),
-            "max_attendees": 500,
-            "ticket_price": {"amount": 50, "currency": "CAD"},
-        },
+        json=_create_event_payload(),
     )
     assert response.status_code == 400
     assert response.json() == {"detail": "Venue not found: 00000000-0000-0000-0000-000000000000"}
@@ -490,20 +487,9 @@ async def test_create_event_no_venue(
 async def test_create_event_rejects_max_attendees_below_minimum(
     client: AsyncClient,
 ) -> None:
-    starts_at = datetime.now(UTC) + timedelta(days=1)
-    ends_at = starts_at + timedelta(hours=4)
     response = await client.post(
         "/api/events",
-        json={
-            "venue_id": "00000000-0000-0000-0000-000000000000",
-            "display_name": "Test Hockey Tournament",
-            "description": "A mock hockey game, for testing.",
-            "category": "Sports",
-            "starts_at": isoformat(starts_at),
-            "ends_at": isoformat(ends_at),
-            "max_attendees": -1,
-            "ticket_price": {"amount": 50, "currency": "CAD"},
-        },
+        json=_create_event_payload(max_attendees=-1),
     )
     assert response.status_code == 422
 
@@ -511,20 +497,9 @@ async def test_create_event_rejects_max_attendees_below_minimum(
 async def test_create_event_rejects_max_attendees_above_maximum(
     client: AsyncClient,
 ) -> None:
-    starts_at = datetime.now(UTC) + timedelta(days=1)
-    ends_at = starts_at + timedelta(hours=4)
     response = await client.post(
         "/api/events",
-        json={
-            "venue_id": "00000000-0000-0000-0000-000000000000",
-            "display_name": "Test Hockey Tournament",
-            "description": "A mock hockey game, for testing.",
-            "category": "Sports",
-            "starts_at": isoformat(starts_at),
-            "ends_at": isoformat(ends_at),
-            "max_attendees": 10001,
-            "ticket_price": {"amount": 50, "currency": "CAD"},
-        },
+        json=_create_event_payload(max_attendees=10001),
     )
     assert response.status_code == 422
 
@@ -533,19 +508,9 @@ async def test_create_event_rejects_naive_datetimes(
     client: AsyncClient,
 ) -> None:
     starts_at = datetime.now() + timedelta(days=1)  # noqa: DTZ005
-    ends_at = starts_at
     response = await client.post(
         "/api/events",
-        json={
-            "venue_id": "00000000-0000-0000-0000-000000000000",
-            "display_name": "Test Hockey Tournament",
-            "description": "A mock hockey game, for testing.",
-            "category": "Sports",
-            "starts_at": starts_at.isoformat(),
-            "ends_at": ends_at.isoformat(),
-            "max_attendees": 500,
-            "ticket_price": {"amount": 50, "currency": "CAD"},
-        },
+        json=_create_event_payload(starts_at=starts_at, ends_at=starts_at),
     )
     for field in ("starts_at", "ends_at"):
         assert_validation_error(
@@ -560,19 +525,9 @@ async def test_create_event_rejects_past_datetimes(
     client: AsyncClient,
 ) -> None:
     starts_at = datetime.now(UTC) - timedelta(days=1)
-    ends_at = starts_at + timedelta(hours=4)
     response = await client.post(
         "/api/events",
-        json={
-            "venue_id": "00000000-0000-0000-0000-000000000000",
-            "display_name": "Test Hockey Tournament",
-            "description": "A mock hockey game, for testing.",
-            "category": "Sports",
-            "starts_at": isoformat(starts_at),
-            "ends_at": isoformat(ends_at),
-            "max_attendees": 500,
-            "ticket_price": {"amount": 50, "currency": "CAD"},
-        },
+        json=_create_event_payload(starts_at=starts_at),
     )
     for field in ("starts_at", "ends_at"):
         assert_validation_error(
@@ -590,16 +545,7 @@ async def test_create_event_rejects_ends_at_before_starts_at(
     ends_at = starts_at - timedelta(hours=1)
     response = await client.post(
         "/api/events",
-        json={
-            "venue_id": "00000000-0000-0000-0000-000000000000",
-            "display_name": "Test Hockey Tournament",
-            "description": "A mock hockey game, for testing.",
-            "category": "Sports",
-            "starts_at": isoformat(starts_at),
-            "ends_at": isoformat(ends_at),
-            "max_attendees": 500,
-            "ticket_price": {"amount": 50, "currency": "CAD"},
-        },
+        json=_create_event_payload(starts_at=starts_at, ends_at=ends_at),
     )
     assert_validation_error(
         response,
@@ -615,19 +561,9 @@ async def test_create_event_rejects_duration_below_minimum(
     offset: timedelta,
 ) -> None:
     starts_at = datetime.now(UTC) + timedelta(days=1)
-    ends_at = starts_at + offset
     response = await client.post(
         "/api/events",
-        json={
-            "venue_id": "00000000-0000-0000-0000-000000000000",
-            "display_name": "Test Hockey Tournament",
-            "description": "A mock hockey game, for testing.",
-            "category": "Sports",
-            "starts_at": isoformat(starts_at),
-            "ends_at": isoformat(ends_at),
-            "max_attendees": 500,
-            "ticket_price": {"amount": 50, "currency": "CAD"},
-        },
+        json=_create_event_payload(starts_at=starts_at, ends_at=starts_at + offset),
     )
     assert_validation_error(
         response,
@@ -641,19 +577,9 @@ async def test_create_event_rejects_duration_above_maximum(
     client: AsyncClient,
 ) -> None:
     starts_at = datetime.now(UTC) + timedelta(days=1)
-    ends_at = starts_at + timedelta(days=8)
     response = await client.post(
         "/api/events",
-        json={
-            "venue_id": "00000000-0000-0000-0000-000000000000",
-            "display_name": "Test Hockey Tournament",
-            "description": "A mock hockey game, for testing.",
-            "category": "Sports",
-            "starts_at": isoformat(starts_at),
-            "ends_at": isoformat(ends_at),
-            "max_attendees": 500,
-            "ticket_price": {"amount": 50, "currency": "CAD"},
-        },
+        json=_create_event_payload(starts_at=starts_at, ends_at=starts_at + timedelta(days=8)),
     )
     assert_validation_error(
         response,
