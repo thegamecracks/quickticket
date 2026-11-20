@@ -37,6 +37,6 @@ line numbers.
 ## Deeper docs
 
 - Changing a model → [`docs/agents/migrations.md`](docs/agents/migrations.md).
-- Writing or debugging tests → [`docs/agents/testing.md`](docs/agents/testing.md).
+- Planning, writing, or debugging tests → [`docs/agents/testing.md`](docs/agents/testing.md).
 - Writing a dependency → [`docs/agents/dependencies.md`](docs/agents/dependencies.md).
 - Running the app, SQLite/OpenID setup, Docker, worker → [`README.md`](README.md).

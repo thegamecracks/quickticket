@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import MISSING, AfterValidator, AwareDatetime, BaseModel, Field
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.interfaces import ORMOption
 from sqlalchemy.sql.functions import count
 from starlette.status import HTTP_201_CREATED
 
@@ -22,6 +23,7 @@ from quickticket.models import (
     StorageObjectID,
     Ticket,
     TicketID,
+    User,
     Venue,
     VenueID,
 )
@@ -152,26 +154,26 @@ class VenueRead(BaseModel):
     organization: PartialOrganization
 
 
+def _create_options_for_get_venue(user: User | None) -> tuple[ORMOption, ...]:
+    return (
+        selectinload(Venue.banner).load_only(StorageObject.id),
+        selectinload(Venue.thumbnail).load_only(StorageObject.id),
+        # Venue => Events => Tickets
+        selectinload(Venue.events)
+        .selectinload(
+            # TODO: return all tickets if user has permission from organization
+            Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
+        )
+        .load_only(Ticket.id),
+        # Venue => Organization
+        selectinload(Venue.organization),
+    )
+
+
 @router.get("/{venue_id}", response_model=VenueRead)
 async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: VenueID) -> Venue:
     """Get a venue by ID."""
-    venue = await session.scalar(
-        select(Venue)
-        .where(Venue.id == venue_id)
-        .options(
-            selectinload(Venue.banner).load_only(StorageObject.id),
-            selectinload(Venue.thumbnail).load_only(StorageObject.id),
-            # Venue => Events => Tickets
-            selectinload(Venue.events)
-            .selectinload(
-                # TODO: return all tickets if user has permission from organization
-                Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
-            )
-            .load_only(Ticket.id),
-            # Venue => Organization
-            selectinload(Venue.organization),
-        ),
-    )
+    venue = await session.get(Venue, venue_id, options=_create_options_for_get_venue(user))
     if venue is None:
         raise HTTPException(404, "Not found")
 
@@ -242,7 +244,7 @@ async def create_venue(
     return venue_orm
 
 
-@router.patch("/{venue_id}", response_model=VenueUpdate)
+@router.patch("/{venue_id}", response_model=VenueRead)
 async def edit_venue(
     user: RequiredUserDep,
     session: AsyncSessionDep,
@@ -251,9 +253,9 @@ async def edit_venue(
 ) -> Venue:
     """Edit a venue's details."""
     # TODO: allow venue drafts?
-    venue = await session.get(Venue, venue_id)
+    venue = await session.get(Venue, venue_id, options=_create_options_for_get_venue(user))
     if venue is None:
-        raise HTTPException(404, "Venue object for ID not found")
+        raise HTTPException(404, "Not found")
 
     controller = await get_organization_controller(session, user, venue.organization_id)
     controller.assert_permissions(OrganizationMemberPermissions.OWNER)

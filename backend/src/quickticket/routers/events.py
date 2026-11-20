@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import MISSING, AfterValidator, AwareDatetime, BaseModel, Field, model_validator
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.interfaces import ORMOption
 from sqlalchemy.sql.functions import count
 from starlette.status import HTTP_201_CREATED
 
@@ -25,6 +26,7 @@ from quickticket.models import (
     StorageObjectID,
     Ticket,
     TicketID,
+    User,
     Venue,
     VenueID,
 )
@@ -161,20 +163,20 @@ async def get_events(
     return {"items": items, "next": next_key, "total": total}
 
 
+def _create_options_for_get_event(user: User | None) -> tuple[ORMOption, ...]:
+    return (
+        selectinload(Event.venue).selectinload(Venue.organization),
+        selectinload(
+            # TODO: return all tickets if user has permission from organization
+            Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
+        ).load_only(Ticket.id),
+    )
+
+
 @router.get("/{event_id}", response_model=EventRead)
 async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: EventID) -> Event:
     """Get an event by ID."""
-    event = await session.scalar(
-        select(Event)
-        .where(Event.id == event_id)
-        .options(
-            selectinload(Event.venue).selectinload(Venue.organization),
-            selectinload(
-                # TODO: return all tickets if user has permission from organization
-                Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
-            ).load_only(Ticket.id),
-        ),
-    )
+    event = await session.get(Event, event_id, options=_create_options_for_get_event(user))
     if event is None:
         raise HTTPException(404, "Not found")
 
@@ -275,7 +277,7 @@ async def create_event(
     return event_orm
 
 
-@router.patch("/{event_id}", response_model=EventUpdate)
+@router.patch("/{event_id}", response_model=EventRead)
 async def edit_event(
     user: RequiredUserDep,
     session: AsyncSessionDep,
@@ -285,9 +287,9 @@ async def edit_event(
     """Edit an event's details."""
     # TODO: schedule notifications
     # TODO: allow event drafts?
-    event = await session.get(Event, event_id, options=[selectinload(Event.venue)])
+    event = await session.get(Event, event_id, options=_create_options_for_get_event(user))
     if event is None:
-        raise HTTPException(404, "event object for ID not found")
+        raise HTTPException(404, "Not found")
 
     controller = await get_organization_controller(session, user, event.venue.organization_id)
     controller.assert_permissions(OrganizationMemberPermissions.OWNER)

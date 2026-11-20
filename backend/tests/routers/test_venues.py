@@ -12,11 +12,13 @@ from quickticket.models import (
     OrganizationMember,
     OrganizationMemberPermissions,
     Point,
+    User,
     Venue,
     VenueID,
 )
 from quickticket.routers.venues import VENUE_LIMIT
 from tests.conftest import AuthController, DatasetLoader, isoformat
+from tests.dataset import Dataset
 
 
 async def test_get_venues(
@@ -462,3 +464,301 @@ async def test_create_venue_reached_limit(
     )
     assert response.status_code == 400
     assert response.json() == {"detail": f"Reached maximum venue limit: {VENUE_LIMIT}"}
+
+
+VENUE_KEYS = frozenset(
+    {
+        "banner",
+        "category",
+        "created_at",
+        "description",
+        "display_name",
+        "events",
+        "id",
+        "location_coords",
+        "location_name",
+        "organization",
+        "thumbnail",
+    },
+)
+"""The keys served by :class:`quickticket.routers.venues.VenueRead`."""
+
+
+def _owner_of_venue(dataset: Dataset, venue: Venue) -> User:
+    """Return the owner of the organization that holds the venue."""
+    member = next(
+        item
+        for item in dataset.organization_members
+        if item.organization_id == venue.organization_id
+    )
+    return next(user for user in dataset.users if user.id == member.user_id)
+
+
+async def test_edit_venue(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    organization = next(item for item in dataset.organizations if item.id == venue.organization_id)
+    expected_events = [item for item in dataset.events if item.venue_id == venue.id]
+    auth.user = _owner_of_venue(dataset, venue)
+
+    response = await client.patch(
+        f"/api/venues/{venue.id}",
+        json={
+            "display_name": "Edited Venue",
+            "description": "An edited venue.",
+            "category": "Comedy",
+            "location_name": "Edited Hall",
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+
+    assert set(data) == VENUE_KEYS
+    assert data["id"] == str(venue.id)
+    assert data["display_name"] == "Edited Venue"
+    assert data["description"] == "An edited venue."
+    assert data["category"] == "Comedy"
+    assert data["location_name"] == "Edited Hall"
+
+    # Fields absent from the payload keep their seeded values.
+    assert venue.location_coords is not None
+    assert data["location_coords"] == venue.location_coords.model_dump()
+    assert data["thumbnail"] is None
+    assert data["banner"] is None
+    assert {event["id"] for event in data["events"]} == {str(event.id) for event in expected_events}
+    assert all(event["tickets"] == [] for event in data["events"])
+    assert data["organization"]["id"] == str(organization.id)
+
+    fetched = await client.get(f"/api/venues/{venue.id}")
+    assert fetched.status_code == 200
+    assert fetched.json() == data
+
+
+async def test_edit_venue_location_coords(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    auth.user = _owner_of_venue(dataset, venue)
+
+    response = await client.patch(
+        f"/api/venues/{venue.id}",
+        json={"location_coords": {"lat": 48.8584, "lng": 2.2945}},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["location_coords"] == {"lat": 48.8584, "lng": 2.2945}
+
+    fetched = await client.get(f"/api/venues/{venue.id}")
+    assert fetched.status_code == 200
+    assert fetched.json() == data
+
+
+async def test_edit_venue_clears_location_coords(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    assert venue.location_coords is not None
+    auth.user = _owner_of_venue(dataset, venue)
+
+    response = await client.patch(
+        f"/api/venues/{venue.id}",
+        json={"location_coords": None},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["location_coords"] is None
+
+    fetched = await client.get(f"/api/venues/{venue.id}")
+    assert fetched.status_code == 200
+    assert fetched.json()["location_coords"] is None
+
+
+async def test_edit_venue_not_found(client: AsyncClient) -> None:
+    response = await client.patch(
+        "/api/venues/00000000-0000-0000-0000-000000000000",
+        json={"display_name": "Edited Venue"},
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Not found"}
+
+
+async def test_edit_venue_unauthenticated(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    auth.user = None
+
+    response = await client.patch(
+        f"/api/venues/{venue.id}",
+        json={"display_name": "Edited Venue"},
+    )
+
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Not authenticated"}
+
+
+async def test_edit_venue_non_member(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    member_ids = {member.user_id for member in dataset.organization_members}
+    auth.user = next(user for user in dataset.users if user.id not in member_ids)
+
+    response = await client.patch(
+        f"/api/venues/{venue.id}",
+        json={"display_name": "Edited Venue"},
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": (
+            f"User ({auth.user.id}) is not a member of organization ({venue.organization_id})"
+        ),
+    }
+
+
+async def test_edit_venue_member_without_owner(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    member = next(
+        item
+        for item in dataset.organization_members
+        if item.organization_id == venue.organization_id
+    )
+    # Downgrade the member before loading so the request authenticates as a
+    # member that lacks the OWNER permission.
+    member.permissions = OrganizationMemberPermissions(0)
+    await dataset_loader.load()
+    auth.user = next(user for user in dataset.users if user.id == member.user_id)
+
+    response = await client.patch(
+        f"/api/venues/{venue.id}",
+        json={"display_name": "Edited Venue"},
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": (
+            f"Organization member ({venue.organization_id}, {auth.user.id}) "
+            "missing permissions: OWNER"
+        ),
+    }
+
+
+async def test_edit_venue_cross_organization(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    other_member = next(
+        member
+        for member in dataset.organization_members
+        if member.organization_id != venue.organization_id
+    )
+    auth.user = next(user for user in dataset.users if user.id == other_member.user_id)
+
+    response = await client.patch(
+        f"/api/venues/{venue.id}",
+        json={"display_name": "Edited Venue"},
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": (
+            f"User ({auth.user.id}) is not a member of organization ({venue.organization_id})"
+        ),
+    }
+
+
+async def test_edit_venue_no_fields(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    auth.user = _owner_of_venue(dataset, venue)
+
+    response = await client.patch(f"/api/venues/{venue.id}", json={})
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "No fields to update"}
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("display_name", ""),
+        ("display_name", "  ab "),
+        ("display_name", "x" * 129),
+        ("category", "x" * 129),
+        ("description", "x" * 4097),
+        ("location_name", "x" * 129),
+    ],
+)
+async def test_edit_venue_rejects_invalid_fields(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+    field: str,
+    value: str,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    auth.user = _owner_of_venue(dataset, venue)
+
+    response = await client.patch(f"/api/venues/{venue.id}", json={field: value})
+
+    assert response.status_code == 422
+    locations = {tuple(error["loc"]) for error in response.json()["detail"]}
+    assert ("body", field) in locations
+
+
+@pytest.mark.parametrize("field", ["display_name", "description", "category", "location_name"])
+async def test_edit_venue_rejects_null_fields(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+    field: str,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    auth.user = _owner_of_venue(dataset, venue)
+
+    response = await client.patch(f"/api/venues/{venue.id}", json={field: None})
+
+    assert response.status_code == 422
+    locations = {tuple(error["loc"]) for error in response.json()["detail"]}
+    assert ("body", field) in locations

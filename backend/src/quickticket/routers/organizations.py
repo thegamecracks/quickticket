@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import MISSING, AwareDatetime, BaseModel
 from sqlalchemy import exists, false, select
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.interfaces import ORMOption
 from sqlalchemy.sql.functions import count
 from starlette.status import HTTP_201_CREATED
 
@@ -22,6 +23,7 @@ from quickticket.models import (
     StorageObject,
     StorageObjectID,
     Ticket,
+    User,
     UserID,
     Venue,
     VenueID,
@@ -118,6 +120,46 @@ class OrganizationRead(BaseModel):
     members: list[PartialOrganizationMember]
 
 
+def _create_options_for_get_organization(user: User | None) -> tuple[ORMOption, ...]:
+    return (
+        # Organization => Venues => Events => Tickets
+        selectinload(Organization.venues)
+        .load_only(
+            Venue.id,
+            Venue.created_at,
+            Venue.display_name,
+            Venue.description,
+            Venue.category,
+        )
+        .selectinload(Venue.events)
+        .load_only(
+            Event.id,
+            Event.created_at,
+            Event.display_name,
+            Event.description,
+            Event.category,
+        )
+        .selectinload(
+            # TODO: return all tickets if user has permission from organization
+            Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
+        )
+        .load_only(Ticket.id),
+        selectinload(Organization.venues, Venue.banner).load_only(StorageObject.id),
+        selectinload(Organization.venues, Venue.thumbnail).load_only(StorageObject.id),
+        selectinload(Organization.venues, Venue.events, Event.banner).load_only(
+            StorageObject.id,
+        ),
+        selectinload(Organization.venues, Venue.events, Event.thumbnail).load_only(
+            StorageObject.id,
+        ),
+        # Organization => OrganizationMembers
+        selectinload(Organization.members).load_only(
+            OrganizationMember.user_id,
+            OrganizationMember.permissions,  # required for get_organization_controller()
+        ),
+    )
+
+
 @router.get("/{organization_id}", response_model=OrganizationRead)
 async def get_organization(
     user: OptionalUserDep,
@@ -125,43 +167,10 @@ async def get_organization(
     organization_id: OrganizationID,
 ) -> Organization:
     """Get an organization by ID."""
-    organization = await session.scalar(
-        select(Organization)
-        .where(Organization.id == organization_id)
-        .options(
-            # Organization => Venues => Events => Tickets
-            selectinload(Organization.venues)
-            .load_only(
-                Venue.id,
-                Venue.created_at,
-                Venue.display_name,
-                Venue.description,
-                Venue.category,
-            )
-            .selectinload(Venue.events)
-            .load_only(
-                Event.id,
-                Event.created_at,
-                Event.display_name,
-                Event.description,
-                Event.category,
-            )
-            .selectinload(
-                # TODO: return all tickets if user has permission from organization
-                Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
-            )
-            .load_only(Ticket.id),
-            selectinload(Organization.venues, Venue.banner).load_only(StorageObject.id),
-            selectinload(Organization.venues, Venue.thumbnail).load_only(StorageObject.id),
-            selectinload(Organization.venues, Venue.events, Event.banner).load_only(
-                StorageObject.id,
-            ),
-            selectinload(Organization.venues, Venue.events, Event.thumbnail).load_only(
-                StorageObject.id,
-            ),
-            # Organization => OrganizationMembers
-            selectinload(Organization.members).load_only(OrganizationMember.user_id),
-        ),
+    organization = await session.get(
+        Organization,
+        organization_id,
+        options=_create_options_for_get_organization(user),
     )
     if organization is None:
         raise HTTPException(404, "Not found")
@@ -225,7 +234,7 @@ async def create_organization(
     return created
 
 
-@router.patch("/{organization_id}", response_model=OrganizationUpdate)
+@router.patch("/{organization_id}", response_model=OrganizationRead)
 async def edit_organization(
     user: RequiredUserDep,
     session: AsyncSessionDep,
@@ -235,9 +244,13 @@ async def edit_organization(
     """Edit an organization's details."""
     # TODO: schedule notifications
     # TODO: allow organization drafts?
-    organization = await session.get(Organization, organization_id)
+    organization = await session.get(
+        Organization,
+        organization_id,
+        options=_create_options_for_get_organization(user),
+    )
     if organization is None:
-        raise HTTPException(404, "Organization object for ID not found")
+        raise HTTPException(404, "Not found")
 
     controller = await get_organization_controller(session, user, organization.id)
     controller.assert_permissions(OrganizationMemberPermissions.OWNER)
