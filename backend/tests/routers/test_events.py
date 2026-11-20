@@ -659,3 +659,64 @@ async def test_create_event_rejects_duration_above_maximum(
         error_type="value_error",
         msg_contains="Event duration must be between 1:00:00 and 7 days, 0:00:00",
     )
+
+
+async def test_edit_event(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+
+    event = dataset.events[0]
+    venue = next(item for item in dataset.venues if item.id == event.venue_id)
+    organization = next(item for item in dataset.organizations if item.id == venue.organization_id)
+    member = next(
+        item for item in dataset.organization_members if item.organization_id == organization.id
+    )
+    auth.user = next(user for user in dataset.users if user.id == member.user_id)
+
+    # Editing an event that has already started must still succeed.
+    assert event.ends_at < datetime.now(UTC)
+
+    response = await client.patch(
+        f"/api/events/{event.id}",
+        json={
+            "display_name": "Edited Event",
+            "description": "An edited event.",
+            "category": "Comedy",
+            "max_attendees": 250,
+            "ticket_price": {"amount": 2500, "currency": "CAD"},
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+
+    assert set(data) == EVENT_KEYS
+    assert data["id"] == str(event.id)
+    assert data["display_name"] == "Edited Event"
+    assert data["description"] == "An edited event."
+    assert data["category"] == "Comedy"
+    assert data["max_attendees"] == 250
+    assert data["ticket_price"] == {"amount": 2500, "currency": "CAD"}
+
+    # Fields absent from the payload keep their seeded values.
+    assert datetime.fromisoformat(data["starts_at"]) == event.starts_at
+    assert datetime.fromisoformat(data["ends_at"]) == event.ends_at
+    assert data["tickets"] == []
+    assert data["venue"]["id"] == str(venue.id)
+
+    fetched = await client.get(f"/api/events/{event.id}")
+    assert fetched.status_code == 200
+    assert fetched.json() == data
+
+
+async def test_edit_event_not_found(client: AsyncClient) -> None:
+    response = await client.patch(
+        "/api/events/00000000-0000-0000-0000-000000000000",
+        json={"display_name": "Edited Event"},
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Not found"}
