@@ -8,7 +8,7 @@ import GoogleMap from '../../components/GoogleMap'
 import EventListItem from '../../components/EventListItem'
 import Markdown from '../../components/Markdown'
 import { useAuth } from '../../lib/auth'
-import { isAdministrator } from '../account/types'
+import { isOrganizationAdministrator } from '../account/types'
 
 export default function VenuePage() {
   const { id } = useParams<{ id: string }>()
@@ -33,13 +33,13 @@ export default function VenuePage() {
     >
       {venue && (
         <div>
-          <span className="text-2xl font-semibold block">Venue owned by{" "}<a className="link link-primary" href={`/organization/${venue?.organization.id}`}>{venue.organization.display_name}</a>
+          <span className="text-2xl font-semibold block">
+            Venue owned by{" "}
+            <a className="link link-primary" href={`/organization/${venue?.organization.id}`}>
+              {venue.organization.display_name}
+            </a>
           </span>
-          {user?.organization_members.some(
-  member =>
-    member.organization_id === venue.organization.id &&
-    isAdministrator(member)
-) && (
+          {isOrganizationAdministrator(user, venue.organization.id) && (
   <div className="mt-4">
     <Link
       to={`/venue/${id}/edit`}
