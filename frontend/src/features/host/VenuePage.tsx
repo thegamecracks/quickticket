@@ -40,15 +40,15 @@ export default function VenuePage() {
             </a>
           </span>
           {isOrganizationAdministrator(user, venue.organization.id) && (
-  <div className="mt-4">
-    <Link
-      to={`/venue/${id}/edit`}
-      className="btn btn-primary btn-sm"
-    >
-      Edit Venue
-    </Link>
-  </div>
-)}
+            <div className="mt-4">
+              <Link
+                to={`/venue/${id}/edit`}
+                className="btn btn-primary btn-sm"
+              >
+                Edit Venue
+              </Link>
+            </div>
+          )}
           <div className="mt-2">
             <div className="flex lg:flex-row flex-col gap-8">
               <div className="flex-1">
