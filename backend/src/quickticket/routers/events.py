@@ -3,7 +3,15 @@ from datetime import datetime, timedelta
 from typing import Annotated, Any, Self
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
-from pydantic import MISSING, AfterValidator, AwareDatetime, BaseModel, Field, model_validator
+from pydantic import (
+    MISSING,
+    AfterValidator,
+    AwareDatetime,
+    BaseModel,
+    ConfigDict,
+    Field,
+    model_validator,
+)
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm.interfaces import ORMOption
@@ -199,6 +207,8 @@ EventMaxAttendees = Annotated[int, Field(ge=0, le=10000)]
 
 
 class EventCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     venue_id: VenueID
     display_name: DisplayNameField
     description: EventDescription
@@ -215,6 +225,8 @@ class EventCreate(BaseModel):
 
 
 class EventUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     display_name: DisplayNameField | MISSING = MISSING
     description: EventDescription | MISSING = MISSING
     category: EventCategory | MISSING = MISSING
