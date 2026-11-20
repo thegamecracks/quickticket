@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import MISSING, AwareDatetime, BaseModel
 from sqlalchemy import exists, false, select
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.interfaces import ORMOption
 from sqlalchemy.sql.functions import count
 from starlette.status import HTTP_201_CREATED
 
@@ -22,6 +23,7 @@ from quickticket.models import (
     StorageObject,
     StorageObjectID,
     Ticket,
+    User,
     UserID,
     Venue,
     VenueID,
@@ -118,14 +120,8 @@ class OrganizationRead(BaseModel):
     members: list[PartialOrganizationMember]
 
 
-@router.get("/{organization_id}", response_model=OrganizationRead)
-async def get_organization(
-    user: OptionalUserDep,
-    session: AsyncSessionDep,
-    organization_id: OrganizationID,
-) -> Organization:
-    """Get an organization by ID."""
-    options = [
+def _create_options_for_get_organization(user: User | None) -> tuple[ORMOption, ...]:
+    return (
         # Organization => Venues => Events => Tickets
         selectinload(Organization.venues)
         .load_only(
@@ -158,8 +154,21 @@ async def get_organization(
         ),
         # Organization => OrganizationMembers
         selectinload(Organization.members).load_only(OrganizationMember.user_id),
-    ]
-    organization = await session.get(Organization, organization_id, options=options)
+    )
+
+
+@router.get("/{organization_id}", response_model=OrganizationRead)
+async def get_organization(
+    user: OptionalUserDep,
+    session: AsyncSessionDep,
+    organization_id: OrganizationID,
+) -> Organization:
+    """Get an organization by ID."""
+    organization = await session.get(
+        Organization,
+        organization_id,
+        options=_create_options_for_get_organization(user),
+    )
     if organization is None:
         raise HTTPException(404, "Not found")
 
@@ -222,7 +231,7 @@ async def create_organization(
     return created
 
 
-@router.patch("/{organization_id}", response_model=OrganizationUpdate)
+@router.patch("/{organization_id}", response_model=OrganizationRead)
 async def edit_organization(
     user: RequiredUserDep,
     session: AsyncSessionDep,
@@ -232,9 +241,13 @@ async def edit_organization(
     """Edit an organization's details."""
     # TODO: schedule notifications
     # TODO: allow organization drafts?
-    organization = await session.get(Organization, organization_id)
+    organization = await session.get(
+        Organization,
+        organization_id,
+        options=_create_options_for_get_organization(user),
+    )
     if organization is None:
-        raise HTTPException(404, "Organization object for ID not found")
+        raise HTTPException(404, "Not found")
 
     controller = await get_organization_controller(session, user, organization.id)
     controller.assert_permissions(OrganizationMemberPermissions.OWNER)
