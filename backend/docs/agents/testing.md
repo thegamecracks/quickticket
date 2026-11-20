@@ -7,7 +7,7 @@ seams, so a refactor that preserves behavior leaves the suite passing.
 
 | Seam | Catches | Misses |
 | --- | --- | --- |
-| HTTP routes under `/api` | status codes, payloads, authorization, cookies | middleware order, app wiring |
+| HTTP routes under `/api` | status codes, payloads, unknown-field rejection, authorization, cookies | middleware order, app wiring |
 | `ImageService.upload_banner`, `upload_thumbnail`, `get_url` | image processing, dedupe, object key layout | request validation |
 | `get_request_limits` | rule matching (method, route shape, root path) given a supplied rule table | enforcement (covered by the 429 tests) |
 | Paging params and `assert_keyset_walk` | filter bounds, keyset continuity, page invariants | per-endpoint ordering |
@@ -55,8 +55,6 @@ Deliberate gaps, each a candidate seam when its area changes:
 - `tasks/`, `worker.py`, `cli.py`: no route dispatches a task yet, so the
   autouse asynctasq fixtures below are the only coverage.
 - `models/tickets.py`: ticket sales have no behavior tests.
-- PATCH unknown fields: the update DTOs do not forbid extra fields yet, so no
-  test pins whether an unknown field is ignored or rejected.
 
 ## Fixtures
 

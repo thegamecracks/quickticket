@@ -17,7 +17,12 @@ from quickticket.models import (
     VenueID,
 )
 from quickticket.routers.venues import VENUE_LIMIT
-from tests.conftest import AuthController, DatasetLoader, isoformat
+from tests.conftest import (
+    AuthController,
+    DatasetLoader,
+    assert_validation_error,
+    isoformat,
+)
 from tests.dataset import Dataset
 
 
@@ -453,6 +458,35 @@ async def test_create_venue_reached_limit(
     assert response.json() == {"detail": f"Reached maximum venue limit: {VENUE_LIMIT}"}
 
 
+async def test_create_venue_rejects_unknown_field(client: AsyncClient) -> None:
+    payload = _create_venue_payload(location_coords={"lat": 48.8584, "lng": 2.2945})
+    payload["bogus"] = "x"
+
+    response = await client.post("/api/venues", json=payload)
+
+    assert_validation_error(
+        response,
+        loc=("body", "bogus"),
+        error_type="extra_forbidden",
+        msg_contains="Extra inputs are not permitted",
+    )
+
+
+async def test_create_venue_rejects_unknown_location_coords_field(client: AsyncClient) -> None:
+    payload = _create_venue_payload(
+        location_coords={"lat": 48.8584, "lng": 2.2945, "bogus": 1},
+    )
+
+    response = await client.post("/api/venues", json=payload)
+
+    assert_validation_error(
+        response,
+        loc=("body", "location_coords", "bogus"),
+        error_type="extra_forbidden",
+        msg_contains="Extra inputs are not permitted",
+    )
+
+
 VENUE_KEYS = frozenset(
     {
         "banner",
@@ -749,3 +783,73 @@ async def test_edit_venue_rejects_null_fields(
     assert response.status_code == 422
     locations = {tuple(error["loc"]) for error in response.json()["detail"]}
     assert ("body", field) in locations
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"bogus": "x"},
+        {"display_name": "Changed", "bogus": "x"},
+    ],
+)
+async def test_edit_venue_rejects_unknown_field(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+    changes: dict[str, object],
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    auth.user = _owner_of_venue(dataset, venue)
+
+    response = await client.patch(f"/api/venues/{venue.id}", json=changes)
+
+    assert_validation_error(
+        response,
+        loc=("body", "bogus"),
+        error_type="extra_forbidden",
+        msg_contains="Extra inputs are not permitted",
+    )
+
+    fetched = await client.get(f"/api/venues/{venue.id}")
+    assert fetched.status_code == 200
+    assert fetched.json()["display_name"] == venue.display_name
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"location_coords": {"lat": 48.8584, "lng": 2.2945, "bogus": 1}},
+        {
+            "display_name": "Changed",
+            "location_coords": {"lat": 48.8584, "lng": 2.2945, "bogus": 1},
+        },
+    ],
+)
+async def test_edit_venue_rejects_unknown_location_coords_field(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+    changes: dict[str, object],
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    assert venue.location_coords is not None
+    auth.user = _owner_of_venue(dataset, venue)
+
+    response = await client.patch(f"/api/venues/{venue.id}", json=changes)
+
+    assert_validation_error(
+        response,
+        loc=("body", "location_coords", "bogus"),
+        error_type="extra_forbidden",
+        msg_contains="Extra inputs are not permitted",
+    )
+
+    fetched = await client.get(f"/api/venues/{venue.id}")
+    assert fetched.status_code == 200
+    data = fetched.json()
+    assert data["display_name"] == venue.display_name
+    assert data["location_coords"] == venue.location_coords.model_dump()

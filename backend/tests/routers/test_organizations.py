@@ -12,7 +12,12 @@ from quickticket.models import (
     OrganizationMemberPermissions,
     User,
 )
-from tests.conftest import AuthController, DatasetLoader, isoformat
+from tests.conftest import (
+    AuthController,
+    DatasetLoader,
+    assert_validation_error,
+    isoformat,
+)
 from tests.dataset import Dataset
 
 
@@ -168,6 +173,20 @@ async def test_create_organization_strips_whitespace_and_filters_non_printable_c
         organization = await session.scalar(select(Organization))
         assert organization is not None
         assert organization.display_name == "My Org"
+
+
+async def test_create_organization_rejects_unknown_field(client: AsyncClient) -> None:
+    response = await client.post(
+        "/api/organizations",
+        json={"display_name": "Test Organization", "bogus": "x"},
+    )
+
+    assert_validation_error(
+        response,
+        loc=("body", "bogus"),
+        error_type="extra_forbidden",
+        msg_contains="Extra inputs are not permitted",
+    )
 
 
 ORGANIZATION_KEYS = frozenset({"created_at", "display_name", "id", "members", "venues"})
@@ -372,3 +391,35 @@ async def test_edit_organization_rejects_invalid_display_name(
     assert response.status_code == 422
     locations = {tuple(error["loc"]) for error in response.json()["detail"]}
     assert ("body", "display_name") in locations
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"bogus": "x"},
+        {"display_name": "Changed", "bogus": "x"},
+    ],
+)
+async def test_edit_organization_rejects_unknown_field(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+    changes: dict[str, object],
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    organization = dataset.organizations[0]
+    auth.user = _owner_of_organization(dataset, organization)
+
+    response = await client.patch(f"/api/organizations/{organization.id}", json=changes)
+
+    assert_validation_error(
+        response,
+        loc=("body", "bogus"),
+        error_type="extra_forbidden",
+        msg_contains="Extra inputs are not permitted",
+    )
+
+    fetched = await client.get(f"/api/organizations/{organization.id}")
+    assert fetched.status_code == 200
+    assert fetched.json()["display_name"] == organization.display_name

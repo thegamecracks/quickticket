@@ -589,6 +589,35 @@ async def test_create_event_rejects_duration_above_maximum(
     )
 
 
+async def test_create_event_rejects_unknown_field(client: AsyncClient) -> None:
+    payload = _create_event_payload()
+    payload["bogus"] = "x"
+
+    response = await client.post("/api/events", json=payload)
+
+    assert_validation_error(
+        response,
+        loc=("body", "bogus"),
+        error_type="extra_forbidden",
+        msg_contains="Extra inputs are not permitted",
+    )
+
+
+async def test_create_event_rejects_unknown_ticket_price_field(client: AsyncClient) -> None:
+    payload = _create_event_payload(
+        ticket_price={"amount": 50, "currency": "CAD", "bogus": 1},
+    )
+
+    response = await client.post("/api/events", json=payload)
+
+    assert_validation_error(
+        response,
+        loc=("body", "ticket_price", "bogus"),
+        error_type="extra_forbidden",
+        msg_contains="Extra inputs are not permitted",
+    )
+
+
 async def test_edit_event(
     client: AsyncClient,
     auth: AuthController,
@@ -1004,3 +1033,72 @@ async def test_edit_event_rejects_null_fields(
     assert response.status_code == 422
     locations = {tuple(error["loc"]) for error in response.json()["detail"]}
     assert ("body", field) in locations
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"bogus": "x"},
+        {"display_name": "Changed", "bogus": "x"},
+    ],
+)
+async def test_edit_event_rejects_unknown_field(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+    changes: dict[str, object],
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    event = dataset.events[0]
+    auth.user = _owner_of_event(dataset, event)
+
+    response = await client.patch(f"/api/events/{event.id}", json=changes)
+
+    assert_validation_error(
+        response,
+        loc=("body", "bogus"),
+        error_type="extra_forbidden",
+        msg_contains="Extra inputs are not permitted",
+    )
+
+    fetched = await client.get(f"/api/events/{event.id}")
+    assert fetched.status_code == 200
+    assert fetched.json()["display_name"] == event.display_name
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"ticket_price": {"amount": 50, "currency": "CAD", "bogus": 1}},
+        {
+            "display_name": "Changed",
+            "ticket_price": {"amount": 50, "currency": "CAD", "bogus": 1},
+        },
+    ],
+)
+async def test_edit_event_rejects_unknown_ticket_price_field(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+    changes: dict[str, object],
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    event = dataset.events[0]
+    auth.user = _owner_of_event(dataset, event)
+
+    response = await client.patch(f"/api/events/{event.id}", json=changes)
+
+    assert_validation_error(
+        response,
+        loc=("body", "ticket_price", "bogus"),
+        error_type="extra_forbidden",
+        msg_contains="Extra inputs are not permitted",
+    )
+
+    fetched = await client.get(f"/api/events/{event.id}")
+    assert fetched.status_code == 200
+    data = fetched.json()
+    assert data["display_name"] == event.display_name
+    assert data["ticket_price"] == event.ticket_price.model_dump()
