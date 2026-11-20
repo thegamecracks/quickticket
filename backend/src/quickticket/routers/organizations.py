@@ -153,7 +153,13 @@ def _create_options_for_get_organization(user: User | None) -> tuple[ORMOption, 
             StorageObject.id,
         ),
         # Organization => OrganizationMembers
-        selectinload(Organization.members).load_only(OrganizationMember.user_id),
+        # `permissions` is loaded because the PATCH route reuses these options
+        # before checking the requester's permissions, and the controller would
+        # otherwise lazy-load the deferred column from a partial instance.
+        selectinload(Organization.members).load_only(
+            OrganizationMember.user_id,
+            OrganizationMember.permissions,
+        ),
     )
 
 
