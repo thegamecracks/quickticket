@@ -164,17 +164,14 @@ async def get_events(
 @router.get("/{event_id}", response_model=EventRead)
 async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: EventID) -> Event:
     """Get an event by ID."""
-    event = await session.scalar(
-        select(Event)
-        .where(Event.id == event_id)
-        .options(
-            selectinload(Event.venue).selectinload(Venue.organization),
-            selectinload(
-                # TODO: return all tickets if user has permission from organization
-                Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
-            ).load_only(Ticket.id),
-        ),
-    )
+    options = [
+        selectinload(Event.venue).selectinload(Venue.organization),
+        selectinload(
+            # TODO: return all tickets if user has permission from organization
+            Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
+        ).load_only(Ticket.id),
+    ]
+    event = await session.get(Event, event_id, options=options)
     if event is None:
         raise HTTPException(404, "Not found")
 

@@ -125,44 +125,41 @@ async def get_organization(
     organization_id: OrganizationID,
 ) -> Organization:
     """Get an organization by ID."""
-    organization = await session.scalar(
-        select(Organization)
-        .where(Organization.id == organization_id)
-        .options(
-            # Organization => Venues => Events => Tickets
-            selectinload(Organization.venues)
-            .load_only(
-                Venue.id,
-                Venue.created_at,
-                Venue.display_name,
-                Venue.description,
-                Venue.category,
-            )
-            .selectinload(Venue.events)
-            .load_only(
-                Event.id,
-                Event.created_at,
-                Event.display_name,
-                Event.description,
-                Event.category,
-            )
-            .selectinload(
-                # TODO: return all tickets if user has permission from organization
-                Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
-            )
-            .load_only(Ticket.id),
-            selectinload(Organization.venues, Venue.banner).load_only(StorageObject.id),
-            selectinload(Organization.venues, Venue.thumbnail).load_only(StorageObject.id),
-            selectinload(Organization.venues, Venue.events, Event.banner).load_only(
-                StorageObject.id,
-            ),
-            selectinload(Organization.venues, Venue.events, Event.thumbnail).load_only(
-                StorageObject.id,
-            ),
-            # Organization => OrganizationMembers
-            selectinload(Organization.members).load_only(OrganizationMember.user_id),
+    options = [
+        # Organization => Venues => Events => Tickets
+        selectinload(Organization.venues)
+        .load_only(
+            Venue.id,
+            Venue.created_at,
+            Venue.display_name,
+            Venue.description,
+            Venue.category,
+        )
+        .selectinload(Venue.events)
+        .load_only(
+            Event.id,
+            Event.created_at,
+            Event.display_name,
+            Event.description,
+            Event.category,
+        )
+        .selectinload(
+            # TODO: return all tickets if user has permission from organization
+            Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
+        )
+        .load_only(Ticket.id),
+        selectinload(Organization.venues, Venue.banner).load_only(StorageObject.id),
+        selectinload(Organization.venues, Venue.thumbnail).load_only(StorageObject.id),
+        selectinload(Organization.venues, Venue.events, Event.banner).load_only(
+            StorageObject.id,
         ),
-    )
+        selectinload(Organization.venues, Venue.events, Event.thumbnail).load_only(
+            StorageObject.id,
+        ),
+        # Organization => OrganizationMembers
+        selectinload(Organization.members).load_only(OrganizationMember.user_id),
+    ]
+    organization = await session.get(Organization, organization_id, options=options)
     if organization is None:
         raise HTTPException(404, "Not found")
 

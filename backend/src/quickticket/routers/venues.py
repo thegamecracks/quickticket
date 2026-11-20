@@ -155,23 +155,20 @@ class VenueRead(BaseModel):
 @router.get("/{venue_id}", response_model=VenueRead)
 async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: VenueID) -> Venue:
     """Get a venue by ID."""
-    venue = await session.scalar(
-        select(Venue)
-        .where(Venue.id == venue_id)
-        .options(
-            selectinload(Venue.banner).load_only(StorageObject.id),
-            selectinload(Venue.thumbnail).load_only(StorageObject.id),
-            # Venue => Events => Tickets
-            selectinload(Venue.events)
-            .selectinload(
-                # TODO: return all tickets if user has permission from organization
-                Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
-            )
-            .load_only(Ticket.id),
-            # Venue => Organization
-            selectinload(Venue.organization),
-        ),
-    )
+    options = [
+        selectinload(Venue.banner).load_only(StorageObject.id),
+        selectinload(Venue.thumbnail).load_only(StorageObject.id),
+        # Venue => Events => Tickets
+        selectinload(Venue.events)
+        .selectinload(
+            # TODO: return all tickets if user has permission from organization
+            Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
+        )
+        .load_only(Ticket.id),
+        # Venue => Organization
+        selectinload(Venue.organization),
+    ]
+    venue = await session.get(Venue, venue_id, options=options)
     if venue is None:
         raise HTTPException(404, "Not found")
 
