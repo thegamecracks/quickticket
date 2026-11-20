@@ -2,7 +2,7 @@ import logging
 from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
-from pydantic import MISSING, AfterValidator, AwareDatetime, BaseModel, Field
+from pydantic import MISSING, AfterValidator, AwareDatetime, BaseModel, ConfigDict, Field
 from sqlalchemy import false, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm.interfaces import ORMOption
@@ -186,6 +186,8 @@ VenueLocationName = Annotated[str, AfterValidator(filter_string_field), Field(ma
 
 
 class VenueCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     organization_id: OrganizationID
     display_name: DisplayNameField
     description: VenueDescription
@@ -195,6 +197,8 @@ class VenueCreate(BaseModel):
 
 
 class VenueUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     display_name: DisplayNameField | MISSING = MISSING
     description: VenueDescription | MISSING = MISSING
     category: VenueCategory | MISSING = MISSING

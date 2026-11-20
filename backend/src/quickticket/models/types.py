@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from typing import Annotated, Any, ClassVar, NewType, Self
 from uuid import UUID
 
-from pydantic import BaseModel, GetCoreSchemaHandler, GetJsonSchemaHandler
+from pydantic import BaseModel, ConfigDict, GetCoreSchemaHandler, GetJsonSchemaHandler
 from pydantic_core import core_schema
 from sqlalchemy import (
     JSON,
@@ -102,6 +102,8 @@ class TZDateTime(TypeDecorator):
 
 class Point(BaseModel):
     """A (latitiude, longitude) coordinate pair."""
+
+    model_config = ConfigDict(extra="forbid")
 
     lat: float
     lng: float

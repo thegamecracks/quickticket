@@ -3,7 +3,7 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
-from pydantic import MISSING, AwareDatetime, BaseModel
+from pydantic import MISSING, AwareDatetime, BaseModel, ConfigDict
 from sqlalchemy import exists, false, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm.interfaces import ORMOption
@@ -179,10 +179,14 @@ async def get_organization(
 
 
 class OrganizationCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     display_name: DisplayNameField
 
 
 class OrganizationUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     display_name: DisplayNameField | MISSING = MISSING
 
 

@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import Dialect
 
 from quickticket.models.types import JSONBSerializer
@@ -158,6 +158,8 @@ class Currency(StrEnum):
 
 
 class Money(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     amount: int
     currency: Currency
 
