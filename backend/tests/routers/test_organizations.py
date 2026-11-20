@@ -1,5 +1,6 @@
 from uuid import UUID
 
+import pytest
 from httpx2 import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -9,8 +10,10 @@ from quickticket.models import (
     OrganizationID,
     OrganizationMember,
     OrganizationMemberPermissions,
+    User,
 )
 from tests.conftest import AuthController, DatasetLoader, isoformat
+from tests.dataset import Dataset
 
 
 async def test_get_organizations(
@@ -165,3 +168,207 @@ async def test_create_organization_strips_whitespace_and_filters_non_printable_c
         organization = await session.scalar(select(Organization))
         assert organization is not None
         assert organization.display_name == "My Org"
+
+
+ORGANIZATION_KEYS = frozenset({"created_at", "display_name", "id", "members", "venues"})
+"""The keys served by :class:`quickticket.routers.organizations.OrganizationRead`."""
+
+ORGANIZATION_VENUE_KEYS = frozenset(
+    {
+        "banner",
+        "category",
+        "created_at",
+        "description",
+        "display_name",
+        "events",
+        "id",
+        "thumbnail",
+    },
+)
+"""The keys of a venue nested in an :class:`OrganizationRead`."""
+
+
+def _owner_of_organization(dataset: Dataset, organization: Organization) -> User:
+    """Return a user who owns the organization."""
+    member = next(
+        item for item in dataset.organization_members if item.organization_id == organization.id
+    )
+    return next(user for user in dataset.users if user.id == member.user_id)
+
+
+async def test_edit_organization(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    organization = dataset.organizations[0]
+    expected_venues = [item for item in dataset.venues if item.organization_id == organization.id]
+    expected_members = [
+        item for item in dataset.organization_members if item.organization_id == organization.id
+    ]
+    auth.user = _owner_of_organization(dataset, organization)
+
+    response = await client.patch(
+        f"/api/organizations/{organization.id}",
+        json={"display_name": "Edited Organization"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+
+    assert set(data) == ORGANIZATION_KEYS
+    assert data["id"] == str(organization.id)
+    assert data["display_name"] == "Edited Organization"
+
+    # Fields absent from the payload keep their seeded values.
+    assert {venue["id"] for venue in data["venues"]} == {str(venue.id) for venue in expected_venues}
+    assert all(set(venue) == ORGANIZATION_VENUE_KEYS for venue in data["venues"])
+    assert {member["user_id"] for member in data["members"]} == {
+        str(member.user_id) for member in expected_members
+    }
+
+    fetched = await client.get(f"/api/organizations/{organization.id}")
+    assert fetched.status_code == 200
+    assert fetched.json() == data
+
+
+async def test_edit_organization_strips_whitespace_and_filters_non_printable_characters(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    organization = dataset.organizations[0]
+    auth.user = _owner_of_organization(dataset, organization)
+
+    response = await client.patch(
+        f"/api/organizations/{organization.id}",
+        json={"display_name": "  \u200bMy Org\x00  "},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["display_name"] == "My Org"
+
+    fetched = await client.get(f"/api/organizations/{organization.id}")
+    assert fetched.status_code == 200
+    assert fetched.json() == data
+
+
+async def test_edit_organization_not_found(client: AsyncClient) -> None:
+    response = await client.patch(
+        "/api/organizations/00000000-0000-0000-0000-000000000000",
+        json={"display_name": "Edited Organization"},
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Not found"}
+
+
+async def test_edit_organization_unauthenticated(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    organization = dataset.organizations[0]
+    auth.user = None
+
+    response = await client.patch(
+        f"/api/organizations/{organization.id}",
+        json={"display_name": "Edited Organization"},
+    )
+
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Not authenticated"}
+
+
+async def test_edit_organization_non_member(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    organization = dataset.organizations[0]
+    member_ids = {member.user_id for member in dataset.organization_members}
+    auth.user = next(user for user in dataset.users if user.id not in member_ids)
+
+    response = await client.patch(
+        f"/api/organizations/{organization.id}",
+        json={"display_name": "Edited Organization"},
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": (f"User ({auth.user.id}) is not a member of organization ({organization.id})"),
+    }
+
+
+async def test_edit_organization_member_without_owner(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    dataset = dataset_loader.dataset
+    organization = dataset.organizations[0]
+    member = next(
+        item for item in dataset.organization_members if item.organization_id == organization.id
+    )
+    # Downgrade the member before loading so the request authenticates as a
+    # member that lacks the OWNER permission.
+    member.permissions = OrganizationMemberPermissions(0)
+    await dataset_loader.load()
+    auth.user = next(user for user in dataset.users if user.id == member.user_id)
+
+    response = await client.patch(
+        f"/api/organizations/{organization.id}",
+        json={"display_name": "Edited Organization"},
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": (
+            f"Organization member ({organization.id}, {auth.user.id}) missing permissions: OWNER"
+        ),
+    }
+
+
+async def test_edit_organization_no_fields(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    organization = dataset.organizations[0]
+    auth.user = _owner_of_organization(dataset, organization)
+
+    response = await client.patch(f"/api/organizations/{organization.id}", json={})
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "No fields to update"}
+
+
+@pytest.mark.parametrize("display_name", ["", "   \t\n", " ab ", "x" * 129])
+async def test_edit_organization_rejects_invalid_display_name(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+    display_name: str,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    organization = dataset.organizations[0]
+    auth.user = _owner_of_organization(dataset, organization)
+
+    response = await client.patch(
+        f"/api/organizations/{organization.id}",
+        json={"display_name": display_name},
+    )
+
+    assert response.status_code == 422
+    locations = {tuple(error["loc"]) for error in response.json()["detail"]}
+    assert ("body", "display_name") in locations

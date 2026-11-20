@@ -55,6 +55,8 @@ Deliberate gaps, each a candidate seam when its area changes:
 - `tasks/`, `worker.py`, `cli.py`: no route dispatches a task yet, so the
   autouse asynctasq fixtures below are the only coverage.
 - `models/tickets.py`: ticket sales have no behavior tests.
+- PATCH unknown fields: the update DTOs do not forbid extra fields yet, so no
+  test pins whether an unknown field is ignored or rejected.
 
 ## Fixtures
 
