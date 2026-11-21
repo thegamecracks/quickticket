@@ -27,8 +27,10 @@ export default function MyEventsPage() {
     setCurrentPage(1)
     // have to get all organization_id by organization_members item's user_id = user.id
     // only want one organization_id though since we have 1-1 user to organization
-    const orgId = user?.organization_members[0].organization_id;
-    getEvents(orgId);
+    const orgId = user?.organization_members[0]?.organization_id;
+
+    // TODO: redirect user to create an organization page if orgId is not there!
+    orgId === undefined ? console.log(" user does not have organization, redirecting user to create an organization page") : getEvents(orgId);
 
   }, [user?.id])
 

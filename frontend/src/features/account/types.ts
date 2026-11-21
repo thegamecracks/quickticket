@@ -32,12 +32,25 @@ export interface User {
 
 /** Membership flag values from models.organizations `OrganizationMemberPermissions`. */
 export const OrganizationMemberPermissions = {
+  // Mirrors backend OrganizationMemberPermissions.OWNER (1) — the backend
+  // itself notes the "owner" name is provisional, so we call it ADMINISTRATOR.
   ADMINISTRATOR: 1,
 } as const;
 
 /** True when the membership carries the ADMINISTRATOR flag. */
 export function isAdministrator(member: ProfileOrganizationMember): boolean {
   return (member.permissions & OrganizationMemberPermissions.ADMINISTRATOR) !== 0;
+}
+
+/** True when the user is an administrator of the given organization. */
+export function isOrganizationAdministrator(
+  user: Pick<User, 'organization_members'> | null | undefined,
+  organizationId: string,
+): boolean {
+  return Boolean(user?.organization_members.some(
+    member =>
+      member.organization_id === organizationId && isAdministrator(member),
+  ));
 }
 
 /** Mirrors quickticket.models.accounts.Address — the ORM row, includes `user_id`. */
