@@ -1,3 +1,4 @@
+import json
 import logging
 
 import click
@@ -27,6 +28,18 @@ def dev() -> None:
 def run() -> None:
     """Run the `fastapi run` command."""
     fastapi_main()
+
+
+@main.command()
+def openapi() -> None:
+    """Print the current OpenAPI schema in JSON format."""
+    from quickticket.app import create_app_from_settings  # noqa: PLC0415
+    from quickticket.settings import Settings  # noqa: PLC0415
+
+    logging.basicConfig(format="{message}", style="{", level=logging.ERROR)
+    app = create_app_from_settings(Settings(_env_file=None))
+    schema = app.openapi()
+    click.echo(json.dumps(schema, indent=2))
 
 
 @main.command()
