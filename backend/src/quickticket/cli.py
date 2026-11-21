@@ -3,8 +3,6 @@ import logging
 import click
 from fastapi_cli.cli import main as fastapi_main
 
-from quickticket.worker import run_worker
-
 log = logging.getLogger(__name__)
 
 
@@ -35,6 +33,8 @@ def run() -> None:
 def worker() -> None:
     """Run the task queue worker."""
     import anyio  # noqa: PLC0415
+
+    from quickticket.worker import run_worker  # noqa: PLC0415
 
     anyio.run(run_worker)
 
