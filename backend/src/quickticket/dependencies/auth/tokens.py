@@ -20,6 +20,7 @@ __all__ = (
     "TokenHeader",
     "TokenValidator",
     "TokenValidatorDep",
+    "UserInfo",
     "get_access_claims_registry",
     "get_id_claims_registry",
 )
@@ -108,7 +109,29 @@ class Address(BaseModel):
     postal_code: str | None = None
 
 
-class IdTokenClaims(TokenClaims):
+class UserInfo(BaseModel):
+    """The attributes returned from a userinfo endpoint."""
+
+    sub: str
+    email_verified: bool
+    name: str
+    groups: list[str] = Field(default_factory=list)
+    preferred_username: str
+    given_name: str
+    family_name: str
+    email: EmailStr
+    # Optional user profile attributes
+    zoneinfo: ZoneInfo | None = None
+    website: str | None = None
+    address: Address | None = None
+    gender: str | None = None
+    locale: str | None = None
+    picture: str | None = None
+    upn: str | None = None
+    birthdate: date | None = None
+
+
+class IdTokenClaims(UserInfo, TokenClaims):
     model_config = ConfigDict(extra="allow")
 
     # TODO: likely needs looser validation to support other providers
@@ -118,26 +141,11 @@ class IdTokenClaims(TokenClaims):
     aud: str
     at_hash: str
     acr: str
-    email_verified: bool
-    name: str
-    groups: list[str] = Field(default_factory=list)
-    preferred_username: str
-    given_name: str
-    family_name: str
-    email: EmailStr
     nonce: str | None = None
     # Optional user profile attributes
-    zoneinfo: ZoneInfo | None = None
-    website: str | None = None
     resource_access: dict[str, Any] = Field(default_factory=dict)
-    address: Address | None = None
-    gender: str | None = None
-    locale: str | None = None
-    picture: str | None = None
-    upn: str | None = None
     realm_access: dict[str, Any] = Field(default_factory=dict)
     organization: list[str] = Field(default_factory=list)
-    birthdate: date | None = None
 
 
 class IdToken(BaseModel):
