@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Annotated
 
 from authlib.integrations.base_client import OAuthError
-from fastapi import Depends, HTTPException, Request
+from fastapi import Depends, HTTPException
 from joserfc.errors import ExpiredTokenError, JoseError
 from sqlalchemy import select
 from sqlalchemy.orm import load_only, selectinload
@@ -189,7 +189,6 @@ async def get_or_refresh_access_token(
     client: OAuth2ClientDep,
     cookies: OAuthCookieControllerDep,
     registration: RegistrationControllerDep,
-    request: Request,
     # NOTE: below cookies can expire on browser
     access_token_cookie: Annotated[str | None, OAuthAccessTokenCookie] = None,
     # id_token_cookie: Annotated[str | None, OAuthIdTokenCookie] = None,
@@ -215,6 +214,22 @@ async def get_or_refresh_access_token(
             cookies.delete_tokens()  # flush out invalid access token
         return None
 
+    return await _refresh_access_token(
+        validator,
+        client,
+        cookies,
+        registration,
+        refresh_token_cookie,
+    )
+
+
+async def _refresh_access_token(
+    validator: TokenValidatorDep,
+    client: OAuth2ClientDep,
+    cookies: OAuthCookieControllerDep,
+    registration: RegistrationControllerDep,
+    refresh_token_cookie: str,
+) -> AccessToken | None:
     log.debug("Refreshing access token")
     try:
         tokens = await client.refresh_token(refresh_token_cookie)
