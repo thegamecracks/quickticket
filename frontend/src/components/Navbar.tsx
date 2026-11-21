@@ -33,7 +33,11 @@ export default function Navbar() {
         </NavLink>
       </nav>
       <div className="navbar-end">
-        {user === undefined ? null : user ? (
+        {user === undefined ? (
+          <div className="skeleton h-8 rounded-field px-3" aria-label="Checking sign-in status…">
+            <span className="invisible text-xs font-semibold">Sign in</span>
+          </div>
+        ) : user ? (
           < div className="dropdown dropdown-end">
             <div tabIndex={0} role="button" className="avatar">
               <div className="w-10 rounded-full">
