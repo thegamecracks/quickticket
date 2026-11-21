@@ -15,11 +15,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
-  // get user profile!
+  // get user profile; only a 401 proves we're signed out. Any other failure
+  // means "unknown", so we stay undefined rather than showing a Sign in button
+  // that may be lying (backend down, timeout, proxy error, etc.).
   useEffect(() => {
     api.get<User>(`/profile/@me`)
       .then((res) => { setUser(res.data) })
-      .catch(() => setUser(null));
+      .catch((err) => {
+        if (axios.isAxiosError(err) && err.response?.status === 401) {
+          setUser(null);
+        } else {
+          console.warn("auth check failed — staying in unknown state", err);
+        }
+      });
   }, [])
 
   const [user, setUser] = useState<User | null | undefined>(undefined)
