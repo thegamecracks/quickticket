@@ -9,6 +9,10 @@ export default function Navbar() {
     login(`${window.location.origin}${location.pathname}`);
   }
 
+  const handleLogout = () => {
+    logout(`${window.location.origin}${location.pathname}`);
+  }
+
 
   return (
     <header className="navbar bg-base-200 shadow-sm">
@@ -41,7 +45,7 @@ export default function Navbar() {
               <li><a href='/myEvents'>My Events</a></li>
               <li><a href='/myTickets'>My Tickets</a></li>
               <li><a href='/settings'>Settings</a></li>
-              <li><a onClick={() => logout()}>Logout</a></li>
+              <li><a onClick={() => handleLogout()}>Logout</a></li>
             </ul>
           </div>
         ) : (

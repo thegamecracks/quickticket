@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null | undefined;
   mockLogin: (userData: User) => void;
   login: (redirPage: string) => void;
-  logout: () => void;
+  logout: (redirPage: string) => void;
 }
 
 // https://react.dev/reference/react/createContext
@@ -53,9 +53,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("user");
+  const logout = (redirPage: string) => {
+    // actual logout LOL!
+    const form = document.createElement("form");
+    form.method = "post";
+    form.action = `${API_URL}/auth/logout?redirect_uri=${encodeURIComponent(redirPage)}`;
+    document.body.appendChild(form);
+    form.submit();
   };
 
   // react 19, do not need .Provider anymore. Removed!
