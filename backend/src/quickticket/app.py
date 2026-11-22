@@ -106,7 +106,7 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
 
     # CSRF middle ware now handled on frontend, but need to exempt login and logout
     # since they are full page redirects...
-    # however, its okay. Login-csrf is mitigated by full page redirect 
+    # however, its okay. Login-csrf is mitigated by full page redirect
     # and logout csrf is nuisance class via OWASP
     csrf_secret = settings.security.csrf_secret.get_secret_value()
     if csrf_secret is not None:
