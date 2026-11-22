@@ -104,7 +104,9 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
     app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=settings.security.trusted_proxies)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.security.allowed_hosts)
 
-    # TODO: require frontend to send x-csrftoken header from csrftoken cookie
+    # CSRF middle ware now handled on frontend, but need to exempt login and logout
+    # since they are full page redirects...
+    # however, its okay. Login-csrf is mitigated by full page redirect and logout csrf is nuisance class via OWASP
     csrf_secret = settings.security.csrf_secret.get_secret_value()
     if csrf_secret is not None:
         if csrf_secret.startswith("insecure"):
@@ -137,6 +139,7 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
         secrets=cookie_secrets,
         cookie_httponly=True,
         cookie_secure=True,
+        # exclude csrf from being all (,,>﹏<,,)👉👈 secret n' shit (,,>﹏<,,)👉👈
         excluded_cookies=["csrftoken"],
     )
 
