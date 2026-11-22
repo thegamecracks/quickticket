@@ -113,11 +113,11 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
             secret=csrf_secret,
             exempt_urls=[
                 # Already mitigated by state parameter
-                re.compile(r"/api/auth/login"),
+                re.compile(r"^/api/auth/login"),
                 # https://safeguard.sh/resources/blog/asvs-5-v10-6-2-forced-logout-protection
                 # TODO: nusiance, but needs to be mitigated with confirmation page.
                 # (remove id_token_hint= to let provider confirm)
-                re.compile(r"/api/auth/logout"),
+                re.compile(r"^/api/auth/logout"),
             ],
         )
 
