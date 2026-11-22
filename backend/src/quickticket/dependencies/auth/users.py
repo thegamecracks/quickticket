@@ -72,6 +72,7 @@ class RegistrationController:
         )
         if identity is not None:
             user = identity.user
+            await self._maybe_refresh_userinfo(user, token)
             return user, identity
 
         if (email := getattr(claims, "email", None)) is not None and getattr(
