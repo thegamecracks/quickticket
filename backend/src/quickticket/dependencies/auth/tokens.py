@@ -15,8 +15,6 @@ from quickticket.dependencies.cache import SettingsDep
 
 __all__ = (
     "AccessToken",
-    "IdToken",
-    "IdTokenClaims",
     "TokenHeader",
     "TokenValidator",
     "TokenValidatorDep",
@@ -89,6 +87,7 @@ class TokenClaims(BaseModel):
 
 class AccessTokenClaims(TokenClaims):
     scope: str
+    nonce: str
 
 
 # CAUTION: provider must support JWT access tokens!
@@ -130,28 +129,9 @@ class UserInfo(BaseModel):
     upn: str | None = None
     birthdate: date | None = None
 
-
-class IdTokenClaims(UserInfo, TokenClaims):
-    model_config = ConfigDict(extra="allow")
-
-    # TODO: likely needs looser validation to support other providers
-    jti: str
-    sid: str
-    auth_time: int
-    aud: str
-    at_hash: str
-    acr: str
-    nonce: str | None = None
-    # Optional user profile attributes
     resource_access: dict[str, Any] = Field(default_factory=dict)
     realm_access: dict[str, Any] = Field(default_factory=dict)
     organization: list[str] = Field(default_factory=list)
-
-
-class IdToken(BaseModel):
-    header: TokenHeader
-    claims: IdTokenClaims
-    raw: str
 
 
 def _parse_token(raw: str, keys: KeySet, registry: JWTClaimsRegistry) -> _JoseToken:
@@ -177,15 +157,6 @@ class TokenValidator:
         return AccessToken(
             header=access_token.header,
             claims=access_token.claims,
-            raw=raw,
-        )
-
-    def parse_id_token(self, raw: str) -> IdToken:
-        id_token = jwt.decode(raw, self.keys)
-        self.id_registry.validate(id_token.claims)
-        return IdToken(
-            header=id_token.header,
-            claims=id_token.claims,
             raw=raw,
         )
 

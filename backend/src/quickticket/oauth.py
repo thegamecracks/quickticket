@@ -18,13 +18,13 @@ class OpenIDDiscovery(BaseModel):
     issuer: AnyUrl
     authorization_endpoint: AnyUrl
     token_endpoint: AnyUrl
+    userinfo_endpoint: AnyUrl
     jwks_uri: AnyUrl
     response_types_supported: list[str]
     subject_types_supported: list[str]
     id_token_signing_alg_values_supported: list[str]
 
     # Recommended
-    userinfo_endpoint: AnyUrl | None = None
     registration_endpoint: AnyUrl | None = None
     scopes_supported: list[str] = Field(default_factory=list)
     claims_supported: list[str] = Field(default_factory=list)
@@ -71,7 +71,6 @@ class TokenExchangeResponse(BaseModel):
     refresh_expires_in: int
     refresh_token: str  # Secret[str]
     token_type: str
-    id_token: str  # Secret[str]
     scope: str
     expires_at: int
 

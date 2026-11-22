@@ -9,7 +9,6 @@ from joserfc.errors import JoseError
 
 from quickticket.dependencies.auth import (
     OAuth2ClientDep,
-    OptionalOpenIDIdentityDep,
     OptionalUserDep,
     PostRedirectUriDep,
     RedirectUriDep,
@@ -62,7 +61,7 @@ async def oauth_login(
     # Proof Key for Code Exchange (PKCE)
     code_verifier = generate_token(48)
     # https://openid.net/specs/openid-connect-core-1_0.html#rfc.section.2
-    # Nonce to be stored in ID token to prevent replay attacks
+    # Nonce to be stored in access token to prevent replay attacks
     nonce = generate_token()
 
     url, state = client.create_authorization_url(
@@ -129,27 +128,23 @@ async def oauth_post_login(
 
     try:
         access_token = validator.parse_access_token(tokens.access_token)
-        id_token = validator.parse_id_token(tokens.id_token)
     except JoseError as e:
         log.debug("OpenID returned invalid tokens", exc_info=e)
         raise HTTPException(400, "OpenID returned invalid tokens") from e
 
-    if id_token.claims.nonce != nonce_cookie:
+    if access_token.claims.nonce != nonce_cookie:
         log.debug(
-            "ID token nonce does not match nonce cookie (%r != %r)",
-            id_token.claims.nonce,
+            "Access token nonce does not match nonce cookie (%r != %r)",
+            access_token.claims.nonce,
             nonce_cookie,
         )
         raise HTTPException(400, "OpenID returned invalid tokens")
-
-    # log.debug("Logging in user with ID token: %s", id_token.model_dump_json())
 
     await registration.register(
         access_token=access_token,
         expires_in=tokens.expires_in,
         refresh_token=tokens.refresh_token,
         refresh_expires_in=tokens.refresh_expires_in,
-        id_token=id_token,
     )
     registration.cookies.delete_flow()  # cleanup state, nonce, and post-redirect
     return RedirectResponse(redirect_uri, 303)
@@ -176,7 +171,6 @@ async def oauth_logout(
     redirect_uri: RedirectUriDep,
     client: OAuth2ClientDep,
     request: Request,
-    identity: OptionalOpenIDIdentityDep,
 ) -> NoReturn:
     """Redirect the user to logout at the OpenID provider.
 
@@ -185,13 +179,9 @@ async def oauth_logout(
     login cookies immediately and then redirects to ``redirect_uri``.
 
     """
-    id_token_hint = None
-    if identity is not None:  # Token can be expired/invalid
-        id_token_hint = await identity.awaitable_attrs.id_token
-
     try:
         url, state = client.create_logout_url(
-            id_token_hint=id_token_hint,
+            id_token_hint=None,
             post_logout_redirect_uri=str(request.url_for("oauth_post_logout")),
         )
     except RPLogoutUnsupported:

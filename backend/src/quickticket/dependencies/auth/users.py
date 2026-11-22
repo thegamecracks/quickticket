@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 from authlib.integrations.base_client import OAuthError
@@ -9,8 +10,9 @@ from joserfc.errors import ExpiredTokenError, JoseError
 from sqlalchemy import select
 from sqlalchemy.orm import load_only, selectinload
 
+from quickticket.dependencies.auth import OpenIDProviderDep
 from quickticket.dependencies.auth.provider import OAuth2ClientDep
-from quickticket.dependencies.auth.tokens import AccessToken, IdToken, TokenValidatorDep
+from quickticket.dependencies.auth.tokens import AccessToken, TokenValidatorDep, UserInfo
 from quickticket.dependencies.cache import SettingsDep
 from quickticket.dependencies.cookies import (
     OAuthAccessTokenCookie,
@@ -18,6 +20,7 @@ from quickticket.dependencies.cookies import (
     OAuthRefreshTokenCookie,
 )
 from quickticket.dependencies.db import AsyncSessionDep
+from quickticket.dependencies.state import HTTPClientDep
 from quickticket.models import OpenIDIdentity, User
 from quickticket.settings import OpenIDSettings
 
@@ -35,12 +38,16 @@ __all__ = (
     "get_valid_access_token",
 )
 
+FRESH_USERINFO_PERIOD = timedelta(minutes=5)
+
 log = logging.getLogger(__name__)
 
 
 @dataclass
 class RegistrationController:
     cookies: OAuthCookieControllerDep
+    http: HTTPClientDep
+    provider: OpenIDProviderDep
     session: AsyncSessionDep
     settings: SettingsDep
 
@@ -60,9 +67,8 @@ class RegistrationController:
         expires_in: int,
         refresh_token: str,
         refresh_expires_in: int,
-        id_token: IdToken,
     ) -> tuple[User, OpenIDIdentity]:
-        user, identity = await self.select_user_by_token(id_token)
+        user, identity = await self.select_user_by_token(access_token)
         self.cookies.set_tokens(
             # id_token=id_token,
             access_token=access_token,
@@ -80,19 +86,11 @@ class RegistrationController:
         # return self.cookies.force_redirect(redirect_uri, status_code)
         return user, identity
 
-    async def select_user_by_token(
-        self,
-        token: AccessToken | IdToken,
-    ) -> tuple[User, OpenIDIdentity]:
-        """Get the user associated with an ID or access token along with the
+    async def select_user_by_token(self, token: AccessToken) -> tuple[User, OpenIDIdentity]:
+        """Get the user associated with an access token along with the
         OpenID identity they used to login.
 
-        If an ID token is passed, the user will be registered if necessary
-        and their personal details will be updated.
-        If an access token is passed and the user does not exist, an HTTP 401
-        will be raised with their token cookies deleted to force re-authentication.
-
-        :param token: The ID or access token linked to the user.
+        :param token: The access token linked to the user.
         :param query: The base query to use for retrieving the user.
         :returns: The newly created or existing user.
 
@@ -108,9 +106,6 @@ class RegistrationController:
         )
         if identity is not None:
             user = identity.user
-            if isinstance(token, IdToken):
-                self._update_openid_identity(identity, token)
-                self._update_user_with_id_token(user, token)
             return user, identity
 
         if (email := getattr(claims, "email", None)) is not None and getattr(
@@ -118,57 +113,54 @@ class RegistrationController:
             "email_verified",
             False,
         ) is True:
-            # Link email claim from either access or ID token if present
+            # Link email claim from access token if present
             # TODO: no guarantee two users don't share same email, prompt recommended
             user = await self.session.scalar(select(User).where(User.email == email))
 
         if user is not None:
-            if isinstance(token, IdToken):
-                log.debug("Linking new OpenID identity with ID token")
-                id_token_raw = token.raw
-            else:
-                # Access token is insufficient for RP-initiated logout.
-                # We'll need to get the ID token later by doing a refresh.
-                log.debug("Linking new OpenID identity with access token")
-                id_token_raw = None
-
-            identity = OpenIDIdentity(
-                issuer=claims.iss,
-                sub=claims.sub,
-                user_id=user.id,
-                id_token=id_token_raw,
-            )
+            log.debug("Linking new OpenID identity with access token")
+            identity = OpenIDIdentity(issuer=claims.iss, sub=claims.sub, user_id=user.id)
             self.session.add(identity)
+
+            await self._maybe_refresh_userinfo(user, token)
             await self.session.flush()  # May flush entities outside of our dependency
             await self.session.refresh(identity)
+
             return user, identity
 
-        if isinstance(token, AccessToken):
-            # User is missing from database and registration was not expected.
-            # Perhaps the backend has changed databases or a sysadmin deleted the user?
-            log.warning("Received access token for non-existent user (sub: %s)", claims.sub)
-            self.cookies.delete_all()
-            raise HTTPException(401, "Not authenticated")
-
-        log.debug("Registering new user from ID token (sub: %s)", claims.sub)
+        log.debug("Registering new user from access token (sub: %s)", claims.sub)
         user = User(display_name="", first_name="", last_name="", email="")
         identity = OpenIDIdentity(issuer=claims.iss, sub=claims.sub)
         user.openid_identities.append(identity)
-        self._update_openid_identity(identity, token)
-        self._update_user_with_id_token(user, token)
-
         self.session.add(user)
+
+        await self._maybe_refresh_userinfo(user, token)
         await self.session.flush()  # May flush entities outside of our dependency
         await self.session.refresh(user)  # Re-fetch attributes, including user ID
 
         return user, identity
 
-    def _update_user_with_id_token(self, user: User, id_token: IdToken) -> None:
+    async def _maybe_refresh_userinfo(self, user: User, token: AccessToken) -> None:
+        updated_at = user.userinfo_updated_at  # fools type-checker, can be None if newly created
+        if updated_at is not None and datetime.now(UTC) - updated_at < FRESH_USERINFO_PERIOD:
+            return
+
+        log.debug("Refreshing userinfo from provider (sub: %s)", token.claims.sub)
+        claims = await self._fetch_userinfo(token)
+        self._update_user_with_userinfo(user, claims)
+
+    async def _fetch_userinfo(self, token: AccessToken) -> UserInfo:
+        headers = {"Authorization": f"Bearer {token.raw}"}
+        userinfo_endpoint = str(self.provider.discovery.userinfo_endpoint)
+        response = await self.http.get(userinfo_endpoint, headers=headers)
+        response.raise_for_status()
+        claims = response.json()
+        return UserInfo.model_validate(claims)
+
+    def _update_user_with_userinfo(self, user: User, claims: UserInfo) -> None:
         # https://openid.net/specs/openid-connect-basic-1_0.html#rfc.section.2.5
-        # Consider retrieving claims from userinfo endpoint with access token
         # "picture", "gender", "birthdate", "zoneinfo", "locale", "phone_number", "address"
         # TODO: set optional claims like locale and address
-        claims = id_token.claims
         user.display_name = claims.preferred_username or claims.name
         user.first_name = claims.given_name
         user.last_name = claims.family_name
@@ -180,9 +172,6 @@ class RegistrationController:
         else:
             is_admin = None  # noqa: F841
         # TODO: set admin flag or enum on user
-
-    def _update_openid_identity(self, identity: OpenIDIdentity, id_token: IdToken) -> None:
-        identity.id_token = id_token.raw
 
 
 async def get_or_refresh_access_token(
@@ -255,7 +244,6 @@ async def _refresh_access_token(
 
     try:
         access_token = validator.parse_access_token(tokens.access_token)
-        id_token = validator.parse_id_token(tokens.id_token)
     except JoseError as e:
         # This suggests conflicting configuration,
         # perhaps incorrect system time or outdated JWKs?
@@ -267,7 +255,6 @@ async def _refresh_access_token(
         expires_in=tokens.expires_in,
         refresh_token=tokens.refresh_token,
         refresh_expires_in=tokens.refresh_expires_in,
-        id_token=id_token,
     )
     return access_token
 

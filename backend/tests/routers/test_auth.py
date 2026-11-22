@@ -13,7 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from quickticket.dependencies.auth.provider import get_openid_provider
-from quickticket.dependencies.auth.tokens import AccessToken, IdToken, TokenValidator
+from quickticket.dependencies.auth.tokens import AccessToken, TokenValidator
 from quickticket.dependencies.auth.users import get_user
 from quickticket.dependencies.state import get_settings
 from quickticket.models import OpenIDIdentity, User
@@ -25,6 +25,7 @@ DISCOVERY = {
     "issuer": "https://idp.example",
     "authorization_endpoint": "https://idp.example/authorize",
     "token_endpoint": "https://idp.example/token",
+    "userinfo_endpoint": "https://idp.example/userinfo",
     "jwks_uri": "https://idp.example/jwks",
     "end_session_endpoint": "https://idp.example/logout",
     "response_types_supported": ["code"],
@@ -128,35 +129,6 @@ class FakeTokenValidator:
                     "typ": "Bearer",
                     "azp": "test-client",
                     "scope": "openid email profile",
-                },
-                "raw": raw,
-            },
-        )
-
-    def parse_id_token(self, raw: str) -> IdToken:
-        return IdToken.model_validate(
-            {
-                "header": {"alg": "RS256", "typ": "JWT", "kid": "test"},
-                "claims": {
-                    "exp": 4102444800,
-                    "iat": 1700000000,
-                    "iss": "https://idp.example",
-                    "sub": "test-sub",
-                    "typ": "ID",
-                    "azp": "test-client",
-                    "jti": "test-jti",
-                    "sid": "test-sid",
-                    "auth_time": 1700000000,
-                    "aud": "test-client",
-                    "at_hash": "test-at-hash",
-                    "acr": "1",
-                    "email_verified": True,
-                    "name": "Test User",
-                    "groups": [],
-                    "preferred_username": "testuser",
-                    "given_name": "Test",
-                    "family_name": "User",
-                    "email": "new.user@example.com",
                     "nonce": self.nonce,
                 },
                 "raw": raw,
@@ -209,7 +181,6 @@ async def complete_login(
             refresh_expires_in=1800,
             refresh_token="refresh-token",  # noqa: S106
             token_type="Bearer",  # noqa: S106
-            id_token="id-token",  # noqa: S106
             scope="openid email profile",
             expires_at=4102444800,
         )
