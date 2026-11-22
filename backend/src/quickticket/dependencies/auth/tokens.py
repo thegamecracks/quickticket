@@ -87,7 +87,6 @@ class TokenClaims(BaseModel):
 
 class AccessTokenClaims(TokenClaims):
     scope: str
-    nonce: str
 
 
 # CAUTION: provider must support JWT access tokens!
