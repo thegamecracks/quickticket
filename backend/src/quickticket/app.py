@@ -1,5 +1,6 @@
 import importlib.metadata
 import logging
+import re
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from typing import cast
@@ -103,12 +104,22 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
     app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=settings.security.trusted_proxies)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.security.allowed_hosts)
 
-    # TODO: require frontend to send x-csrftoken header from csrftoken cookie
     csrf_secret = settings.security.csrf_secret.get_secret_value()
     if csrf_secret is not None:
         if csrf_secret.startswith("insecure"):
             log.warning("csrf_secret not set, using insecure hardcoded value")
-        app.add_middleware(CSRFMiddleware, secret=csrf_secret)
+        app.add_middleware(
+            CSRFMiddleware,
+            secret=csrf_secret,
+            exempt_urls=[
+                # Already mitigated by state parameter
+                re.compile(r"^/api/auth/login"),
+                # https://safeguard.sh/resources/blog/asvs-5-v10-6-2-forced-logout-protection
+                # TODO: nusiance, but needs to be mitigated with confirmation page.
+                # (remove id_token_hint= to let provider confirm)
+                re.compile(r"^/api/auth/logout"),
+            ],
+        )
 
     if settings.log.profiling:
         add_profiling_middleware(app)
@@ -129,6 +140,7 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
         secrets=cookie_secrets,
         cookie_httponly=True,
         cookie_secure=True,
+        excluded_cookies=["csrftoken"],
     )
 
     app.add_exception_handler(DecompressionBombError, handle_decompression_bomb)  # ty: ignore[invalid-argument-type]
