@@ -25,14 +25,23 @@ import type {
 
 import type {
   AcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostParams,
+  AcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostPathParameters,
+  DeleteOrganizationApiOrganizationsOrganizationIdDeletePathParameters,
+  DeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeletePathParameters,
+  EditOrganizationApiOrganizationsOrganizationIdPatchPathParameters,
+  EditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchPathParameters,
+  GetOrganizationApiOrganizationsOrganizationIdGetPathParameters,
   GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetParams,
+  GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetPathParameters,
   GetOrganizationsApiOrganizationsGetParams,
   HTTPValidationError,
+  InviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostPathParameters,
   KeysetPagedResponsePartialOrganizationAnnotatedDatetimeAwareDatetime,
   OrganizationCreate,
   OrganizationRead,
   OrganizationUpdate,
-  RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostParams
+  RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostParams,
+  RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostPathParameters
 } from '../model';
 
 import { api } from '../../lib/api';
@@ -235,7 +244,7 @@ export const useCreateOrganizationApiOrganizationsPost = <TError = HTTPValidatio
  * @summary Get Organization
  */
 export const getOrganizationApiOrganizationsOrganizationIdGet = (
-    organizationId: string,
+    { organizationId }: GetOrganizationApiOrganizationsOrganizationIdGetPathParameters,
  signal?: AbortSignal
 ) => {
 
@@ -249,23 +258,23 @@ export const getOrganizationApiOrganizationsOrganizationIdGet = (
 
 
 
-export const getGetOrganizationApiOrganizationsOrganizationIdGetQueryKey = (organizationId: string,) => {
+export const getGetOrganizationApiOrganizationsOrganizationIdGetQueryKey = ({ organizationId }: GetOrganizationApiOrganizationsOrganizationIdGetPathParameters,) => {
     return [
     `/api/organizations/${organizationId}`
     ] as const;
     }
 
 
-export const getGetOrganizationApiOrganizationsOrganizationIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError = HTTPValidationError>(organizationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError, TData>>, }
+export const getGetOrganizationApiOrganizationsOrganizationIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError = HTTPValidationError>({ organizationId }: GetOrganizationApiOrganizationsOrganizationIdGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetOrganizationApiOrganizationsOrganizationIdGetQueryKey(organizationId);
+  const queryKey =  queryOptions?.queryKey ?? getGetOrganizationApiOrganizationsOrganizationIdGetQueryKey({ organizationId });
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>> = ({ signal }) => getOrganizationApiOrganizationsOrganizationIdGet(organizationId, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>> = ({ signal }) => getOrganizationApiOrganizationsOrganizationIdGet({ organizationId }, signal);
 
 
 
@@ -283,7 +292,7 @@ export type GetOrganizationApiOrganizationsOrganizationIdGetQueryError = HTTPVal
  * @summary Get Organization
  */
 export function useGetOrganizationApiOrganizationsOrganizationIdGet<TData = Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError = HTTPValidationError>(
- organizationId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError, TData>> & Pick<
+ pathParams: GetOrganizationApiOrganizationsOrganizationIdGetPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>,
           TError,
@@ -297,7 +306,7 @@ export function useGetOrganizationApiOrganizationsOrganizationIdGet<TData = Awai
  * @summary Get Organization
  */
 export function useGetOrganizationApiOrganizationsOrganizationIdGet<TData = Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError = HTTPValidationError>(
- organizationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError, TData>> & Pick<
+ pathParams: GetOrganizationApiOrganizationsOrganizationIdGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>,
           TError,
@@ -311,7 +320,7 @@ export function useGetOrganizationApiOrganizationsOrganizationIdGet<TData = Awai
  * @summary Get Organization
  */
 export function useGetOrganizationApiOrganizationsOrganizationIdGet<TData = Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError = HTTPValidationError>(
- organizationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError, TData>>, }
+ pathParams: GetOrganizationApiOrganizationsOrganizationIdGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -319,11 +328,11 @@ export function useGetOrganizationApiOrganizationsOrganizationIdGet<TData = Awai
  * @summary Get Organization
  */
 export function useGetOrganizationApiOrganizationsOrganizationIdGet<TData = Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError = HTTPValidationError>(
- organizationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError, TData>>, }
+ { organizationId }: GetOrganizationApiOrganizationsOrganizationIdGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError, TData>>, }
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetOrganizationApiOrganizationsOrganizationIdGetQueryOptions(organizationId,options)
+  const queryOptions = getGetOrganizationApiOrganizationsOrganizationIdGetQueryOptions({ organizationId },options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -340,7 +349,7 @@ export function useGetOrganizationApiOrganizationsOrganizationIdGet<TData = Awai
  * @summary Edit Organization
  */
 export const editOrganizationApiOrganizationsOrganizationIdPatch = (
-    organizationId: string,
+    { organizationId }: EditOrganizationApiOrganizationsOrganizationIdPatchPathParameters,
     organizationUpdate: OrganizationUpdate,
  signal?: AbortSignal
 ) => {
@@ -374,9 +383,9 @@ const {mutation: mutationOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof editOrganizationApiOrganizationsOrganizationIdPatch>>, EditOrganizationApiOrganizationsOrganizationIdPatchMutationVariables> = (props) => {
-          const {organizationId,data} = props ?? {};
+          const {pathParams,data} = props ?? {};
 
-          return  editOrganizationApiOrganizationsOrganizationIdPatch(organizationId,data,)
+          return  editOrganizationApiOrganizationsOrganizationIdPatch(pathParams,data,)
         }
 
 
@@ -389,7 +398,7 @@ const {mutation: mutationOptions} = options ?
     export type EditOrganizationApiOrganizationsOrganizationIdPatchMutationResult = NonNullable<Awaited<ReturnType<typeof editOrganizationApiOrganizationsOrganizationIdPatch>>>
     export type EditOrganizationApiOrganizationsOrganizationIdPatchMutationBody = OrganizationUpdate
     export type EditOrganizationApiOrganizationsOrganizationIdPatchMutationError = HTTPValidationError
-    export type EditOrganizationApiOrganizationsOrganizationIdPatchMutationVariables = {organizationId: string;data: OrganizationUpdate}
+    export type EditOrganizationApiOrganizationsOrganizationIdPatchMutationVariables = {pathParams: EditOrganizationApiOrganizationsOrganizationIdPatchPathParameters;data: OrganizationUpdate}
 
     /**
  * Edit an organization's details.
@@ -411,7 +420,7 @@ export const useEditOrganizationApiOrganizationsOrganizationIdPatch = <TError = 
  * @summary Delete Organization
  */
 export const deleteOrganizationApiOrganizationsOrganizationIdDelete = (
-    organizationId: string,
+    { organizationId }: DeleteOrganizationApiOrganizationsOrganizationIdDeletePathParameters,
  signal?: AbortSignal
 ) => {
 
@@ -442,9 +451,9 @@ const {mutation: mutationOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteOrganizationApiOrganizationsOrganizationIdDelete>>, DeleteOrganizationApiOrganizationsOrganizationIdDeleteMutationVariables> = (props) => {
-          const {organizationId} = props ?? {};
+          const {pathParams} = props ?? {};
 
-          return  deleteOrganizationApiOrganizationsOrganizationIdDelete(organizationId,)
+          return  deleteOrganizationApiOrganizationsOrganizationIdDelete(pathParams,)
         }
 
 
@@ -457,7 +466,7 @@ const {mutation: mutationOptions} = options ?
     export type DeleteOrganizationApiOrganizationsOrganizationIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteOrganizationApiOrganizationsOrganizationIdDelete>>>
 
     export type DeleteOrganizationApiOrganizationsOrganizationIdDeleteMutationError = HTTPValidationError
-    export type DeleteOrganizationApiOrganizationsOrganizationIdDeleteMutationVariables = {organizationId: string}
+    export type DeleteOrganizationApiOrganizationsOrganizationIdDeleteMutationVariables = {pathParams: DeleteOrganizationApiOrganizationsOrganizationIdDeletePathParameters}
 
     /**
  * Delete an organization.
@@ -480,8 +489,7 @@ export const useDeleteOrganizationApiOrganizationsOrganizationIdDelete = <TError
  * @summary Edit Organization Member
  */
 export const editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatch = (
-    organizationId: string,
-    userId: string,
+    { organizationId, userId }: EditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchPathParameters,
  signal?: AbortSignal
 ) => {
 
@@ -512,9 +520,9 @@ const {mutation: mutationOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatch>>, EditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchMutationVariables> = (props) => {
-          const {organizationId,userId} = props ?? {};
+          const {pathParams} = props ?? {};
 
-          return  editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatch(organizationId,userId,)
+          return  editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatch(pathParams,)
         }
 
 
@@ -527,7 +535,7 @@ const {mutation: mutationOptions} = options ?
     export type EditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchMutationResult = NonNullable<Awaited<ReturnType<typeof editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatch>>>
 
     export type EditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchMutationError = HTTPValidationError
-    export type EditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchMutationVariables = {organizationId: string;userId: string}
+    export type EditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchMutationVariables = {pathParams: EditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchPathParameters}
 
     /**
  * Edit an organization member.
@@ -550,8 +558,7 @@ export const useEditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatch 
  * @summary Delete Organization Member
  */
 export const deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDelete = (
-    organizationId: string,
-    userId: string,
+    { organizationId, userId }: DeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeletePathParameters,
  signal?: AbortSignal
 ) => {
 
@@ -582,9 +589,9 @@ const {mutation: mutationOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDelete>>, DeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteMutationVariables> = (props) => {
-          const {organizationId,userId} = props ?? {};
+          const {pathParams} = props ?? {};
 
-          return  deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDelete(organizationId,userId,)
+          return  deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDelete(pathParams,)
         }
 
 
@@ -597,7 +604,7 @@ const {mutation: mutationOptions} = options ?
     export type DeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDelete>>>
 
     export type DeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteMutationError = HTTPValidationError
-    export type DeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteMutationVariables = {organizationId: string;userId: string}
+    export type DeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteMutationVariables = {pathParams: DeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeletePathParameters}
 
     /**
  * Remove a member from an organization.
@@ -620,8 +627,7 @@ export const useDeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDele
  * @summary Invite Organization Member
  */
 export const inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPost = (
-    organizationId: string,
-    userId: string,
+    { organizationId, userId }: InviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostPathParameters,
  signal?: AbortSignal
 ) => {
 
@@ -652,9 +658,9 @@ const {mutation: mutationOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPost>>, InviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostMutationVariables> = (props) => {
-          const {organizationId,userId} = props ?? {};
+          const {pathParams} = props ?? {};
 
-          return  inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPost(organizationId,userId,)
+          return  inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPost(pathParams,)
         }
 
 
@@ -667,7 +673,7 @@ const {mutation: mutationOptions} = options ?
     export type InviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostMutationResult = NonNullable<Awaited<ReturnType<typeof inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPost>>>
 
     export type InviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostMutationError = HTTPValidationError
-    export type InviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostMutationVariables = {organizationId: string;userId: string}
+    export type InviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostMutationVariables = {pathParams: InviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostPathParameters}
 
     /**
  * Invite a user to an organization.
@@ -690,7 +696,7 @@ export const useInviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPost
  * @summary Get Organization Member Invite
  */
 export const getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet = (
-    inviteId: string,
+    { inviteId }: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetPathParameters,
     params: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetParams,
  signal?: AbortSignal
 ) => {
@@ -706,7 +712,7 @@ export const getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet = (
 
 
 
-export const getGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetQueryKey = (inviteId: string,
+export const getGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetQueryKey = ({ inviteId }: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetPathParameters,
     params?: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetParams,) => {
     return [
     `/api/organizations/invites/${inviteId}`, ...(params ? [params] : [])
@@ -714,17 +720,17 @@ export const getGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetQue
     }
 
 
-export const getGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>, TError = HTTPValidationError>(inviteId: string,
+export const getGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>, TError = HTTPValidationError>({ inviteId }: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetPathParameters,
     params: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetQueryKey(inviteId,params);
+  const queryKey =  queryOptions?.queryKey ?? getGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetQueryKey({ inviteId },params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>> = ({ signal }) => getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet(inviteId,params, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>> = ({ signal }) => getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet({ inviteId },params, signal);
 
 
 
@@ -743,7 +749,7 @@ export type GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetQueryEr
  * @summary Get Organization Member Invite
  */
 export function useGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet<TData = Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>, TError = HTTPValidationError>(
- inviteId: string,
+ pathParams: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetPathParameters,
     params: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>,
@@ -759,7 +765,7 @@ export function useGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet
  * @summary Get Organization Member Invite
  */
 export function useGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet<TData = Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>, TError = HTTPValidationError>(
- inviteId: string,
+ pathParams: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetPathParameters,
     params: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>,
@@ -775,7 +781,7 @@ export function useGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet
  * @summary Get Organization Member Invite
  */
 export function useGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet<TData = Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>, TError = HTTPValidationError>(
- inviteId: string,
+ pathParams: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetPathParameters,
     params: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -785,12 +791,12 @@ export function useGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet
  * @summary Get Organization Member Invite
  */
 export function useGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet<TData = Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>, TError = HTTPValidationError>(
- inviteId: string,
+ { inviteId }: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetPathParameters,
     params: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>, TError, TData>>, }
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetQueryOptions(inviteId,params,options)
+  const queryOptions = getGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetQueryOptions({ inviteId },params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -808,7 +814,7 @@ export function useGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet
  * @summary Accept Organization Member Invite
  */
 export const acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPost = (
-    inviteId: string,
+    { inviteId }: AcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostPathParameters,
     params: AcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostParams,
  signal?: AbortSignal
 ) => {
@@ -841,9 +847,9 @@ const {mutation: mutationOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPost>>, AcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostMutationVariables> = (props) => {
-          const {inviteId,params} = props ?? {};
+          const {pathParams,params} = props ?? {};
 
-          return  acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPost(inviteId,params,)
+          return  acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPost(pathParams,params,)
         }
 
 
@@ -856,7 +862,7 @@ const {mutation: mutationOptions} = options ?
     export type AcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostMutationResult = NonNullable<Awaited<ReturnType<typeof acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPost>>>
 
     export type AcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostMutationError = HTTPValidationError
-    export type AcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostMutationVariables = {inviteId: string;params: AcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostParams}
+    export type AcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostMutationVariables = {pathParams: AcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostPathParameters;params: AcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostParams}
 
     /**
  * Accept an invite for an organization.
@@ -879,7 +885,7 @@ export const useAcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcc
  * @summary Reject Organization Member Invite
  */
 export const rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPost = (
-    inviteId: string,
+    { inviteId }: RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostPathParameters,
     params: RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostParams,
  signal?: AbortSignal
 ) => {
@@ -912,9 +918,9 @@ const {mutation: mutationOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPost>>, RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostMutationVariables> = (props) => {
-          const {inviteId,params} = props ?? {};
+          const {pathParams,params} = props ?? {};
 
-          return  rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPost(inviteId,params,)
+          return  rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPost(pathParams,params,)
         }
 
 
@@ -927,7 +933,7 @@ const {mutation: mutationOptions} = options ?
     export type RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostMutationResult = NonNullable<Awaited<ReturnType<typeof rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPost>>>
 
     export type RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostMutationError = HTTPValidationError
-    export type RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostMutationVariables = {inviteId: string;params: RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostParams}
+    export type RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostMutationVariables = {pathParams: RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostPathParameters;params: RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostParams}
 
     /**
  * Reject an invite for an organization.

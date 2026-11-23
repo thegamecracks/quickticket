@@ -26,10 +26,19 @@ import type {
 import type {
   BodySetVenueBannerApiVenuesEntityIdBannerPut,
   BodySetVenueThumbnailApiVenuesEntityIdThumbnailPut,
+  DeleteVenueApiVenuesVenueIdDeletePathParameters,
+  DeleteVenueBannerApiVenuesEntityIdBannerDeletePathParameters,
+  DeleteVenueThumbnailApiVenuesEntityIdThumbnailDeletePathParameters,
+  EditVenueApiVenuesVenueIdPatchPathParameters,
+  GetVenueApiVenuesVenueIdGetPathParameters,
+  GetVenueBannerApiVenuesEntityIdBannerGetPathParameters,
+  GetVenueThumbnailApiVenuesEntityIdThumbnailGetPathParameters,
   GetVenuesApiVenuesGetParams,
   HTTPValidationError,
   ImageRead,
   KeysetPagedResponsePartialVenueAnnotatedDatetimeAwareDatetime,
+  SetVenueBannerApiVenuesEntityIdBannerPutPathParameters,
+  SetVenueThumbnailApiVenuesEntityIdThumbnailPutPathParameters,
   VenueCreate,
   VenueRead,
   VenueUpdate
@@ -235,7 +244,7 @@ export const useCreateVenueApiVenuesPost = <TError = HTTPValidationError,
  * @summary Get Venue
  */
 export const getVenueApiVenuesVenueIdGet = (
-    venueId: string,
+    { venueId }: GetVenueApiVenuesVenueIdGetPathParameters,
  signal?: AbortSignal
 ) => {
 
@@ -249,23 +258,23 @@ export const getVenueApiVenuesVenueIdGet = (
 
 
 
-export const getGetVenueApiVenuesVenueIdGetQueryKey = (venueId: string,) => {
+export const getGetVenueApiVenuesVenueIdGetQueryKey = ({ venueId }: GetVenueApiVenuesVenueIdGetPathParameters,) => {
     return [
     `/api/venues/${venueId}`
     ] as const;
     }
 
 
-export const getGetVenueApiVenuesVenueIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError = HTTPValidationError>(venueId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError, TData>>, }
+export const getGetVenueApiVenuesVenueIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError = HTTPValidationError>({ venueId }: GetVenueApiVenuesVenueIdGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetVenueApiVenuesVenueIdGetQueryKey(venueId);
+  const queryKey =  queryOptions?.queryKey ?? getGetVenueApiVenuesVenueIdGetQueryKey({ venueId });
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>> = ({ signal }) => getVenueApiVenuesVenueIdGet(venueId, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>> = ({ signal }) => getVenueApiVenuesVenueIdGet({ venueId }, signal);
 
 
 
@@ -283,7 +292,7 @@ export type GetVenueApiVenuesVenueIdGetQueryError = HTTPValidationError
  * @summary Get Venue
  */
 export function useGetVenueApiVenuesVenueIdGet<TData = Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError = HTTPValidationError>(
- venueId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError, TData>> & Pick<
+ pathParams: GetVenueApiVenuesVenueIdGetPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>,
           TError,
@@ -297,7 +306,7 @@ export function useGetVenueApiVenuesVenueIdGet<TData = Awaited<ReturnType<typeof
  * @summary Get Venue
  */
 export function useGetVenueApiVenuesVenueIdGet<TData = Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError = HTTPValidationError>(
- venueId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError, TData>> & Pick<
+ pathParams: GetVenueApiVenuesVenueIdGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>,
           TError,
@@ -311,7 +320,7 @@ export function useGetVenueApiVenuesVenueIdGet<TData = Awaited<ReturnType<typeof
  * @summary Get Venue
  */
 export function useGetVenueApiVenuesVenueIdGet<TData = Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError = HTTPValidationError>(
- venueId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError, TData>>, }
+ pathParams: GetVenueApiVenuesVenueIdGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -319,11 +328,11 @@ export function useGetVenueApiVenuesVenueIdGet<TData = Awaited<ReturnType<typeof
  * @summary Get Venue
  */
 export function useGetVenueApiVenuesVenueIdGet<TData = Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError = HTTPValidationError>(
- venueId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError, TData>>, }
+ { venueId }: GetVenueApiVenuesVenueIdGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError, TData>>, }
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetVenueApiVenuesVenueIdGetQueryOptions(venueId,options)
+  const queryOptions = getGetVenueApiVenuesVenueIdGetQueryOptions({ venueId },options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -340,7 +349,7 @@ export function useGetVenueApiVenuesVenueIdGet<TData = Awaited<ReturnType<typeof
  * @summary Edit Venue
  */
 export const editVenueApiVenuesVenueIdPatch = (
-    venueId: string,
+    { venueId }: EditVenueApiVenuesVenueIdPatchPathParameters,
     venueUpdate: VenueUpdate,
  signal?: AbortSignal
 ) => {
@@ -374,9 +383,9 @@ const {mutation: mutationOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof editVenueApiVenuesVenueIdPatch>>, EditVenueApiVenuesVenueIdPatchMutationVariables> = (props) => {
-          const {venueId,data} = props ?? {};
+          const {pathParams,data} = props ?? {};
 
-          return  editVenueApiVenuesVenueIdPatch(venueId,data,)
+          return  editVenueApiVenuesVenueIdPatch(pathParams,data,)
         }
 
 
@@ -389,7 +398,7 @@ const {mutation: mutationOptions} = options ?
     export type EditVenueApiVenuesVenueIdPatchMutationResult = NonNullable<Awaited<ReturnType<typeof editVenueApiVenuesVenueIdPatch>>>
     export type EditVenueApiVenuesVenueIdPatchMutationBody = VenueUpdate
     export type EditVenueApiVenuesVenueIdPatchMutationError = HTTPValidationError
-    export type EditVenueApiVenuesVenueIdPatchMutationVariables = {venueId: string;data: VenueUpdate}
+    export type EditVenueApiVenuesVenueIdPatchMutationVariables = {pathParams: EditVenueApiVenuesVenueIdPatchPathParameters;data: VenueUpdate}
 
     /**
  * Edit a venue's details.
@@ -411,7 +420,7 @@ export const useEditVenueApiVenuesVenueIdPatch = <TError = HTTPValidationError,
  * @summary Delete Venue
  */
 export const deleteVenueApiVenuesVenueIdDelete = (
-    venueId: string,
+    { venueId }: DeleteVenueApiVenuesVenueIdDeletePathParameters,
  signal?: AbortSignal
 ) => {
 
@@ -442,9 +451,9 @@ const {mutation: mutationOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteVenueApiVenuesVenueIdDelete>>, DeleteVenueApiVenuesVenueIdDeleteMutationVariables> = (props) => {
-          const {venueId} = props ?? {};
+          const {pathParams} = props ?? {};
 
-          return  deleteVenueApiVenuesVenueIdDelete(venueId,)
+          return  deleteVenueApiVenuesVenueIdDelete(pathParams,)
         }
 
 
@@ -457,7 +466,7 @@ const {mutation: mutationOptions} = options ?
     export type DeleteVenueApiVenuesVenueIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteVenueApiVenuesVenueIdDelete>>>
 
     export type DeleteVenueApiVenuesVenueIdDeleteMutationError = HTTPValidationError
-    export type DeleteVenueApiVenuesVenueIdDeleteMutationVariables = {venueId: string}
+    export type DeleteVenueApiVenuesVenueIdDeleteMutationVariables = {pathParams: DeleteVenueApiVenuesVenueIdDeletePathParameters}
 
     /**
  * Delete a venue.
@@ -479,7 +488,7 @@ export const useDeleteVenueApiVenuesVenueIdDelete = <TError = HTTPValidationErro
  * @summary Get Venue Banner
  */
 export const getVenueBannerApiVenuesEntityIdBannerGet = (
-    entityId: string,
+    { entityId }: GetVenueBannerApiVenuesEntityIdBannerGetPathParameters,
  signal?: AbortSignal
 ) => {
 
@@ -493,23 +502,23 @@ export const getVenueBannerApiVenuesEntityIdBannerGet = (
 
 
 
-export const getGetVenueBannerApiVenuesEntityIdBannerGetQueryKey = (entityId: string,) => {
+export const getGetVenueBannerApiVenuesEntityIdBannerGetQueryKey = ({ entityId }: GetVenueBannerApiVenuesEntityIdBannerGetPathParameters,) => {
     return [
     `/api/venues/${entityId}/banner`
     ] as const;
     }
 
 
-export const getGetVenueBannerApiVenuesEntityIdBannerGetQueryOptions = <TData = Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError = void | unknown | HTTPValidationError>(entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError, TData>>, }
+export const getGetVenueBannerApiVenuesEntityIdBannerGetQueryOptions = <TData = Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError = void | unknown | HTTPValidationError>({ entityId }: GetVenueBannerApiVenuesEntityIdBannerGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetVenueBannerApiVenuesEntityIdBannerGetQueryKey(entityId);
+  const queryKey =  queryOptions?.queryKey ?? getGetVenueBannerApiVenuesEntityIdBannerGetQueryKey({ entityId });
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>> = ({ signal }) => getVenueBannerApiVenuesEntityIdBannerGet(entityId, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>> = ({ signal }) => getVenueBannerApiVenuesEntityIdBannerGet({ entityId }, signal);
 
 
 
@@ -527,7 +536,7 @@ export type GetVenueBannerApiVenuesEntityIdBannerGetQueryError = void | unknown 
  * @summary Get Venue Banner
  */
 export function useGetVenueBannerApiVenuesEntityIdBannerGet<TData = Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError = void | unknown | HTTPValidationError>(
- entityId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError, TData>> & Pick<
+ pathParams: GetVenueBannerApiVenuesEntityIdBannerGetPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>,
           TError,
@@ -541,7 +550,7 @@ export function useGetVenueBannerApiVenuesEntityIdBannerGet<TData = Awaited<Retu
  * @summary Get Venue Banner
  */
 export function useGetVenueBannerApiVenuesEntityIdBannerGet<TData = Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError = void | unknown | HTTPValidationError>(
- entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError, TData>> & Pick<
+ pathParams: GetVenueBannerApiVenuesEntityIdBannerGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>,
           TError,
@@ -555,7 +564,7 @@ export function useGetVenueBannerApiVenuesEntityIdBannerGet<TData = Awaited<Retu
  * @summary Get Venue Banner
  */
 export function useGetVenueBannerApiVenuesEntityIdBannerGet<TData = Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError = void | unknown | HTTPValidationError>(
- entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError, TData>>, }
+ pathParams: GetVenueBannerApiVenuesEntityIdBannerGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -563,11 +572,11 @@ export function useGetVenueBannerApiVenuesEntityIdBannerGet<TData = Awaited<Retu
  * @summary Get Venue Banner
  */
 export function useGetVenueBannerApiVenuesEntityIdBannerGet<TData = Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError = void | unknown | HTTPValidationError>(
- entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError, TData>>, }
+ { entityId }: GetVenueBannerApiVenuesEntityIdBannerGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError, TData>>, }
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetVenueBannerApiVenuesEntityIdBannerGetQueryOptions(entityId,options)
+  const queryOptions = getGetVenueBannerApiVenuesEntityIdBannerGetQueryOptions({ entityId },options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -584,7 +593,7 @@ export function useGetVenueBannerApiVenuesEntityIdBannerGet<TData = Awaited<Retu
  * @summary Set Venue Banner
  */
 export const setVenueBannerApiVenuesEntityIdBannerPut = (
-    entityId: string,
+    { entityId }: SetVenueBannerApiVenuesEntityIdBannerPutPathParameters,
     bodySetVenueBannerApiVenuesEntityIdBannerPut: BodySetVenueBannerApiVenuesEntityIdBannerPut,
  signal?: AbortSignal
 ) => {
@@ -620,9 +629,9 @@ const {mutation: mutationOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof setVenueBannerApiVenuesEntityIdBannerPut>>, SetVenueBannerApiVenuesEntityIdBannerPutMutationVariables> = (props) => {
-          const {entityId,data} = props ?? {};
+          const {pathParams,data} = props ?? {};
 
-          return  setVenueBannerApiVenuesEntityIdBannerPut(entityId,data,)
+          return  setVenueBannerApiVenuesEntityIdBannerPut(pathParams,data,)
         }
 
 
@@ -635,7 +644,7 @@ const {mutation: mutationOptions} = options ?
     export type SetVenueBannerApiVenuesEntityIdBannerPutMutationResult = NonNullable<Awaited<ReturnType<typeof setVenueBannerApiVenuesEntityIdBannerPut>>>
     export type SetVenueBannerApiVenuesEntityIdBannerPutMutationBody = BodySetVenueBannerApiVenuesEntityIdBannerPut
     export type SetVenueBannerApiVenuesEntityIdBannerPutMutationError = HTTPValidationError
-    export type SetVenueBannerApiVenuesEntityIdBannerPutMutationVariables = {entityId: string;data: BodySetVenueBannerApiVenuesEntityIdBannerPut}
+    export type SetVenueBannerApiVenuesEntityIdBannerPutMutationVariables = {pathParams: SetVenueBannerApiVenuesEntityIdBannerPutPathParameters;data: BodySetVenueBannerApiVenuesEntityIdBannerPut}
 
     /**
  * Set this entity's banner.
@@ -656,7 +665,7 @@ export const useSetVenueBannerApiVenuesEntityIdBannerPut = <TError = HTTPValidat
  * @summary Delete Venue Banner
  */
 export const deleteVenueBannerApiVenuesEntityIdBannerDelete = (
-    entityId: string,
+    { entityId }: DeleteVenueBannerApiVenuesEntityIdBannerDeletePathParameters,
  signal?: AbortSignal
 ) => {
 
@@ -687,9 +696,9 @@ const {mutation: mutationOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteVenueBannerApiVenuesEntityIdBannerDelete>>, DeleteVenueBannerApiVenuesEntityIdBannerDeleteMutationVariables> = (props) => {
-          const {entityId} = props ?? {};
+          const {pathParams} = props ?? {};
 
-          return  deleteVenueBannerApiVenuesEntityIdBannerDelete(entityId,)
+          return  deleteVenueBannerApiVenuesEntityIdBannerDelete(pathParams,)
         }
 
 
@@ -702,7 +711,7 @@ const {mutation: mutationOptions} = options ?
     export type DeleteVenueBannerApiVenuesEntityIdBannerDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteVenueBannerApiVenuesEntityIdBannerDelete>>>
 
     export type DeleteVenueBannerApiVenuesEntityIdBannerDeleteMutationError = HTTPValidationError
-    export type DeleteVenueBannerApiVenuesEntityIdBannerDeleteMutationVariables = {entityId: string}
+    export type DeleteVenueBannerApiVenuesEntityIdBannerDeleteMutationVariables = {pathParams: DeleteVenueBannerApiVenuesEntityIdBannerDeletePathParameters}
 
     /**
  * Delete this entity's banner.
@@ -723,7 +732,7 @@ export const useDeleteVenueBannerApiVenuesEntityIdBannerDelete = <TError = HTTPV
  * @summary Get Venue Thumbnail
  */
 export const getVenueThumbnailApiVenuesEntityIdThumbnailGet = (
-    entityId: string,
+    { entityId }: GetVenueThumbnailApiVenuesEntityIdThumbnailGetPathParameters,
  signal?: AbortSignal
 ) => {
 
@@ -737,23 +746,23 @@ export const getVenueThumbnailApiVenuesEntityIdThumbnailGet = (
 
 
 
-export const getGetVenueThumbnailApiVenuesEntityIdThumbnailGetQueryKey = (entityId: string,) => {
+export const getGetVenueThumbnailApiVenuesEntityIdThumbnailGetQueryKey = ({ entityId }: GetVenueThumbnailApiVenuesEntityIdThumbnailGetPathParameters,) => {
     return [
     `/api/venues/${entityId}/thumbnail`
     ] as const;
     }
 
 
-export const getGetVenueThumbnailApiVenuesEntityIdThumbnailGetQueryOptions = <TData = Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError = void | unknown | HTTPValidationError>(entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError, TData>>, }
+export const getGetVenueThumbnailApiVenuesEntityIdThumbnailGetQueryOptions = <TData = Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError = void | unknown | HTTPValidationError>({ entityId }: GetVenueThumbnailApiVenuesEntityIdThumbnailGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetVenueThumbnailApiVenuesEntityIdThumbnailGetQueryKey(entityId);
+  const queryKey =  queryOptions?.queryKey ?? getGetVenueThumbnailApiVenuesEntityIdThumbnailGetQueryKey({ entityId });
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>> = ({ signal }) => getVenueThumbnailApiVenuesEntityIdThumbnailGet(entityId, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>> = ({ signal }) => getVenueThumbnailApiVenuesEntityIdThumbnailGet({ entityId }, signal);
 
 
 
@@ -771,7 +780,7 @@ export type GetVenueThumbnailApiVenuesEntityIdThumbnailGetQueryError = void | un
  * @summary Get Venue Thumbnail
  */
 export function useGetVenueThumbnailApiVenuesEntityIdThumbnailGet<TData = Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError = void | unknown | HTTPValidationError>(
- entityId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError, TData>> & Pick<
+ pathParams: GetVenueThumbnailApiVenuesEntityIdThumbnailGetPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>,
           TError,
@@ -785,7 +794,7 @@ export function useGetVenueThumbnailApiVenuesEntityIdThumbnailGet<TData = Awaite
  * @summary Get Venue Thumbnail
  */
 export function useGetVenueThumbnailApiVenuesEntityIdThumbnailGet<TData = Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError = void | unknown | HTTPValidationError>(
- entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError, TData>> & Pick<
+ pathParams: GetVenueThumbnailApiVenuesEntityIdThumbnailGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>,
           TError,
@@ -799,7 +808,7 @@ export function useGetVenueThumbnailApiVenuesEntityIdThumbnailGet<TData = Awaite
  * @summary Get Venue Thumbnail
  */
 export function useGetVenueThumbnailApiVenuesEntityIdThumbnailGet<TData = Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError = void | unknown | HTTPValidationError>(
- entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError, TData>>, }
+ pathParams: GetVenueThumbnailApiVenuesEntityIdThumbnailGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -807,11 +816,11 @@ export function useGetVenueThumbnailApiVenuesEntityIdThumbnailGet<TData = Awaite
  * @summary Get Venue Thumbnail
  */
 export function useGetVenueThumbnailApiVenuesEntityIdThumbnailGet<TData = Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError = void | unknown | HTTPValidationError>(
- entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError, TData>>, }
+ { entityId }: GetVenueThumbnailApiVenuesEntityIdThumbnailGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError, TData>>, }
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetVenueThumbnailApiVenuesEntityIdThumbnailGetQueryOptions(entityId,options)
+  const queryOptions = getGetVenueThumbnailApiVenuesEntityIdThumbnailGetQueryOptions({ entityId },options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -828,7 +837,7 @@ export function useGetVenueThumbnailApiVenuesEntityIdThumbnailGet<TData = Awaite
  * @summary Set Venue Thumbnail
  */
 export const setVenueThumbnailApiVenuesEntityIdThumbnailPut = (
-    entityId: string,
+    { entityId }: SetVenueThumbnailApiVenuesEntityIdThumbnailPutPathParameters,
     bodySetVenueThumbnailApiVenuesEntityIdThumbnailPut: BodySetVenueThumbnailApiVenuesEntityIdThumbnailPut,
  signal?: AbortSignal
 ) => {
@@ -864,9 +873,9 @@ const {mutation: mutationOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof setVenueThumbnailApiVenuesEntityIdThumbnailPut>>, SetVenueThumbnailApiVenuesEntityIdThumbnailPutMutationVariables> = (props) => {
-          const {entityId,data} = props ?? {};
+          const {pathParams,data} = props ?? {};
 
-          return  setVenueThumbnailApiVenuesEntityIdThumbnailPut(entityId,data,)
+          return  setVenueThumbnailApiVenuesEntityIdThumbnailPut(pathParams,data,)
         }
 
 
@@ -879,7 +888,7 @@ const {mutation: mutationOptions} = options ?
     export type SetVenueThumbnailApiVenuesEntityIdThumbnailPutMutationResult = NonNullable<Awaited<ReturnType<typeof setVenueThumbnailApiVenuesEntityIdThumbnailPut>>>
     export type SetVenueThumbnailApiVenuesEntityIdThumbnailPutMutationBody = BodySetVenueThumbnailApiVenuesEntityIdThumbnailPut
     export type SetVenueThumbnailApiVenuesEntityIdThumbnailPutMutationError = HTTPValidationError
-    export type SetVenueThumbnailApiVenuesEntityIdThumbnailPutMutationVariables = {entityId: string;data: BodySetVenueThumbnailApiVenuesEntityIdThumbnailPut}
+    export type SetVenueThumbnailApiVenuesEntityIdThumbnailPutMutationVariables = {pathParams: SetVenueThumbnailApiVenuesEntityIdThumbnailPutPathParameters;data: BodySetVenueThumbnailApiVenuesEntityIdThumbnailPut}
 
     /**
  * Set this entity's thumbnail.
@@ -900,7 +909,7 @@ export const useSetVenueThumbnailApiVenuesEntityIdThumbnailPut = <TError = HTTPV
  * @summary Delete Venue Thumbnail
  */
 export const deleteVenueThumbnailApiVenuesEntityIdThumbnailDelete = (
-    entityId: string,
+    { entityId }: DeleteVenueThumbnailApiVenuesEntityIdThumbnailDeletePathParameters,
  signal?: AbortSignal
 ) => {
 
@@ -931,9 +940,9 @@ const {mutation: mutationOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteVenueThumbnailApiVenuesEntityIdThumbnailDelete>>, DeleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteMutationVariables> = (props) => {
-          const {entityId} = props ?? {};
+          const {pathParams} = props ?? {};
 
-          return  deleteVenueThumbnailApiVenuesEntityIdThumbnailDelete(entityId,)
+          return  deleteVenueThumbnailApiVenuesEntityIdThumbnailDelete(pathParams,)
         }
 
 
@@ -946,7 +955,7 @@ const {mutation: mutationOptions} = options ?
     export type DeleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteVenueThumbnailApiVenuesEntityIdThumbnailDelete>>>
 
     export type DeleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteMutationError = HTTPValidationError
-    export type DeleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteMutationVariables = {entityId: string}
+    export type DeleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteMutationVariables = {pathParams: DeleteVenueThumbnailApiVenuesEntityIdThumbnailDeletePathParameters}
 
     /**
  * Delete this entity's thumbnail.

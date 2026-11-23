@@ -30,6 +30,7 @@ export default defineConfig({
         useDates: true,
         useBigInt: true,
         useBrandedTypes: true, // NewType
+        useNamedParameters: true,
       },
     },
     input: {

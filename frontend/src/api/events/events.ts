@@ -26,13 +26,22 @@ import type {
 import type {
   BodySetEventBannerApiEventsEntityIdBannerPut,
   BodySetEventThumbnailApiEventsEntityIdThumbnailPut,
+  DeleteEventApiEventsEventIdDeletePathParameters,
+  DeleteEventBannerApiEventsEntityIdBannerDeletePathParameters,
+  DeleteEventThumbnailApiEventsEntityIdThumbnailDeletePathParameters,
+  EditEventApiEventsEventIdPatchPathParameters,
   EventCreate,
   EventRead,
   EventUpdate,
+  GetEventApiEventsEventIdGetPathParameters,
+  GetEventBannerApiEventsEntityIdBannerGetPathParameters,
+  GetEventThumbnailApiEventsEntityIdThumbnailGetPathParameters,
   GetEventsApiEventsGetParams,
   HTTPValidationError,
   ImageRead,
-  KeysetPagedResponseEventReadAnnotatedDatetimeAwareDatetime
+  KeysetPagedResponseEventReadAnnotatedDatetimeAwareDatetime,
+  SetEventBannerApiEventsEntityIdBannerPutPathParameters,
+  SetEventThumbnailApiEventsEntityIdThumbnailPutPathParameters
 } from '../model';
 
 import { api } from '../../lib/api';
@@ -235,7 +244,7 @@ export const useCreateEventApiEventsPost = <TError = HTTPValidationError,
  * @summary Get Event
  */
 export const getEventApiEventsEventIdGet = (
-    eventId: string,
+    { eventId }: GetEventApiEventsEventIdGetPathParameters,
  signal?: AbortSignal
 ) => {
 
@@ -249,23 +258,23 @@ export const getEventApiEventsEventIdGet = (
 
 
 
-export const getGetEventApiEventsEventIdGetQueryKey = (eventId: string,) => {
+export const getGetEventApiEventsEventIdGetQueryKey = ({ eventId }: GetEventApiEventsEventIdGetPathParameters,) => {
     return [
     `/api/events/${eventId}`
     ] as const;
     }
 
 
-export const getGetEventApiEventsEventIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getEventApiEventsEventIdGet>>, TError = HTTPValidationError>(eventId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventApiEventsEventIdGet>>, TError, TData>>, }
+export const getGetEventApiEventsEventIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getEventApiEventsEventIdGet>>, TError = HTTPValidationError>({ eventId }: GetEventApiEventsEventIdGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventApiEventsEventIdGet>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetEventApiEventsEventIdGetQueryKey(eventId);
+  const queryKey =  queryOptions?.queryKey ?? getGetEventApiEventsEventIdGetQueryKey({ eventId });
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getEventApiEventsEventIdGet>>> = ({ signal }) => getEventApiEventsEventIdGet(eventId, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getEventApiEventsEventIdGet>>> = ({ signal }) => getEventApiEventsEventIdGet({ eventId }, signal);
 
 
 
@@ -283,7 +292,7 @@ export type GetEventApiEventsEventIdGetQueryError = HTTPValidationError
  * @summary Get Event
  */
 export function useGetEventApiEventsEventIdGet<TData = Awaited<ReturnType<typeof getEventApiEventsEventIdGet>>, TError = HTTPValidationError>(
- eventId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventApiEventsEventIdGet>>, TError, TData>> & Pick<
+ pathParams: GetEventApiEventsEventIdGetPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventApiEventsEventIdGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getEventApiEventsEventIdGet>>,
           TError,
@@ -297,7 +306,7 @@ export function useGetEventApiEventsEventIdGet<TData = Awaited<ReturnType<typeof
  * @summary Get Event
  */
 export function useGetEventApiEventsEventIdGet<TData = Awaited<ReturnType<typeof getEventApiEventsEventIdGet>>, TError = HTTPValidationError>(
- eventId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventApiEventsEventIdGet>>, TError, TData>> & Pick<
+ pathParams: GetEventApiEventsEventIdGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventApiEventsEventIdGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getEventApiEventsEventIdGet>>,
           TError,
@@ -311,7 +320,7 @@ export function useGetEventApiEventsEventIdGet<TData = Awaited<ReturnType<typeof
  * @summary Get Event
  */
 export function useGetEventApiEventsEventIdGet<TData = Awaited<ReturnType<typeof getEventApiEventsEventIdGet>>, TError = HTTPValidationError>(
- eventId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventApiEventsEventIdGet>>, TError, TData>>, }
+ pathParams: GetEventApiEventsEventIdGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventApiEventsEventIdGet>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -319,11 +328,11 @@ export function useGetEventApiEventsEventIdGet<TData = Awaited<ReturnType<typeof
  * @summary Get Event
  */
 export function useGetEventApiEventsEventIdGet<TData = Awaited<ReturnType<typeof getEventApiEventsEventIdGet>>, TError = HTTPValidationError>(
- eventId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventApiEventsEventIdGet>>, TError, TData>>, }
+ { eventId }: GetEventApiEventsEventIdGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventApiEventsEventIdGet>>, TError, TData>>, }
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetEventApiEventsEventIdGetQueryOptions(eventId,options)
+  const queryOptions = getGetEventApiEventsEventIdGetQueryOptions({ eventId },options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -340,7 +349,7 @@ export function useGetEventApiEventsEventIdGet<TData = Awaited<ReturnType<typeof
  * @summary Edit Event
  */
 export const editEventApiEventsEventIdPatch = (
-    eventId: string,
+    { eventId }: EditEventApiEventsEventIdPatchPathParameters,
     eventUpdate: EventUpdate,
  signal?: AbortSignal
 ) => {
@@ -374,9 +383,9 @@ const {mutation: mutationOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof editEventApiEventsEventIdPatch>>, EditEventApiEventsEventIdPatchMutationVariables> = (props) => {
-          const {eventId,data} = props ?? {};
+          const {pathParams,data} = props ?? {};
 
-          return  editEventApiEventsEventIdPatch(eventId,data,)
+          return  editEventApiEventsEventIdPatch(pathParams,data,)
         }
 
 
@@ -389,7 +398,7 @@ const {mutation: mutationOptions} = options ?
     export type EditEventApiEventsEventIdPatchMutationResult = NonNullable<Awaited<ReturnType<typeof editEventApiEventsEventIdPatch>>>
     export type EditEventApiEventsEventIdPatchMutationBody = EventUpdate
     export type EditEventApiEventsEventIdPatchMutationError = HTTPValidationError
-    export type EditEventApiEventsEventIdPatchMutationVariables = {eventId: string;data: EventUpdate}
+    export type EditEventApiEventsEventIdPatchMutationVariables = {pathParams: EditEventApiEventsEventIdPatchPathParameters;data: EventUpdate}
 
     /**
  * Edit an event's details.
@@ -411,7 +420,7 @@ export const useEditEventApiEventsEventIdPatch = <TError = HTTPValidationError,
  * @summary Delete Event
  */
 export const deleteEventApiEventsEventIdDelete = (
-    eventId: string,
+    { eventId }: DeleteEventApiEventsEventIdDeletePathParameters,
  signal?: AbortSignal
 ) => {
 
@@ -442,9 +451,9 @@ const {mutation: mutationOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteEventApiEventsEventIdDelete>>, DeleteEventApiEventsEventIdDeleteMutationVariables> = (props) => {
-          const {eventId} = props ?? {};
+          const {pathParams} = props ?? {};
 
-          return  deleteEventApiEventsEventIdDelete(eventId,)
+          return  deleteEventApiEventsEventIdDelete(pathParams,)
         }
 
 
@@ -457,7 +466,7 @@ const {mutation: mutationOptions} = options ?
     export type DeleteEventApiEventsEventIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteEventApiEventsEventIdDelete>>>
 
     export type DeleteEventApiEventsEventIdDeleteMutationError = HTTPValidationError
-    export type DeleteEventApiEventsEventIdDeleteMutationVariables = {eventId: string}
+    export type DeleteEventApiEventsEventIdDeleteMutationVariables = {pathParams: DeleteEventApiEventsEventIdDeletePathParameters}
 
     /**
  * Delete an event.
@@ -479,7 +488,7 @@ export const useDeleteEventApiEventsEventIdDelete = <TError = HTTPValidationErro
  * @summary Get Event Banner
  */
 export const getEventBannerApiEventsEntityIdBannerGet = (
-    entityId: string,
+    { entityId }: GetEventBannerApiEventsEntityIdBannerGetPathParameters,
  signal?: AbortSignal
 ) => {
 
@@ -493,23 +502,23 @@ export const getEventBannerApiEventsEntityIdBannerGet = (
 
 
 
-export const getGetEventBannerApiEventsEntityIdBannerGetQueryKey = (entityId: string,) => {
+export const getGetEventBannerApiEventsEntityIdBannerGetQueryKey = ({ entityId }: GetEventBannerApiEventsEntityIdBannerGetPathParameters,) => {
     return [
     `/api/events/${entityId}/banner`
     ] as const;
     }
 
 
-export const getGetEventBannerApiEventsEntityIdBannerGetQueryOptions = <TData = Awaited<ReturnType<typeof getEventBannerApiEventsEntityIdBannerGet>>, TError = void | unknown | HTTPValidationError>(entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventBannerApiEventsEntityIdBannerGet>>, TError, TData>>, }
+export const getGetEventBannerApiEventsEntityIdBannerGetQueryOptions = <TData = Awaited<ReturnType<typeof getEventBannerApiEventsEntityIdBannerGet>>, TError = void | unknown | HTTPValidationError>({ entityId }: GetEventBannerApiEventsEntityIdBannerGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventBannerApiEventsEntityIdBannerGet>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetEventBannerApiEventsEntityIdBannerGetQueryKey(entityId);
+  const queryKey =  queryOptions?.queryKey ?? getGetEventBannerApiEventsEntityIdBannerGetQueryKey({ entityId });
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getEventBannerApiEventsEntityIdBannerGet>>> = ({ signal }) => getEventBannerApiEventsEntityIdBannerGet(entityId, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getEventBannerApiEventsEntityIdBannerGet>>> = ({ signal }) => getEventBannerApiEventsEntityIdBannerGet({ entityId }, signal);
 
 
 
@@ -527,7 +536,7 @@ export type GetEventBannerApiEventsEntityIdBannerGetQueryError = void | unknown 
  * @summary Get Event Banner
  */
 export function useGetEventBannerApiEventsEntityIdBannerGet<TData = Awaited<ReturnType<typeof getEventBannerApiEventsEntityIdBannerGet>>, TError = void | unknown | HTTPValidationError>(
- entityId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventBannerApiEventsEntityIdBannerGet>>, TError, TData>> & Pick<
+ pathParams: GetEventBannerApiEventsEntityIdBannerGetPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventBannerApiEventsEntityIdBannerGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getEventBannerApiEventsEntityIdBannerGet>>,
           TError,
@@ -541,7 +550,7 @@ export function useGetEventBannerApiEventsEntityIdBannerGet<TData = Awaited<Retu
  * @summary Get Event Banner
  */
 export function useGetEventBannerApiEventsEntityIdBannerGet<TData = Awaited<ReturnType<typeof getEventBannerApiEventsEntityIdBannerGet>>, TError = void | unknown | HTTPValidationError>(
- entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventBannerApiEventsEntityIdBannerGet>>, TError, TData>> & Pick<
+ pathParams: GetEventBannerApiEventsEntityIdBannerGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventBannerApiEventsEntityIdBannerGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getEventBannerApiEventsEntityIdBannerGet>>,
           TError,
@@ -555,7 +564,7 @@ export function useGetEventBannerApiEventsEntityIdBannerGet<TData = Awaited<Retu
  * @summary Get Event Banner
  */
 export function useGetEventBannerApiEventsEntityIdBannerGet<TData = Awaited<ReturnType<typeof getEventBannerApiEventsEntityIdBannerGet>>, TError = void | unknown | HTTPValidationError>(
- entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventBannerApiEventsEntityIdBannerGet>>, TError, TData>>, }
+ pathParams: GetEventBannerApiEventsEntityIdBannerGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventBannerApiEventsEntityIdBannerGet>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -563,11 +572,11 @@ export function useGetEventBannerApiEventsEntityIdBannerGet<TData = Awaited<Retu
  * @summary Get Event Banner
  */
 export function useGetEventBannerApiEventsEntityIdBannerGet<TData = Awaited<ReturnType<typeof getEventBannerApiEventsEntityIdBannerGet>>, TError = void | unknown | HTTPValidationError>(
- entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventBannerApiEventsEntityIdBannerGet>>, TError, TData>>, }
+ { entityId }: GetEventBannerApiEventsEntityIdBannerGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventBannerApiEventsEntityIdBannerGet>>, TError, TData>>, }
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetEventBannerApiEventsEntityIdBannerGetQueryOptions(entityId,options)
+  const queryOptions = getGetEventBannerApiEventsEntityIdBannerGetQueryOptions({ entityId },options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -584,7 +593,7 @@ export function useGetEventBannerApiEventsEntityIdBannerGet<TData = Awaited<Retu
  * @summary Set Event Banner
  */
 export const setEventBannerApiEventsEntityIdBannerPut = (
-    entityId: string,
+    { entityId }: SetEventBannerApiEventsEntityIdBannerPutPathParameters,
     bodySetEventBannerApiEventsEntityIdBannerPut: BodySetEventBannerApiEventsEntityIdBannerPut,
  signal?: AbortSignal
 ) => {
@@ -620,9 +629,9 @@ const {mutation: mutationOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof setEventBannerApiEventsEntityIdBannerPut>>, SetEventBannerApiEventsEntityIdBannerPutMutationVariables> = (props) => {
-          const {entityId,data} = props ?? {};
+          const {pathParams,data} = props ?? {};
 
-          return  setEventBannerApiEventsEntityIdBannerPut(entityId,data,)
+          return  setEventBannerApiEventsEntityIdBannerPut(pathParams,data,)
         }
 
 
@@ -635,7 +644,7 @@ const {mutation: mutationOptions} = options ?
     export type SetEventBannerApiEventsEntityIdBannerPutMutationResult = NonNullable<Awaited<ReturnType<typeof setEventBannerApiEventsEntityIdBannerPut>>>
     export type SetEventBannerApiEventsEntityIdBannerPutMutationBody = BodySetEventBannerApiEventsEntityIdBannerPut
     export type SetEventBannerApiEventsEntityIdBannerPutMutationError = HTTPValidationError
-    export type SetEventBannerApiEventsEntityIdBannerPutMutationVariables = {entityId: string;data: BodySetEventBannerApiEventsEntityIdBannerPut}
+    export type SetEventBannerApiEventsEntityIdBannerPutMutationVariables = {pathParams: SetEventBannerApiEventsEntityIdBannerPutPathParameters;data: BodySetEventBannerApiEventsEntityIdBannerPut}
 
     /**
  * Set this entity's banner.
@@ -656,7 +665,7 @@ export const useSetEventBannerApiEventsEntityIdBannerPut = <TError = HTTPValidat
  * @summary Delete Event Banner
  */
 export const deleteEventBannerApiEventsEntityIdBannerDelete = (
-    entityId: string,
+    { entityId }: DeleteEventBannerApiEventsEntityIdBannerDeletePathParameters,
  signal?: AbortSignal
 ) => {
 
@@ -687,9 +696,9 @@ const {mutation: mutationOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteEventBannerApiEventsEntityIdBannerDelete>>, DeleteEventBannerApiEventsEntityIdBannerDeleteMutationVariables> = (props) => {
-          const {entityId} = props ?? {};
+          const {pathParams} = props ?? {};
 
-          return  deleteEventBannerApiEventsEntityIdBannerDelete(entityId,)
+          return  deleteEventBannerApiEventsEntityIdBannerDelete(pathParams,)
         }
 
 
@@ -702,7 +711,7 @@ const {mutation: mutationOptions} = options ?
     export type DeleteEventBannerApiEventsEntityIdBannerDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteEventBannerApiEventsEntityIdBannerDelete>>>
 
     export type DeleteEventBannerApiEventsEntityIdBannerDeleteMutationError = HTTPValidationError
-    export type DeleteEventBannerApiEventsEntityIdBannerDeleteMutationVariables = {entityId: string}
+    export type DeleteEventBannerApiEventsEntityIdBannerDeleteMutationVariables = {pathParams: DeleteEventBannerApiEventsEntityIdBannerDeletePathParameters}
 
     /**
  * Delete this entity's banner.
@@ -723,7 +732,7 @@ export const useDeleteEventBannerApiEventsEntityIdBannerDelete = <TError = HTTPV
  * @summary Get Event Thumbnail
  */
 export const getEventThumbnailApiEventsEntityIdThumbnailGet = (
-    entityId: string,
+    { entityId }: GetEventThumbnailApiEventsEntityIdThumbnailGetPathParameters,
  signal?: AbortSignal
 ) => {
 
@@ -737,23 +746,23 @@ export const getEventThumbnailApiEventsEntityIdThumbnailGet = (
 
 
 
-export const getGetEventThumbnailApiEventsEntityIdThumbnailGetQueryKey = (entityId: string,) => {
+export const getGetEventThumbnailApiEventsEntityIdThumbnailGetQueryKey = ({ entityId }: GetEventThumbnailApiEventsEntityIdThumbnailGetPathParameters,) => {
     return [
     `/api/events/${entityId}/thumbnail`
     ] as const;
     }
 
 
-export const getGetEventThumbnailApiEventsEntityIdThumbnailGetQueryOptions = <TData = Awaited<ReturnType<typeof getEventThumbnailApiEventsEntityIdThumbnailGet>>, TError = void | unknown | HTTPValidationError>(entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventThumbnailApiEventsEntityIdThumbnailGet>>, TError, TData>>, }
+export const getGetEventThumbnailApiEventsEntityIdThumbnailGetQueryOptions = <TData = Awaited<ReturnType<typeof getEventThumbnailApiEventsEntityIdThumbnailGet>>, TError = void | unknown | HTTPValidationError>({ entityId }: GetEventThumbnailApiEventsEntityIdThumbnailGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventThumbnailApiEventsEntityIdThumbnailGet>>, TError, TData>>, }
 ) => {
 
 const {query: queryOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetEventThumbnailApiEventsEntityIdThumbnailGetQueryKey(entityId);
+  const queryKey =  queryOptions?.queryKey ?? getGetEventThumbnailApiEventsEntityIdThumbnailGetQueryKey({ entityId });
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getEventThumbnailApiEventsEntityIdThumbnailGet>>> = ({ signal }) => getEventThumbnailApiEventsEntityIdThumbnailGet(entityId, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getEventThumbnailApiEventsEntityIdThumbnailGet>>> = ({ signal }) => getEventThumbnailApiEventsEntityIdThumbnailGet({ entityId }, signal);
 
 
 
@@ -771,7 +780,7 @@ export type GetEventThumbnailApiEventsEntityIdThumbnailGetQueryError = void | un
  * @summary Get Event Thumbnail
  */
 export function useGetEventThumbnailApiEventsEntityIdThumbnailGet<TData = Awaited<ReturnType<typeof getEventThumbnailApiEventsEntityIdThumbnailGet>>, TError = void | unknown | HTTPValidationError>(
- entityId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventThumbnailApiEventsEntityIdThumbnailGet>>, TError, TData>> & Pick<
+ pathParams: GetEventThumbnailApiEventsEntityIdThumbnailGetPathParameters, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventThumbnailApiEventsEntityIdThumbnailGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getEventThumbnailApiEventsEntityIdThumbnailGet>>,
           TError,
@@ -785,7 +794,7 @@ export function useGetEventThumbnailApiEventsEntityIdThumbnailGet<TData = Awaite
  * @summary Get Event Thumbnail
  */
 export function useGetEventThumbnailApiEventsEntityIdThumbnailGet<TData = Awaited<ReturnType<typeof getEventThumbnailApiEventsEntityIdThumbnailGet>>, TError = void | unknown | HTTPValidationError>(
- entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventThumbnailApiEventsEntityIdThumbnailGet>>, TError, TData>> & Pick<
+ pathParams: GetEventThumbnailApiEventsEntityIdThumbnailGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventThumbnailApiEventsEntityIdThumbnailGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getEventThumbnailApiEventsEntityIdThumbnailGet>>,
           TError,
@@ -799,7 +808,7 @@ export function useGetEventThumbnailApiEventsEntityIdThumbnailGet<TData = Awaite
  * @summary Get Event Thumbnail
  */
 export function useGetEventThumbnailApiEventsEntityIdThumbnailGet<TData = Awaited<ReturnType<typeof getEventThumbnailApiEventsEntityIdThumbnailGet>>, TError = void | unknown | HTTPValidationError>(
- entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventThumbnailApiEventsEntityIdThumbnailGet>>, TError, TData>>, }
+ pathParams: GetEventThumbnailApiEventsEntityIdThumbnailGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventThumbnailApiEventsEntityIdThumbnailGet>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -807,11 +816,11 @@ export function useGetEventThumbnailApiEventsEntityIdThumbnailGet<TData = Awaite
  * @summary Get Event Thumbnail
  */
 export function useGetEventThumbnailApiEventsEntityIdThumbnailGet<TData = Awaited<ReturnType<typeof getEventThumbnailApiEventsEntityIdThumbnailGet>>, TError = void | unknown | HTTPValidationError>(
- entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventThumbnailApiEventsEntityIdThumbnailGet>>, TError, TData>>, }
+ { entityId }: GetEventThumbnailApiEventsEntityIdThumbnailGetPathParameters, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEventThumbnailApiEventsEntityIdThumbnailGet>>, TError, TData>>, }
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetEventThumbnailApiEventsEntityIdThumbnailGetQueryOptions(entityId,options)
+  const queryOptions = getGetEventThumbnailApiEventsEntityIdThumbnailGetQueryOptions({ entityId },options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -828,7 +837,7 @@ export function useGetEventThumbnailApiEventsEntityIdThumbnailGet<TData = Awaite
  * @summary Set Event Thumbnail
  */
 export const setEventThumbnailApiEventsEntityIdThumbnailPut = (
-    entityId: string,
+    { entityId }: SetEventThumbnailApiEventsEntityIdThumbnailPutPathParameters,
     bodySetEventThumbnailApiEventsEntityIdThumbnailPut: BodySetEventThumbnailApiEventsEntityIdThumbnailPut,
  signal?: AbortSignal
 ) => {
@@ -864,9 +873,9 @@ const {mutation: mutationOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof setEventThumbnailApiEventsEntityIdThumbnailPut>>, SetEventThumbnailApiEventsEntityIdThumbnailPutMutationVariables> = (props) => {
-          const {entityId,data} = props ?? {};
+          const {pathParams,data} = props ?? {};
 
-          return  setEventThumbnailApiEventsEntityIdThumbnailPut(entityId,data,)
+          return  setEventThumbnailApiEventsEntityIdThumbnailPut(pathParams,data,)
         }
 
 
@@ -879,7 +888,7 @@ const {mutation: mutationOptions} = options ?
     export type SetEventThumbnailApiEventsEntityIdThumbnailPutMutationResult = NonNullable<Awaited<ReturnType<typeof setEventThumbnailApiEventsEntityIdThumbnailPut>>>
     export type SetEventThumbnailApiEventsEntityIdThumbnailPutMutationBody = BodySetEventThumbnailApiEventsEntityIdThumbnailPut
     export type SetEventThumbnailApiEventsEntityIdThumbnailPutMutationError = HTTPValidationError
-    export type SetEventThumbnailApiEventsEntityIdThumbnailPutMutationVariables = {entityId: string;data: BodySetEventThumbnailApiEventsEntityIdThumbnailPut}
+    export type SetEventThumbnailApiEventsEntityIdThumbnailPutMutationVariables = {pathParams: SetEventThumbnailApiEventsEntityIdThumbnailPutPathParameters;data: BodySetEventThumbnailApiEventsEntityIdThumbnailPut}
 
     /**
  * Set this entity's thumbnail.
@@ -900,7 +909,7 @@ export const useSetEventThumbnailApiEventsEntityIdThumbnailPut = <TError = HTTPV
  * @summary Delete Event Thumbnail
  */
 export const deleteEventThumbnailApiEventsEntityIdThumbnailDelete = (
-    entityId: string,
+    { entityId }: DeleteEventThumbnailApiEventsEntityIdThumbnailDeletePathParameters,
  signal?: AbortSignal
 ) => {
 
@@ -931,9 +940,9 @@ const {mutation: mutationOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteEventThumbnailApiEventsEntityIdThumbnailDelete>>, DeleteEventThumbnailApiEventsEntityIdThumbnailDeleteMutationVariables> = (props) => {
-          const {entityId} = props ?? {};
+          const {pathParams} = props ?? {};
 
-          return  deleteEventThumbnailApiEventsEntityIdThumbnailDelete(entityId,)
+          return  deleteEventThumbnailApiEventsEntityIdThumbnailDelete(pathParams,)
         }
 
 
@@ -946,7 +955,7 @@ const {mutation: mutationOptions} = options ?
     export type DeleteEventThumbnailApiEventsEntityIdThumbnailDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteEventThumbnailApiEventsEntityIdThumbnailDelete>>>
 
     export type DeleteEventThumbnailApiEventsEntityIdThumbnailDeleteMutationError = HTTPValidationError
-    export type DeleteEventThumbnailApiEventsEntityIdThumbnailDeleteMutationVariables = {entityId: string}
+    export type DeleteEventThumbnailApiEventsEntityIdThumbnailDeleteMutationVariables = {pathParams: DeleteEventThumbnailApiEventsEntityIdThumbnailDeletePathParameters}
 
     /**
  * Delete this entity's thumbnail.
