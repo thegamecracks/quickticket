@@ -144,7 +144,20 @@ type VenuePatch = Partial<
   >
 >
 
-function VenueForm({ venueId }: { venueId?: string }) {
+export function VenueForm({
+  venueId,
+  fixedOrganizationId,
+  embedded,
+  onCreated,
+}: {
+  venueId?: string
+  /** Skip the organization picker and create in this organization (wizard). */
+  fixedOrganizationId?: string
+  /** Render the bare form (no page shell) for the create-event wizard. */
+  embedded?: boolean
+  /** Replaces the default post-create navigation (wizard advances a step). */
+  onCreated?: (venue: VenueResponse) => void
+}) {
   const isEdit = Boolean(venueId)
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -175,14 +188,14 @@ function VenueForm({ venueId }: { venueId?: string }) {
     [user],
   )
 
-  const [organizationId, setOrganizationId] = useState('')
+  const [organizationId, setOrganizationId] = useState(fixedOrganizationId ?? '')
   const [adminOrgNames, setAdminOrgNames] = useState<
     Record<string, string>
   >({})
 
   useEffect(() => {
-    if (isEdit || adminMemberships.length < 2) {
-      if (adminMemberships.length === 1) {
+    if (isEdit || fixedOrganizationId || adminMemberships.length < 2) {
+      if (!fixedOrganizationId && adminMemberships.length === 1) {
         setOrganizationId(adminMemberships[0].organization_id)
       }
       return
@@ -210,7 +223,7 @@ function VenueForm({ venueId }: { venueId?: string }) {
     return () => {
       active = false
     }
-  }, [isEdit, adminMemberships])
+  }, [isEdit, fixedOrganizationId, adminMemberships])
 
   useEffect(() => {
     if (!isEdit) return
@@ -378,7 +391,11 @@ function VenueForm({ venueId }: { venueId?: string }) {
             : null,
         })
 
-        navigate(`/venue/${response.data.id}`)
+        if (onCreated) {
+          onCreated(response.data)
+        } else {
+          navigate(`/venue/${response.data.id}`)
+        }
       }
     } catch (requestError) {
       let message = isEdit
@@ -425,11 +442,8 @@ function VenueForm({ venueId }: { venueId?: string }) {
     </div>
   )
 
-  return (
-    <PageLayout
-      title={isEdit ? 'Edit Venue' : 'Create Venue'}
-      back={isEdit && venueId ? { to: `/venue/${venueId}` } : undefined}
-    >
+  const content = (
+    <>
       {isEdit && loading ? (
         <p className="text-base-content/70">Loading venue details...</p>
       ) : isEdit && loadError ? (
@@ -584,7 +598,7 @@ function VenueForm({ venueId }: { venueId?: string }) {
             </section>
 
             {/* Organization picker (create mode, multiple admin orgs only) */}
-            {!isEdit && adminMemberships.length > 1 && (
+            {!isEdit && !fixedOrganizationId && adminMemberships.length > 1 && (
               <section className="rounded-xl border border-base-300 bg-base-100 p-5 shadow-sm sm:p-6">
                 <div>
                   <label htmlFor="venueOrganization" className="mb-2 block text-sm font-medium">
@@ -653,6 +667,17 @@ function VenueForm({ venueId }: { venueId?: string }) {
           </form>
         </div>
       )}
+    </>
+  )
+
+  if (embedded) return content
+
+  return (
+    <PageLayout
+      title={isEdit ? 'Edit Venue' : 'Create Venue'}
+      back={isEdit && venueId ? { to: `/venue/${venueId}` } : undefined}
+    >
+      {content}
     </PageLayout>
   )
 }

@@ -1,12 +1,17 @@
+import { useEffect, useRef, useState, type ChangeEvent, type SubmitEvent } from 'react'
+import { Link } from 'react-router'
+import { APIProvider } from '@vis.gl/react-google-maps'
+
 import PageLayout from "../../components/PageLayout"
-import { useRef, useState, type ChangeEvent, type SubmitEvent } from 'react'
+import { api } from '../../lib/api'
+import { useAuth } from '../../lib/auth'
+import { isAdministrator } from '../account/types'
 import type { Event } from '../events/types'
-import {
-  MockUser,
-  createMockEvent,
-  getMockOrganizationsForAccount,
-  getMockVenuesForOrganization,
-} from '../../lib/mocks'
+import type { VenueResponse } from '../events/types'
+import type { OrganizationResponse, OrganizationVenue } from '../organizations/types'
+import { createMockEvent } from '../../lib/mocks'
+import { OrganizationForm } from './OrganizationForm'
+import { VenueForm } from './VenueForm'
 
 const categories = [
   'Music',
@@ -19,36 +24,151 @@ const categories = [
   'Other',
 ]
 
-interface EventCreationPageProps {
-  /**
-   * Organization the event is created under. Eventually supplied by the
-   * wizard flow (after org + venue creation); falls back to the mock
-   * user's first organization for now.
-   */
-  organizationId?: string
-  /** Preselected venue, e.g. the one just created in the wizard. */
-  venueId?: string
+/** Maps a freshly created venue onto the organization response's venue shape. */
+const toOrganizationVenue = (venue: VenueResponse): OrganizationVenue => ({
+  id: venue.id,
+  created_at: venue.created_at,
+  display_name: venue.display_name,
+  description: venue.description,
+  category: venue.category,
+  thumbnail: venue.thumbnail,
+  banner: venue.banner,
+  events: [],
+})
+
+/**
+ * Create-event wizard. Resolves the organizer's preconditions in order —
+ * organization, then first venue, then the event itself — showing only the
+ * steps that are still missing. Each step's form is the same one used by its
+ * standalone page (embedded), so the wizard and pages can't drift apart.
+ *
+ * Steps cannot go backwards: an organization or venue created mid-flow
+ * cannot be un-created, so a back button would mislead.
+ */
+export default function EventCreationPage() {
+  const { user } = useAuth()
+
+  // A user owns at most one organization; any administrator membership is it.
+  const membershipOrgId = user?.organization_members.find(isAdministrator)?.organization_id
+
+  const [org, setOrg] = useState<OrganizationResponse | null>(null)
+  const [orgError, setOrgError] = useState(false)
+
+  useEffect(() => {
+    if (!membershipOrgId) return
+
+    let active = true
+
+    api
+      .get<OrganizationResponse>(`/organizations/${membershipOrgId}`)
+      .then(response => {
+        if (active) setOrg(response.data)
+      })
+      .catch(() => {
+        if (active) setOrgError(true)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [membershipOrgId])
+
+  const needsOrg = org === null
+  const needsVenue = org !== null && org.venues.length === 0
+  // Only count the steps that still have to happen; a fully set-up organizer
+  // sees "Step 1 of 1", a brand-new one sees "Step 1 of 3".
+  const totalSteps = (needsOrg ? 1 : 0) + (needsVenue ? 1 : 0) + 1
+
+  const stepHeading = (title: string) => (
+    <p className="-mt-2 mb-7 text-sm text-base-content/60">
+      Step 1 of {totalSteps} — {title}
+    </p>
+  )
+
+  return (
+    <PageLayout
+      title="Create Event"
+      actions={
+        <Link to="/myEvents" className="btn btn-ghost btn-sm">
+          Cancel
+        </Link>
+      }
+    >
+      {/* Authentication loading state */}
+      {user === undefined && (
+        <p className="text-base-content/70">Checking your account...</p>
+      )}
+
+      {/* No sign-in gate: a signed-out visitor uses the navbar's Sign in
+          button. */}
+
+      {/* Organization still loading */}
+      {user && membershipOrgId && !org && !orgError && (
+        <p className="text-base-content/70">Loading your organization...</p>
+      )}
+
+      {/* Organization failed to load */}
+      {user && membershipOrgId && orgError && (
+        <div role="alert" className="alert alert-error">
+          Unable to load your organization. Please try again later.
+        </div>
+      )}
+
+      {/* Step: create organization */}
+      {user && !membershipOrgId && !org && (
+        <>
+          {stepHeading('create your organization')}
+
+          <OrganizationForm embedded onCreated={setOrg} />
+        </>
+      )}
+
+      {/* Step: create first venue */}
+      {org && org.venues.length === 0 && (
+        <>
+          {stepHeading('add your first venue')}
+
+          <APIProvider
+            apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? ''}
+            libraries={['geocoding']}
+            onError={error => console.error('Google Maps failed to load:', error)}
+          >
+            <VenueForm
+              embedded
+              fixedOrganizationId={org.id}
+              onCreated={venue =>
+                setOrg(previous =>
+                  previous
+                    ? { ...previous, venues: [toOrganizationVenue(venue), ...previous.venues] }
+                    : previous,
+                )
+              }
+            />
+          </APIProvider>
+        </>
+      )}
+
+      {/* Step: event details */}
+      {org && org.venues.length > 0 && (
+        <>
+          {stepHeading('event details')}
+
+          <EventForm venues={org.venues} />
+        </>
+      )}
+    </PageLayout>
+  )
 }
 
-export default function EventCreationPage({
-  organizationId: wizardOrganizationId,
-  venueId: wizardVenueId,
-}: EventCreationPageProps) {
-  // replace mock lookup with real wizard/router values later
-  const organizations = getMockOrganizationsForAccount(MockUser.id)
-  const organization = wizardOrganizationId
-    ? organizations.find((o) => o.id === wizardOrganizationId)
-    : organizations[0]
-
-  const orgVenues = organization
-    ? getMockVenuesForOrganization(organization.id)
-    : []
+/** The event details form; mounted once venues are known so the first venue
+ * can be auto-selected through the initial state. */
+function EventForm({ venues }: { venues: OrganizationVenue[] }) {
   // TODO: consolidate useStates
   const [displayName, setDisplayName] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
   const [otherCategory, setOtherCategory] = useState('')
-  const [venueId, setVenueId] = useState(wizardVenueId ?? '')
+  const [venueId, setVenueId] = useState(venues[0]?.id ?? '')
   const [startsAt, setStartsAt] = useState('')
   const [endsAt, setEndsAt] = useState('')
   const [ticketPrice, setTicketPrice] = useState('')
@@ -79,7 +199,7 @@ export default function EventCreationPage({
     setDescription('')
     setCategory('')
     setOtherCategory('')
-    setVenueId(wizardVenueId ?? '')
+    setVenueId(venues[0]?.id ?? '')
     setStartsAt('')
     setEndsAt('')
     setTicketPrice('')
@@ -128,6 +248,12 @@ export default function EventCreationPage({
       max_attendees: Number(maxAttendees),
     }
 
+    // TODO: replace the mock submission with POST /events, mirroring the
+    // backend's EventCreate validation (name 3-128 chars, description <=4096,
+    // category <=128, future-aware starts_at/ends_at with a 1h-7d duration,
+    // max_attendees 0-10000, ticket_price in cents), then navigate to
+    // /events/{id} on success. Images upload separately (storage objects +
+    // banner/thumbnail association), not with the create call.
     const created = createMockEvent(mockEvent)
     console.log('Mock event submission:', created)
 
@@ -136,7 +262,7 @@ export default function EventCreationPage({
   }
 
   return (
-    <PageLayout title="Create Event">
+    <>
       <p className="-mt-2 mb-7 text-sm text-base-content/60">
         Enter the details guests will see when browsing your event.
       </p>
@@ -253,7 +379,7 @@ export default function EventCreationPage({
                     Select a venue
                   </option>
 
-                  {orgVenues.map((venue) => (
+                  {venues.map((venue) => (
                     <option key={venue.id} value={venue.id}>
                       {venue.display_name}
                     </option>
@@ -535,6 +661,6 @@ export default function EventCreationPage({
           </button>
         </div>
       </form>
-    </PageLayout>
+    </>
   )
 }

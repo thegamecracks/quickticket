@@ -70,18 +70,8 @@ export default function MyOrganizationPage() {
         </p>
       )}
 
-      {/* Sign-in required */}
-      {user === null && (
-        <div className="rounded-lg bg-base-200 p-6">
-          <h2 className="text-lg font-semibold">
-            Sign In Required
-          </h2>
-
-          <p className="mt-2 text-base-content/70">
-            Please sign in to view your organization.
-          </p>
-        </div>
-      )}
+      {/* No sign-in gate: a signed-out visitor uses the navbar's Sign in
+          button; losing auth mid-session raises the global toast instead. */}
 
       {/* No organization yet */}
       {user && !orgId && (

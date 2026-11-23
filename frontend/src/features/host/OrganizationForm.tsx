@@ -39,8 +39,19 @@ const validateOrganizationForm = (
  * Create/edit organization form. An organization is just a name, so this is
  * the VenueForm pattern with only the display-name field: pass `organizationId`
  * to edit an existing organization, or nothing to create one.
+ *
+ * `embedded` renders the bare form (no page shell) for the create-event
+ * wizard; `onCreated` replaces the default post-create navigation.
  */
-function OrganizationForm({ organizationId }: { organizationId?: string }) {
+export function OrganizationForm({
+  organizationId,
+  embedded,
+  onCreated,
+}: {
+  organizationId?: string
+  embedded?: boolean
+  onCreated?: (organization: OrganizationResponse) => void
+}) {
   const isEdit = Boolean(organizationId)
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -139,11 +150,15 @@ function OrganizationForm({ organizationId }: { organizationId?: string }) {
 
         setFeedback({ error: false, text: 'Organization updated successfully.' })
       } else {
-        await api.post('/organizations', {
+        const response = await api.post<OrganizationResponse>('/organizations', {
           display_name: formState.displayName,
         })
 
-        navigate('/myOrganization')
+        if (onCreated) {
+          onCreated(response.data)
+        } else {
+          navigate('/myOrganization')
+        }
       }
     } catch (requestError) {
       let message = isEdit
@@ -166,11 +181,8 @@ function OrganizationForm({ organizationId }: { organizationId?: string }) {
     }
   }
 
-  return (
-    <PageLayout
-      title={isEdit ? 'Edit Organization' : 'Create Organization'}
-      back={isEdit ? { to: '/myOrganization' } : undefined}
-    >
+  const content = (
+    <>
       {isEdit && loading ? (
         <p className="text-base-content/70">Loading organization details...</p>
       ) : isEdit && loadError ? (
@@ -264,6 +276,17 @@ function OrganizationForm({ organizationId }: { organizationId?: string }) {
           </form>
         </div>
       )}
+    </>
+  )
+
+  if (embedded) return content
+
+  return (
+    <PageLayout
+      title={isEdit ? 'Edit Organization' : 'Create Organization'}
+      back={isEdit ? { to: '/myOrganization' } : undefined}
+    >
+      {content}
     </PageLayout>
   )
 }

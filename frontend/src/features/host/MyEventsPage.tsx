@@ -118,18 +118,8 @@ export default function MyEventsPage() {
         </p>
       )}
 
-      {/* Sign-in required */}
-      {user === null && (
-        <div className="rounded-lg bg-base-200 p-6">
-          <h2 className="text-lg font-semibold">
-            Sign In Required
-          </h2>
-
-          <p className="mt-2 text-base-content/70">
-            Please sign in to view your organized events.
-          </p>
-        </div>
-      )}
+      {/* No sign-in gate: a signed-out visitor uses the navbar's Sign in
+          button. */}
 
       {/* TODO: redirect user to the create-an-organization page if orgId is missing */}
       {user && orgId === undefined && (
