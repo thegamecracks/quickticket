@@ -11,6 +11,7 @@ export default defineConfig({
       schemas: 'src/api/model',
       client: 'react-query',
       mock: true,
+      // formatter: 'biome',
       // https://orval.dev/docs/guides/custom-axios/
       httpClient: 'axios',
       override: {
