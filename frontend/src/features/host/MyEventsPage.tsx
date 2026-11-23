@@ -4,6 +4,7 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 
 import PageLayout from '../../components/PageLayout'
 import EventCard from '../../components/EventCard'
+import EventCardSkeleton from '../../components/EventCardSkeleton'
 import { Pagination, safePage } from '../../components/Pagination'
 
 import { useAuth } from '../../lib/auth'
@@ -165,9 +166,14 @@ export default function MyEventsPage() {
 
           {/* First page is still loading */}
           {isLoading && (
-            <p className="text-base-content/70">
-              Loading your events...
-            </p>
+            <div aria-live="polite">
+              <span className="sr-only">Loading your events...</span>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: PAGE_SIZE }, (_, i) => (
+                  <EventCardSkeleton key={i} />
+                ))}
+              </div>
+            </div>
           )}
 
           {/* Loading failed */}

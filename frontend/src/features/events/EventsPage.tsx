@@ -2,6 +2,7 @@ import PageLayout from '../../components/PageLayout'
 
 import { useSearchParams } from 'react-router'
 import EventCard from '../../components/EventCard'
+import EventCardSkeleton from '../../components/EventCardSkeleton'
 import { useEffect } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { LoadMoreButton } from '../../components/LoadMoreButton'
@@ -93,7 +94,14 @@ export default function EventsPage() {
 
       {/* First page is still loading */}
       {isLoading && (
-        <p className="text-base-content/70">Loading events...</p>
+        <div aria-live="polite">
+          <span className="sr-only">Loading events...</span>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: PAGE_SIZE }, (_, i) => (
+              <EventCardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Loading failed */}
