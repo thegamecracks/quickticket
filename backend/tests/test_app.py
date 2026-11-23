@@ -11,7 +11,13 @@ from httpx2 import ASGITransport, AsyncClient, Response as HTTPResponse
 from quickticket.app import create_app_from_settings
 from quickticket.dependencies.auth import get_user
 from quickticket.errors import ForcedResponse
-from quickticket.settings import FrontendSettings, LogSettings, OpenAPISettings, Settings
+from quickticket.settings import (
+    FrontendSettings,
+    LogSettings,
+    OpenAPISettings,
+    SecuritySettings,
+    Settings,
+)
 
 
 @pytest.fixture
@@ -71,6 +77,43 @@ async def middleware_client(probe_app: FastAPI) -> AsyncGenerator[AsyncClient]:
         yield client
 
 
+@pytest.fixture
+def csrf_app() -> FastAPI:
+    """Create the real app with CSRF and cookie encryption enabled."""
+    settings = Settings(
+        _env_file=None,
+        frontend=FrontendSettings(builtin=False),
+        log=LogSettings(debug=False, profiling=False),
+        openapi=OpenAPISettings(url=None),
+        security=SecuritySettings(allowed_hosts=["*"], csrf_secret="test-csrf-secret"),  # noqa: S106
+    )
+    app = create_app_from_settings(settings)
+    app.state.settings = settings
+    app.dependency_overrides[get_user] = lambda: None
+
+    @app.get("/probe/csrf")
+    async def read_csrf() -> dict[str, bool]:
+        return {"ok": True}
+
+    @app.post("/probe/csrf")
+    async def submit_csrf() -> dict[str, bool]:
+        return {"ok": True}
+
+    return app
+
+
+@pytest.fixture
+async def csrf_client(csrf_app: FastAPI) -> AsyncGenerator[AsyncClient]:
+    async with (
+        LifespanManager(csrf_app),
+        AsyncClient(
+            transport=ASGITransport(csrf_app),
+            base_url="https://test",
+        ) as client,
+    ):
+        yield client
+
+
 def cookie_attributes(response: HTTPResponse) -> list[tuple[str, str, str, bool, bool]]:
     """Return (name, max-age, path, httponly, secure) for each Set-Cookie header."""
     return [
@@ -84,6 +127,15 @@ def cookie_attributes(response: HTTPResponse) -> list[tuple[str, str, str, bool,
         for header in response.headers.get_list("set-cookie")
         for name, morsel in SimpleCookie(header).items()
     ]
+
+
+def cookie_value(response: HTTPResponse, name: str) -> str | None:
+    """Return the value of the named Set-Cookie header, as the client sees it."""
+    for header in response.headers.get_list("set-cookie"):
+        cookies = SimpleCookie(header)
+        if name in cookies:
+            return cookies[name].value
+    return None
 
 
 # Regression test for b7a99d4, which de-duplicated headers with
@@ -130,3 +182,46 @@ async def test_preserve_headers_transfers_missing_headers_to_returned_response(
 
     assert response.headers.get_list("x-shared") == ["same"]
     assert response.headers.get_list("x-temp-only") == ["temp"]
+
+
+# Regression test: the csrftoken cookie is echoed through x-csrftoken, so the
+# exact value the client received must be accepted without re-encoding.
+async def test_unsafe_request_with_csrf_cookie_token_succeeds(
+    csrf_client: AsyncClient,
+) -> None:
+    response = await csrf_client.get("/probe/csrf")
+    assert response.status_code == 200
+    csrf_token = cookie_value(response, "csrftoken")
+    assert csrf_token is not None
+
+    response = await csrf_client.post(
+        "/probe/csrf",
+        headers={"x-csrftoken": csrf_token},
+    )
+
+    assert response.status_code == 200
+
+
+async def test_unsafe_request_without_csrf_header_is_rejected(
+    csrf_client: AsyncClient,
+) -> None:
+    response = await csrf_client.get("/probe/csrf")
+    assert response.status_code == 200
+
+    response = await csrf_client.post("/probe/csrf")
+
+    assert response.status_code == 403
+
+
+async def test_unsafe_request_with_wrong_csrf_token_is_rejected(
+    csrf_client: AsyncClient,
+) -> None:
+    response = await csrf_client.get("/probe/csrf")
+    assert response.status_code == 200
+
+    response = await csrf_client.post(
+        "/probe/csrf",
+        headers={"x-csrftoken": "wrong-token"},
+    )
+
+    assert response.status_code == 403
