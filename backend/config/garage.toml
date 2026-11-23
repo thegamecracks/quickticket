@@ -12,11 +12,11 @@ rpc_secret = "1320d345ebc1eab0e191dfa0c420725ea50717aa712105d71272c2659bb4896a"
 [s3_api]
 s3_region = "garage"
 api_bind_addr = "[::]:3900"
-root_domain = ".s3.thegamecracks.xyz"
+root_domain = ".s3.garage.local"
 
 [s3_web]
 bind_addr = "[::]:3902"
-root_domain = ".web.thegamecracks.xyz"
+root_domain = ".web.garage.local"
 index = "index.html"
 
 [admin]
