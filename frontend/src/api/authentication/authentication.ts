@@ -31,6 +31,7 @@ import type {
   OauthPostLogoutApiAuthPostLogoutGetParams
 } from '../model';
 
+import { api } from '../../lib/api';
 
 
 
@@ -50,38 +51,6 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
-export type oauthLoginApiAuthLoginPostResponse303 = {
-  data: unknown
-  status: 303
-}
-
-export type oauthLoginApiAuthLoginPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-;
-export type oauthLoginApiAuthLoginPostResponseError = (oauthLoginApiAuthLoginPostResponse303 | oauthLoginApiAuthLoginPostResponse422) & {
-  headers: Headers;
-};
-
-export type oauthLoginApiAuthLoginPostResponse = (oauthLoginApiAuthLoginPostResponseError)
-
-export const getOauthLoginApiAuthLoginPostUrl = (params?: OauthLoginApiAuthLoginPostParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/auth/login?${stringifiedParams}` : `/api/auth/login`
-}
-
 /**
  * Redirect the user to login at the OpenID provider.
  *
@@ -90,24 +59,18 @@ export const getOauthLoginApiAuthLoginPostUrl = (params?: OauthLoginApiAuthLogin
  * this redirects straight to ``redirect_uri``.
  * @summary Oauth Login
  */
-export const oauthLoginApiAuthLoginPost = async (params?: OauthLoginApiAuthLoginPostParams, options?: RequestInit): Promise<oauthLoginApiAuthLoginPostResponse> => {
-
-  const res = await fetch(getOauthLoginApiAuthLoginPostUrl(params),
-  {
-    ...options,
-    method: 'POST'
+export const oauthLoginApiAuthLoginPost = (
+    params?: OauthLoginApiAuthLoginPostParams,
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: oauthLoginApiAuthLoginPostResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as oauthLoginApiAuthLoginPostResponse
-}
-
+      return api<unknown>(
+      {url: `/api/auth/login`, method: 'POST',
+        params, signal
+    },
+      );
+    }
 
 
 
@@ -115,15 +78,15 @@ export const oauthLoginApiAuthLoginPost = async (params?: OauthLoginApiAuthLogin
 export const getOauthLoginApiAuthLoginPostMutationKey = () => ['oauthLoginApiAuthLoginPost'] as const;
 
 export const getOauthLoginApiAuthLoginPostMutationOptions = <TError = unknown | HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof oauthLoginApiAuthLoginPost>>, TError,OauthLoginApiAuthLoginPostMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof oauthLoginApiAuthLoginPost>>, TError,OauthLoginApiAuthLoginPostMutationVariables, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof oauthLoginApiAuthLoginPost>>, TError,OauthLoginApiAuthLoginPostMutationVariables, TContext> => {
 
 const mutationKey = getOauthLoginApiAuthLoginPostMutationKey();
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }};
 
 
 
@@ -131,7 +94,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof oauthLoginApiAuthLoginPost>>, OauthLoginApiAuthLoginPostMutationVariables> = (props) => {
           const {params} = props ?? {};
 
-          return  oauthLoginApiAuthLoginPost(params,fetchOptions)
+          return  oauthLoginApiAuthLoginPost(params,)
         }
 
 
@@ -155,7 +118,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Oauth Login
  */
 export const useOauthLoginApiAuthLoginPost = <TError = unknown | HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof oauthLoginApiAuthLoginPost>>, TError,OauthLoginApiAuthLoginPostMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof oauthLoginApiAuthLoginPost>>, TError,OauthLoginApiAuthLoginPostMutationVariables, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof oauthLoginApiAuthLoginPost>>,
         TError,
@@ -164,64 +127,21 @@ export const useOauthLoginApiAuthLoginPost = <TError = unknown | HTTPValidationE
       > => {
       return useMutation(getOauthLoginApiAuthLoginPostMutationOptions(options), queryClient);
     }
-    export type oauthPostLoginApiAuthPostLoginGetResponse303 = {
-  data: unknown
-  status: 303
-}
-
-export type oauthPostLoginApiAuthPostLoginGetResponse400 = {
-  data: void
-  status: 400
-}
-
-export type oauthPostLoginApiAuthPostLoginGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-;
-export type oauthPostLoginApiAuthPostLoginGetResponseError = (oauthPostLoginApiAuthPostLoginGetResponse303 | oauthPostLoginApiAuthPostLoginGetResponse400 | oauthPostLoginApiAuthPostLoginGetResponse422) & {
-  headers: Headers;
-};
-
-export type oauthPostLoginApiAuthPostLoginGetResponse = (oauthPostLoginApiAuthPostLoginGetResponseError)
-
-export const getOauthPostLoginApiAuthPostLoginGetUrl = (params: OauthPostLoginApiAuthPostLoginGetParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/auth/post-login?${stringifiedParams}` : `/api/auth/post-login`
-}
-
-/**
+    /**
  * @summary Oauth Post Login
  */
-export const oauthPostLoginApiAuthPostLoginGet = async (params: OauthPostLoginApiAuthPostLoginGetParams, options?: RequestInit): Promise<oauthPostLoginApiAuthPostLoginGetResponse> => {
-
-  const res = await fetch(getOauthPostLoginApiAuthPostLoginGetUrl(params),
-  {
-    ...options,
-    method: 'GET'
+export const oauthPostLoginApiAuthPostLoginGet = (
+    params: OauthPostLoginApiAuthPostLoginGetParams,
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: oauthPostLoginApiAuthPostLoginGetResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as oauthPostLoginApiAuthPostLoginGetResponse
-}
-
+      return api<unknown>(
+      {url: `/api/auth/post-login`, method: 'GET',
+        params, signal
+    },
+      );
+    }
 
 
 
@@ -233,16 +153,16 @@ export const getOauthPostLoginApiAuthPostLoginGetQueryKey = (params?: OauthPostL
     }
 
 
-export const getOauthPostLoginApiAuthPostLoginGetQueryOptions = <TData = Awaited<ReturnType<typeof oauthPostLoginApiAuthPostLoginGet>>, TError = unknown | void | HTTPValidationError>(params: OauthPostLoginApiAuthPostLoginGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthPostLoginApiAuthPostLoginGet>>, TError, TData>>, fetch?: RequestInit}
+export const getOauthPostLoginApiAuthPostLoginGetQueryOptions = <TData = Awaited<ReturnType<typeof oauthPostLoginApiAuthPostLoginGet>>, TError = unknown | void | HTTPValidationError>(params: OauthPostLoginApiAuthPostLoginGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthPostLoginApiAuthPostLoginGet>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getOauthPostLoginApiAuthPostLoginGetQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof oauthPostLoginApiAuthPostLoginGet>>> = ({ signal }) => oauthPostLoginApiAuthPostLoginGet(params, { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof oauthPostLoginApiAuthPostLoginGet>>> = ({ signal }) => oauthPostLoginApiAuthPostLoginGet(params, signal);
 
 
 
@@ -263,7 +183,7 @@ export function useOauthPostLoginApiAuthPostLoginGet<TData = Awaited<ReturnType<
           TError,
           Awaited<ReturnType<typeof oauthPostLoginApiAuthPostLoginGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /** @summary Oauth Post Login */
@@ -274,17 +194,17 @@ export function useOauthPostLoginApiAuthPostLoginGet<TData = Awaited<ReturnType<
           TError,
           Awaited<ReturnType<typeof oauthPostLoginApiAuthPostLoginGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /** @summary Oauth Post Login */
 export function useOauthPostLoginApiAuthPostLoginGet<TData = Awaited<ReturnType<typeof oauthPostLoginApiAuthPostLoginGet>>, TError = unknown | void | HTTPValidationError>(
- params: OauthPostLoginApiAuthPostLoginGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthPostLoginApiAuthPostLoginGet>>, TError, TData>>, fetch?: RequestInit}
+ params: OauthPostLoginApiAuthPostLoginGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthPostLoginApiAuthPostLoginGet>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /** @summary Oauth Post Login */
 export function useOauthPostLoginApiAuthPostLoginGet<TData = Awaited<ReturnType<typeof oauthPostLoginApiAuthPostLoginGet>>, TError = unknown | void | HTTPValidationError>(
- params: OauthPostLoginApiAuthPostLoginGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthPostLoginApiAuthPostLoginGet>>, TError, TData>>, fetch?: RequestInit}
+ params: OauthPostLoginApiAuthPostLoginGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthPostLoginApiAuthPostLoginGet>>, TError, TData>>, }
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -300,56 +220,22 @@ export function useOauthPostLoginApiAuthPostLoginGet<TData = Awaited<ReturnType<
 
 
 
-export type oauthValidateApiAuthValidateGetResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type oauthValidateApiAuthValidateGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type oauthValidateApiAuthValidateGetResponseSuccess = (oauthValidateApiAuthValidateGetResponse200) & {
-  headers: Headers;
-};
-export type oauthValidateApiAuthValidateGetResponseError = (oauthValidateApiAuthValidateGetResponse422) & {
-  headers: Headers;
-};
-
-export type oauthValidateApiAuthValidateGetResponse = (oauthValidateApiAuthValidateGetResponseSuccess | oauthValidateApiAuthValidateGetResponseError)
-
-export const getOauthValidateApiAuthValidateGetUrl = () => {
-
-
-
-
-  return `/api/auth/validate`
-}
-
 /**
  * Verify authentication and return the decoded access token.
  * @deprecated
  * @summary Oauth Validate
  */
-export const oauthValidateApiAuthValidateGet = async ( options?: RequestInit): Promise<oauthValidateApiAuthValidateGetResponse> => {
+export const oauthValidateApiAuthValidateGet = (
 
-  const res = await fetch(getOauthValidateApiAuthValidateGetUrl(),
-  {
-    ...options,
-    method: 'GET'
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: oauthValidateApiAuthValidateGetResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as oauthValidateApiAuthValidateGetResponse
-}
-
+      return api<unknown>(
+      {url: `/api/auth/validate`, method: 'GET', signal
+    },
+      );
+    }
 
 
 
@@ -361,16 +247,16 @@ export const getOauthValidateApiAuthValidateGetQueryKey = () => {
     }
 
 
-export const getOauthValidateApiAuthValidateGetQueryOptions = <TData = Awaited<ReturnType<typeof oauthValidateApiAuthValidateGet>>, TError = HTTPValidationError>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthValidateApiAuthValidateGet>>, TError, TData>>, fetch?: RequestInit}
+export const getOauthValidateApiAuthValidateGetQueryOptions = <TData = Awaited<ReturnType<typeof oauthValidateApiAuthValidateGet>>, TError = HTTPValidationError>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthValidateApiAuthValidateGet>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getOauthValidateApiAuthValidateGetQueryKey();
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof oauthValidateApiAuthValidateGet>>> = ({ signal }) => oauthValidateApiAuthValidateGet({ signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof oauthValidateApiAuthValidateGet>>> = ({ signal }) => oauthValidateApiAuthValidateGet(signal);
 
 
 
@@ -395,7 +281,7 @@ export function useOauthValidateApiAuthValidateGet<TData = Awaited<ReturnType<ty
           TError,
           Awaited<ReturnType<typeof oauthValidateApiAuthValidateGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -410,7 +296,7 @@ export function useOauthValidateApiAuthValidateGet<TData = Awaited<ReturnType<ty
           TError,
           Awaited<ReturnType<typeof oauthValidateApiAuthValidateGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -419,7 +305,7 @@ export function useOauthValidateApiAuthValidateGet<TData = Awaited<ReturnType<ty
  * @summary Oauth Validate
  */
 export function useOauthValidateApiAuthValidateGet<TData = Awaited<ReturnType<typeof oauthValidateApiAuthValidateGet>>, TError = HTTPValidationError>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthValidateApiAuthValidateGet>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthValidateApiAuthValidateGet>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -428,7 +314,7 @@ export function useOauthValidateApiAuthValidateGet<TData = Awaited<ReturnType<ty
  * @summary Oauth Validate
  */
 export function useOauthValidateApiAuthValidateGet<TData = Awaited<ReturnType<typeof oauthValidateApiAuthValidateGet>>, TError = HTTPValidationError>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthValidateApiAuthValidateGet>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthValidateApiAuthValidateGet>>, TError, TData>>, }
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -444,50 +330,6 @@ export function useOauthValidateApiAuthValidateGet<TData = Awaited<ReturnType<ty
 
 
 
-export type oauthLogoutApiAuthLogoutPostResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type oauthLogoutApiAuthLogoutPostResponse303 = {
-  data: void
-  status: 303
-}
-
-export type oauthLogoutApiAuthLogoutPostResponse307 = {
-  data: void
-  status: 307
-}
-
-export type oauthLogoutApiAuthLogoutPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type oauthLogoutApiAuthLogoutPostResponseSuccess = (oauthLogoutApiAuthLogoutPostResponse200) & {
-  headers: Headers;
-};
-export type oauthLogoutApiAuthLogoutPostResponseError = (oauthLogoutApiAuthLogoutPostResponse303 | oauthLogoutApiAuthLogoutPostResponse307 | oauthLogoutApiAuthLogoutPostResponse422) & {
-  headers: Headers;
-};
-
-export type oauthLogoutApiAuthLogoutPostResponse = (oauthLogoutApiAuthLogoutPostResponseSuccess | oauthLogoutApiAuthLogoutPostResponseError)
-
-export const getOauthLogoutApiAuthLogoutPostUrl = (params?: OauthLogoutApiAuthLogoutPostParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/auth/logout?${stringifiedParams}` : `/api/auth/logout`
-}
-
 /**
  * Redirect the user to logout at the OpenID provider.
  *
@@ -496,24 +338,18 @@ export const getOauthLogoutApiAuthLogoutPostUrl = (params?: OauthLogoutApiAuthLo
  * login cookies immediately and then redirects to ``redirect_uri``.
  * @summary Oauth Logout
  */
-export const oauthLogoutApiAuthLogoutPost = async (params?: OauthLogoutApiAuthLogoutPostParams, options?: RequestInit): Promise<oauthLogoutApiAuthLogoutPostResponse> => {
-
-  const res = await fetch(getOauthLogoutApiAuthLogoutPostUrl(params),
-  {
-    ...options,
-    method: 'POST'
+export const oauthLogoutApiAuthLogoutPost = (
+    params?: OauthLogoutApiAuthLogoutPostParams,
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: oauthLogoutApiAuthLogoutPostResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as oauthLogoutApiAuthLogoutPostResponse
-}
-
+      return api<unknown>(
+      {url: `/api/auth/logout`, method: 'POST',
+        params, signal
+    },
+      );
+    }
 
 
 
@@ -521,15 +357,15 @@ export const oauthLogoutApiAuthLogoutPost = async (params?: OauthLogoutApiAuthLo
 export const getOauthLogoutApiAuthLogoutPostMutationKey = () => ['oauthLogoutApiAuthLogoutPost'] as const;
 
 export const getOauthLogoutApiAuthLogoutPostMutationOptions = <TError = void | HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof oauthLogoutApiAuthLogoutPost>>, TError,OauthLogoutApiAuthLogoutPostMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof oauthLogoutApiAuthLogoutPost>>, TError,OauthLogoutApiAuthLogoutPostMutationVariables, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof oauthLogoutApiAuthLogoutPost>>, TError,OauthLogoutApiAuthLogoutPostMutationVariables, TContext> => {
 
 const mutationKey = getOauthLogoutApiAuthLogoutPostMutationKey();
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }};
 
 
 
@@ -537,7 +373,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof oauthLogoutApiAuthLogoutPost>>, OauthLogoutApiAuthLogoutPostMutationVariables> = (props) => {
           const {params} = props ?? {};
 
-          return  oauthLogoutApiAuthLogoutPost(params,fetchOptions)
+          return  oauthLogoutApiAuthLogoutPost(params,)
         }
 
 
@@ -561,7 +397,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Oauth Logout
  */
 export const useOauthLogoutApiAuthLogoutPost = <TError = void | HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof oauthLogoutApiAuthLogoutPost>>, TError,OauthLogoutApiAuthLogoutPostMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof oauthLogoutApiAuthLogoutPost>>, TError,OauthLogoutApiAuthLogoutPostMutationVariables, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof oauthLogoutApiAuthLogoutPost>>,
         TError,
@@ -570,64 +406,21 @@ export const useOauthLogoutApiAuthLogoutPost = <TError = void | HTTPValidationEr
       > => {
       return useMutation(getOauthLogoutApiAuthLogoutPostMutationOptions(options), queryClient);
     }
-    export type oauthPostLogoutApiAuthPostLogoutGetResponse307 = {
-  data: unknown
-  status: 307
-}
-
-export type oauthPostLogoutApiAuthPostLogoutGetResponse400 = {
-  data: void
-  status: 400
-}
-
-export type oauthPostLogoutApiAuthPostLogoutGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-;
-export type oauthPostLogoutApiAuthPostLogoutGetResponseError = (oauthPostLogoutApiAuthPostLogoutGetResponse307 | oauthPostLogoutApiAuthPostLogoutGetResponse400 | oauthPostLogoutApiAuthPostLogoutGetResponse422) & {
-  headers: Headers;
-};
-
-export type oauthPostLogoutApiAuthPostLogoutGetResponse = (oauthPostLogoutApiAuthPostLogoutGetResponseError)
-
-export const getOauthPostLogoutApiAuthPostLogoutGetUrl = (params: OauthPostLogoutApiAuthPostLogoutGetParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/auth/post-logout?${stringifiedParams}` : `/api/auth/post-logout`
-}
-
-/**
+    /**
  * @summary Oauth Post Logout
  */
-export const oauthPostLogoutApiAuthPostLogoutGet = async (params: OauthPostLogoutApiAuthPostLogoutGetParams, options?: RequestInit): Promise<oauthPostLogoutApiAuthPostLogoutGetResponse> => {
-
-  const res = await fetch(getOauthPostLogoutApiAuthPostLogoutGetUrl(params),
-  {
-    ...options,
-    method: 'GET'
+export const oauthPostLogoutApiAuthPostLogoutGet = (
+    params: OauthPostLogoutApiAuthPostLogoutGetParams,
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: oauthPostLogoutApiAuthPostLogoutGetResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as oauthPostLogoutApiAuthPostLogoutGetResponse
-}
-
+      return api<unknown>(
+      {url: `/api/auth/post-logout`, method: 'GET',
+        params, signal
+    },
+      );
+    }
 
 
 
@@ -639,16 +432,16 @@ export const getOauthPostLogoutApiAuthPostLogoutGetQueryKey = (params?: OauthPos
     }
 
 
-export const getOauthPostLogoutApiAuthPostLogoutGetQueryOptions = <TData = Awaited<ReturnType<typeof oauthPostLogoutApiAuthPostLogoutGet>>, TError = unknown | void | HTTPValidationError>(params: OauthPostLogoutApiAuthPostLogoutGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthPostLogoutApiAuthPostLogoutGet>>, TError, TData>>, fetch?: RequestInit}
+export const getOauthPostLogoutApiAuthPostLogoutGetQueryOptions = <TData = Awaited<ReturnType<typeof oauthPostLogoutApiAuthPostLogoutGet>>, TError = unknown | void | HTTPValidationError>(params: OauthPostLogoutApiAuthPostLogoutGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthPostLogoutApiAuthPostLogoutGet>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getOauthPostLogoutApiAuthPostLogoutGetQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof oauthPostLogoutApiAuthPostLogoutGet>>> = ({ signal }) => oauthPostLogoutApiAuthPostLogoutGet(params, { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof oauthPostLogoutApiAuthPostLogoutGet>>> = ({ signal }) => oauthPostLogoutApiAuthPostLogoutGet(params, signal);
 
 
 
@@ -669,7 +462,7 @@ export function useOauthPostLogoutApiAuthPostLogoutGet<TData = Awaited<ReturnTyp
           TError,
           Awaited<ReturnType<typeof oauthPostLogoutApiAuthPostLogoutGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /** @summary Oauth Post Logout */
@@ -680,17 +473,17 @@ export function useOauthPostLogoutApiAuthPostLogoutGet<TData = Awaited<ReturnTyp
           TError,
           Awaited<ReturnType<typeof oauthPostLogoutApiAuthPostLogoutGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /** @summary Oauth Post Logout */
 export function useOauthPostLogoutApiAuthPostLogoutGet<TData = Awaited<ReturnType<typeof oauthPostLogoutApiAuthPostLogoutGet>>, TError = unknown | void | HTTPValidationError>(
- params: OauthPostLogoutApiAuthPostLogoutGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthPostLogoutApiAuthPostLogoutGet>>, TError, TData>>, fetch?: RequestInit}
+ params: OauthPostLogoutApiAuthPostLogoutGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthPostLogoutApiAuthPostLogoutGet>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /** @summary Oauth Post Logout */
 export function useOauthPostLogoutApiAuthPostLogoutGet<TData = Awaited<ReturnType<typeof oauthPostLogoutApiAuthPostLogoutGet>>, TError = unknown | void | HTTPValidationError>(
- params: OauthPostLogoutApiAuthPostLogoutGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthPostLogoutApiAuthPostLogoutGet>>, TError, TData>>, fetch?: RequestInit}
+ params: OauthPostLogoutApiAuthPostLogoutGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof oauthPostLogoutApiAuthPostLogoutGet>>, TError, TData>>, }
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 

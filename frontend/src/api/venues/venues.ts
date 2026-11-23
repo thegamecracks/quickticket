@@ -35,28 +35,9 @@ import type {
   VenueUpdate
 } from '../model';
 
+import { api } from '../../lib/api';
 
 
-
-const getHeaders = (...sources: (RequestInit['headers'] | Record<string, string | undefined>)[]) => {
-  const seen = new Set<string>();
-  const layers: [string, string | readonly string[]][][] = [];
-  for (const source of sources.reverse()) {
-    if (!source) continue;
-    const entries = source instanceof Headers
-      ? source.entries()
-      : Symbol.iterator in source
-        ? Array.from(source as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string])
-        : Object.entries<string | readonly string[] | undefined>(source);
-    const layer: [string, string | readonly string[]][] = [];
-    for (const [name, value] of entries) {
-      if (value !== undefined && !seen.has(name.toLowerCase())) layer.push([name, value]);
-    }
-    for (const [name] of layer) seen.add(name.toLowerCase());
-    layers.push(layer);
-  }
-  return Object.fromEntries(layers.reverse().flat()) as Extract<RequestInit['headers'], Record<string, unknown>>;
-};
 
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
@@ -74,62 +55,22 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
-export type getVenuesApiVenuesGetResponse200 = {
-  data: KeysetPagedResponsePartialVenueAnnotatedDatetimeAwareDatetime
-  status: 200
-}
-
-export type getVenuesApiVenuesGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type getVenuesApiVenuesGetResponseSuccess = (getVenuesApiVenuesGetResponse200) & {
-  headers: Headers;
-};
-export type getVenuesApiVenuesGetResponseError = (getVenuesApiVenuesGetResponse422) & {
-  headers: Headers;
-};
-
-export type getVenuesApiVenuesGetResponse = (getVenuesApiVenuesGetResponseSuccess | getVenuesApiVenuesGetResponseError)
-
-export const getGetVenuesApiVenuesGetUrl = (params?: GetVenuesApiVenuesGetParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/venues?${stringifiedParams}` : `/api/venues`
-}
-
 /**
  * Get a list of venues.
  * @summary Get Venues
  */
-export const getVenuesApiVenuesGet = async (params?: GetVenuesApiVenuesGetParams, options?: RequestInit): Promise<getVenuesApiVenuesGetResponse> => {
-
-  const res = await fetch(getGetVenuesApiVenuesGetUrl(params),
-  {
-    ...options,
-    method: 'GET'
+export const getVenuesApiVenuesGet = (
+    params?: GetVenuesApiVenuesGetParams,
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: getVenuesApiVenuesGetResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as getVenuesApiVenuesGetResponse
-}
-
+      return api<KeysetPagedResponsePartialVenueAnnotatedDatetimeAwareDatetime>(
+      {url: `/api/venues`, method: 'GET',
+        params, signal
+    },
+      );
+    }
 
 
 
@@ -141,16 +82,16 @@ export const getGetVenuesApiVenuesGetQueryKey = (params?: GetVenuesApiVenuesGetP
     }
 
 
-export const getGetVenuesApiVenuesGetQueryOptions = <TData = Awaited<ReturnType<typeof getVenuesApiVenuesGet>>, TError = HTTPValidationError>(params?: GetVenuesApiVenuesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenuesApiVenuesGet>>, TError, TData>>, fetch?: RequestInit}
+export const getGetVenuesApiVenuesGetQueryOptions = <TData = Awaited<ReturnType<typeof getVenuesApiVenuesGet>>, TError = HTTPValidationError>(params?: GetVenuesApiVenuesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenuesApiVenuesGet>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetVenuesApiVenuesGetQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVenuesApiVenuesGet>>> = ({ signal }) => getVenuesApiVenuesGet(params, { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVenuesApiVenuesGet>>> = ({ signal }) => getVenuesApiVenuesGet(params, signal);
 
 
 
@@ -174,7 +115,7 @@ export function useGetVenuesApiVenuesGet<TData = Awaited<ReturnType<typeof getVe
           TError,
           Awaited<ReturnType<typeof getVenuesApiVenuesGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -188,7 +129,7 @@ export function useGetVenuesApiVenuesGet<TData = Awaited<ReturnType<typeof getVe
           TError,
           Awaited<ReturnType<typeof getVenuesApiVenuesGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -196,7 +137,7 @@ export function useGetVenuesApiVenuesGet<TData = Awaited<ReturnType<typeof getVe
  * @summary Get Venues
  */
 export function useGetVenuesApiVenuesGet<TData = Awaited<ReturnType<typeof getVenuesApiVenuesGet>>, TError = HTTPValidationError>(
- params?: GetVenuesApiVenuesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenuesApiVenuesGet>>, TError, TData>>, fetch?: RequestInit}
+ params?: GetVenuesApiVenuesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenuesApiVenuesGet>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -204,7 +145,7 @@ export function useGetVenuesApiVenuesGet<TData = Awaited<ReturnType<typeof getVe
  * @summary Get Venues
  */
 export function useGetVenuesApiVenuesGet<TData = Awaited<ReturnType<typeof getVenuesApiVenuesGet>>, TError = HTTPValidationError>(
- params?: GetVenuesApiVenuesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenuesApiVenuesGet>>, TError, TData>>, fetch?: RequestInit}
+ params?: GetVenuesApiVenuesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenuesApiVenuesGet>>, TError, TData>>, }
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -220,55 +161,23 @@ export function useGetVenuesApiVenuesGet<TData = Awaited<ReturnType<typeof getVe
 
 
 
-export type createVenueApiVenuesPostResponse201 = {
-  data: VenueRead
-  status: 201
-}
-
-export type createVenueApiVenuesPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type createVenueApiVenuesPostResponseSuccess = (createVenueApiVenuesPostResponse201) & {
-  headers: Headers;
-};
-export type createVenueApiVenuesPostResponseError = (createVenueApiVenuesPostResponse422) & {
-  headers: Headers;
-};
-
-export type createVenueApiVenuesPostResponse = (createVenueApiVenuesPostResponseSuccess | createVenueApiVenuesPostResponseError)
-
-export const getCreateVenueApiVenuesPostUrl = () => {
-
-
-
-
-  return `/api/venues`
-}
-
 /**
  * Create a new venue in an organization.
  * @summary Create Venue
  */
-export const createVenueApiVenuesPost = async (venueCreate: VenueCreate, options?: RequestInit): Promise<createVenueApiVenuesPostResponse> => {
-
-  const res = await fetch(getCreateVenueApiVenuesPostUrl(),
-  {
-    ...options,
-    method: 'POST',
-    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
-    body: JSON.stringify(venueCreate)
-  }
-)
+export const createVenueApiVenuesPost = (
+    venueCreate: VenueCreate,
+ signal?: AbortSignal
+) => {
 
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: createVenueApiVenuesPostResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as createVenueApiVenuesPostResponse
-}
-
+      return api<VenueRead>(
+      {url: `/api/venues`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: venueCreate, signal
+    },
+      );
+    }
 
 
 
@@ -276,15 +185,15 @@ export const createVenueApiVenuesPost = async (venueCreate: VenueCreate, options
 export const getCreateVenueApiVenuesPostMutationKey = () => ['createVenueApiVenuesPost'] as const;
 
 export const getCreateVenueApiVenuesPostMutationOptions = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createVenueApiVenuesPost>>, TError,CreateVenueApiVenuesPostMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createVenueApiVenuesPost>>, TError,CreateVenueApiVenuesPostMutationVariables, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof createVenueApiVenuesPost>>, TError,CreateVenueApiVenuesPostMutationVariables, TContext> => {
 
 const mutationKey = getCreateVenueApiVenuesPostMutationKey();
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }};
 
 
 
@@ -292,7 +201,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof createVenueApiVenuesPost>>, CreateVenueApiVenuesPostMutationVariables> = (props) => {
           const {data} = props ?? {};
 
-          return  createVenueApiVenuesPost(data,fetchOptions)
+          return  createVenueApiVenuesPost(data,)
         }
 
 
@@ -312,7 +221,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Create Venue
  */
 export const useCreateVenueApiVenuesPost = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createVenueApiVenuesPost>>, TError,CreateVenueApiVenuesPostMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createVenueApiVenuesPost>>, TError,CreateVenueApiVenuesPostMutationVariables, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createVenueApiVenuesPost>>,
         TError,
@@ -321,55 +230,21 @@ export const useCreateVenueApiVenuesPost = <TError = HTTPValidationError,
       > => {
       return useMutation(getCreateVenueApiVenuesPostMutationOptions(options), queryClient);
     }
-    export type getVenueApiVenuesVenueIdGetResponse200 = {
-  data: VenueRead
-  status: 200
-}
-
-export type getVenueApiVenuesVenueIdGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type getVenueApiVenuesVenueIdGetResponseSuccess = (getVenueApiVenuesVenueIdGetResponse200) & {
-  headers: Headers;
-};
-export type getVenueApiVenuesVenueIdGetResponseError = (getVenueApiVenuesVenueIdGetResponse422) & {
-  headers: Headers;
-};
-
-export type getVenueApiVenuesVenueIdGetResponse = (getVenueApiVenuesVenueIdGetResponseSuccess | getVenueApiVenuesVenueIdGetResponseError)
-
-export const getGetVenueApiVenuesVenueIdGetUrl = (venueId: string,) => {
-
-
-
-
-  return `/api/venues/${venueId}`
-}
-
-/**
+    /**
  * Get a venue by ID.
  * @summary Get Venue
  */
-export const getVenueApiVenuesVenueIdGet = async (venueId: string, options?: RequestInit): Promise<getVenueApiVenuesVenueIdGetResponse> => {
-
-  const res = await fetch(getGetVenueApiVenuesVenueIdGetUrl(venueId),
-  {
-    ...options,
-    method: 'GET'
+export const getVenueApiVenuesVenueIdGet = (
+    venueId: string,
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: getVenueApiVenuesVenueIdGetResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as getVenueApiVenuesVenueIdGetResponse
-}
-
+      return api<VenueRead>(
+      {url: `/api/venues/${venueId}`, method: 'GET', signal
+    },
+      );
+    }
 
 
 
@@ -381,16 +256,16 @@ export const getGetVenueApiVenuesVenueIdGetQueryKey = (venueId: string,) => {
     }
 
 
-export const getGetVenueApiVenuesVenueIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError = HTTPValidationError>(venueId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError, TData>>, fetch?: RequestInit}
+export const getGetVenueApiVenuesVenueIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError = HTTPValidationError>(venueId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetVenueApiVenuesVenueIdGetQueryKey(venueId);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>> = ({ signal }) => getVenueApiVenuesVenueIdGet(venueId, { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>> = ({ signal }) => getVenueApiVenuesVenueIdGet(venueId, signal);
 
 
 
@@ -414,7 +289,7 @@ export function useGetVenueApiVenuesVenueIdGet<TData = Awaited<ReturnType<typeof
           TError,
           Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -428,7 +303,7 @@ export function useGetVenueApiVenuesVenueIdGet<TData = Awaited<ReturnType<typeof
           TError,
           Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -436,7 +311,7 @@ export function useGetVenueApiVenuesVenueIdGet<TData = Awaited<ReturnType<typeof
  * @summary Get Venue
  */
 export function useGetVenueApiVenuesVenueIdGet<TData = Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError = HTTPValidationError>(
- venueId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError, TData>>, fetch?: RequestInit}
+ venueId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -444,7 +319,7 @@ export function useGetVenueApiVenuesVenueIdGet<TData = Awaited<ReturnType<typeof
  * @summary Get Venue
  */
 export function useGetVenueApiVenuesVenueIdGet<TData = Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError = HTTPValidationError>(
- venueId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError, TData>>, fetch?: RequestInit}
+ venueId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueApiVenuesVenueIdGet>>, TError, TData>>, }
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -460,56 +335,24 @@ export function useGetVenueApiVenuesVenueIdGet<TData = Awaited<ReturnType<typeof
 
 
 
-export type editVenueApiVenuesVenueIdPatchResponse200 = {
-  data: VenueRead
-  status: 200
-}
-
-export type editVenueApiVenuesVenueIdPatchResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type editVenueApiVenuesVenueIdPatchResponseSuccess = (editVenueApiVenuesVenueIdPatchResponse200) & {
-  headers: Headers;
-};
-export type editVenueApiVenuesVenueIdPatchResponseError = (editVenueApiVenuesVenueIdPatchResponse422) & {
-  headers: Headers;
-};
-
-export type editVenueApiVenuesVenueIdPatchResponse = (editVenueApiVenuesVenueIdPatchResponseSuccess | editVenueApiVenuesVenueIdPatchResponseError)
-
-export const getEditVenueApiVenuesVenueIdPatchUrl = (venueId: string,) => {
-
-
-
-
-  return `/api/venues/${venueId}`
-}
-
 /**
  * Edit a venue's details.
  * @summary Edit Venue
  */
-export const editVenueApiVenuesVenueIdPatch = async (venueId: string,
-    venueUpdate: VenueUpdate, options?: RequestInit): Promise<editVenueApiVenuesVenueIdPatchResponse> => {
-
-  const res = await fetch(getEditVenueApiVenuesVenueIdPatchUrl(venueId),
-  {
-    ...options,
-    method: 'PATCH',
-    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
-    body: JSON.stringify(venueUpdate)
-  }
-)
+export const editVenueApiVenuesVenueIdPatch = (
+    venueId: string,
+    venueUpdate: VenueUpdate,
+ signal?: AbortSignal
+) => {
 
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: editVenueApiVenuesVenueIdPatchResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as editVenueApiVenuesVenueIdPatchResponse
-}
-
+      return api<VenueRead>(
+      {url: `/api/venues/${venueId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: venueUpdate, signal
+    },
+      );
+    }
 
 
 
@@ -517,15 +360,15 @@ export const editVenueApiVenuesVenueIdPatch = async (venueId: string,
 export const getEditVenueApiVenuesVenueIdPatchMutationKey = () => ['editVenueApiVenuesVenueIdPatch'] as const;
 
 export const getEditVenueApiVenuesVenueIdPatchMutationOptions = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof editVenueApiVenuesVenueIdPatch>>, TError,EditVenueApiVenuesVenueIdPatchMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof editVenueApiVenuesVenueIdPatch>>, TError,EditVenueApiVenuesVenueIdPatchMutationVariables, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof editVenueApiVenuesVenueIdPatch>>, TError,EditVenueApiVenuesVenueIdPatchMutationVariables, TContext> => {
 
 const mutationKey = getEditVenueApiVenuesVenueIdPatchMutationKey();
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }};
 
 
 
@@ -533,7 +376,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof editVenueApiVenuesVenueIdPatch>>, EditVenueApiVenuesVenueIdPatchMutationVariables> = (props) => {
           const {venueId,data} = props ?? {};
 
-          return  editVenueApiVenuesVenueIdPatch(venueId,data,fetchOptions)
+          return  editVenueApiVenuesVenueIdPatch(venueId,data,)
         }
 
 
@@ -553,7 +396,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Edit Venue
  */
 export const useEditVenueApiVenuesVenueIdPatch = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof editVenueApiVenuesVenueIdPatch>>, TError,EditVenueApiVenuesVenueIdPatchMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof editVenueApiVenuesVenueIdPatch>>, TError,EditVenueApiVenuesVenueIdPatchMutationVariables, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof editVenueApiVenuesVenueIdPatch>>,
         TError,
@@ -562,56 +405,22 @@ export const useEditVenueApiVenuesVenueIdPatch = <TError = HTTPValidationError,
       > => {
       return useMutation(getEditVenueApiVenuesVenueIdPatchMutationOptions(options), queryClient);
     }
-    export type deleteVenueApiVenuesVenueIdDeleteResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type deleteVenueApiVenuesVenueIdDeleteResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type deleteVenueApiVenuesVenueIdDeleteResponseSuccess = (deleteVenueApiVenuesVenueIdDeleteResponse200) & {
-  headers: Headers;
-};
-export type deleteVenueApiVenuesVenueIdDeleteResponseError = (deleteVenueApiVenuesVenueIdDeleteResponse422) & {
-  headers: Headers;
-};
-
-export type deleteVenueApiVenuesVenueIdDeleteResponse = (deleteVenueApiVenuesVenueIdDeleteResponseSuccess | deleteVenueApiVenuesVenueIdDeleteResponseError)
-
-export const getDeleteVenueApiVenuesVenueIdDeleteUrl = (venueId: string,) => {
-
-
-
-
-  return `/api/venues/${venueId}`
-}
-
-/**
+    /**
  * Delete a venue.
  * @deprecated
  * @summary Delete Venue
  */
-export const deleteVenueApiVenuesVenueIdDelete = async (venueId: string, options?: RequestInit): Promise<deleteVenueApiVenuesVenueIdDeleteResponse> => {
-
-  const res = await fetch(getDeleteVenueApiVenuesVenueIdDeleteUrl(venueId),
-  {
-    ...options,
-    method: 'DELETE'
+export const deleteVenueApiVenuesVenueIdDelete = (
+    venueId: string,
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: deleteVenueApiVenuesVenueIdDeleteResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as deleteVenueApiVenuesVenueIdDeleteResponse
-}
-
+      return api<unknown>(
+      {url: `/api/venues/${venueId}`, method: 'DELETE', signal
+    },
+      );
+    }
 
 
 
@@ -619,15 +428,15 @@ export const deleteVenueApiVenuesVenueIdDelete = async (venueId: string, options
 export const getDeleteVenueApiVenuesVenueIdDeleteMutationKey = () => ['deleteVenueApiVenuesVenueIdDelete'] as const;
 
 export const getDeleteVenueApiVenuesVenueIdDeleteMutationOptions = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteVenueApiVenuesVenueIdDelete>>, TError,DeleteVenueApiVenuesVenueIdDeleteMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteVenueApiVenuesVenueIdDelete>>, TError,DeleteVenueApiVenuesVenueIdDeleteMutationVariables, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteVenueApiVenuesVenueIdDelete>>, TError,DeleteVenueApiVenuesVenueIdDeleteMutationVariables, TContext> => {
 
 const mutationKey = getDeleteVenueApiVenuesVenueIdDeleteMutationKey();
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }};
 
 
 
@@ -635,7 +444,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteVenueApiVenuesVenueIdDelete>>, DeleteVenueApiVenuesVenueIdDeleteMutationVariables> = (props) => {
           const {venueId} = props ?? {};
 
-          return  deleteVenueApiVenuesVenueIdDelete(venueId,fetchOptions)
+          return  deleteVenueApiVenuesVenueIdDelete(venueId,)
         }
 
 
@@ -656,7 +465,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Delete Venue
  */
 export const useDeleteVenueApiVenuesVenueIdDelete = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteVenueApiVenuesVenueIdDelete>>, TError,DeleteVenueApiVenuesVenueIdDeleteMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteVenueApiVenuesVenueIdDelete>>, TError,DeleteVenueApiVenuesVenueIdDeleteMutationVariables, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteVenueApiVenuesVenueIdDelete>>,
         TError,
@@ -665,58 +474,21 @@ export const useDeleteVenueApiVenuesVenueIdDelete = <TError = HTTPValidationErro
       > => {
       return useMutation(getDeleteVenueApiVenuesVenueIdDeleteMutationOptions(options), queryClient);
     }
-    export type getVenueBannerApiVenuesEntityIdBannerGetResponse307 = {
-  data: void
-  status: 307
-}
-
-export type getVenueBannerApiVenuesEntityIdBannerGetResponse404 = {
-  data: unknown
-  status: 404
-}
-
-export type getVenueBannerApiVenuesEntityIdBannerGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-;
-export type getVenueBannerApiVenuesEntityIdBannerGetResponseError = (getVenueBannerApiVenuesEntityIdBannerGetResponse307 | getVenueBannerApiVenuesEntityIdBannerGetResponse404 | getVenueBannerApiVenuesEntityIdBannerGetResponse422) & {
-  headers: Headers;
-};
-
-export type getVenueBannerApiVenuesEntityIdBannerGetResponse = (getVenueBannerApiVenuesEntityIdBannerGetResponseError)
-
-export const getGetVenueBannerApiVenuesEntityIdBannerGetUrl = (entityId: string,) => {
-
-
-
-
-  return `/api/venues/${entityId}/banner`
-}
-
-/**
+    /**
  * Get this entity's banner.
  * @summary Get Venue Banner
  */
-export const getVenueBannerApiVenuesEntityIdBannerGet = async (entityId: string, options?: RequestInit): Promise<getVenueBannerApiVenuesEntityIdBannerGetResponse> => {
-
-  const res = await fetch(getGetVenueBannerApiVenuesEntityIdBannerGetUrl(entityId),
-  {
-    ...options,
-    method: 'GET'
+export const getVenueBannerApiVenuesEntityIdBannerGet = (
+    entityId: string,
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: getVenueBannerApiVenuesEntityIdBannerGetResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as getVenueBannerApiVenuesEntityIdBannerGetResponse
-}
-
+      return api<unknown>(
+      {url: `/api/venues/${entityId}/banner`, method: 'GET', signal
+    },
+      );
+    }
 
 
 
@@ -728,16 +500,16 @@ export const getGetVenueBannerApiVenuesEntityIdBannerGetQueryKey = (entityId: st
     }
 
 
-export const getGetVenueBannerApiVenuesEntityIdBannerGetQueryOptions = <TData = Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError = void | unknown | HTTPValidationError>(entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError, TData>>, fetch?: RequestInit}
+export const getGetVenueBannerApiVenuesEntityIdBannerGetQueryOptions = <TData = Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError = void | unknown | HTTPValidationError>(entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetVenueBannerApiVenuesEntityIdBannerGetQueryKey(entityId);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>> = ({ signal }) => getVenueBannerApiVenuesEntityIdBannerGet(entityId, { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>> = ({ signal }) => getVenueBannerApiVenuesEntityIdBannerGet(entityId, signal);
 
 
 
@@ -761,7 +533,7 @@ export function useGetVenueBannerApiVenuesEntityIdBannerGet<TData = Awaited<Retu
           TError,
           Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -775,7 +547,7 @@ export function useGetVenueBannerApiVenuesEntityIdBannerGet<TData = Awaited<Retu
           TError,
           Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -783,7 +555,7 @@ export function useGetVenueBannerApiVenuesEntityIdBannerGet<TData = Awaited<Retu
  * @summary Get Venue Banner
  */
 export function useGetVenueBannerApiVenuesEntityIdBannerGet<TData = Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError = void | unknown | HTTPValidationError>(
- entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError, TData>>, fetch?: RequestInit}
+ entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -791,7 +563,7 @@ export function useGetVenueBannerApiVenuesEntityIdBannerGet<TData = Awaited<Retu
  * @summary Get Venue Banner
  */
 export function useGetVenueBannerApiVenuesEntityIdBannerGet<TData = Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError = void | unknown | HTTPValidationError>(
- entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError, TData>>, fetch?: RequestInit}
+ entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueBannerApiVenuesEntityIdBannerGet>>, TError, TData>>, }
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -807,58 +579,26 @@ export function useGetVenueBannerApiVenuesEntityIdBannerGet<TData = Awaited<Retu
 
 
 
-export type setVenueBannerApiVenuesEntityIdBannerPutResponse200 = {
-  data: ImageRead
-  status: 200
-}
-
-export type setVenueBannerApiVenuesEntityIdBannerPutResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type setVenueBannerApiVenuesEntityIdBannerPutResponseSuccess = (setVenueBannerApiVenuesEntityIdBannerPutResponse200) & {
-  headers: Headers;
-};
-export type setVenueBannerApiVenuesEntityIdBannerPutResponseError = (setVenueBannerApiVenuesEntityIdBannerPutResponse422) & {
-  headers: Headers;
-};
-
-export type setVenueBannerApiVenuesEntityIdBannerPutResponse = (setVenueBannerApiVenuesEntityIdBannerPutResponseSuccess | setVenueBannerApiVenuesEntityIdBannerPutResponseError)
-
-export const getSetVenueBannerApiVenuesEntityIdBannerPutUrl = (entityId: string,) => {
-
-
-
-
-  return `/api/venues/${entityId}/banner`
-}
-
 /**
  * Set this entity's banner.
  * @summary Set Venue Banner
  */
-export const setVenueBannerApiVenuesEntityIdBannerPut = async (entityId: string,
-    bodySetVenueBannerApiVenuesEntityIdBannerPut: BodySetVenueBannerApiVenuesEntityIdBannerPut, options?: RequestInit): Promise<setVenueBannerApiVenuesEntityIdBannerPutResponse> => {
-    const formData = new FormData();
+export const setVenueBannerApiVenuesEntityIdBannerPut = (
+    entityId: string,
+    bodySetVenueBannerApiVenuesEntityIdBannerPut: BodySetVenueBannerApiVenuesEntityIdBannerPut,
+ signal?: AbortSignal
+) => {
+
+      const formData = new FormData();
 formData.append(`file`, bodySetVenueBannerApiVenuesEntityIdBannerPut.file);
 
-  const res = await fetch(getSetVenueBannerApiVenuesEntityIdBannerPutUrl(entityId),
-  {
-    ...options,
-    method: 'PUT'
-    ,
-    body: formData
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: setVenueBannerApiVenuesEntityIdBannerPutResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as setVenueBannerApiVenuesEntityIdBannerPutResponse
-}
-
+      return api<ImageRead>(
+      {url: `/api/venues/${entityId}/banner`, method: 'PUT',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      );
+    }
 
 
 
@@ -866,15 +606,15 @@ formData.append(`file`, bodySetVenueBannerApiVenuesEntityIdBannerPut.file);
 export const getSetVenueBannerApiVenuesEntityIdBannerPutMutationKey = () => ['setVenueBannerApiVenuesEntityIdBannerPut'] as const;
 
 export const getSetVenueBannerApiVenuesEntityIdBannerPutMutationOptions = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setVenueBannerApiVenuesEntityIdBannerPut>>, TError,SetVenueBannerApiVenuesEntityIdBannerPutMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setVenueBannerApiVenuesEntityIdBannerPut>>, TError,SetVenueBannerApiVenuesEntityIdBannerPutMutationVariables, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof setVenueBannerApiVenuesEntityIdBannerPut>>, TError,SetVenueBannerApiVenuesEntityIdBannerPutMutationVariables, TContext> => {
 
 const mutationKey = getSetVenueBannerApiVenuesEntityIdBannerPutMutationKey();
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }};
 
 
 
@@ -882,7 +622,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof setVenueBannerApiVenuesEntityIdBannerPut>>, SetVenueBannerApiVenuesEntityIdBannerPutMutationVariables> = (props) => {
           const {entityId,data} = props ?? {};
 
-          return  setVenueBannerApiVenuesEntityIdBannerPut(entityId,data,fetchOptions)
+          return  setVenueBannerApiVenuesEntityIdBannerPut(entityId,data,)
         }
 
 
@@ -902,7 +642,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Set Venue Banner
  */
 export const useSetVenueBannerApiVenuesEntityIdBannerPut = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setVenueBannerApiVenuesEntityIdBannerPut>>, TError,SetVenueBannerApiVenuesEntityIdBannerPutMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setVenueBannerApiVenuesEntityIdBannerPut>>, TError,SetVenueBannerApiVenuesEntityIdBannerPutMutationVariables, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof setVenueBannerApiVenuesEntityIdBannerPut>>,
         TError,
@@ -911,55 +651,21 @@ export const useSetVenueBannerApiVenuesEntityIdBannerPut = <TError = HTTPValidat
       > => {
       return useMutation(getSetVenueBannerApiVenuesEntityIdBannerPutMutationOptions(options), queryClient);
     }
-    export type deleteVenueBannerApiVenuesEntityIdBannerDeleteResponse204 = {
-  data: void
-  status: 204
-}
-
-export type deleteVenueBannerApiVenuesEntityIdBannerDeleteResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type deleteVenueBannerApiVenuesEntityIdBannerDeleteResponseSuccess = (deleteVenueBannerApiVenuesEntityIdBannerDeleteResponse204) & {
-  headers: Headers;
-};
-export type deleteVenueBannerApiVenuesEntityIdBannerDeleteResponseError = (deleteVenueBannerApiVenuesEntityIdBannerDeleteResponse422) & {
-  headers: Headers;
-};
-
-export type deleteVenueBannerApiVenuesEntityIdBannerDeleteResponse = (deleteVenueBannerApiVenuesEntityIdBannerDeleteResponseSuccess | deleteVenueBannerApiVenuesEntityIdBannerDeleteResponseError)
-
-export const getDeleteVenueBannerApiVenuesEntityIdBannerDeleteUrl = (entityId: string,) => {
-
-
-
-
-  return `/api/venues/${entityId}/banner`
-}
-
-/**
+    /**
  * Delete this entity's banner.
  * @summary Delete Venue Banner
  */
-export const deleteVenueBannerApiVenuesEntityIdBannerDelete = async (entityId: string, options?: RequestInit): Promise<deleteVenueBannerApiVenuesEntityIdBannerDeleteResponse> => {
-
-  const res = await fetch(getDeleteVenueBannerApiVenuesEntityIdBannerDeleteUrl(entityId),
-  {
-    ...options,
-    method: 'DELETE'
+export const deleteVenueBannerApiVenuesEntityIdBannerDelete = (
+    entityId: string,
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: deleteVenueBannerApiVenuesEntityIdBannerDeleteResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as deleteVenueBannerApiVenuesEntityIdBannerDeleteResponse
-}
-
+      return api<void>(
+      {url: `/api/venues/${entityId}/banner`, method: 'DELETE', signal
+    },
+      );
+    }
 
 
 
@@ -967,15 +673,15 @@ export const deleteVenueBannerApiVenuesEntityIdBannerDelete = async (entityId: s
 export const getDeleteVenueBannerApiVenuesEntityIdBannerDeleteMutationKey = () => ['deleteVenueBannerApiVenuesEntityIdBannerDelete'] as const;
 
 export const getDeleteVenueBannerApiVenuesEntityIdBannerDeleteMutationOptions = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteVenueBannerApiVenuesEntityIdBannerDelete>>, TError,DeleteVenueBannerApiVenuesEntityIdBannerDeleteMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteVenueBannerApiVenuesEntityIdBannerDelete>>, TError,DeleteVenueBannerApiVenuesEntityIdBannerDeleteMutationVariables, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteVenueBannerApiVenuesEntityIdBannerDelete>>, TError,DeleteVenueBannerApiVenuesEntityIdBannerDeleteMutationVariables, TContext> => {
 
 const mutationKey = getDeleteVenueBannerApiVenuesEntityIdBannerDeleteMutationKey();
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }};
 
 
 
@@ -983,7 +689,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteVenueBannerApiVenuesEntityIdBannerDelete>>, DeleteVenueBannerApiVenuesEntityIdBannerDeleteMutationVariables> = (props) => {
           const {entityId} = props ?? {};
 
-          return  deleteVenueBannerApiVenuesEntityIdBannerDelete(entityId,fetchOptions)
+          return  deleteVenueBannerApiVenuesEntityIdBannerDelete(entityId,)
         }
 
 
@@ -1003,7 +709,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Delete Venue Banner
  */
 export const useDeleteVenueBannerApiVenuesEntityIdBannerDelete = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteVenueBannerApiVenuesEntityIdBannerDelete>>, TError,DeleteVenueBannerApiVenuesEntityIdBannerDeleteMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteVenueBannerApiVenuesEntityIdBannerDelete>>, TError,DeleteVenueBannerApiVenuesEntityIdBannerDeleteMutationVariables, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteVenueBannerApiVenuesEntityIdBannerDelete>>,
         TError,
@@ -1012,58 +718,21 @@ export const useDeleteVenueBannerApiVenuesEntityIdBannerDelete = <TError = HTTPV
       > => {
       return useMutation(getDeleteVenueBannerApiVenuesEntityIdBannerDeleteMutationOptions(options), queryClient);
     }
-    export type getVenueThumbnailApiVenuesEntityIdThumbnailGetResponse307 = {
-  data: void
-  status: 307
-}
-
-export type getVenueThumbnailApiVenuesEntityIdThumbnailGetResponse404 = {
-  data: unknown
-  status: 404
-}
-
-export type getVenueThumbnailApiVenuesEntityIdThumbnailGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-;
-export type getVenueThumbnailApiVenuesEntityIdThumbnailGetResponseError = (getVenueThumbnailApiVenuesEntityIdThumbnailGetResponse307 | getVenueThumbnailApiVenuesEntityIdThumbnailGetResponse404 | getVenueThumbnailApiVenuesEntityIdThumbnailGetResponse422) & {
-  headers: Headers;
-};
-
-export type getVenueThumbnailApiVenuesEntityIdThumbnailGetResponse = (getVenueThumbnailApiVenuesEntityIdThumbnailGetResponseError)
-
-export const getGetVenueThumbnailApiVenuesEntityIdThumbnailGetUrl = (entityId: string,) => {
-
-
-
-
-  return `/api/venues/${entityId}/thumbnail`
-}
-
-/**
+    /**
  * Get this entity's thumbnail.
  * @summary Get Venue Thumbnail
  */
-export const getVenueThumbnailApiVenuesEntityIdThumbnailGet = async (entityId: string, options?: RequestInit): Promise<getVenueThumbnailApiVenuesEntityIdThumbnailGetResponse> => {
-
-  const res = await fetch(getGetVenueThumbnailApiVenuesEntityIdThumbnailGetUrl(entityId),
-  {
-    ...options,
-    method: 'GET'
+export const getVenueThumbnailApiVenuesEntityIdThumbnailGet = (
+    entityId: string,
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: getVenueThumbnailApiVenuesEntityIdThumbnailGetResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as getVenueThumbnailApiVenuesEntityIdThumbnailGetResponse
-}
-
+      return api<unknown>(
+      {url: `/api/venues/${entityId}/thumbnail`, method: 'GET', signal
+    },
+      );
+    }
 
 
 
@@ -1075,16 +744,16 @@ export const getGetVenueThumbnailApiVenuesEntityIdThumbnailGetQueryKey = (entity
     }
 
 
-export const getGetVenueThumbnailApiVenuesEntityIdThumbnailGetQueryOptions = <TData = Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError = void | unknown | HTTPValidationError>(entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError, TData>>, fetch?: RequestInit}
+export const getGetVenueThumbnailApiVenuesEntityIdThumbnailGetQueryOptions = <TData = Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError = void | unknown | HTTPValidationError>(entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetVenueThumbnailApiVenuesEntityIdThumbnailGetQueryKey(entityId);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>> = ({ signal }) => getVenueThumbnailApiVenuesEntityIdThumbnailGet(entityId, { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>> = ({ signal }) => getVenueThumbnailApiVenuesEntityIdThumbnailGet(entityId, signal);
 
 
 
@@ -1108,7 +777,7 @@ export function useGetVenueThumbnailApiVenuesEntityIdThumbnailGet<TData = Awaite
           TError,
           Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -1122,7 +791,7 @@ export function useGetVenueThumbnailApiVenuesEntityIdThumbnailGet<TData = Awaite
           TError,
           Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -1130,7 +799,7 @@ export function useGetVenueThumbnailApiVenuesEntityIdThumbnailGet<TData = Awaite
  * @summary Get Venue Thumbnail
  */
 export function useGetVenueThumbnailApiVenuesEntityIdThumbnailGet<TData = Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError = void | unknown | HTTPValidationError>(
- entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError, TData>>, fetch?: RequestInit}
+ entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -1138,7 +807,7 @@ export function useGetVenueThumbnailApiVenuesEntityIdThumbnailGet<TData = Awaite
  * @summary Get Venue Thumbnail
  */
 export function useGetVenueThumbnailApiVenuesEntityIdThumbnailGet<TData = Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError = void | unknown | HTTPValidationError>(
- entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError, TData>>, fetch?: RequestInit}
+ entityId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getVenueThumbnailApiVenuesEntityIdThumbnailGet>>, TError, TData>>, }
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -1154,58 +823,26 @@ export function useGetVenueThumbnailApiVenuesEntityIdThumbnailGet<TData = Awaite
 
 
 
-export type setVenueThumbnailApiVenuesEntityIdThumbnailPutResponse200 = {
-  data: ImageRead
-  status: 200
-}
-
-export type setVenueThumbnailApiVenuesEntityIdThumbnailPutResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type setVenueThumbnailApiVenuesEntityIdThumbnailPutResponseSuccess = (setVenueThumbnailApiVenuesEntityIdThumbnailPutResponse200) & {
-  headers: Headers;
-};
-export type setVenueThumbnailApiVenuesEntityIdThumbnailPutResponseError = (setVenueThumbnailApiVenuesEntityIdThumbnailPutResponse422) & {
-  headers: Headers;
-};
-
-export type setVenueThumbnailApiVenuesEntityIdThumbnailPutResponse = (setVenueThumbnailApiVenuesEntityIdThumbnailPutResponseSuccess | setVenueThumbnailApiVenuesEntityIdThumbnailPutResponseError)
-
-export const getSetVenueThumbnailApiVenuesEntityIdThumbnailPutUrl = (entityId: string,) => {
-
-
-
-
-  return `/api/venues/${entityId}/thumbnail`
-}
-
 /**
  * Set this entity's thumbnail.
  * @summary Set Venue Thumbnail
  */
-export const setVenueThumbnailApiVenuesEntityIdThumbnailPut = async (entityId: string,
-    bodySetVenueThumbnailApiVenuesEntityIdThumbnailPut: BodySetVenueThumbnailApiVenuesEntityIdThumbnailPut, options?: RequestInit): Promise<setVenueThumbnailApiVenuesEntityIdThumbnailPutResponse> => {
-    const formData = new FormData();
+export const setVenueThumbnailApiVenuesEntityIdThumbnailPut = (
+    entityId: string,
+    bodySetVenueThumbnailApiVenuesEntityIdThumbnailPut: BodySetVenueThumbnailApiVenuesEntityIdThumbnailPut,
+ signal?: AbortSignal
+) => {
+
+      const formData = new FormData();
 formData.append(`file`, bodySetVenueThumbnailApiVenuesEntityIdThumbnailPut.file);
 
-  const res = await fetch(getSetVenueThumbnailApiVenuesEntityIdThumbnailPutUrl(entityId),
-  {
-    ...options,
-    method: 'PUT'
-    ,
-    body: formData
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: setVenueThumbnailApiVenuesEntityIdThumbnailPutResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as setVenueThumbnailApiVenuesEntityIdThumbnailPutResponse
-}
-
+      return api<ImageRead>(
+      {url: `/api/venues/${entityId}/thumbnail`, method: 'PUT',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      );
+    }
 
 
 
@@ -1213,15 +850,15 @@ formData.append(`file`, bodySetVenueThumbnailApiVenuesEntityIdThumbnailPut.file)
 export const getSetVenueThumbnailApiVenuesEntityIdThumbnailPutMutationKey = () => ['setVenueThumbnailApiVenuesEntityIdThumbnailPut'] as const;
 
 export const getSetVenueThumbnailApiVenuesEntityIdThumbnailPutMutationOptions = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setVenueThumbnailApiVenuesEntityIdThumbnailPut>>, TError,SetVenueThumbnailApiVenuesEntityIdThumbnailPutMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setVenueThumbnailApiVenuesEntityIdThumbnailPut>>, TError,SetVenueThumbnailApiVenuesEntityIdThumbnailPutMutationVariables, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof setVenueThumbnailApiVenuesEntityIdThumbnailPut>>, TError,SetVenueThumbnailApiVenuesEntityIdThumbnailPutMutationVariables, TContext> => {
 
 const mutationKey = getSetVenueThumbnailApiVenuesEntityIdThumbnailPutMutationKey();
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }};
 
 
 
@@ -1229,7 +866,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof setVenueThumbnailApiVenuesEntityIdThumbnailPut>>, SetVenueThumbnailApiVenuesEntityIdThumbnailPutMutationVariables> = (props) => {
           const {entityId,data} = props ?? {};
 
-          return  setVenueThumbnailApiVenuesEntityIdThumbnailPut(entityId,data,fetchOptions)
+          return  setVenueThumbnailApiVenuesEntityIdThumbnailPut(entityId,data,)
         }
 
 
@@ -1249,7 +886,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Set Venue Thumbnail
  */
 export const useSetVenueThumbnailApiVenuesEntityIdThumbnailPut = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setVenueThumbnailApiVenuesEntityIdThumbnailPut>>, TError,SetVenueThumbnailApiVenuesEntityIdThumbnailPutMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setVenueThumbnailApiVenuesEntityIdThumbnailPut>>, TError,SetVenueThumbnailApiVenuesEntityIdThumbnailPutMutationVariables, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof setVenueThumbnailApiVenuesEntityIdThumbnailPut>>,
         TError,
@@ -1258,55 +895,21 @@ export const useSetVenueThumbnailApiVenuesEntityIdThumbnailPut = <TError = HTTPV
       > => {
       return useMutation(getSetVenueThumbnailApiVenuesEntityIdThumbnailPutMutationOptions(options), queryClient);
     }
-    export type deleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteResponse204 = {
-  data: void
-  status: 204
-}
-
-export type deleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type deleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteResponseSuccess = (deleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteResponse204) & {
-  headers: Headers;
-};
-export type deleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteResponseError = (deleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteResponse422) & {
-  headers: Headers;
-};
-
-export type deleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteResponse = (deleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteResponseSuccess | deleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteResponseError)
-
-export const getDeleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteUrl = (entityId: string,) => {
-
-
-
-
-  return `/api/venues/${entityId}/thumbnail`
-}
-
-/**
+    /**
  * Delete this entity's thumbnail.
  * @summary Delete Venue Thumbnail
  */
-export const deleteVenueThumbnailApiVenuesEntityIdThumbnailDelete = async (entityId: string, options?: RequestInit): Promise<deleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteResponse> => {
-
-  const res = await fetch(getDeleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteUrl(entityId),
-  {
-    ...options,
-    method: 'DELETE'
+export const deleteVenueThumbnailApiVenuesEntityIdThumbnailDelete = (
+    entityId: string,
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: deleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteResponse['data'] = body ? JSON.parse(body) : undefined
-  return { data, status: res.status, headers: res.headers } as deleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteResponse
-}
-
+      return api<void>(
+      {url: `/api/venues/${entityId}/thumbnail`, method: 'DELETE', signal
+    },
+      );
+    }
 
 
 
@@ -1314,15 +917,15 @@ export const deleteVenueThumbnailApiVenuesEntityIdThumbnailDelete = async (entit
 export const getDeleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteMutationKey = () => ['deleteVenueThumbnailApiVenuesEntityIdThumbnailDelete'] as const;
 
 export const getDeleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteMutationOptions = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteVenueThumbnailApiVenuesEntityIdThumbnailDelete>>, TError,DeleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteVenueThumbnailApiVenuesEntityIdThumbnailDelete>>, TError,DeleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteMutationVariables, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteVenueThumbnailApiVenuesEntityIdThumbnailDelete>>, TError,DeleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteMutationVariables, TContext> => {
 
 const mutationKey = getDeleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteMutationKey();
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }};
 
 
 
@@ -1330,7 +933,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteVenueThumbnailApiVenuesEntityIdThumbnailDelete>>, DeleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteMutationVariables> = (props) => {
           const {entityId} = props ?? {};
 
-          return  deleteVenueThumbnailApiVenuesEntityIdThumbnailDelete(entityId,fetchOptions)
+          return  deleteVenueThumbnailApiVenuesEntityIdThumbnailDelete(entityId,)
         }
 
 
@@ -1350,7 +953,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Delete Venue Thumbnail
  */
 export const useDeleteVenueThumbnailApiVenuesEntityIdThumbnailDelete = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteVenueThumbnailApiVenuesEntityIdThumbnailDelete>>, TError,DeleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteVenueThumbnailApiVenuesEntityIdThumbnailDelete>>, TError,DeleteVenueThumbnailApiVenuesEntityIdThumbnailDeleteMutationVariables, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteVenueThumbnailApiVenuesEntityIdThumbnailDelete>>,
         TError,

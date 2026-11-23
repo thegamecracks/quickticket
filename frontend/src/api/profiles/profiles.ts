@@ -24,6 +24,7 @@ import type {
   Profile
 } from '../model';
 
+import { api } from '../../lib/api';
 
 
 
@@ -43,55 +44,21 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
-export type profileMeApiProfileMeGetResponse200 = {
-  data: Profile
-  status: 200
-}
-
-export type profileMeApiProfileMeGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type profileMeApiProfileMeGetResponseSuccess = (profileMeApiProfileMeGetResponse200) & {
-  headers: Headers;
-};
-export type profileMeApiProfileMeGetResponseError = (profileMeApiProfileMeGetResponse422) & {
-  headers: Headers;
-};
-
-export type profileMeApiProfileMeGetResponse = (profileMeApiProfileMeGetResponseSuccess | profileMeApiProfileMeGetResponseError)
-
-export const getProfileMeApiProfileMeGetUrl = () => {
-
-
-
-
-  return `/api/profile/@me`
-}
-
 /**
  * Retrieve the current user.
  * @summary Profile Me
  */
-export const profileMeApiProfileMeGet = async ( options?: RequestInit): Promise<profileMeApiProfileMeGetResponse> => {
+export const profileMeApiProfileMeGet = (
 
-  const res = await fetch(getProfileMeApiProfileMeGetUrl(),
-  {
-    ...options,
-    method: 'GET'
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: profileMeApiProfileMeGetResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as profileMeApiProfileMeGetResponse
-}
-
+      return api<Profile>(
+      {url: `/api/profile/@me`, method: 'GET', signal
+    },
+      );
+    }
 
 
 
@@ -103,16 +70,16 @@ export const getProfileMeApiProfileMeGetQueryKey = () => {
     }
 
 
-export const getProfileMeApiProfileMeGetQueryOptions = <TData = Awaited<ReturnType<typeof profileMeApiProfileMeGet>>, TError = HTTPValidationError>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof profileMeApiProfileMeGet>>, TError, TData>>, fetch?: RequestInit}
+export const getProfileMeApiProfileMeGetQueryOptions = <TData = Awaited<ReturnType<typeof profileMeApiProfileMeGet>>, TError = HTTPValidationError>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof profileMeApiProfileMeGet>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getProfileMeApiProfileMeGetQueryKey();
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof profileMeApiProfileMeGet>>> = ({ signal }) => profileMeApiProfileMeGet({ signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof profileMeApiProfileMeGet>>> = ({ signal }) => profileMeApiProfileMeGet(signal);
 
 
 
@@ -136,7 +103,7 @@ export function useProfileMeApiProfileMeGet<TData = Awaited<ReturnType<typeof pr
           TError,
           Awaited<ReturnType<typeof profileMeApiProfileMeGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -150,7 +117,7 @@ export function useProfileMeApiProfileMeGet<TData = Awaited<ReturnType<typeof pr
           TError,
           Awaited<ReturnType<typeof profileMeApiProfileMeGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -158,7 +125,7 @@ export function useProfileMeApiProfileMeGet<TData = Awaited<ReturnType<typeof pr
  * @summary Profile Me
  */
 export function useProfileMeApiProfileMeGet<TData = Awaited<ReturnType<typeof profileMeApiProfileMeGet>>, TError = HTTPValidationError>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof profileMeApiProfileMeGet>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof profileMeApiProfileMeGet>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -166,7 +133,7 @@ export function useProfileMeApiProfileMeGet<TData = Awaited<ReturnType<typeof pr
  * @summary Profile Me
  */
 export function useProfileMeApiProfileMeGet<TData = Awaited<ReturnType<typeof profileMeApiProfileMeGet>>, TError = HTTPValidationError>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof profileMeApiProfileMeGet>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof profileMeApiProfileMeGet>>, TError, TData>>, }
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 

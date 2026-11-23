@@ -35,28 +35,9 @@ import type {
   RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostParams
 } from '../model';
 
+import { api } from '../../lib/api';
 
 
-
-const getHeaders = (...sources: (RequestInit['headers'] | Record<string, string | undefined>)[]) => {
-  const seen = new Set<string>();
-  const layers: [string, string | readonly string[]][][] = [];
-  for (const source of sources.reverse()) {
-    if (!source) continue;
-    const entries = source instanceof Headers
-      ? source.entries()
-      : Symbol.iterator in source
-        ? Array.from(source as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string])
-        : Object.entries<string | readonly string[] | undefined>(source);
-    const layer: [string, string | readonly string[]][] = [];
-    for (const [name, value] of entries) {
-      if (value !== undefined && !seen.has(name.toLowerCase())) layer.push([name, value]);
-    }
-    for (const [name] of layer) seen.add(name.toLowerCase());
-    layers.push(layer);
-  }
-  return Object.fromEntries(layers.reverse().flat()) as Extract<RequestInit['headers'], Record<string, unknown>>;
-};
 
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
@@ -74,62 +55,22 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
-export type getOrganizationsApiOrganizationsGetResponse200 = {
-  data: KeysetPagedResponsePartialOrganizationAnnotatedDatetimeAwareDatetime
-  status: 200
-}
-
-export type getOrganizationsApiOrganizationsGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type getOrganizationsApiOrganizationsGetResponseSuccess = (getOrganizationsApiOrganizationsGetResponse200) & {
-  headers: Headers;
-};
-export type getOrganizationsApiOrganizationsGetResponseError = (getOrganizationsApiOrganizationsGetResponse422) & {
-  headers: Headers;
-};
-
-export type getOrganizationsApiOrganizationsGetResponse = (getOrganizationsApiOrganizationsGetResponseSuccess | getOrganizationsApiOrganizationsGetResponseError)
-
-export const getGetOrganizationsApiOrganizationsGetUrl = (params?: GetOrganizationsApiOrganizationsGetParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/organizations?${stringifiedParams}` : `/api/organizations`
-}
-
 /**
  * Get a list of organizations.
  * @summary Get Organizations
  */
-export const getOrganizationsApiOrganizationsGet = async (params?: GetOrganizationsApiOrganizationsGetParams, options?: RequestInit): Promise<getOrganizationsApiOrganizationsGetResponse> => {
-
-  const res = await fetch(getGetOrganizationsApiOrganizationsGetUrl(params),
-  {
-    ...options,
-    method: 'GET'
+export const getOrganizationsApiOrganizationsGet = (
+    params?: GetOrganizationsApiOrganizationsGetParams,
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: getOrganizationsApiOrganizationsGetResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as getOrganizationsApiOrganizationsGetResponse
-}
-
+      return api<KeysetPagedResponsePartialOrganizationAnnotatedDatetimeAwareDatetime>(
+      {url: `/api/organizations`, method: 'GET',
+        params, signal
+    },
+      );
+    }
 
 
 
@@ -141,16 +82,16 @@ export const getGetOrganizationsApiOrganizationsGetQueryKey = (params?: GetOrgan
     }
 
 
-export const getGetOrganizationsApiOrganizationsGetQueryOptions = <TData = Awaited<ReturnType<typeof getOrganizationsApiOrganizationsGet>>, TError = HTTPValidationError>(params?: GetOrganizationsApiOrganizationsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationsApiOrganizationsGet>>, TError, TData>>, fetch?: RequestInit}
+export const getGetOrganizationsApiOrganizationsGetQueryOptions = <TData = Awaited<ReturnType<typeof getOrganizationsApiOrganizationsGet>>, TError = HTTPValidationError>(params?: GetOrganizationsApiOrganizationsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationsApiOrganizationsGet>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetOrganizationsApiOrganizationsGetQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOrganizationsApiOrganizationsGet>>> = ({ signal }) => getOrganizationsApiOrganizationsGet(params, { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOrganizationsApiOrganizationsGet>>> = ({ signal }) => getOrganizationsApiOrganizationsGet(params, signal);
 
 
 
@@ -174,7 +115,7 @@ export function useGetOrganizationsApiOrganizationsGet<TData = Awaited<ReturnTyp
           TError,
           Awaited<ReturnType<typeof getOrganizationsApiOrganizationsGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -188,7 +129,7 @@ export function useGetOrganizationsApiOrganizationsGet<TData = Awaited<ReturnTyp
           TError,
           Awaited<ReturnType<typeof getOrganizationsApiOrganizationsGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -196,7 +137,7 @@ export function useGetOrganizationsApiOrganizationsGet<TData = Awaited<ReturnTyp
  * @summary Get Organizations
  */
 export function useGetOrganizationsApiOrganizationsGet<TData = Awaited<ReturnType<typeof getOrganizationsApiOrganizationsGet>>, TError = HTTPValidationError>(
- params?: GetOrganizationsApiOrganizationsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationsApiOrganizationsGet>>, TError, TData>>, fetch?: RequestInit}
+ params?: GetOrganizationsApiOrganizationsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationsApiOrganizationsGet>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -204,7 +145,7 @@ export function useGetOrganizationsApiOrganizationsGet<TData = Awaited<ReturnTyp
  * @summary Get Organizations
  */
 export function useGetOrganizationsApiOrganizationsGet<TData = Awaited<ReturnType<typeof getOrganizationsApiOrganizationsGet>>, TError = HTTPValidationError>(
- params?: GetOrganizationsApiOrganizationsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationsApiOrganizationsGet>>, TError, TData>>, fetch?: RequestInit}
+ params?: GetOrganizationsApiOrganizationsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationsApiOrganizationsGet>>, TError, TData>>, }
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -220,55 +161,23 @@ export function useGetOrganizationsApiOrganizationsGet<TData = Awaited<ReturnTyp
 
 
 
-export type createOrganizationApiOrganizationsPostResponse201 = {
-  data: OrganizationRead
-  status: 201
-}
-
-export type createOrganizationApiOrganizationsPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type createOrganizationApiOrganizationsPostResponseSuccess = (createOrganizationApiOrganizationsPostResponse201) & {
-  headers: Headers;
-};
-export type createOrganizationApiOrganizationsPostResponseError = (createOrganizationApiOrganizationsPostResponse422) & {
-  headers: Headers;
-};
-
-export type createOrganizationApiOrganizationsPostResponse = (createOrganizationApiOrganizationsPostResponseSuccess | createOrganizationApiOrganizationsPostResponseError)
-
-export const getCreateOrganizationApiOrganizationsPostUrl = () => {
-
-
-
-
-  return `/api/organizations`
-}
-
 /**
  * Create a new organization.
  * @summary Create Organization
  */
-export const createOrganizationApiOrganizationsPost = async (organizationCreate: OrganizationCreate, options?: RequestInit): Promise<createOrganizationApiOrganizationsPostResponse> => {
-
-  const res = await fetch(getCreateOrganizationApiOrganizationsPostUrl(),
-  {
-    ...options,
-    method: 'POST',
-    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
-    body: JSON.stringify(organizationCreate)
-  }
-)
+export const createOrganizationApiOrganizationsPost = (
+    organizationCreate: OrganizationCreate,
+ signal?: AbortSignal
+) => {
 
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: createOrganizationApiOrganizationsPostResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as createOrganizationApiOrganizationsPostResponse
-}
-
+      return api<OrganizationRead>(
+      {url: `/api/organizations`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: organizationCreate, signal
+    },
+      );
+    }
 
 
 
@@ -276,15 +185,15 @@ export const createOrganizationApiOrganizationsPost = async (organizationCreate:
 export const getCreateOrganizationApiOrganizationsPostMutationKey = () => ['createOrganizationApiOrganizationsPost'] as const;
 
 export const getCreateOrganizationApiOrganizationsPostMutationOptions = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOrganizationApiOrganizationsPost>>, TError,CreateOrganizationApiOrganizationsPostMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOrganizationApiOrganizationsPost>>, TError,CreateOrganizationApiOrganizationsPostMutationVariables, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof createOrganizationApiOrganizationsPost>>, TError,CreateOrganizationApiOrganizationsPostMutationVariables, TContext> => {
 
 const mutationKey = getCreateOrganizationApiOrganizationsPostMutationKey();
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }};
 
 
 
@@ -292,7 +201,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof createOrganizationApiOrganizationsPost>>, CreateOrganizationApiOrganizationsPostMutationVariables> = (props) => {
           const {data} = props ?? {};
 
-          return  createOrganizationApiOrganizationsPost(data,fetchOptions)
+          return  createOrganizationApiOrganizationsPost(data,)
         }
 
 
@@ -312,7 +221,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Create Organization
  */
 export const useCreateOrganizationApiOrganizationsPost = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOrganizationApiOrganizationsPost>>, TError,CreateOrganizationApiOrganizationsPostMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createOrganizationApiOrganizationsPost>>, TError,CreateOrganizationApiOrganizationsPostMutationVariables, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createOrganizationApiOrganizationsPost>>,
         TError,
@@ -321,55 +230,21 @@ export const useCreateOrganizationApiOrganizationsPost = <TError = HTTPValidatio
       > => {
       return useMutation(getCreateOrganizationApiOrganizationsPostMutationOptions(options), queryClient);
     }
-    export type getOrganizationApiOrganizationsOrganizationIdGetResponse200 = {
-  data: OrganizationRead
-  status: 200
-}
-
-export type getOrganizationApiOrganizationsOrganizationIdGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type getOrganizationApiOrganizationsOrganizationIdGetResponseSuccess = (getOrganizationApiOrganizationsOrganizationIdGetResponse200) & {
-  headers: Headers;
-};
-export type getOrganizationApiOrganizationsOrganizationIdGetResponseError = (getOrganizationApiOrganizationsOrganizationIdGetResponse422) & {
-  headers: Headers;
-};
-
-export type getOrganizationApiOrganizationsOrganizationIdGetResponse = (getOrganizationApiOrganizationsOrganizationIdGetResponseSuccess | getOrganizationApiOrganizationsOrganizationIdGetResponseError)
-
-export const getGetOrganizationApiOrganizationsOrganizationIdGetUrl = (organizationId: string,) => {
-
-
-
-
-  return `/api/organizations/${organizationId}`
-}
-
-/**
+    /**
  * Get an organization by ID.
  * @summary Get Organization
  */
-export const getOrganizationApiOrganizationsOrganizationIdGet = async (organizationId: string, options?: RequestInit): Promise<getOrganizationApiOrganizationsOrganizationIdGetResponse> => {
-
-  const res = await fetch(getGetOrganizationApiOrganizationsOrganizationIdGetUrl(organizationId),
-  {
-    ...options,
-    method: 'GET'
+export const getOrganizationApiOrganizationsOrganizationIdGet = (
+    organizationId: string,
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: getOrganizationApiOrganizationsOrganizationIdGetResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as getOrganizationApiOrganizationsOrganizationIdGetResponse
-}
-
+      return api<OrganizationRead>(
+      {url: `/api/organizations/${organizationId}`, method: 'GET', signal
+    },
+      );
+    }
 
 
 
@@ -381,16 +256,16 @@ export const getGetOrganizationApiOrganizationsOrganizationIdGetQueryKey = (orga
     }
 
 
-export const getGetOrganizationApiOrganizationsOrganizationIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError = HTTPValidationError>(organizationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError, TData>>, fetch?: RequestInit}
+export const getGetOrganizationApiOrganizationsOrganizationIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError = HTTPValidationError>(organizationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetOrganizationApiOrganizationsOrganizationIdGetQueryKey(organizationId);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>> = ({ signal }) => getOrganizationApiOrganizationsOrganizationIdGet(organizationId, { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>> = ({ signal }) => getOrganizationApiOrganizationsOrganizationIdGet(organizationId, signal);
 
 
 
@@ -414,7 +289,7 @@ export function useGetOrganizationApiOrganizationsOrganizationIdGet<TData = Awai
           TError,
           Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -428,7 +303,7 @@ export function useGetOrganizationApiOrganizationsOrganizationIdGet<TData = Awai
           TError,
           Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -436,7 +311,7 @@ export function useGetOrganizationApiOrganizationsOrganizationIdGet<TData = Awai
  * @summary Get Organization
  */
 export function useGetOrganizationApiOrganizationsOrganizationIdGet<TData = Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError = HTTPValidationError>(
- organizationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError, TData>>, fetch?: RequestInit}
+ organizationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -444,7 +319,7 @@ export function useGetOrganizationApiOrganizationsOrganizationIdGet<TData = Awai
  * @summary Get Organization
  */
 export function useGetOrganizationApiOrganizationsOrganizationIdGet<TData = Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError = HTTPValidationError>(
- organizationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError, TData>>, fetch?: RequestInit}
+ organizationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationApiOrganizationsOrganizationIdGet>>, TError, TData>>, }
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -460,56 +335,24 @@ export function useGetOrganizationApiOrganizationsOrganizationIdGet<TData = Awai
 
 
 
-export type editOrganizationApiOrganizationsOrganizationIdPatchResponse200 = {
-  data: OrganizationRead
-  status: 200
-}
-
-export type editOrganizationApiOrganizationsOrganizationIdPatchResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type editOrganizationApiOrganizationsOrganizationIdPatchResponseSuccess = (editOrganizationApiOrganizationsOrganizationIdPatchResponse200) & {
-  headers: Headers;
-};
-export type editOrganizationApiOrganizationsOrganizationIdPatchResponseError = (editOrganizationApiOrganizationsOrganizationIdPatchResponse422) & {
-  headers: Headers;
-};
-
-export type editOrganizationApiOrganizationsOrganizationIdPatchResponse = (editOrganizationApiOrganizationsOrganizationIdPatchResponseSuccess | editOrganizationApiOrganizationsOrganizationIdPatchResponseError)
-
-export const getEditOrganizationApiOrganizationsOrganizationIdPatchUrl = (organizationId: string,) => {
-
-
-
-
-  return `/api/organizations/${organizationId}`
-}
-
 /**
  * Edit an organization's details.
  * @summary Edit Organization
  */
-export const editOrganizationApiOrganizationsOrganizationIdPatch = async (organizationId: string,
-    organizationUpdate: OrganizationUpdate, options?: RequestInit): Promise<editOrganizationApiOrganizationsOrganizationIdPatchResponse> => {
-
-  const res = await fetch(getEditOrganizationApiOrganizationsOrganizationIdPatchUrl(organizationId),
-  {
-    ...options,
-    method: 'PATCH',
-    headers: getHeaders({ 'Content-Type': 'application/json' }, options?.headers),
-    body: JSON.stringify(organizationUpdate)
-  }
-)
+export const editOrganizationApiOrganizationsOrganizationIdPatch = (
+    organizationId: string,
+    organizationUpdate: OrganizationUpdate,
+ signal?: AbortSignal
+) => {
 
 
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: editOrganizationApiOrganizationsOrganizationIdPatchResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as editOrganizationApiOrganizationsOrganizationIdPatchResponse
-}
-
+      return api<OrganizationRead>(
+      {url: `/api/organizations/${organizationId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: organizationUpdate, signal
+    },
+      );
+    }
 
 
 
@@ -517,15 +360,15 @@ export const editOrganizationApiOrganizationsOrganizationIdPatch = async (organi
 export const getEditOrganizationApiOrganizationsOrganizationIdPatchMutationKey = () => ['editOrganizationApiOrganizationsOrganizationIdPatch'] as const;
 
 export const getEditOrganizationApiOrganizationsOrganizationIdPatchMutationOptions = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof editOrganizationApiOrganizationsOrganizationIdPatch>>, TError,EditOrganizationApiOrganizationsOrganizationIdPatchMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof editOrganizationApiOrganizationsOrganizationIdPatch>>, TError,EditOrganizationApiOrganizationsOrganizationIdPatchMutationVariables, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof editOrganizationApiOrganizationsOrganizationIdPatch>>, TError,EditOrganizationApiOrganizationsOrganizationIdPatchMutationVariables, TContext> => {
 
 const mutationKey = getEditOrganizationApiOrganizationsOrganizationIdPatchMutationKey();
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }};
 
 
 
@@ -533,7 +376,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof editOrganizationApiOrganizationsOrganizationIdPatch>>, EditOrganizationApiOrganizationsOrganizationIdPatchMutationVariables> = (props) => {
           const {organizationId,data} = props ?? {};
 
-          return  editOrganizationApiOrganizationsOrganizationIdPatch(organizationId,data,fetchOptions)
+          return  editOrganizationApiOrganizationsOrganizationIdPatch(organizationId,data,)
         }
 
 
@@ -553,7 +396,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Edit Organization
  */
 export const useEditOrganizationApiOrganizationsOrganizationIdPatch = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof editOrganizationApiOrganizationsOrganizationIdPatch>>, TError,EditOrganizationApiOrganizationsOrganizationIdPatchMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof editOrganizationApiOrganizationsOrganizationIdPatch>>, TError,EditOrganizationApiOrganizationsOrganizationIdPatchMutationVariables, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof editOrganizationApiOrganizationsOrganizationIdPatch>>,
         TError,
@@ -562,56 +405,22 @@ export const useEditOrganizationApiOrganizationsOrganizationIdPatch = <TError = 
       > => {
       return useMutation(getEditOrganizationApiOrganizationsOrganizationIdPatchMutationOptions(options), queryClient);
     }
-    export type deleteOrganizationApiOrganizationsOrganizationIdDeleteResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type deleteOrganizationApiOrganizationsOrganizationIdDeleteResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type deleteOrganizationApiOrganizationsOrganizationIdDeleteResponseSuccess = (deleteOrganizationApiOrganizationsOrganizationIdDeleteResponse200) & {
-  headers: Headers;
-};
-export type deleteOrganizationApiOrganizationsOrganizationIdDeleteResponseError = (deleteOrganizationApiOrganizationsOrganizationIdDeleteResponse422) & {
-  headers: Headers;
-};
-
-export type deleteOrganizationApiOrganizationsOrganizationIdDeleteResponse = (deleteOrganizationApiOrganizationsOrganizationIdDeleteResponseSuccess | deleteOrganizationApiOrganizationsOrganizationIdDeleteResponseError)
-
-export const getDeleteOrganizationApiOrganizationsOrganizationIdDeleteUrl = (organizationId: string,) => {
-
-
-
-
-  return `/api/organizations/${organizationId}`
-}
-
-/**
+    /**
  * Delete an organization.
  * @deprecated
  * @summary Delete Organization
  */
-export const deleteOrganizationApiOrganizationsOrganizationIdDelete = async (organizationId: string, options?: RequestInit): Promise<deleteOrganizationApiOrganizationsOrganizationIdDeleteResponse> => {
-
-  const res = await fetch(getDeleteOrganizationApiOrganizationsOrganizationIdDeleteUrl(organizationId),
-  {
-    ...options,
-    method: 'DELETE'
+export const deleteOrganizationApiOrganizationsOrganizationIdDelete = (
+    organizationId: string,
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: deleteOrganizationApiOrganizationsOrganizationIdDeleteResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as deleteOrganizationApiOrganizationsOrganizationIdDeleteResponse
-}
-
+      return api<unknown>(
+      {url: `/api/organizations/${organizationId}`, method: 'DELETE', signal
+    },
+      );
+    }
 
 
 
@@ -619,15 +428,15 @@ export const deleteOrganizationApiOrganizationsOrganizationIdDelete = async (org
 export const getDeleteOrganizationApiOrganizationsOrganizationIdDeleteMutationKey = () => ['deleteOrganizationApiOrganizationsOrganizationIdDelete'] as const;
 
 export const getDeleteOrganizationApiOrganizationsOrganizationIdDeleteMutationOptions = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOrganizationApiOrganizationsOrganizationIdDelete>>, TError,DeleteOrganizationApiOrganizationsOrganizationIdDeleteMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOrganizationApiOrganizationsOrganizationIdDelete>>, TError,DeleteOrganizationApiOrganizationsOrganizationIdDeleteMutationVariables, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteOrganizationApiOrganizationsOrganizationIdDelete>>, TError,DeleteOrganizationApiOrganizationsOrganizationIdDeleteMutationVariables, TContext> => {
 
 const mutationKey = getDeleteOrganizationApiOrganizationsOrganizationIdDeleteMutationKey();
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }};
 
 
 
@@ -635,7 +444,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteOrganizationApiOrganizationsOrganizationIdDelete>>, DeleteOrganizationApiOrganizationsOrganizationIdDeleteMutationVariables> = (props) => {
           const {organizationId} = props ?? {};
 
-          return  deleteOrganizationApiOrganizationsOrganizationIdDelete(organizationId,fetchOptions)
+          return  deleteOrganizationApiOrganizationsOrganizationIdDelete(organizationId,)
         }
 
 
@@ -656,7 +465,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Delete Organization
  */
 export const useDeleteOrganizationApiOrganizationsOrganizationIdDelete = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOrganizationApiOrganizationsOrganizationIdDelete>>, TError,DeleteOrganizationApiOrganizationsOrganizationIdDeleteMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOrganizationApiOrganizationsOrganizationIdDelete>>, TError,DeleteOrganizationApiOrganizationsOrganizationIdDeleteMutationVariables, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteOrganizationApiOrganizationsOrganizationIdDelete>>,
         TError,
@@ -665,58 +474,23 @@ export const useDeleteOrganizationApiOrganizationsOrganizationIdDelete = <TError
       > => {
       return useMutation(getDeleteOrganizationApiOrganizationsOrganizationIdDeleteMutationOptions(options), queryClient);
     }
-    export type editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchResponseSuccess = (editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchResponse200) & {
-  headers: Headers;
-};
-export type editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchResponseError = (editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchResponse422) & {
-  headers: Headers;
-};
-
-export type editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchResponse = (editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchResponseSuccess | editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchResponseError)
-
-export const getEditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchUrl = (organizationId: string,
-    userId: string,) => {
-
-
-
-
-  return `/api/organizations/${organizationId}/${userId}`
-}
-
-/**
+    /**
  * Edit an organization member.
  * @deprecated
  * @summary Edit Organization Member
  */
-export const editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatch = async (organizationId: string,
-    userId: string, options?: RequestInit): Promise<editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchResponse> => {
-
-  const res = await fetch(getEditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchUrl(organizationId,userId),
-  {
-    ...options,
-    method: 'PATCH'
+export const editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatch = (
+    organizationId: string,
+    userId: string,
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchResponse
-}
-
+      return api<unknown>(
+      {url: `/api/organizations/${organizationId}/${userId}`, method: 'PATCH', signal
+    },
+      );
+    }
 
 
 
@@ -724,15 +498,15 @@ export const editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatch = a
 export const getEditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchMutationKey = () => ['editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatch'] as const;
 
 export const getEditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchMutationOptions = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatch>>, TError,EditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatch>>, TError,EditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchMutationVariables, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatch>>, TError,EditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchMutationVariables, TContext> => {
 
 const mutationKey = getEditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchMutationKey();
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }};
 
 
 
@@ -740,7 +514,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatch>>, EditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchMutationVariables> = (props) => {
           const {organizationId,userId} = props ?? {};
 
-          return  editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatch(organizationId,userId,fetchOptions)
+          return  editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatch(organizationId,userId,)
         }
 
 
@@ -761,7 +535,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Edit Organization Member
  */
 export const useEditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatch = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatch>>, TError,EditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatch>>, TError,EditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchMutationVariables, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof editOrganizationMemberApiOrganizationsOrganizationIdUserIdPatch>>,
         TError,
@@ -770,58 +544,23 @@ export const useEditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatch 
       > => {
       return useMutation(getEditOrganizationMemberApiOrganizationsOrganizationIdUserIdPatchMutationOptions(options), queryClient);
     }
-    export type deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteResponseSuccess = (deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteResponse200) & {
-  headers: Headers;
-};
-export type deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteResponseError = (deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteResponse422) & {
-  headers: Headers;
-};
-
-export type deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteResponse = (deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteResponseSuccess | deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteResponseError)
-
-export const getDeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteUrl = (organizationId: string,
-    userId: string,) => {
-
-
-
-
-  return `/api/organizations/${organizationId}/${userId}`
-}
-
-/**
+    /**
  * Remove a member from an organization.
  * @deprecated
  * @summary Delete Organization Member
  */
-export const deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDelete = async (organizationId: string,
-    userId: string, options?: RequestInit): Promise<deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteResponse> => {
-
-  const res = await fetch(getDeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteUrl(organizationId,userId),
-  {
-    ...options,
-    method: 'DELETE'
+export const deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDelete = (
+    organizationId: string,
+    userId: string,
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteResponse
-}
-
+      return api<unknown>(
+      {url: `/api/organizations/${organizationId}/${userId}`, method: 'DELETE', signal
+    },
+      );
+    }
 
 
 
@@ -829,15 +568,15 @@ export const deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDelete 
 export const getDeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteMutationKey = () => ['deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDelete'] as const;
 
 export const getDeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteMutationOptions = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDelete>>, TError,DeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDelete>>, TError,DeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteMutationVariables, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDelete>>, TError,DeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteMutationVariables, TContext> => {
 
 const mutationKey = getDeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteMutationKey();
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }};
 
 
 
@@ -845,7 +584,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDelete>>, DeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteMutationVariables> = (props) => {
           const {organizationId,userId} = props ?? {};
 
-          return  deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDelete(organizationId,userId,fetchOptions)
+          return  deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDelete(organizationId,userId,)
         }
 
 
@@ -866,7 +605,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Delete Organization Member
  */
 export const useDeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDelete = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDelete>>, TError,DeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDelete>>, TError,DeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteMutationVariables, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDelete>>,
         TError,
@@ -875,58 +614,23 @@ export const useDeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDele
       > => {
       return useMutation(getDeleteOrganizationMemberApiOrganizationsOrganizationIdUserIdDeleteMutationOptions(options), queryClient);
     }
-    export type inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostResponseSuccess = (inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostResponse200) & {
-  headers: Headers;
-};
-export type inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostResponseError = (inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostResponse422) & {
-  headers: Headers;
-};
-
-export type inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostResponse = (inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostResponseSuccess | inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostResponseError)
-
-export const getInviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostUrl = (organizationId: string,
-    userId: string,) => {
-
-
-
-
-  return `/api/organizations/${organizationId}/${userId}`
-}
-
-/**
+    /**
  * Invite a user to an organization.
  * @deprecated
  * @summary Invite Organization Member
  */
-export const inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPost = async (organizationId: string,
-    userId: string, options?: RequestInit): Promise<inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostResponse> => {
-
-  const res = await fetch(getInviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostUrl(organizationId,userId),
-  {
-    ...options,
-    method: 'POST'
+export const inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPost = (
+    organizationId: string,
+    userId: string,
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostResponse
-}
-
+      return api<unknown>(
+      {url: `/api/organizations/${organizationId}/${userId}`, method: 'POST', signal
+    },
+      );
+    }
 
 
 
@@ -934,15 +638,15 @@ export const inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPost = 
 export const getInviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostMutationKey = () => ['inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPost'] as const;
 
 export const getInviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostMutationOptions = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPost>>, TError,InviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPost>>, TError,InviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostMutationVariables, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPost>>, TError,InviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostMutationVariables, TContext> => {
 
 const mutationKey = getInviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostMutationKey();
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }};
 
 
 
@@ -950,7 +654,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPost>>, InviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostMutationVariables> = (props) => {
           const {organizationId,userId} = props ?? {};
 
-          return  inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPost(organizationId,userId,fetchOptions)
+          return  inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPost(organizationId,userId,)
         }
 
 
@@ -971,7 +675,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Invite Organization Member
  */
 export const useInviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPost = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPost>>, TError,InviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPost>>, TError,InviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostMutationVariables, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof inviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPost>>,
         TError,
@@ -980,65 +684,24 @@ export const useInviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPost
       > => {
       return useMutation(getInviteOrganizationMemberApiOrganizationsOrganizationIdUserIdPostMutationOptions(options), queryClient);
     }
-    export type getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetResponseSuccess = (getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetResponse200) & {
-  headers: Headers;
-};
-export type getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetResponseError = (getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetResponse422) & {
-  headers: Headers;
-};
-
-export type getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetResponse = (getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetResponseSuccess | getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetResponseError)
-
-export const getGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetUrl = (inviteId: string,
-    params: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/organizations/invites/${inviteId}?${stringifiedParams}` : `/api/organizations/invites/${inviteId}`
-}
-
-/**
+    /**
  * Get an invite for an organization.
  * @deprecated
  * @summary Get Organization Member Invite
  */
-export const getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet = async (inviteId: string,
-    params: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetParams, options?: RequestInit): Promise<getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetResponse> => {
-
-  const res = await fetch(getGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetUrl(inviteId,params),
-  {
-    ...options,
-    method: 'GET'
+export const getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet = (
+    inviteId: string,
+    params: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetParams,
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetResponse
-}
-
+      return api<unknown>(
+      {url: `/api/organizations/invites/${inviteId}`, method: 'GET',
+        params, signal
+    },
+      );
+    }
 
 
 
@@ -1052,16 +715,16 @@ export const getGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetQue
 
 
 export const getGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>, TError = HTTPValidationError>(inviteId: string,
-    params: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>, TError, TData>>, fetch?: RequestInit}
+    params: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>, TError, TData>>, }
 ) => {
 
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+const {query: queryOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetQueryKey(inviteId,params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>> = ({ signal }) => getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet(inviteId,params, { signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>> = ({ signal }) => getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet(inviteId,params, signal);
 
 
 
@@ -1087,7 +750,7 @@ export function useGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet
           TError,
           Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -1103,7 +766,7 @@ export function useGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet
           TError,
           Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -1113,7 +776,7 @@ export function useGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet
  */
 export function useGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet<TData = Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>, TError = HTTPValidationError>(
  inviteId: string,
-    params: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>, TError, TData>>, fetch?: RequestInit}
+    params: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>, TError, TData>>, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -1123,7 +786,7 @@ export function useGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet
  */
 export function useGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet<TData = Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>, TError = HTTPValidationError>(
  inviteId: string,
-    params: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>, TError, TData>>, fetch?: RequestInit}
+    params: GetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet>>, TError, TData>>, }
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -1139,65 +802,24 @@ export function useGetOrganizationMemberInviteApiOrganizationsInvitesInviteIdGet
 
 
 
-export type acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostResponseSuccess = (acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostResponse200) & {
-  headers: Headers;
-};
-export type acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostResponseError = (acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostResponse422) & {
-  headers: Headers;
-};
-
-export type acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostResponse = (acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostResponseSuccess | acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostResponseError)
-
-export const getAcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostUrl = (inviteId: string,
-    params: AcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/organizations/invites/${inviteId}/accept?${stringifiedParams}` : `/api/organizations/invites/${inviteId}/accept`
-}
-
 /**
  * Accept an invite for an organization.
  * @deprecated
  * @summary Accept Organization Member Invite
  */
-export const acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPost = async (inviteId: string,
-    params: AcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostParams, options?: RequestInit): Promise<acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostResponse> => {
-
-  const res = await fetch(getAcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostUrl(inviteId,params),
-  {
-    ...options,
-    method: 'POST'
+export const acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPost = (
+    inviteId: string,
+    params: AcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostParams,
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostResponse
-}
-
+      return api<unknown>(
+      {url: `/api/organizations/invites/${inviteId}/accept`, method: 'POST',
+        params, signal
+    },
+      );
+    }
 
 
 
@@ -1205,15 +827,15 @@ export const acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAccept
 export const getAcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostMutationKey = () => ['acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPost'] as const;
 
 export const getAcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostMutationOptions = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPost>>, TError,AcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPost>>, TError,AcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostMutationVariables, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPost>>, TError,AcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostMutationVariables, TContext> => {
 
 const mutationKey = getAcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostMutationKey();
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }};
 
 
 
@@ -1221,7 +843,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPost>>, AcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostMutationVariables> = (props) => {
           const {inviteId,params} = props ?? {};
 
-          return  acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPost(inviteId,params,fetchOptions)
+          return  acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPost(inviteId,params,)
         }
 
 
@@ -1242,7 +864,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Accept Organization Member Invite
  */
 export const useAcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPost = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPost>>, TError,AcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPost>>, TError,AcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostMutationVariables, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof acceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPost>>,
         TError,
@@ -1251,65 +873,24 @@ export const useAcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcc
       > => {
       return useMutation(getAcceptOrganizationMemberInviteApiOrganizationsInvitesInviteIdAcceptPostMutationOptions(options), queryClient);
     }
-    export type rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostResponse200 = {
-  data: unknown
-  status: 200
-}
-
-export type rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostResponseSuccess = (rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostResponse200) & {
-  headers: Headers;
-};
-export type rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostResponseError = (rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostResponse422) & {
-  headers: Headers;
-};
-
-export type rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostResponse = (rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostResponseSuccess | rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostResponseError)
-
-export const getRejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostUrl = (inviteId: string,
-    params: RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/organizations/invites/${inviteId}/reject?${stringifiedParams}` : `/api/organizations/invites/${inviteId}/reject`
-}
-
-/**
+    /**
  * Reject an invite for an organization.
  * @deprecated
  * @summary Reject Organization Member Invite
  */
-export const rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPost = async (inviteId: string,
-    params: RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostParams, options?: RequestInit): Promise<rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostResponse> => {
-
-  const res = await fetch(getRejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostUrl(inviteId,params),
-  {
-    ...options,
-    method: 'POST'
+export const rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPost = (
+    inviteId: string,
+    params: RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostParams,
+ signal?: AbortSignal
+) => {
 
 
-  }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostResponse
-}
-
+      return api<unknown>(
+      {url: `/api/organizations/invites/${inviteId}/reject`, method: 'POST',
+        params, signal
+    },
+      );
+    }
 
 
 
@@ -1317,15 +898,15 @@ export const rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdReject
 export const getRejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostMutationKey = () => ['rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPost'] as const;
 
 export const getRejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostMutationOptions = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPost>>, TError,RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPost>>, TError,RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostMutationVariables, TContext>, }
 ): UseMutationOptions<Awaited<ReturnType<typeof rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPost>>, TError,RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostMutationVariables, TContext> => {
 
 const mutationKey = getRejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostMutationKey();
-const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+const {mutation: mutationOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, fetch: undefined};
+      : {mutation: { mutationKey, }};
 
 
 
@@ -1333,7 +914,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPost>>, RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostMutationVariables> = (props) => {
           const {inviteId,params} = props ?? {};
 
-          return  rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPost(inviteId,params,fetchOptions)
+          return  rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPost(inviteId,params,)
         }
 
 
@@ -1354,7 +935,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
  * @summary Reject Organization Member Invite
  */
 export const useRejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPost = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPost>>, TError,RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostMutationVariables, TContext>, fetch?: RequestInit}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPost>>, TError,RejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPostMutationVariables, TContext>, }
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof rejectOrganizationMemberInviteApiOrganizationsInvitesInviteIdRejectPost>>,
         TError,
