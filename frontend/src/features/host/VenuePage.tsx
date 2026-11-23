@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { api } from '../../lib/api'
 import { useEffect, useState } from 'react'
 import type { VenueEventResponse, VenueResponse } from '../events/types'
@@ -7,12 +7,10 @@ import GoogleMap from '../../components/GoogleMap'
 
 import EventListItem from '../../components/EventListItem'
 import Markdown from '../../components/Markdown'
-import { useAuth } from '../../lib/auth'
-import { isOrganizationAdministrator } from '../account/types'
+import { SkeletonText } from '../../components/Skeleton'
 
 export default function VenuePage() {
   const { id } = useParams<{ id: string }>()
-  const { user } = useAuth()
 
   const [venue, setVenue] = useState<VenueResponse | undefined>(undefined)
 
@@ -31,6 +29,7 @@ export default function VenuePage() {
       fallbackTitle="Venue"
       back={{ to: '/events' }}
     >
+      {!venue && <SkeletonText lines={6} />}
       {venue && (
         <div>
           <span className="text-2xl font-semibold block">
@@ -39,16 +38,7 @@ export default function VenuePage() {
               {venue.organization.display_name}
             </a>
           </span>
-          {isOrganizationAdministrator(user, venue.organization.id) && (
-            <div className="mt-4">
-              <Link
-                to={`/venue/${id}/edit`}
-                className="btn btn-primary btn-sm"
-              >
-                Edit Venue
-              </Link>
-            </div>
-          )}
+          {/* Venue editing lives on the My Organization page now. */}
           <div className="mt-2">
             <div className="flex lg:flex-row flex-col gap-8">
               <div className="flex-1">

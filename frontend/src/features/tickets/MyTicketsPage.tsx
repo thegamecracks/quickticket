@@ -7,6 +7,7 @@ import type { User } from "../account/types";
 import type { Ticket } from "./types";
 import { useNavigate } from "react-router";
 import { calcDateLongTimeMediumRange } from "../../lib/general";
+import { SkeletonRows } from "../../components/Skeleton";
 import { PAGE_SIZE, type Paged } from "../../lib/pagination";
 
 // TODO: replace this mock fetcher with the real endpoint once a
@@ -57,9 +58,7 @@ export default function MyTicketsPage() {
       {user && (
         <div className="space-y-6">
           {tickets === undefined && (
-            <p className="text-base-content/70">
-              Loading your tickets...
-            </p>
+            <SkeletonRows rows={4} />
           )}
 
           {tickets && tickets.length > 0 && (

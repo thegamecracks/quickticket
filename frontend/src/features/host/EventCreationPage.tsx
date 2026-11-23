@@ -12,6 +12,7 @@ import type { OrganizationResponse, OrganizationVenue } from '../organizations/t
 import { createMockEvent } from '../../lib/mocks'
 import { OrganizationForm } from './OrganizationForm'
 import { VenueForm } from './VenueForm'
+import { SkeletonRows } from '../../components/Skeleton'
 
 const categories = [
   'Music',
@@ -96,7 +97,7 @@ export default function EventCreationPage() {
     >
       {/* Authentication loading state */}
       {user === undefined && (
-        <p className="text-base-content/70">Checking your account...</p>
+        <SkeletonRows rows={3} />
       )}
 
       {/* No sign-in gate: a signed-out visitor uses the navbar's Sign in
@@ -104,7 +105,7 @@ export default function EventCreationPage() {
 
       {/* Organization still loading */}
       {user && membershipOrgId && !org && !orgError && (
-        <p className="text-base-content/70">Loading your organization...</p>
+        <SkeletonRows rows={4} />
       )}
 
       {/* Organization failed to load */}

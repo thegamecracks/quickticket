@@ -4,6 +4,7 @@ import { api } from '../../lib/api'
 import { useEffect, useState } from 'react'
 import type { OrganizationResponse } from '../organizations/types'
 import SkeletonImage from '../../components/SkeletonImage'
+import { SkeletonRows } from '../../components/Skeleton'
 
 export default function OrganizationPage() {
   const { id } = useParams<{ id: string }>()
@@ -26,6 +27,7 @@ export default function OrganizationPage() {
 
   return (
     <PageLayout title={org?.display_name} back>
+      {!org && <SkeletonRows rows={4} />}
       {org && (
         <ul className="list">
           {org.venues.map((venue) => (

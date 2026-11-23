@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { APIProvider, useMapsLibrary } from '@vis.gl/react-google-maps'
 import axios from 'axios'
 import PageLayout from '../../components/PageLayout'
+import { SkeletonText } from '../../components/Skeleton'
 import { api } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import {
@@ -445,7 +446,7 @@ export function VenueForm({
   const content = (
     <>
       {isEdit && loading ? (
-        <p className="text-base-content/70">Loading venue details...</p>
+        <SkeletonText lines={2} />
       ) : isEdit && loadError ? (
         <div role="alert" className="alert alert-error">
           {loadError}

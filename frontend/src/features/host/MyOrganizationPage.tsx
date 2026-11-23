@@ -6,6 +6,7 @@ import SkeletonImage from '../../components/SkeletonImage'
 import { api } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import { isAdministrator } from '../account/types'
+import { SkeletonRows } from '../../components/Skeleton'
 import type { OrganizationResponse } from '../organizations/types'
 
 /**
@@ -65,9 +66,7 @@ export default function MyOrganizationPage() {
     >
       {/* Authentication loading state */}
       {user === undefined && (
-        <p className="text-base-content/70">
-          Checking your account...
-        </p>
+        <SkeletonRows rows={3} />
       )}
 
       {/* No sign-in gate: a signed-out visitor uses the navbar's Sign in
@@ -102,9 +101,7 @@ export default function MyOrganizationPage() {
 
       {/* Loading */}
       {orgId && !org && !loadError && (
-        <p className="text-base-content/70">
-          Loading your organization...
-        </p>
+        <SkeletonRows rows={4} />
       )}
 
       {org && (

@@ -5,6 +5,7 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import PageLayout from '../../components/PageLayout'
 import EventCard from '../../components/EventCard'
 import EventCardSkeleton from '../../components/EventCardSkeleton'
+import { SkeletonRows } from '../../components/Skeleton'
 import { Pagination, safePage } from '../../components/Pagination'
 
 import { useAuth } from '../../lib/auth'
@@ -113,9 +114,7 @@ export default function MyEventsPage() {
 
       {/* Authentication loading state */}
       {user === undefined && (
-        <p className="text-base-content/70">
-          Checking your account...
-        </p>
+        <SkeletonRows rows={3} />
       )}
 
       {/* No sign-in gate: a signed-out visitor uses the navbar's Sign in
