@@ -1,0 +1,139 @@
+# Garage S3 DEV — Deployment
+# Object storage for image uploads, mirroring the backend/compose.yaml `s3`
+# service (same image/command/env + the same garage.toml mounted at
+# /etc/garage.toml, here via ConfigMap). Exposed externally through Traefik
+# on the outbound entrypoint — see ingress-dev.yaml.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quickticket-garage-dev
+  namespace: quickticket
+  labels:
+    app: quickticket-garage-dev
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: quickticket-garage-dev
+  template:
+    metadata:
+      labels:
+        app: quickticket-garage-dev
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      containers:
+        - name: garage
+          image: docker.io/dxflrs/garage:v2.5.0
+          ports:
+            - containerPort: 3900
+              name: s3
+          command:
+            - /garage
+            - server
+            - --single-node
+            - --default-bucket
+          env:
+            # https://garagehq.deuxfleurs.fr/documentation/quick-start/#configuring-initial-access-credentials
+            - name: GARAGE_DEFAULT_ACCESS_KEY
+              value: GK1f12370a0306fcb1d13c3be2304f2d5b
+            - name: GARAGE_DEFAULT_SECRET_KEY
+              value: c6c4ca3c65ccb75e024f6106d1781fc3d38c10875c77ff12820617e1a9fc1f1a
+            - name: GARAGE_DEFAULT_BUCKET
+              value: quickticket
+          volumeMounts:
+            - name: garage-data
+              mountPath: /var/lib/garage
+            - name: config
+              mountPath: /etc/garage.toml
+              subPath: garage.toml
+              readOnly: true
+          readinessProbe:
+            tcpSocket:
+              port: s3
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: s3
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "25m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+      volumes:
+        - name: garage-data
+          persistentVolumeClaim:
+            claimName: quickticket-garage-data-dev
+        - name: config
+          configMap:
+            name: quickticket-garage-config-dev
+---
+# Garage S3 DEV - Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: quickticket-garage-dev
+  namespace: quickticket
+spec:
+  selector:
+    app: quickticket-garage-dev
+  ports:
+    - port: 3900
+      targetPort: s3
+      protocol: TCP
+      name: s3
+---
+# Garage S3 DEV - longhorn pvc
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: quickticket-garage-data-dev
+  namespace: quickticket
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 1Gi
+---
+# Garage S3 DEV - config, copied byte-for-byte from backend/config/garage.toml
+# (the file compose.yaml mounts read-only at /etc/garage.toml)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: quickticket-garage-config-dev
+  namespace: quickticket
+data:
+  garage.toml: |
+    # https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/
+    metadata_dir = "/var/lib/garage/meta"
+    data_dir = "/var/lib/garage/data"
+    db_engine = "sqlite"
+    replication_factor = 1
+
+    rpc_bind_addr = "[::]:3901"
+    rpc_public_addr = "127.0.0.1:3901"
+    rpc_secret = "1320d345ebc1eab0e191dfa0c420725ea50717aa712105d71272c2659bb4896a"
+    # Make sure to replace this secret! `openssl rand -hex 32`
+
+    [s3_api]
+    s3_region = "garage"
+    api_bind_addr = "[::]:3900"
+    root_domain = ".s3.thegamecracks.xyz"
+
+    [s3_web]
+    bind_addr = "[::]:3902"
+    root_domain = ".web.thegamecracks.xyz"
+    index = "index.html"
+
+    [admin]
+    api_bind_addr = "[::]:3903"
+    admin_token = ""
+    metrics_token = ""
