@@ -79,7 +79,7 @@ jobs:
         with:
           bun-version: 1
       - run: bun install --frozen-lockfile
-      - run: bun run lint
+      - run: bun run lint --format github
 
   build:
     name: tsc + vite build
