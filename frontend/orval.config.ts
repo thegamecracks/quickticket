@@ -17,6 +17,7 @@ export default defineConfig({
       // https://orval.dev/docs/reference/configuration/output#mock
       // mock: true,
       tagsSplitDeduplication: true,
+      clean: true,
       // formatter: 'biome',
       // https://orval.dev/docs/guides/custom-axios/
       httpClient: 'axios',
