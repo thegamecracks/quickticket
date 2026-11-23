@@ -15,6 +15,7 @@ import TicketDetailPage from './features/tickets/TicketDetailPage'
 import EventCreationPage from './features/host/EventCreationPage'
 import VenuePage from './features/host/VenuePage'
 import EditVenuePage from './features/host/EditVenuePage'
+import EditEventPage from './features/host/EditEventPage'
 import OrganizationPage from './features/host/OrganizationPage'
 import EditOrganizationPage from './features/host/EditOrganizationPage'
 
@@ -26,6 +27,7 @@ export default function App() {
           <Route index element={<HomePage />} />
           <Route path="events" element={<EventsPage />} />
           <Route path="events/:id" element={<EventDetailPage />} />
+          <Route path="events/:id/edit" element={<EditEventPage />} />
           <Route path="events/:id/checkout" element={<CheckoutPage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="myEvents" element={<MyEventsPage />} />

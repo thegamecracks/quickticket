@@ -194,6 +194,7 @@ export default function MyEventsPage() {
                 <EventCard
                   key={event.id}
                   event={event}
+                  editHref={`/events/${event.id}/edit`}
                 />
               ))}
             </div>

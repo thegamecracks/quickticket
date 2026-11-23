@@ -2,13 +2,15 @@ import type { EventResponse } from "../features/events/types"
 import { getMockTicketCount } from "../lib/mocks"
 import SkeletonImage from "./SkeletonImage"
 import { calcTimeMediumRange, formatDateLong } from "../lib/general"
-import { useNavigate } from "react-router"
+import { Link, useNavigate } from "react-router"
 
-type EventCardProps = {
+ type EventCardProps = {
   event: EventResponse
+  /** When set (e.g. on the organizer's own listings), shows an Edit link. */
+  editHref?: string
 }
 
-export default function EventCard({ event }: EventCardProps) {
+export default function EventCard({ event, editHref }: EventCardProps) {
   const navigate = useNavigate();
 
   const handleViewEvent = () => {
@@ -56,6 +58,11 @@ export default function EventCard({ event }: EventCardProps) {
             )}
           </div>
           <div className="card-actions justify-end">
+            {editHref && (
+              <Link to={editHref} className="btn btn-outline btn-primary">
+                Edit
+              </Link>
+            )}
             <button className="btn btn-primary" onClick={() => handleViewEvent()}>View Event</button>
           </div>
         </div>

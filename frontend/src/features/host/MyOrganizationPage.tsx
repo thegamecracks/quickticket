@@ -187,13 +187,21 @@ export default function MyOrganizationPage() {
                       </p>
                     </div>
 
-                    {/* TODO: event editing comes in a later PR */}
-                    <button
-                      className="btn btn-outline btn-primary max-sm:col-start-2! max-sm:row-start-2! self-start sm:self-center sm:justify-self-end"
-                      onClick={() => handleViewEvent(event.id)}
-                    >
-                      View
-                    </button>
+                    {/* Event editing mirrors the venue card's View + Edit pair. */}
+                    <div className="max-sm:col-start-2! max-sm:row-start-2! flex flex-wrap items-center gap-2 self-start sm:self-center">
+                      <button
+                        className="btn btn-outline btn-primary"
+                        onClick={() => handleViewEvent(event.id)}
+                      >
+                        View
+                      </button>
+                      <Link
+                        to={`/events/${event.id}/edit`}
+                        className="btn btn-primary"
+                      >
+                        Edit
+                      </Link>
+                    </div>
                   </li>
                 ))}
               </ul>
