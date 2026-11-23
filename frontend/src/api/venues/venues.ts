@@ -26,7 +26,6 @@ import type {
 import type {
   BodySetVenueBannerApiVenuesEntityIdBannerPut,
   BodySetVenueThumbnailApiVenuesEntityIdThumbnailPut,
-  DeleteVenueApiVenuesVenueIdDeletePathParameters,
   DeleteVenueBannerApiVenuesEntityIdBannerDeletePathParameters,
   DeleteVenueThumbnailApiVenuesEntityIdThumbnailDeletePathParameters,
   EditVenueApiVenuesVenueIdPatchPathParameters,
@@ -413,75 +412,6 @@ export const useEditVenueApiVenuesVenueIdPatch = <TError = HTTPValidationError,
         TContext
       > => {
       return useMutation(getEditVenueApiVenuesVenueIdPatchMutationOptions(options), queryClient);
-    }
-    /**
- * Delete a venue.
- * @deprecated
- * @summary Delete Venue
- */
-export const deleteVenueApiVenuesVenueIdDelete = (
-    { venueId }: DeleteVenueApiVenuesVenueIdDeletePathParameters,
- signal?: AbortSignal
-) => {
-
-
-      return api<unknown>(
-      {url: `/api/venues/${venueId}`, method: 'DELETE', signal
-    },
-      );
-    }
-
-
-
-
-export const getDeleteVenueApiVenuesVenueIdDeleteMutationKey = () => ['deleteVenueApiVenuesVenueIdDelete'] as const;
-
-export const getDeleteVenueApiVenuesVenueIdDeleteMutationOptions = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteVenueApiVenuesVenueIdDelete>>, TError,DeleteVenueApiVenuesVenueIdDeleteMutationVariables, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof deleteVenueApiVenuesVenueIdDelete>>, TError,DeleteVenueApiVenuesVenueIdDeleteMutationVariables, TContext> => {
-
-const mutationKey = getDeleteVenueApiVenuesVenueIdDeleteMutationKey();
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteVenueApiVenuesVenueIdDelete>>, DeleteVenueApiVenuesVenueIdDeleteMutationVariables> = (props) => {
-          const {pathParams} = props ?? {};
-
-          return  deleteVenueApiVenuesVenueIdDelete(pathParams,)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeleteVenueApiVenuesVenueIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteVenueApiVenuesVenueIdDelete>>>
-
-    export type DeleteVenueApiVenuesVenueIdDeleteMutationError = HTTPValidationError
-    export type DeleteVenueApiVenuesVenueIdDeleteMutationVariables = {pathParams: DeleteVenueApiVenuesVenueIdDeletePathParameters}
-
-    /**
- * Delete a venue.
- * @deprecated
- * @summary Delete Venue
- */
-export const useDeleteVenueApiVenuesVenueIdDelete = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteVenueApiVenuesVenueIdDelete>>, TError,DeleteVenueApiVenuesVenueIdDeleteMutationVariables, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deleteVenueApiVenuesVenueIdDelete>>,
-        TError,
-        DeleteVenueApiVenuesVenueIdDeleteMutationVariables,
-        TContext
-      > => {
-      return useMutation(getDeleteVenueApiVenuesVenueIdDeleteMutationOptions(options), queryClient);
     }
     /**
  * Get this entity's banner.

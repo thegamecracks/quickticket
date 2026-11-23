@@ -26,7 +26,6 @@ import type {
 import type {
   BodySetEventBannerApiEventsEntityIdBannerPut,
   BodySetEventThumbnailApiEventsEntityIdThumbnailPut,
-  DeleteEventApiEventsEventIdDeletePathParameters,
   DeleteEventBannerApiEventsEntityIdBannerDeletePathParameters,
   DeleteEventThumbnailApiEventsEntityIdThumbnailDeletePathParameters,
   EditEventApiEventsEventIdPatchPathParameters,
@@ -413,75 +412,6 @@ export const useEditEventApiEventsEventIdPatch = <TError = HTTPValidationError,
         TContext
       > => {
       return useMutation(getEditEventApiEventsEventIdPatchMutationOptions(options), queryClient);
-    }
-    /**
- * Delete an event.
- * @deprecated
- * @summary Delete Event
- */
-export const deleteEventApiEventsEventIdDelete = (
-    { eventId }: DeleteEventApiEventsEventIdDeletePathParameters,
- signal?: AbortSignal
-) => {
-
-
-      return api<unknown>(
-      {url: `/api/events/${eventId}`, method: 'DELETE', signal
-    },
-      );
-    }
-
-
-
-
-export const getDeleteEventApiEventsEventIdDeleteMutationKey = () => ['deleteEventApiEventsEventIdDelete'] as const;
-
-export const getDeleteEventApiEventsEventIdDeleteMutationOptions = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteEventApiEventsEventIdDelete>>, TError,DeleteEventApiEventsEventIdDeleteMutationVariables, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof deleteEventApiEventsEventIdDelete>>, TError,DeleteEventApiEventsEventIdDeleteMutationVariables, TContext> => {
-
-const mutationKey = getDeleteEventApiEventsEventIdDeleteMutationKey();
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteEventApiEventsEventIdDelete>>, DeleteEventApiEventsEventIdDeleteMutationVariables> = (props) => {
-          const {pathParams} = props ?? {};
-
-          return  deleteEventApiEventsEventIdDelete(pathParams,)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeleteEventApiEventsEventIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteEventApiEventsEventIdDelete>>>
-
-    export type DeleteEventApiEventsEventIdDeleteMutationError = HTTPValidationError
-    export type DeleteEventApiEventsEventIdDeleteMutationVariables = {pathParams: DeleteEventApiEventsEventIdDeletePathParameters}
-
-    /**
- * Delete an event.
- * @deprecated
- * @summary Delete Event
- */
-export const useDeleteEventApiEventsEventIdDelete = <TError = HTTPValidationError,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteEventApiEventsEventIdDelete>>, TError,DeleteEventApiEventsEventIdDeleteMutationVariables, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deleteEventApiEventsEventIdDelete>>,
-        TError,
-        DeleteEventApiEventsEventIdDeleteMutationVariables,
-        TContext
-      > => {
-      return useMutation(getDeleteEventApiEventsEventIdDeleteMutationOptions(options), queryClient);
     }
     /**
  * Get this entity's banner.

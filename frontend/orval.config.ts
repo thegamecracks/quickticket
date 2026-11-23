@@ -31,6 +31,7 @@ export default defineConfig({
         useBigInt: true,
         useBrandedTypes: true, // NewType
         useNamedParameters: true,
+        useDeprecatedOperations: false,
       },
     },
     input: {
