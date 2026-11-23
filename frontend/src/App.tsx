@@ -9,6 +9,7 @@ import EventsPage from './features/events/EventsPage'
 import AccountSettingsPage from './features/account/AccountSettingsPage'
 import { AuthProvider } from './lib/auth'
 import MyEventsPage from './features/host/MyEventsPage'
+import MyOrganizationPage from './features/host/MyOrganizationPage'
 import MyTicketsPage from './features/tickets/MyTicketsPage'
 import TicketDetailPage from './features/tickets/TicketDetailPage'
 import EventCreationPage from './features/host/EventCreationPage'
@@ -16,6 +17,8 @@ import VenuePage from './features/host/VenuePage'
 import CreateVenuePage from './features/host/CreateVenuePage'
 import EditVenuePage from './features/host/EditVenuePage'
 import OrganizationPage from './features/host/OrganizationPage'
+import CreateOrganizationPage from './features/host/CreateOrganizationPage'
+import EditOrganizationPage from './features/host/EditOrganizationPage'
 
 export default function App() {
   return (
@@ -28,13 +31,16 @@ export default function App() {
           <Route path="events/:id/checkout" element={<CheckoutPage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="myEvents" element={<MyEventsPage />} />
+          <Route path="myOrganization" element={<MyOrganizationPage />} />
           <Route path="createEvent" element={<EventCreationPage />} />
           <Route path="createVenue" element={<CreateVenuePage />} />
+          <Route path="createOrganization" element={<CreateOrganizationPage />} />
           <Route path="myTickets" element={<MyTicketsPage />} />
           <Route path="myTickets/:id" element={<TicketDetailPage />} />
           <Route path="venue/:id" element={<VenuePage />} />
           <Route path="venue/:id/edit" element={<EditVenuePage />} />
           <Route path="organization/:id" element={<OrganizationPage />} />
+          <Route path="organization/:id/edit" element={<EditOrganizationPage />} />
           <Route path="settings" element={<AccountSettingsPage />} />
         </Route>
       </Routes>

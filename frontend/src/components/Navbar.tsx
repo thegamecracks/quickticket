@@ -47,6 +47,7 @@ export default function Navbar() {
             <ul tabIndex={-1}
               className="menu dropdown-content bg-base-200 rounded-box z-1 w-52 shadow-sm">
               <li><a href='/myEvents'>My Events</a></li>
+              <li><a href='/myOrganization'>My Organization</a></li>
               <li><a href='/myTickets'>My Tickets</a></li>
               <li><a href='/settings'>Settings</a></li>
               <li><a onClick={() => handleLogout()}>Logout</a></li>
