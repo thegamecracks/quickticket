@@ -209,9 +209,13 @@ async def create_organization(
         select(
             exists().where(
                 OrganizationMember.user_id == user.id,
+                # Compare against zero: bitwise_and() yields an integer, and
+                # EXISTS/AND requires a boolean (Postgres rejects it with
+                # DatatypeMismatch, while the SQLite test suite tolerates it).
                 OrganizationMember.permissions.bitwise_and(
                     OrganizationMemberPermissions.OWNER,
-                ),
+                )
+                != 0,
             ),
         ),
     )
