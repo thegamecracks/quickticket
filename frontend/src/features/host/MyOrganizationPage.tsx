@@ -70,7 +70,7 @@ export default function MyOrganizationPage() {
       )}
 
       {/* No sign-in gate: a signed-out visitor uses the navbar's Sign in
-          button; losing auth mid-session raises the global toast instead. */}
+          button. */}
 
       {/* No organization yet */}
       {user && !orgId && (
@@ -117,8 +117,11 @@ export default function MyOrganizationPage() {
             ) : (
               <ul className="list">
                 {org.venues.map(venue => (
-                  <li className="list-row" key={venue.id}>
-                    <figure className="h-20 w-32 shrink-0 overflow-hidden rounded-lg bg-base-300">
+                  <li
+                    className="list-row max-sm:grid-cols-[auto_1fr]! max-sm:grid-flow-row!"
+                    key={venue.id}
+                  >
+                    <figure className="h-20 w-32 shrink-0 max-sm:row-span-2 max-sm:self-center overflow-hidden rounded-lg bg-base-300">
                       <SkeletonImage
                         src={venue.thumbnail
                           ? `/storage/${venue.thumbnail.id}`
@@ -128,13 +131,13 @@ export default function MyOrganizationPage() {
                       />
                     </figure>
 
-                    <div>
+                    <div className="max-sm:col-start-2">
                       {venue.display_name}
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="max-sm:col-start-2! max-sm:row-start-2! flex flex-wrap items-center gap-2 self-start sm:self-center">
                       <button
-                        className="btn btn-ghost"
+                        className="btn btn-outline btn-primary"
                         onClick={() => handleViewVenue(venue.id)}
                       >
                         View
@@ -163,8 +166,11 @@ export default function MyOrganizationPage() {
             ) : (
               <ul className="list">
                 {events?.map(({ event, venue }) => (
-                  <li className="list-row" key={event.id}>
-                    <figure className="h-20 w-32 shrink-0 overflow-hidden rounded-lg bg-base-300">
+                  <li
+                    className="list-row max-sm:grid-cols-[auto_1fr]! max-sm:grid-flow-row!"
+                    key={event.id}
+                  >
+                    <figure className="h-20 w-32 shrink-0 max-sm:row-span-2 max-sm:self-center overflow-hidden rounded-lg bg-base-300">
                       <SkeletonImage
                         src={event.thumbnail
                           ? `/storage/${event.thumbnail.id}`
@@ -174,7 +180,7 @@ export default function MyOrganizationPage() {
                       />
                     </figure>
 
-                    <div>
+                    <div className="max-sm:col-start-2">
                       {event.display_name}
                       <p className="text-xs text-base-content/70">
                         {venue.display_name}
@@ -183,7 +189,7 @@ export default function MyOrganizationPage() {
 
                     {/* TODO: event editing comes in a later PR */}
                     <button
-                      className="btn btn-primary"
+                      className="btn btn-outline btn-primary max-sm:col-start-2! max-sm:row-start-2! self-start sm:self-center sm:justify-self-end"
                       onClick={() => handleViewEvent(event.id)}
                     >
                       View

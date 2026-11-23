@@ -31,8 +31,11 @@ export default function OrganizationPage() {
       {org && (
         <ul className="list">
           {org.venues.map((venue) => (
-            <li className="list-row">
-              <figure className="h-20 w-32 shrink-0 overflow-hidden rounded-lg bg-base-300">
+            <li
+              className="list-row max-sm:grid-cols-[auto_1fr]! max-sm:grid-flow-row!"
+              key={venue.id}
+            >
+              <figure className="h-20 w-32 shrink-0 max-sm:row-span-2 max-sm:self-center overflow-hidden rounded-lg bg-base-300">
 
                 <SkeletonImage
                   src={venue.thumbnail ? `/storage/${venue.thumbnail.id}` : 'https://placehold.co/800x450/272c35/ffffff?text=QuickTicket+Event'}
@@ -40,10 +43,10 @@ export default function OrganizationPage() {
                   className="h-full w-full object-cover"
                 />
               </figure>
-              <div>
+              <div className="max-sm:col-start-2">
                 {venue.display_name}
               </div>
-              <button className="btn btn-primary" onClick={() => handleViewVenue(venue.id)}>View</button>
+              <button className="btn btn-outline btn-primary max-sm:col-start-2! max-sm:row-start-2! self-start sm:self-center sm:justify-self-end" onClick={() => handleViewVenue(venue.id)}>View</button>
             </li>
           ))}
         </ul>
