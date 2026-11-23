@@ -1,43 +1,64 @@
-
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router'
+import { useInfiniteQuery } from '@tanstack/react-query'
 
 import PageLayout from '../../components/PageLayout'
 import EventCard from '../../components/EventCard'
+import EventCardSkeleton from '../../components/EventCardSkeleton'
 import { Pagination, safePage } from '../../components/Pagination'
 
 import { useAuth } from '../../lib/auth'
 import { api } from '../../lib/api'
+import { PAGE_SIZE, type Paged } from '../../lib/pagination'
 import type { EventResponse } from '../events/types'
 
 export default function MyEventsPage() {
   const { user } = useAuth()
 
   const [searchParams, setSearchParams] = useSearchParams()
-  const [currentPage, setCurrentPage] = useState(1)
-  const [events, setEvents] = useState<EventResponse[] | undefined>(undefined)
-
-  useEffect(() => {
-    const getEvents = async (orgId: string | undefined): Promise<void> => {
-      const res = await api.get<{ items: EventResponse[] }>(`/events?organization_id=${orgId}`)
-      setEvents(res.data.items)
-    }
-
-    // Reset pagination when the logged-in user changes.
-    setCurrentPage(1)
-    // have to get all organization_id by organization_members item's user_id = user.id
-    // only want one organization_id though since we have 1-1 user to organization
-    const orgId = user?.organization_members[0]?.organization_id;
-
-    // TODO: redirect user to create an organization page if orgId is not there!
-    orgId === undefined ? console.log(" user does not have organization, redirecting user to create an organization page") : getEvents(orgId);
-
-  }, [user?.id])
-
-
   const search = searchParams.get('search') ?? ''
 
-  const filteredEvents = events?.filter(event => {
+  // have to get all organization_id by organization_members item's user_id = user.id
+  // only want one organization_id though since we have 1-1 user to organization
+  const orgId = user?.organization_members[0]?.organization_id
+
+  // Cursor-paginated fetch of this organizer's events (GET /events?organization_id=).
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isLoading,
+    isError,
+    refetch,
+  } = useInfiniteQuery({
+    queryKey: ['events', 'mine', orgId],
+    enabled: orgId !== undefined,
+    queryFn: ({ pageParam }) =>
+      api
+        .get<Paged<EventResponse>>('/events', {
+          params: {
+            limit: PAGE_SIZE,
+            next: pageParam,
+            organization_id: orgId,
+          },
+        })
+        .then((res) => res.data),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.next,
+  })
+
+  // The numbered Pagination UI below needs the full list, so drain every
+  // page up front. safePage() clamps the URL page if the list shrinks.
+  useEffect(() => {
+    if (hasNextPage && !isFetching && !isError) {
+      void fetchNextPage()
+    }
+  }, [hasNextPage, isFetching, isError, fetchNextPage])
+
+  const events = data?.pages.flatMap((page) => page.items)
+
+  const filteredEvents = events?.filter((event) => {
     const searchText = search.trim().toLowerCase()
 
     return (
@@ -46,18 +67,26 @@ export default function MyEventsPage() {
     )
   })
 
-  // Pagination
-  const eventsPerPage = 6
+  // Pagination: page number lives in the URL (?page=) so it survives
+  // refreshes and the back button.
   const totalPages = Math.ceil(
-    filteredEvents ? filteredEvents.length / eventsPerPage : 0
+    filteredEvents ? filteredEvents.length / PAGE_SIZE : 0
   )
 
-  const page = safePage(currentPage, totalPages)
+  const rawPage = Number(searchParams.get('page') ?? '1')
+  const page = safePage(Number.isFinite(rawPage) ? rawPage : 1, totalPages)
 
-  const paginatedEvents = filteredEvents?.slice(
-    (page - 1) * eventsPerPage,
-    page * eventsPerPage
-  )
+  const setPage = (nextPage: number) => {
+    const nextParams = new URLSearchParams(searchParams)
+
+    if (nextPage > 1) {
+      nextParams.set('page', String(nextPage))
+    } else {
+      nextParams.delete('page')
+    }
+
+    setSearchParams(nextParams, { replace: true })
+  }
 
   const handleSearch = (value: string) => {
     const nextParams = new URLSearchParams(searchParams)
@@ -68,9 +97,16 @@ export default function MyEventsPage() {
       nextParams.delete('search')
     }
 
+    // Return to page 1 on a new search
+    nextParams.delete('page')
+
     setSearchParams(nextParams, { replace: true })
-    setCurrentPage(1)
   }
+
+  const paginatedEvents = filteredEvents?.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE
+  )
 
   return (
     <PageLayout title="My Events">
@@ -95,8 +131,17 @@ export default function MyEventsPage() {
         </div>
       )}
 
+      {/* TODO: redirect user to the create-an-organization page if orgId is missing */}
+      {user && orgId === undefined && (
+        <div className="rounded-xl border border-base-300 bg-base-200 p-8 text-center">
+          <p className="text-base-content/70">
+            Create an organization to start hosting events.
+          </p>
+        </div>
+      )}
+
       {/* Organizer's event listing */}
-      {user && (
+      {user && orgId !== undefined && (
         <div className="space-y-6">
 
           {/* Create Event action */}
@@ -116,13 +161,41 @@ export default function MyEventsPage() {
             aria-label="Search my events"
             className="input input-bordered w-full"
             value={search}
-            onChange={e => handleSearch(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
           />
+
+          {/* First page is still loading */}
+          {isLoading && (
+            <div aria-live="polite">
+              <span className="sr-only">Loading your events...</span>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: PAGE_SIZE }, (_, i) => (
+                  <EventCardSkeleton key={i} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Loading failed */}
+          {isError && (
+            <div className="rounded-xl border border-base-300 bg-base-200 p-8 text-center">
+              <p className="text-base-content/70">
+                Failed to load your events.
+              </p>
+              <button
+                type="button"
+                className="btn btn-primary mt-4"
+                onClick={() => void refetch()}
+              >
+                Try again
+              </button>
+            </div>
+          )}
 
           {/* Existing event cards */}
           {filteredEvents && filteredEvents.length > 0 && (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {paginatedEvents?.map(event => (
+              {paginatedEvents?.map((event) => (
                 <EventCard
                   key={event.id}
                   event={event}
@@ -161,13 +234,11 @@ export default function MyEventsPage() {
           )}
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              onChangePage={setCurrentPage}
-            />
-          )}
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onChangePage={setPage}
+          />
 
         </div>
       )}
