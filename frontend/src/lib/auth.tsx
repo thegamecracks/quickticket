@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import type { User } from "../features/account/types";
 import axios from "axios";
 import { api } from "./api";
@@ -9,6 +9,9 @@ interface AuthContextType {
   mockLogin: (userData: User) => void;
   login: (redirPage: string) => void;
   logout: (redirPage: string) => void;
+  /** Refetches /profile/@me; call after actions that change the profile
+   *  (e.g. creating an organization) so membership-dependent UI updates. */
+  refreshUser: () => Promise<void>;
 }
 
 // https://react.dev/reference/react/createContext
@@ -19,8 +22,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // get user profile; only a 401 proves we're signed out. Any other failure
   // means "unknown", so we stay undefined rather than showing a Sign in button
   // that may be lying (backend down, timeout, proxy error, etc.).
-  useEffect(() => {
-    api.get<User>(`/profile/@me`)
+  const refreshUser = useCallback(() => {
+    return api
+      .get<User>(`/profile/@me`)
       .then((res) => {
         setUser(res.data);
       })
@@ -32,6 +36,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       });
   }, [])
+
+  useEffect(() => {
+    void refreshUser();
+  }, [refreshUser])
 
   const [user, setUser] = useState<User | null | undefined>(undefined)
 
@@ -52,7 +60,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // react 19, do not need .Provider anymore. Removed!
   return (
-    <AuthContext value={{ user, mockLogin, login, logout }
+    <AuthContext value={{ user, mockLogin, login, logout, refreshUser }
     }>
       {children}
     </AuthContext>
