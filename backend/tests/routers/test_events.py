@@ -24,7 +24,6 @@ from tests.dataset import Dataset
 
 EVENT_KEYS = frozenset(
     {
-        "banner",
         "created_at",
         "description",
         "display_name",
@@ -33,7 +32,6 @@ EVENT_KEYS = frozenset(
         "max_attendees",
         "starts_at",
         "category",
-        "thumbnail",
         "ticket_price",
         "tickets",
         "venue",
@@ -82,8 +80,6 @@ async def test_get_events(
                 "display_name": expected.display_name,
                 "description": expected.description,
                 "category": expected.category,
-                "thumbnail": None,
-                "banner": None,
                 "starts_at": isoformat(expected.starts_at),
                 "ends_at": isoformat(expected.ends_at),
                 "ticket_price": expected.ticket_price.model_dump(),
@@ -95,8 +91,6 @@ async def test_get_events(
                     "display_name": expected.venue.display_name,
                     "description": expected.venue.description,
                     "category": expected.venue.category,
-                    "thumbnail": None,
-                    "banner": None,
                     "location_name": expected.venue.location_name,
                     "location_coords": expected.venue.location_coords
                     and expected.venue.location_coords.model_dump(),
@@ -293,8 +287,6 @@ async def test_get_event(
     assert data["display_name"] == event.display_name
     assert data["description"] == event.description
     assert data["category"] == event.category
-    assert data["thumbnail"] is None
-    assert data["banner"] is None
     assert datetime.fromisoformat(data["starts_at"]) == event.starts_at
     assert datetime.fromisoformat(data["ends_at"]) == event.ends_at
     assert data["ticket_price"] == event.ticket_price.model_dump()
@@ -307,8 +299,6 @@ async def test_get_event(
         "display_name",
         "description",
         "category",
-        "thumbnail",
-        "banner",
         "location_name",
         "location_coords",
         "organization",
@@ -318,8 +308,6 @@ async def test_get_event(
     assert data["venue"]["display_name"] == venue.display_name
     assert data["venue"]["description"] == venue.description
     assert data["venue"]["category"] == venue.category
-    assert data["venue"]["thumbnail"] is None
-    assert data["venue"]["banner"] is None
     assert data["venue"]["location_name"] == venue.location_name
     assert data["venue"]["location_coords"] == venue.location_coords.model_dump()
 

@@ -194,14 +194,12 @@ ORGANIZATION_KEYS = frozenset({"created_at", "display_name", "id", "members", "v
 
 ORGANIZATION_VENUE_KEYS = frozenset(
     {
-        "banner",
         "category",
         "created_at",
         "description",
         "display_name",
         "events",
         "id",
-        "thumbnail",
     },
 )
 """The keys of a venue nested in an :class:`OrganizationRead`."""

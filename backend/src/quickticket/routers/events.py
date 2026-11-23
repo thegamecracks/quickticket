@@ -30,8 +30,6 @@ from quickticket.models import (
     OrganizationID,
     OrganizationMemberPermissions,
     Point,
-    StorageObject,
-    StorageObjectID,
     Ticket,
     TicketID,
     User,
@@ -68,18 +66,12 @@ class PartialOrganization(BaseModel):
     display_name: str
 
 
-class PartialStorageObject(BaseModel):
-    id: StorageObjectID
-
-
 class PartialVenue(BaseModel):
     id: VenueID
     created_at: AwareDatetime
     display_name: str
     description: str
     category: str
-    thumbnail: PartialStorageObject | None
-    banner: PartialStorageObject | None
     location_name: str
     location_coords: Point | None
 
@@ -92,8 +84,6 @@ class EventRead(BaseModel):
     display_name: str
     description: str
     category: str
-    thumbnail: PartialStorageObject | None
-    banner: PartialStorageObject | None
     starts_at: AwareDatetime
     ends_at: AwareDatetime
     ticket_price: Money
@@ -142,8 +132,6 @@ async def get_events(
         paged_query = paged_query.where(Event.created_at < page.next)
 
     paged_query = paged_query.options(
-        selectinload(Event.banner).load_only(StorageObject.id),
-        selectinload(Event.thumbnail).load_only(StorageObject.id),
         selectinload(Event.venue).load_only(
             Venue.id,
             Venue.created_at,
@@ -153,8 +141,6 @@ async def get_events(
             Venue.location_name,
             Venue.location_coords,
         ),
-        selectinload(Event.venue, Venue.banner).load_only(StorageObject.id),
-        selectinload(Event.venue, Venue.thumbnail).load_only(StorageObject.id),
         selectinload(Event.venue, Venue.organization),
         selectinload(
             # TODO: return all tickets if user has permission from organization

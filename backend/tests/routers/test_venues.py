@@ -65,8 +65,6 @@ async def test_get_venues(
             "display_name": venue.display_name,
             "description": venue.description,
             "category": venue.category,
-            "thumbnail": None,
-            "banner": None,
             "location_name": venue.location_name,
             "location_coords": venue.location_coords.model_dump()
             if venue.location_coords is not None
@@ -122,8 +120,6 @@ async def test_get_venue(
         "display_name": venue.display_name,
         "description": venue.description,
         "category": venue.category,
-        "thumbnail": None,
-        "banner": None,
         "location_name": venue.location_name,
         "location_coords": venue.location_coords.model_dump()
         if venue.location_coords is not None
@@ -144,8 +140,6 @@ async def test_get_venue(
             "display_name": expected.display_name,
             "description": expected.description,
             "category": expected.category,
-            "thumbnail": None,
-            "banner": None,
             "starts_at": isoformat(expected.starts_at),
             "ends_at": isoformat(expected.ends_at),
             "ticket_price": expected.ticket_price.model_dump(),
@@ -210,7 +204,7 @@ async def test_create_venue(
     data = response.json()
     assert response.headers.get_list("location") == [f"https://test/api/venues/{data['id']}"]
 
-    assert len(data) == 11
+    assert set(data) == VENUE_KEYS
     assert data["id"] is not None
     assert data["created_at"] is not None
     assert data["display_name"] == "Test Venue"
@@ -218,8 +212,6 @@ async def test_create_venue(
     assert data["category"] == "Sports"
     assert data["location_name"] == "Test Stadium"
     assert data["location_coords"] == {"lat": 48.8584, "lng": 2.2945}
-    assert data["thumbnail"] is None
-    assert data["banner"] is None
     assert data["events"] == []
     assert data["organization"]["id"] == str(organization.id)
     assert data["organization"]["display_name"] == "Test Organization"
@@ -489,7 +481,6 @@ async def test_create_venue_rejects_unknown_location_coords_field(client: AsyncC
 
 VENUE_KEYS = frozenset(
     {
-        "banner",
         "category",
         "created_at",
         "description",
@@ -499,7 +490,6 @@ VENUE_KEYS = frozenset(
         "location_coords",
         "location_name",
         "organization",
-        "thumbnail",
     },
 )
 """The keys served by :class:`quickticket.routers.venues.VenueRead`."""
@@ -549,8 +539,6 @@ async def test_edit_venue(
     # Fields absent from the payload keep their seeded values.
     assert venue.location_coords is not None
     assert data["location_coords"] == venue.location_coords.model_dump()
-    assert data["thumbnail"] is None
-    assert data["banner"] is None
     assert {event["id"] for event in data["events"]} == {str(event.id) for event in expected_events}
     assert all(event["tickets"] == [] for event in data["events"])
     assert data["organization"]["id"] == str(organization.id)

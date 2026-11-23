@@ -20,8 +20,6 @@ from quickticket.models import (
     OrganizationID,
     OrganizationMember,
     OrganizationMemberPermissions,
-    StorageObject,
-    StorageObjectID,
     Ticket,
     User,
     UserID,
@@ -75,18 +73,12 @@ async def get_organizations(
     return {"items": items, "next": next_key, "total": total}
 
 
-class PartialStorageObject(BaseModel):
-    id: StorageObjectID
-
-
 class PartialEvent(BaseModel):
     id: EventID
     created_at: AwareDatetime
     display_name: str
     description: str
     category: str
-    thumbnail: PartialStorageObject | None
-    banner: PartialStorageObject | None
     # starts_at: AwareDatetime
     # ends_at: AwareDatetime
     # ticket_price: Money
@@ -99,8 +91,6 @@ class PartialVenue(BaseModel):
     display_name: str
     description: str
     category: str
-    thumbnail: PartialStorageObject | None
-    banner: PartialStorageObject | None
     # location_name: str
     # location_coords: Point | None
 
@@ -144,14 +134,6 @@ def _create_options_for_get_organization(user: User | None) -> tuple[ORMOption, 
             Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
         )
         .load_only(Ticket.id),
-        selectinload(Organization.venues, Venue.banner).load_only(StorageObject.id),
-        selectinload(Organization.venues, Venue.thumbnail).load_only(StorageObject.id),
-        selectinload(Organization.venues, Venue.events, Event.banner).load_only(
-            StorageObject.id,
-        ),
-        selectinload(Organization.venues, Venue.events, Event.thumbnail).load_only(
-            StorageObject.id,
-        ),
         # Organization => OrganizationMembers
         selectinload(Organization.members).load_only(
             OrganizationMember.user_id,

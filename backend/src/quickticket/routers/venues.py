@@ -19,8 +19,6 @@ from quickticket.models import (
     OrganizationID,
     OrganizationMemberPermissions,
     Point,
-    StorageObject,
-    StorageObjectID,
     Ticket,
     TicketID,
     User,
@@ -57,18 +55,12 @@ class PartialOrganization(BaseModel):
     display_name: str
 
 
-class PartialStorageObject(BaseModel):
-    id: StorageObjectID
-
-
 class PartialVenue(BaseModel):
     id: VenueID
     created_at: AwareDatetime
     display_name: str
     description: str
     category: str
-    thumbnail: PartialStorageObject | None
-    banner: PartialStorageObject | None
     location_name: str
     location_coords: Point | None
 
@@ -100,8 +92,6 @@ async def get_venues(
         paged_query = paged_query.where(Venue.created_at < page.next)
 
     paged_query = paged_query.options(
-        selectinload(Venue.banner).load_only(StorageObject.id),
-        selectinload(Venue.thumbnail).load_only(StorageObject.id),
         # Venue => Events => Tickets
         selectinload(Venue.events)
         .load_only(Event.id)
@@ -129,8 +119,6 @@ class VenueReadEvent(BaseModel):
     display_name: str
     description: str
     category: str
-    thumbnail: PartialStorageObject | None
-    banner: PartialStorageObject | None
     starts_at: AwareDatetime
     ends_at: AwareDatetime
     ticket_price: Money
@@ -145,8 +133,6 @@ class VenueRead(BaseModel):
     display_name: str
     description: str
     category: str
-    thumbnail: PartialStorageObject | None
-    banner: PartialStorageObject | None
     location_name: str
     location_coords: Point | None
 
@@ -156,8 +142,6 @@ class VenueRead(BaseModel):
 
 def _create_options_for_get_venue(user: User | None) -> tuple[ORMOption, ...]:
     return (
-        selectinload(Venue.banner).load_only(StorageObject.id),
-        selectinload(Venue.thumbnail).load_only(StorageObject.id),
         # Venue => Events => Tickets
         selectinload(Venue.events)
         .selectinload(
