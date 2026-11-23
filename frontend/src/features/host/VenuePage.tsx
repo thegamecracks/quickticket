@@ -62,7 +62,7 @@ export default function VenuePage() {
 
                 <ul className="list">
                   {venue.events.map((event: VenueEventResponse) =>
-                    <EventListItem event={event} />
+                    <EventListItem key={event.id} event={event} />
                   )}
                 </ul>
               </div>
