@@ -10,7 +10,8 @@ export default defineConfig({
       target: 'src/api/quickticket.ts',
       schemas: 'src/api/model',
       client: 'react-query',
-      mock: true,
+      // https://orval.dev/docs/reference/configuration/output#mock
+      // mock: true,
       // formatter: 'biome',
       // https://orval.dev/docs/guides/custom-axios/
       httpClient: 'axios',
