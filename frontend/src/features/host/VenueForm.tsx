@@ -457,7 +457,7 @@ export function VenueForm({
         <div role="alert" className="alert alert-error">
           Only an administrator of this venue's organization can edit it.
         </div>
-      ) : !isEdit && adminMemberships.length === 0 ? (
+      ) : !isEdit && !fixedOrganizationId && adminMemberships.length === 0 ? (
         <div role="alert" className="alert alert-error">
           You must be an administrator of an organization to create a venue.
         </div>

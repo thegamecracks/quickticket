@@ -55,7 +55,7 @@ export function OrganizationForm({
 }) {
   const isEdit = Boolean(organizationId)
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
 
   const [organization, setOrganization] = useState<OrganizationResponse | null>(null)
   const [form, setForm] = useState<OrganizationFormState>(emptyForm)
@@ -154,6 +154,11 @@ export function OrganizationForm({
         const response = await api.post<OrganizationResponse>('/organizations', {
           display_name: formState.displayName,
         })
+
+        // The created membership only exists on the backend; refetch the
+        // profile so membership-dependent UI (wizard gates, My Organization)
+        // sees it without a page reload.
+        await refreshUser()
 
         if (onCreated) {
           onCreated(response.data)
