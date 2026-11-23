@@ -29,6 +29,7 @@ export default defineConfig({
         // https://orval.dev/docs/reference/configuration/output#type-generation-options
         useDates: true,
         useBigInt: true,
+        useBrandedTypes: true, // NewType
       },
     },
     input: {
