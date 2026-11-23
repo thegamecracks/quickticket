@@ -105,21 +105,14 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.security.allowed_hosts)
 
     csrf_secret = settings.security.csrf_secret.get_secret_value()
-    if csrf_secret is not None:
-        if csrf_secret.startswith("insecure"):
-            log.warning("csrf_secret not set, using insecure hardcoded value")
-        app.add_middleware(
-            CSRFMiddleware,
-            secret=csrf_secret,
-            exempt_urls=[
-                # Already mitigated by state parameter
-                re.compile(r"^/api/auth/login"),
-                # https://safeguard.sh/resources/blog/asvs-5-v10-6-2-forced-logout-protection
-                # TODO: nusiance, but needs to be mitigated with confirmation page.
-                # (remove id_token_hint= to let provider confirm)
-                re.compile(r"^/api/auth/logout"),
-            ],
-        )
+    csrf_exempt_urls = [
+        # Already mitigated by state parameter
+        re.compile(r"^/api/auth/login"),
+        # https://safeguard.sh/resources/blog/asvs-5-v10-6-2-forced-logout-protection
+        # TODO: nusiance, but needs to be mitigated with confirmation page.
+        # (remove id_token_hint= to let provider confirm)
+        re.compile(r"^/api/auth/logout"),
+    ]
 
     if settings.log.profiling:
         add_profiling_middleware(app)
@@ -142,6 +135,19 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
         cookie_secure=True,
         excluded_cookies=["csrftoken"],
     )
+
+    # CSRF runs OUTERMOST (added last; the stack is LIFO). SecureCookies rewrites
+    # the incoming Cookie header and drops every cookie it does not process —
+    # including excluded ones like csrftoken — so this check must read the request
+    # cookies before that rewrite, or double-submit always fails with 403.
+    if csrf_secret is not None:
+        if csrf_secret.startswith("insecure"):
+            log.warning("csrf_secret not set, using insecure hardcoded value")
+        app.add_middleware(
+            CSRFMiddleware,
+            secret=csrf_secret,
+            exempt_urls=csrf_exempt_urls,
+        )
 
     app.add_exception_handler(DecompressionBombError, handle_decompression_bomb)  # ty: ignore[invalid-argument-type]
     app.add_exception_handler(EntityNotFound, handle_entity_not_found)  # ty: ignore[invalid-argument-type]
