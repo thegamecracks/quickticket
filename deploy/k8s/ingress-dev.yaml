@@ -1,4 +1,4 @@
-# Traefik TCP IngressRoutes — DEV postgres/redis exposed on entryPoint outbound (:2459, traefik-external). TLS terminates at traefik with aerosol-tls.
+# Traefik TCP IngressRoutes — DEV postgres/redis/garage exposed on entryPoint outbound (:2459, traefik-external). TLS terminates at traefik with aerosol-tls.
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRouteTCP
@@ -38,6 +38,26 @@ spec:
   tls:
     secretName: aerosol-tls
 ---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: quickticket-garage-dev
+  namespace: quickticket
+  annotations:
+    kubernetes.io/ingress.class: traefik-external
+spec:
+  entryPoints:
+    - outbound
+  routes:
+    - match: HostSNI(`garage-dev-qt.aerosol.dev`)
+      services:
+        - name: quickticket-garage-dev
+          port: 3900
+  tls:
+    secretName: aerosol-tls
+    options:
+      name: s3-http1
+---
 # Advertise the postgres ALPN protocol so libpq handshakes succeed through traefik TLS termination.
 apiVersion: traefik.io/v1alpha1
 kind: TLSOption
@@ -48,4 +68,18 @@ spec:
   alpnProtocols:
     - postgresql
     - h2
+    - http/1.1
+---
+# Advertise ONLY http/1.1 for Garage S3: traefik's TCP routes are raw TCP after
+# TLS termination, and its default ALPN offers h2 — an h2 client (curl, obstore)
+# then speaks HTTP/2 to a Garage S3 endpoint that only understands HTTP/1.1 and
+# dies with an HTTP2 framing error. Restricting the advertisement pins every
+# client to http/1.1, which is the protocol real S3 endpoints speak.
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: s3-http1
+  namespace: quickticket
+spec:
+  alpnProtocols:
     - http/1.1

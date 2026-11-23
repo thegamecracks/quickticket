@@ -204,18 +204,7 @@ async def create_organization(
     response: Response,
 ) -> Organization:
     """Create a new organization."""
-
-    owns_organization = await session.scalar(
-        select(
-            exists().where(
-                OrganizationMember.user_id == user.id,
-                OrganizationMember.permissions.bitwise_and(
-                    OrganizationMemberPermissions.OWNER,
-                ),
-            ),
-        ),
-    )
-    if owns_organization:
+    if await _owns_organization(session, user):
         raise HTTPException(400, "Already owns an organization")
 
     created = Organization(
@@ -236,6 +225,17 @@ async def create_organization(
         request.url_for("get_organization", organization_id=created.id),
     )
     return created
+
+
+async def _owns_organization(session: AsyncSessionDep, user: RequiredUserDep) -> bool:
+    perms = OrganizationMemberPermissions.OWNER
+    matches_user = OrganizationMember.user_id == user.id
+    has_perms = OrganizationMember.permissions.bitwise_and(perms) == perms
+    query = select(exists().where(matches_user, has_perms))
+
+    result = await session.scalar(query)
+    assert result is not None
+    return result
 
 
 @router.patch("/{organization_id}", response_model=OrganizationRead)

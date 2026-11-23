@@ -33,10 +33,11 @@ async def get_object_store(settings: SettingsDep, state: StateDep) -> Store:
 
     # https://developmentseed.org/obstore/latest/api/store/#obstore.store.from_url
     allow_http = False
-    if url.scheme in ("s3+http", "s3+https"):
-        endpoint = url.replace(scheme=url.scheme.lstrip("s3+"))
-        url = url.replace(scheme="s3")
+    if url.scheme in ("s3+http", "s3+https"):  # s3+https://host:port/bucket
+        endpoint, bucket = _split_endpoint_from_bucket(url)
+        url = URL(scheme="s3", hostname=bucket)
         allow_http = endpoint.scheme == "http"
+
         config: S3Config = {
             "access_key_id": settings.s3.access_key.get_secret_value(),
             "endpoint": str(endpoint),
@@ -69,6 +70,13 @@ async def get_object_store(settings: SettingsDep, state: StateDep) -> Store:
 
     log.info("Initialized %s", type(store).__name__)
     return store
+
+
+def _split_endpoint_from_bucket(url: URL) -> tuple[URL, str]:
+    scheme = url.scheme.lstrip("s3+")
+    bucket = url.path.lstrip("/")
+    endpoint = url.replace(scheme=scheme, path="")
+    return endpoint, bucket
 
 
 ObjectStoreDep = Annotated[Store, Depends(get_object_store)]
