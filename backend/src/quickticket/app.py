@@ -122,7 +122,8 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
     app.add_middleware(BaseHTTPMiddleware, dispatch=preserve_headers)
 
     # https://securecookies.thearchitector.dev/securecookies.html
-    # Cookie encryption must be outermost middleware, after other middlewares add their cookies
+    # Cookie encryption should generally be the outermost middleware.
+    # Any cookie middleware below this will not receive encryption.
     cookie_secrets = [s.get_secret_value() for s in settings.security.cookie_encryption_secrets]
     if cookie_secrets and cookie_secrets[0] == "Qfw1bmzNtFba8qLxYZzxtEDfgd4P58LCDKiuMezO6lU=":
         log.warning("cookie_encryption_secrets not set, using insecure hardcoded value")
@@ -135,10 +136,14 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
         excluded_cookies=["csrftoken"],
     )
 
-    # CSRF runs OUTERMOST (added last; the stack is LIFO). SecureCookies rewrites
-    # the incoming Cookie header and drops every cookie it does not process —
-    # including excluded ones like csrftoken — so this check must read the request
-    # cookies before that rewrite, or double-submit always fails with 403.
+    # Normally SecureCSRFMiddleware would be placed above SecureCookiesMiddleware.
+    # However, there are two independent bugs with this library:
+    #
+    # 1. excluded_cookies=[] (and included_cookies=[]) drops cookies instead of passing-through.
+    # 2. cookie_httponly=True prevents the frontend from submitting the x-csrftoken header.
+    #
+    # Having either flag will break (Secure)CSRFMiddleware. As such, we must put this outside
+    # encryption. This is an acceptable risk, since CSRF tokens are already signed.
     csrf_secret = settings.security.csrf_secret.get_secret_value()
     if csrf_secret is not None:
         if csrf_secret.startswith("insecure"):
