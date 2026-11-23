@@ -57,7 +57,6 @@ async def test_get_venues(
         assert {EventID(UUID(event["id"])) for event in item_events} == {
             event.id for event in events[venue.id]
         }
-        assert all(event["tickets"] == [] for event in item_events)
 
         assert item == {
             "id": str(venue.id),
@@ -144,7 +143,6 @@ async def test_get_venue(
             "ends_at": isoformat(expected.ends_at),
             "ticket_price": expected.ticket_price.model_dump(),
             "max_attendees": expected.max_attendees,
-            "tickets": [],
         }
 
 
@@ -614,7 +612,6 @@ async def test_edit_venue(
     assert venue.location_coords is not None
     assert data["location_coords"] == venue.location_coords.model_dump()
     assert {event["id"] for event in data["events"]} == {str(event.id) for event in expected_events}
-    assert all(event["tickets"] == [] for event in data["events"])
     assert data["organization"]["id"] == str(organization.id)
 
     fetched = await client.get(f"/api/venues/{venue.id}")
