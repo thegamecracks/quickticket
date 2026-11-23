@@ -197,7 +197,8 @@ export default function EventForm({
 
       // Images attach after the event exists. Failures never re-submit the
       // event itself (create succeeded — a retry would duplicate it); the
-      // user can re-upload from the edit page instead.
+      // destination page tells the user what to do instead.
+      const uploadFailed: string[] = []
       for (const [kind, file] of [
         ['thumbnail', thumbnailFile] as const,
         ['banner', bannerFile] as const,
@@ -207,10 +208,13 @@ export default function EventForm({
           await uploadImage(response.data.id, kind, file)
         } catch (err) {
           console.warn(`${kind} upload failed (event was saved)`, err)
+          uploadFailed.push(kind)
         }
       }
 
-      navigate(`/events/${response.data.id}`)
+      navigate(`/events/${response.data.id}`, {
+        state: uploadFailed.length ? { uploadFailed } : null,
+      })
     } catch (err) {
       setIsError(true)
       if (axios.isAxiosError(err)) {
