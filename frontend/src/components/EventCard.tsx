@@ -1,14 +1,17 @@
 import type { EventResponse } from "../features/events/types"
 import { getMockTicketCount } from "../lib/mocks"
+import { thumbnailUrl } from "../lib/images"
 import SkeletonImage from "./SkeletonImage"
 import { calcTimeMediumRange, formatDateLong } from "../lib/general"
-import { useNavigate } from "react-router"
+import { Link, useNavigate } from "react-router"
 
-type EventCardProps = {
+ type EventCardProps = {
   event: EventResponse
+  /** When set (e.g. on the organizer's own listings), shows an Edit link. */
+  editHref?: string
 }
 
-export default function EventCard({ event }: EventCardProps) {
+export default function EventCard({ event, editHref }: EventCardProps) {
   const navigate = useNavigate();
 
   const handleViewEvent = () => {
@@ -20,9 +23,8 @@ export default function EventCard({ event }: EventCardProps) {
 
       {/* Event image */}
       <figure>
-        {/* TODO: resolve StorageObjectRef -> image URL once backend serves storage */}
         <SkeletonImage
-          src={event.thumbnail ? `/storage/${event.thumbnail.id}` : 'https://placehold.co/800x450/272c35/ffffff?text=QuickTicket+Event'}
+          src={event.thumbnail ? thumbnailUrl('events', event.id) : 'https://placehold.co/800x450/272c35/ffffff?text=QuickTicket+Event'}
           alt={event.display_name}
           className="h-48 w-full object-cover"
         />
@@ -56,6 +58,11 @@ export default function EventCard({ event }: EventCardProps) {
             )}
           </div>
           <div className="card-actions justify-end">
+            {editHref && (
+              <Link to={editHref} className="btn btn-outline btn-primary">
+                Edit
+              </Link>
+            )}
             <button className="btn btn-primary" onClick={() => handleViewEvent()}>View Event</button>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { useState, useEffect } from 'react'
 import type { EventResponse } from './types'
 import { formatDateLong, calcTimeMediumRange } from '../../lib/general'
@@ -7,6 +7,7 @@ import { api } from '../../lib/api'
 import PageLayout from '../../components/PageLayout'
 import Markdown from '../../components/Markdown'
 import SkeletonImage from '../../components/SkeletonImage'
+import { bannerUrl, thumbnailUrl } from '../../lib/images'
 import { SkeletonText } from '../../components/Skeleton'
 
 import GoogleMap from '../../components/GoogleMap'
@@ -15,6 +16,12 @@ export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>()
   const [event, setEvent] = useState<EventResponse | undefined>(undefined)
   const navigate = useNavigate();
+  const location = useLocation()
+  const [noticeVisible, setNoticeVisible] = useState(true)
+  // Set by EventForm when the event saved but an image upload failed.
+  const uploadFailed = (
+    location.state as { uploadFailed?: string[] } | null
+  )?.uploadFailed
 
   useEffect(() => {
     const getEvent = async (): Promise<void> => {
@@ -38,11 +45,40 @@ export default function EventDetailPage() {
 
     >
       {!event && <SkeletonText lines={6} />}
+      {uploadFailed?.length ? (
+        noticeVisible && (
+          <div
+            role="status"
+            className="mt-2 alert alert-info alert-vertical sm:alert-horizontal"
+          >
+            <span>
+              The event was saved, but the{' '}
+              {uploadFailed.join(' and ')} failed to upload. Re-upload
+              {uploadFailed.length > 1 ? ' them' : ' it'} from{' '}
+              <Link to="/myEvents" className="link">
+                My Events
+              </Link>
+              .
+            </span>
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={() => setNoticeVisible(false)}
+            >
+              Dismiss
+            </button>
+          </div>
+        )
+      ) : null}
       {event && (
         <div className="mt-2">
           <figure>
             <SkeletonImage
-              src={event.thumbnail ? `/storage/${event.thumbnail.id}` : 'https://placehold.co/800x450/272c35/ffffff?text=QuickTicket+Event'}
+              src={event.banner
+                ? bannerUrl('events', event.id)
+                : event.thumbnail
+                  ? thumbnailUrl('events', event.id)
+                  : 'https://placehold.co/800x450/272c35/ffffff?text=QuickTicket+Event'}
               alt={event.display_name}
               className="h-48 w-full object-cover"
             />

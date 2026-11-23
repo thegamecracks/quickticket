@@ -46,6 +46,15 @@ __all__ = (
     "create_app_from_settings",
 )
 
+_CSRF_EXMEMPT_URLS = [
+    # Already mitigated by state parameter
+    re.compile(r"^/api/auth/login"),
+    # https://safeguard.sh/resources/blog/asvs-5-v10-6-2-forced-logout-protection
+    # TODO: nusiance, but needs to be mitigated with confirmation page.
+    # (remove id_token_hint= to let provider confirm)
+    re.compile(r"^/api/auth/logout"),
+]
+
 log = logging.getLogger(__name__)
 
 
@@ -104,23 +113,6 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
     app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=settings.security.trusted_proxies)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.security.allowed_hosts)
 
-    csrf_secret = settings.security.csrf_secret.get_secret_value()
-    if csrf_secret is not None:
-        if csrf_secret.startswith("insecure"):
-            log.warning("csrf_secret not set, using insecure hardcoded value")
-        app.add_middleware(
-            CSRFMiddleware,
-            secret=csrf_secret,
-            exempt_urls=[
-                # Already mitigated by state parameter
-                re.compile(r"^/api/auth/login"),
-                # https://safeguard.sh/resources/blog/asvs-5-v10-6-2-forced-logout-protection
-                # TODO: nusiance, but needs to be mitigated with confirmation page.
-                # (remove id_token_hint= to let provider confirm)
-                re.compile(r"^/api/auth/logout"),
-            ],
-        )
-
     if settings.log.profiling:
         add_profiling_middleware(app)
 
@@ -130,7 +122,8 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
     app.add_middleware(BaseHTTPMiddleware, dispatch=preserve_headers)
 
     # https://securecookies.thearchitector.dev/securecookies.html
-    # Cookie encryption must be outermost middleware, after other middlewares add their cookies
+    # Cookie encryption should generally be the outermost middleware.
+    # Any cookie middleware below this will not receive encryption.
     cookie_secrets = [s.get_secret_value() for s in settings.security.cookie_encryption_secrets]
     if cookie_secrets and cookie_secrets[0] == "Qfw1bmzNtFba8qLxYZzxtEDfgd4P58LCDKiuMezO6lU=":
         log.warning("cookie_encryption_secrets not set, using insecure hardcoded value")
@@ -142,6 +135,20 @@ def create_app_from_settings(settings: Settings) -> FastAPI:
         cookie_secure=True,
         excluded_cookies=["csrftoken"],
     )
+
+    # Normally SecureCSRFMiddleware would be placed above SecureCookiesMiddleware.
+    # However, there are two independent bugs with this library:
+    #
+    # 1. excluded_cookies=[] (and included_cookies=[]) drops cookies instead of passing-through.
+    # 2. cookie_httponly=True prevents the frontend from submitting the x-csrftoken header.
+    #
+    # Having either flag will break (Secure)CSRFMiddleware. As such, we must put this outside
+    # encryption. This is an acceptable risk, since CSRF tokens are already signed.
+    csrf_secret = settings.security.csrf_secret.get_secret_value()
+    if csrf_secret is not None:
+        if csrf_secret.startswith("insecure"):
+            log.warning("csrf_secret not set, using insecure hardcoded value")
+        app.add_middleware(CSRFMiddleware, secret=csrf_secret, exempt_urls=_CSRF_EXMEMPT_URLS)
 
     app.add_exception_handler(DecompressionBombError, handle_decompression_bomb)  # ty: ignore[invalid-argument-type]
     app.add_exception_handler(EntityNotFound, handle_entity_not_found)  # ty: ignore[invalid-argument-type]
