@@ -4,9 +4,6 @@ Python 3.14 + FastAPI JSON API in `src/quickticket/`, tooled with `uv`.
 
 ## Verify before you finish
 
-All four must pass. `check --fix` and `format` rewrite files, so run the set
-twice: the second run must report no fixes and no formatting changes.
-
 ```sh
 uv run ruff check --fix        # lints
 uv run ruff format             # style
