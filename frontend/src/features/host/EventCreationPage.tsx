@@ -723,7 +723,7 @@ function EventForm({ venue }: { venue: OrganizationVenue }) {
       )}
 
       {/* Buttons */}
-      <div className="flex justify-end gap-3 border-t border-base-300 pt-5">
+      <div className="flex justify-end gap-3">
         <button
           type="button"
           className="btn btn-ghost"

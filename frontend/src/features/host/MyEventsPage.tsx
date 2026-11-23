@@ -124,7 +124,13 @@ export default function MyEventsPage() {
       {user && orgId === undefined && (
         <div className="rounded-xl border border-base-300 bg-base-200 p-8 text-center">
           <p className="text-base-content/70">
-            Create an organization to start hosting events.
+            <Link
+              to="/createEvent"
+              className="btn btn-link btn-sm align-baseline px-1"
+            >
+              Create an organization
+            </Link>{' '}
+            to start hosting events.
           </p>
         </div>
       )}

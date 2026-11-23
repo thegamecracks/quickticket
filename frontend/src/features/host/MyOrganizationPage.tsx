@@ -80,7 +80,8 @@ export default function MyOrganizationPage() {
           </h2>
 
           <p className="mt-2 text-base-content/70">
-            You haven't created an organization yet.
+            You haven't created an organization yet. You can create an
+            organization by attempting to create an event.
           </p>
 
           {/* Organization creation happens inside the create-event flow

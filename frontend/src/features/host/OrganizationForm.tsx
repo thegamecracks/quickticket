@@ -248,7 +248,7 @@ export function OrganizationForm({
             )}
 
             {/* FORM ACTIONS */}
-            <div className="flex flex-wrap justify-end gap-3 border-t border-base-300 pt-5">
+            <div className="flex flex-wrap justify-end gap-3">
               {isEdit ? (
                 <button
                   type="button"
