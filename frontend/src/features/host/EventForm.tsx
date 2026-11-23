@@ -67,6 +67,10 @@ export default function EventForm({
   const [maxAttendees, setMaxAttendees] = useState('')
   const [thumbnailUrl, setThumbnailUrl] = useState('')
   const [bannerUrl, setBannerUrl] = useState('')
+  // Set only when the user picks a new image: in edit mode this doubles as
+  // the dirty flag (loaded previews leave it null, so saves don't re-upload).
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
+  const [bannerFile, setBannerFile] = useState<File | null>(null)
   const [message, setMessage] = useState('')
   const [isError, setIsError] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -117,13 +121,25 @@ export default function EventForm({
   const readImage = (
     e: ChangeEvent<HTMLInputElement>,
     setUrl: (url: string) => void,
+    setFile: (file: File | null) => void,
   ) => {
     const file = e.target.files?.[0]
     if (!file) return
 
+    setFile(file)
     const reader = new FileReader()
     reader.onload = () => setUrl(reader.result as string)
     reader.readAsDataURL(file)
+  }
+
+  /** Associates a picked image with an event via its banner/thumbnail routes.
+   * Uploads happen after the event exists — EventCreate/EventUpdate don't
+   * accept image fields. Client-side dimension/filesize checks are deferred
+   * until the backend's image hardening lands; the API rejects bad files. */
+  const uploadImage = (eventId: string, kind: 'thumbnail' | 'banner', file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+    return api.putForm(`/events/${eventId}/${kind}`, form)
   }
 
   const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
@@ -177,6 +193,22 @@ export default function EventForm({
       const response = isEdit
         ? await api.patch<EventResponse>(`/events/${eventId}`, payload)
         : await api.post<EventResponse>('/events', { ...payload, venue_id: venue?.id })
+
+      // Images attach after the event exists. Failures never re-submit the
+      // event itself (create succeeded — a retry would duplicate it); the
+      // user can re-upload from the edit page instead.
+      for (const [kind, file] of [
+        ['thumbnail', thumbnailFile] as const,
+        ['banner', bannerFile] as const,
+      ]) {
+        if (!file) continue
+        try {
+          await uploadImage(response.data.id, kind, file)
+        } catch (err) {
+          console.warn(`${kind} upload failed (event was saved)`, err)
+        }
+      }
+
       navigate(`/events/${response.data.id}`)
     } catch (err) {
       setIsError(true)
@@ -482,7 +514,7 @@ export default function EventForm({
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(e) => readImage(e, setThumbnailUrl)}
+                onChange={(e) => readImage(e, setThumbnailUrl, setThumbnailFile)}
               />
 
               <button
@@ -524,7 +556,7 @@ export default function EventForm({
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(e) => readImage(e, setBannerUrl)}
+                onChange={(e) => readImage(e, setBannerUrl, setBannerFile)}
               />
 
               <button
