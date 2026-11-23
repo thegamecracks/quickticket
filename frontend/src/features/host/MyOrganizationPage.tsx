@@ -83,11 +83,10 @@ export default function MyOrganizationPage() {
             You haven't created an organization yet.
           </p>
 
-          {/* TODO: a later PR wires the creation flow (creating an event with
-              no organization pops this form, then the venue form, then the
-              event form). Until then, offer a direct link. */}
-          <Link to="/createOrganization" className="btn btn-primary mt-5">
-            Create Your Organization
+          {/* Organization creation happens inside the create-event flow
+              now: it is that flow's first step. */}
+          <Link to="/createEvent" className="btn btn-primary mt-5">
+            Create an Event
           </Link>
         </div>
       )}
