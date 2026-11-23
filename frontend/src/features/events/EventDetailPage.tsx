@@ -7,7 +7,7 @@ import { api } from '../../lib/api'
 import PageLayout from '../../components/PageLayout'
 import Markdown from '../../components/Markdown'
 import SkeletonImage from '../../components/SkeletonImage'
-import { bannerUrl, thumbnailUrl } from '../../lib/images'
+import { EVENT_PLACEHOLDER, bannerUrl, thumbnailUrl } from '../../lib/images'
 import { SkeletonText } from '../../components/Skeleton'
 
 import GoogleMap from '../../components/GoogleMap'
@@ -74,11 +74,12 @@ export default function EventDetailPage() {
         <div className="mt-2">
           <figure>
             <SkeletonImage
-              src={event.banner
-                ? bannerUrl('events', event.id)
-                : event.thumbnail
-                  ? thumbnailUrl('events', event.id)
-                  : 'https://placehold.co/800x450/272c35/ffffff?text=QuickTicket+Event'}
+              key={event.id}
+              sources={[
+                bannerUrl('events', event.id),
+                thumbnailUrl('events', event.id),
+                EVENT_PLACEHOLDER,
+              ]}
               alt={event.display_name}
               className="h-48 w-full object-cover"
             />

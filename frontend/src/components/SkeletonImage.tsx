@@ -1,26 +1,32 @@
 import { useState } from 'react'
-import type { StorageObjectRef } from '../features/events/types'
 
 type SkeletonImageProps = {
-  src: StorageObjectRef | string
+  /**
+   * Ordered candidate sources. On load-error the next source is tried; the
+   * last entry is the final fallback (typically a placeholder URL). Add a
+   * `key` when the same component instance can switch entities.
+   */
+  sources: string[]
   alt: string
   className?: string
 }
 
-export default function SkeletonImage({ src, alt, className }: SkeletonImageProps) {
-  const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
+export default function SkeletonImage({ sources, alt, className }: SkeletonImageProps) {
+  const [index, setIndex] = useState(0)
+  const [loaded, setLoaded] = useState(false)
+  const src = sources[Math.min(index, sources.length - 1)]
 
   return (
     <div className={`relative ${className}`}>
-      {status === 'loading' && (
+      {!loaded && (
         <div className="skeleton absolute inset-0 h-full w-full" />
       )}
       <img
-        src={src.toString()}
+        src={src}
         alt={alt}
-        onLoad={() => setStatus('loaded')}
-        onError={() => setStatus('error')}
-        className={`${className} ${status === 'loaded' ? 'opacity-100' :
+        onLoad={() => setLoaded(true)}
+        onError={() => setIndex(i => Math.min(i + 1, sources.length - 1))}
+        className={`${className} ${loaded ? 'opacity-100' :
           'opacity-0'} transition-opacity`}
       />
     </div>

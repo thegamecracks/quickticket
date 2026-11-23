@@ -9,7 +9,7 @@ import EventListItem from '../../components/EventListItem'
 import Markdown from '../../components/Markdown'
 import { SkeletonText } from '../../components/Skeleton'
 import SkeletonImage from '../../components/SkeletonImage'
-import { bannerUrl, thumbnailUrl } from '../../lib/images'
+import { VENUE_PLACEHOLDER, bannerUrl, thumbnailUrl } from '../../lib/images'
 
 export default function VenuePage() {
   const { id } = useParams<{ id: string }>()
@@ -36,11 +36,12 @@ export default function VenuePage() {
         <div>
           <figure className="mb-4">
             <SkeletonImage
-              src={venue.banner
-                ? bannerUrl('venues', venue.id)
-                : venue.thumbnail
-                  ? thumbnailUrl('venues', venue.id)
-                  : 'https://placehold.co/800x450/272c35/ffffff?text=QuickTicket+Venue'}
+              key={venue.id}
+              sources={[
+                bannerUrl('venues', venue.id),
+                thumbnailUrl('venues', venue.id),
+                VENUE_PLACEHOLDER,
+              ]}
               alt={venue.display_name}
               className="h-48 w-full rounded-xl object-cover"
             />
