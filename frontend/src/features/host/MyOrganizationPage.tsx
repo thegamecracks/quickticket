@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router'
 
 import PageLayout from '../../components/PageLayout'
 import SkeletonImage from '../../components/SkeletonImage'
+import { thumbnailUrl } from '../../lib/images'
 import { api } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import { isAdministrator } from '../account/types'
@@ -124,7 +125,7 @@ export default function MyOrganizationPage() {
                     <figure className="h-20 w-32 shrink-0 max-sm:row-span-2 max-sm:self-center overflow-hidden rounded-lg bg-base-300">
                       <SkeletonImage
                         src={venue.thumbnail
-                          ? `/storage/${venue.thumbnail.id}`
+                          ? thumbnailUrl('venues', venue.id)
                           : 'https://placehold.co/800x450/272c35/ffffff?text=QuickTicket+Event'}
                         alt={venue.display_name}
                         className="h-full w-full object-cover"
@@ -173,7 +174,7 @@ export default function MyOrganizationPage() {
                     <figure className="h-20 w-32 shrink-0 max-sm:row-span-2 max-sm:self-center overflow-hidden rounded-lg bg-base-300">
                       <SkeletonImage
                         src={event.thumbnail
-                          ? `/storage/${event.thumbnail.id}`
+                          ? thumbnailUrl('events', event.id)
                           : 'https://placehold.co/800x450/272c35/ffffff?text=QuickTicket+Event'}
                         alt={event.display_name}
                         className="h-full w-full object-cover"

@@ -1,5 +1,6 @@
 import type { EventResponse } from "../features/events/types"
 import { getMockTicketCount } from "../lib/mocks"
+import { thumbnailUrl } from "../lib/images"
 import SkeletonImage from "./SkeletonImage"
 import { calcTimeMediumRange, formatDateLong } from "../lib/general"
 import { Link, useNavigate } from "react-router"
@@ -22,9 +23,8 @@ export default function EventCard({ event, editHref }: EventCardProps) {
 
       {/* Event image */}
       <figure>
-        {/* TODO: resolve StorageObjectRef -> image URL once backend serves storage */}
         <SkeletonImage
-          src={event.thumbnail ? `/storage/${event.thumbnail.id}` : 'https://placehold.co/800x450/272c35/ffffff?text=QuickTicket+Event'}
+          src={event.thumbnail ? thumbnailUrl('events', event.id) : 'https://placehold.co/800x450/272c35/ffffff?text=QuickTicket+Event'}
           alt={event.display_name}
           className="h-48 w-full object-cover"
         />

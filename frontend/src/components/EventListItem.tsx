@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router";
 import type { VenueEventResponse } from "../features/events/types";
 import { calcTimeMediumRange, formatDateLong } from "../lib/general";
+import { thumbnailUrl } from "../lib/images";
 import SkeletonImage from "./SkeletonImage";
 
 
@@ -19,7 +20,7 @@ export default function EventListItem({ event }: EventListItemProps) {
     <li className="list-row items-center gap-4">
       <figure className="h-20 w-32 shrink-0 overflow-hidden rounded-lg bg-base-300">
         <SkeletonImage
-          src={event.thumbnail ? `/storage/${event.thumbnail.id}` : 'https://placehold.co/800x450/272c35/ffffff?text=QuickTicket+Event'}
+          src={event.thumbnail ? thumbnailUrl('events', event.id) : 'https://placehold.co/800x450/272c35/ffffff?text=QuickTicket+Event'}
           alt={event.display_name}
           className="h-full w-full object-cover"
         />

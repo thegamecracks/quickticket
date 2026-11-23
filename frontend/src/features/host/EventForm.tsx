@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 
 import { SkeletonRows } from '../../components/Skeleton'
 import { api } from '../../lib/api'
+import { bannerUrl as eventBannerUrl, thumbnailUrl as eventThumbnailUrl } from '../../lib/images'
 import axios from 'axios'
 import type { EventResponse } from '../events/types'
 
@@ -100,8 +101,8 @@ export default function EventForm({
         setTicketPrice((event.ticket_price.amount / 100).toFixed(2))
         setIsFree(event.ticket_price.amount === 0)
         setMaxAttendees(String(event.max_attendees))
-        if (event.thumbnail) setThumbnailUrl(`/storage/${event.thumbnail.id}`)
-        if (event.banner) setBannerUrl(`/storage/${event.banner.id}`)
+        if (event.thumbnail) setThumbnailUrl(eventThumbnailUrl('events', event.id))
+        if (event.banner) setBannerUrl(eventBannerUrl('events', event.id))
       })
       .catch(() => {
         if (active) setLoadError(true)
