@@ -5,6 +5,7 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import PageLayout from '../../components/PageLayout'
 import EventCard from '../../components/EventCard'
 import EventCardSkeleton from '../../components/EventCardSkeleton'
+import { SkeletonRows } from '../../components/Skeleton'
 import { Pagination, safePage } from '../../components/Pagination'
 
 import { useAuth } from '../../lib/auth'
@@ -113,29 +114,23 @@ export default function MyEventsPage() {
 
       {/* Authentication loading state */}
       {user === undefined && (
-        <p className="text-base-content/70">
-          Checking your account...
-        </p>
+        <SkeletonRows rows={3} />
       )}
 
-      {/* Sign-in required */}
-      {user === null && (
-        <div className="rounded-lg bg-base-200 p-6">
-          <h2 className="text-lg font-semibold">
-            Sign In Required
-          </h2>
-
-          <p className="mt-2 text-base-content/70">
-            Please sign in to view your organized events.
-          </p>
-        </div>
-      )}
+      {/* No sign-in gate: a signed-out visitor uses the navbar's Sign in
+          button. */}
 
       {/* TODO: redirect user to the create-an-organization page if orgId is missing */}
       {user && orgId === undefined && (
         <div className="rounded-xl border border-base-300 bg-base-200 p-8 text-center">
           <p className="text-base-content/70">
-            Create an organization to start hosting events.
+            <Link
+              to="/createEvent"
+              className="btn btn-link btn-sm align-baseline px-1"
+            >
+              Create an organization
+            </Link>{' '}
+            to start hosting events.
           </p>
         </div>
       )}

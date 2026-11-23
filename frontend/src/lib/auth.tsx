@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { User } from "../features/account/types";
 import axios from "axios";
-import { api, API_URL } from "./api";
+import { api } from "./api";
+import { submitAuthFlow } from "./authFlow";
 
 interface AuthContextType {
   user: User | null | undefined;
@@ -20,7 +21,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // that may be lying (backend down, timeout, proxy error, etc.).
   useEffect(() => {
     api.get<User>(`/profile/@me`)
-      .then((res) => { setUser(res.data) })
+      .then((res) => {
+        setUser(res.data);
+      })
       .catch((err) => {
         if (axios.isAxiosError(err) && err.response?.status === 401) {
           setUser(null);
@@ -33,33 +36,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null | undefined>(undefined)
 
   const mockLogin = (userData: User) => {
-    axios.get(`${API_URL}/auth/login`);
+    api.get("/auth/login");
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
   };
 
   const login = (redirPage: string) => {
-    // need to use form unless we change backend to send the url back to the front end to use
-    /* e.g. - something like this.
-    if "application/json" in request.headers.get("accept", ""):
-       return JSONResponse({"authorize_url": str(url)})
-    return cookies.force_redirect(url, 303)
-    */
-    const form = document.createElement("form");
-    form.method = "post";
-    form.action = `${API_URL}/auth/login?redirect_uri=${encodeURIComponent(redirPage)}`;
-    document.body.appendChild(form);
-    form.submit();
+    submitAuthFlow('login', redirPage)
   }
 
 
   const logout = (redirPage: string) => {
-    // actual logout LOL!
-    const form = document.createElement("form");
-    form.method = "post";
-    form.action = `${API_URL}/auth/logout?redirect_uri=${encodeURIComponent(redirPage)}`;
-    document.body.appendChild(form);
-    form.submit();
+    submitAuthFlow('logout', redirPage)
   };
 
   // react 19, do not need .Provider anymore. Removed!

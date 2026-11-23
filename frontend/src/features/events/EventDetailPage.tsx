@@ -7,6 +7,7 @@ import { api } from '../../lib/api'
 import PageLayout from '../../components/PageLayout'
 import Markdown from '../../components/Markdown'
 import SkeletonImage from '../../components/SkeletonImage'
+import { SkeletonText } from '../../components/Skeleton'
 
 import GoogleMap from '../../components/GoogleMap'
 
@@ -36,6 +37,7 @@ export default function EventDetailPage() {
       back={{ to: '/events' }}
 
     >
+      {!event && <SkeletonText lines={6} />}
       {event && (
         <div className="mt-2">
           <figure>
