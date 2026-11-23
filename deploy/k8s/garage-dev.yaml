@@ -126,11 +126,11 @@ data:
     [s3_api]
     s3_region = "garage"
     api_bind_addr = "[::]:3900"
-    root_domain = ".s3.thegamecracks.xyz"
+    root_domain = ".s3.garage-dev-qt.aerosol.dev"
 
     [s3_web]
     bind_addr = "[::]:3902"
-    root_domain = ".web.thegamecracks.xyz"
+    root_domain = ".web.garage-dev-qt.aerosol.dev"
     index = "index.html"
 
     [admin]
