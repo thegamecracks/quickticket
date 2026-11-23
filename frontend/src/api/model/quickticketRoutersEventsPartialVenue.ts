@@ -9,7 +9,7 @@ import type { Point } from './point';
 
 export interface QuickticketRoutersEventsPartialVenue {
   id: string;
-  created_at: string;
+  created_at: Date;
   display_name: string;
   description: string;
   category: string;

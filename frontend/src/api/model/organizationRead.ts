@@ -9,7 +9,7 @@ import type { QuickticketRoutersOrganizationsPartialVenue } from './quickticketR
 
 export interface OrganizationRead {
   id: string;
-  created_at: string;
+  created_at: Date;
   display_name: string;
   venues: QuickticketRoutersOrganizationsPartialVenue[];
   members: PartialOrganizationMember[];

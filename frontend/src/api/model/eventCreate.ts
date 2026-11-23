@@ -17,8 +17,8 @@ export interface EventCreate {
   description: string;
   /** @maxLength 128 */
   category: string;
-  starts_at: string;
-  ends_at: string;
+  starts_at: Date;
+  ends_at: Date;
   /**
      * @minimum 0
      * @maximum 10000

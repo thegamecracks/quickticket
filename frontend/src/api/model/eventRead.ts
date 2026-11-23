@@ -10,12 +10,12 @@ import type { QuickticketRoutersEventsPartialVenue } from './quickticketRoutersE
 
 export interface EventRead {
   id: string;
-  created_at: string;
+  created_at: Date;
   display_name: string;
   description: string;
   category: string;
-  starts_at: string;
-  ends_at: string;
+  starts_at: Date;
+  ends_at: Date;
   ticket_price: Money;
   max_attendees: number;
   tickets: PartialTicket[];

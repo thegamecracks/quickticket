@@ -8,6 +8,6 @@ import type { EventRead } from './eventRead';
 
 export interface KeysetPagedResponseEventReadAnnotatedDatetimeAwareDatetime {
   items: EventRead[];
-  next: string | null;
+  next: Date | null;
   total: number;
 }

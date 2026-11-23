@@ -7,7 +7,7 @@
 
 export type GetEventsApiEventsGetParams = {
   /** Get the next page by key. */
-  next?: string | null;
+  next?: Date | null;
   /**
    * Limit the number of items returned.
    * @maximum 10
@@ -15,9 +15,9 @@ export type GetEventsApiEventsGetParams = {
    */
   limit?: number;
   /** Return items after the given datetime, exclusive. */
-  after?: string | null;
+  after?: Date | null;
   /** Return items before the given datetime, exclusive. */
-  before?: string | null;
+  before?: Date | null;
   /** Filter events by organization ID. Nonexistent organizations return an empty list. */
   organization_id?: string | null;
 };

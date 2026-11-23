@@ -11,5 +11,5 @@ export interface ImageRead {
   filesize: number;
   /** @pattern ^\w+/[-+.\w]+$ */
   mime_type: string;
-  created_at: string;
+  created_at: Date;
 }

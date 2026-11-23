@@ -8,6 +8,6 @@ import type { QuickticketRoutersVenuesPartialVenue } from './quickticketRoutersV
 
 export interface KeysetPagedResponsePartialVenueAnnotatedDatetimeAwareDatetime {
   items: QuickticketRoutersVenuesPartialVenue[];
-  next: string | null;
+  next: Date | null;
   total: number;
 }

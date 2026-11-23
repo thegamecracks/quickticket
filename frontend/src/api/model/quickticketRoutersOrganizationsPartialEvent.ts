@@ -7,7 +7,7 @@
 
 export interface QuickticketRoutersOrganizationsPartialEvent {
   id: string;
-  created_at: string;
+  created_at: Date;
   display_name: string;
   description: string;
   category: string;

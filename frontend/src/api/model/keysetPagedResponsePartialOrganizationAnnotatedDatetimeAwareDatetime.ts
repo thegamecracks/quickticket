@@ -8,6 +8,6 @@ import type { PartialOrganization } from './partialOrganization';
 
 export interface KeysetPagedResponsePartialOrganizationAnnotatedDatetimeAwareDatetime {
   items: PartialOrganization[];
-  next: string | null;
+  next: Date | null;
   total: number;
 }

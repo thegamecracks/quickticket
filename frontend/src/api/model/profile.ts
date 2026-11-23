@@ -9,7 +9,7 @@ import type { ProfileOrganizationMember } from './profileOrganizationMember';
 
 export interface Profile {
   id: string;
-  created_at: string;
+  created_at: Date;
   display_name: string;
   first_name: string;
   last_name: string;

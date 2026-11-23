@@ -10,5 +10,5 @@ export interface ProfileOrganizationMember {
   organization_id: string;
   user_id: string;
   permissions: OrganizationMemberPermissions;
-  joined_at: string;
+  joined_at: Date;
 }

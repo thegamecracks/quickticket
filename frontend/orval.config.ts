@@ -26,6 +26,8 @@ export default defineConfig({
           path: 'src/lib/api.ts',
           name: 'api',
         },
+        // https://orval.dev/docs/reference/configuration/output#type-generation-options
+        useDates: true,
       },
     },
     input: {

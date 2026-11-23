@@ -10,7 +10,7 @@ import type { VenueReadEvent } from './venueReadEvent';
 
 export interface VenueRead {
   id: string;
-  created_at: string;
+  created_at: Date;
   display_name: string;
   description: string;
   category: string;

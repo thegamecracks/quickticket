@@ -7,6 +7,6 @@
 
 export interface PartialOrganization {
   id: string;
-  created_at: string;
+  created_at: Date;
   display_name: string;
 }

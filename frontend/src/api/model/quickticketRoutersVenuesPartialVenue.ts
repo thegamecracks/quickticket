@@ -10,7 +10,7 @@ import type { QuickticketRoutersVenuesPartialEvent } from './quickticketRoutersV
 
 export interface QuickticketRoutersVenuesPartialVenue {
   id: string;
-  created_at: string;
+  created_at: Date;
   display_name: string;
   description: string;
   category: string;
