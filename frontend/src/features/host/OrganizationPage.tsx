@@ -4,7 +4,7 @@ import { api } from '../../lib/api'
 import { useEffect, useState } from 'react'
 import type { OrganizationResponse } from '../organizations/types'
 import SkeletonImage from '../../components/SkeletonImage'
-import { thumbnailUrl } from '../../lib/images'
+import { EVENT_PLACEHOLDER, thumbnailUrl } from '../../lib/images'
 import { SkeletonRows } from '../../components/Skeleton'
 
 export default function OrganizationPage() {
@@ -39,7 +39,7 @@ export default function OrganizationPage() {
               <figure className="h-20 w-32 shrink-0 max-sm:row-span-2 max-sm:self-center overflow-hidden rounded-lg bg-base-300">
 
                 <SkeletonImage
-                  src={venue.thumbnail ? thumbnailUrl('venues', venue.id) : 'https://placehold.co/800x450/272c35/ffffff?text=QuickTicket+Event'}
+                  sources={[thumbnailUrl('venues', venue.id), EVENT_PLACEHOLDER]}
                   alt={venue.display_name}
                   className="h-full w-full object-cover"
                 />

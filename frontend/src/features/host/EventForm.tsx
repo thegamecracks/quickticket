@@ -101,8 +101,10 @@ export default function EventForm({
         setTicketPrice((event.ticket_price.amount / 100).toFixed(2))
         setIsFree(event.ticket_price.amount === 0)
         setMaxAttendees(String(event.max_attendees))
-        if (event.thumbnail) setThumbnailUrl(eventThumbnailUrl('events', event.id))
-        if (event.banner) setBannerUrl(eventBannerUrl('events', event.id))
+        // Always point at the image routes: the entity responses no longer
+        // carry image fields (8461564), and a 404 clears the preview.
+        setThumbnailUrl(eventThumbnailUrl('events', event.id))
+        setBannerUrl(eventBannerUrl('events', event.id))
       })
       .catch(() => {
         if (active) setLoadError(true)
@@ -537,6 +539,7 @@ export default function EventForm({
                   src={thumbnailUrl}
                   alt="Thumbnail preview"
                   className="max-h-40 w-full object-contain"
+                  onError={() => setThumbnailUrl('')}
                 />
               ) : (
                 <span className="text-sm text-base-content/50">
@@ -579,6 +582,7 @@ export default function EventForm({
                   src={bannerUrl}
                   alt="Banner preview"
                   className="max-h-40 w-full object-contain"
+                  onError={() => setBannerUrl('')}
                 />
               ) : (
                 <span className="text-sm text-base-content/50">

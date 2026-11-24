@@ -16,7 +16,7 @@ export default function TicketDetailPage() {
           <div className="mx-auto card card-border rounded-2xl bg-primary/20 shadow-md" key={t.id}>
             <figure className="px-10 pt-10">
               <SkeletonImage
-                src="https://api.qrserver.com/v1/create-qr-code/?data=https://www.youtube.com/watch?v=j5a0jTc9S10&size=150x150"
+                sources={["https://api.qrserver.com/v1/create-qr-code/?data=https://www.youtube.com/watch?v=j5a0jTc9S10&size=150x150"]}
                 alt="Ticket"
                 className="w-32 h-32 object-cover"
               />

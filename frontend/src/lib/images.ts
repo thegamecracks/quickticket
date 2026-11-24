@@ -11,3 +11,9 @@ export const bannerUrl = (entity: ImageEntity, id: string): string =>
 
 export const thumbnailUrl = (entity: ImageEntity, id: string): string =>
   `${API_URL}/${entity}/${id}/thumbnail`
+
+/** Final fallbacks for SkeletonImage's source chain. */
+export const EVENT_PLACEHOLDER =
+  'https://placehold.co/800x450/272c35/ffffff?text=QuickTicket+Event'
+export const VENUE_PLACEHOLDER =
+  'https://placehold.co/800x450/272c35/ffffff?text=QuickTicket+Venue'
