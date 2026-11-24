@@ -46,7 +46,8 @@ from quickticket.routers.images import create_banner_routes, create_thumbnail_ro
 from quickticket.validators import (
     DisplayNameField,
     FutureAwareDatetime,
-    filter_string_field,
+    filter_multiline_field,
+    filter_oneline_field,
 )
 
 MIN_EVENT_DURATION = timedelta(hours=1)
@@ -187,8 +188,8 @@ def check_event_duration(*, starts_at: datetime, ends_at: datetime) -> None:
         )
 
 
-EventDescription = Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
-EventCategory = Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
+EventDescription = Annotated[str, AfterValidator(filter_multiline_field), Field(max_length=4096)]
+EventCategory = Annotated[str, AfterValidator(filter_oneline_field), Field(max_length=128)]
 EventMaxAttendees = Annotated[int, Field(ge=0, le=10000)]
 
 

@@ -177,6 +177,14 @@ def _create_venue_payload(
     }
 
 
+def _owned_organization(dataset: Dataset) -> tuple[Organization, User]:
+    """Return a seeded organization and one of its owners."""
+    member = dataset.organization_members[0]
+    organization = next(item for item in dataset.organizations if item.id == member.organization_id)
+    user = next(item for item in dataset.users if item.id == member.user_id)
+    return organization, user
+
+
 async def test_create_venue(
     client: AsyncClient,
     auth: AuthController,
@@ -226,6 +234,72 @@ async def test_create_venue(
         assert persisted.category == "Sports"
         assert persisted.location_name == "Test Stadium"
         assert persisted.location_coords == Point(lat=48.8584, lng=2.2945)
+
+
+async def test_create_venue_preserves_multiline_description(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    organization, owner = _owned_organization(dataset_loader.dataset)
+    auth.user = owner
+
+    response = await client.post(
+        "/api/venues",
+        json=_create_venue_payload(
+            organization_id=organization.id,
+            description="  ## About\n\nDoors at 7.\n\tBring ID.  ",
+        ),
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["description"] == "## About\n\nDoors at 7.\n\tBring ID."
+
+    fetched = await client.get(f"/api/venues/{data['id']}")
+    assert fetched.status_code == 200
+    assert fetched.json() == data
+
+
+@pytest.mark.parametrize("field", ["category", "location_name"])
+async def test_create_venue_collapses_oneline_fields(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+    field: str,
+) -> None:
+    await dataset_loader.load()
+    organization, owner = _owned_organization(dataset_loader.dataset)
+    auth.user = owner
+
+    payload = _create_venue_payload(organization_id=organization.id)
+    payload[field] = "  Sports \u00a0\t\n Hall  "
+    response = await client.post("/api/venues", json=payload)
+
+    assert response.status_code == 201
+    assert response.json()[field] == "Sports Hall"
+
+
+async def test_create_venue_accepts_whitespace_only_description(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    organization, owner = _owned_organization(dataset_loader.dataset)
+    auth.user = owner
+
+    response = await client.post(
+        "/api/venues",
+        json=_create_venue_payload(
+            organization_id=organization.id,
+            description="\n\n  \t\n",
+        ),
+    )
+
+    assert response.status_code == 201
+    assert response.json()["description"] == ""
 
 
 @pytest.mark.parametrize(
@@ -542,6 +616,30 @@ async def test_edit_venue(
     assert {event["id"] for event in data["events"]} == {str(event.id) for event in expected_events}
     assert all(event["tickets"] == [] for event in data["events"])
     assert data["organization"]["id"] == str(organization.id)
+
+    fetched = await client.get(f"/api/venues/{venue.id}")
+    assert fetched.status_code == 200
+    assert fetched.json() == data
+
+
+async def test_edit_venue_preserves_multiline_description(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    venue = dataset.venues[0]
+    auth.user = _owner_of_venue(dataset, venue)
+
+    response = await client.patch(
+        f"/api/venues/{venue.id}",
+        json={"description": "Line one\n\nLine two"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["description"] == "Line one\n\nLine two"
 
     fetched = await client.get(f"/api/venues/{venue.id}")
     assert fetched.status_code == 200

@@ -175,6 +175,19 @@ async def test_create_organization_strips_whitespace_and_filters_non_printable_c
         assert organization.display_name == "My Org"
 
 
+async def test_create_organization_collapses_internal_whitespace(
+    auth: AuthController,
+    client: AsyncClient,
+) -> None:
+    response = await client.post(
+        "/api/organizations",
+        json={"display_name": "  My \u00a0\t  Org  "},
+    )
+
+    assert response.status_code == 201
+    assert response.json()["display_name"] == "My Org"
+
+
 async def test_create_organization_rejects_unknown_field(client: AsyncClient) -> None:
     response = await client.post(
         "/api/organizations",

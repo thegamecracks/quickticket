@@ -32,7 +32,7 @@ from quickticket.paging import (
     KeysetPageParams,
 )
 from quickticket.routers.images import create_banner_routes, create_thumbnail_routes
-from quickticket.validators import DisplayNameField, filter_string_field
+from quickticket.validators import DisplayNameField, filter_multiline_field, filter_oneline_field
 
 VENUE_LIMIT = 5
 
@@ -164,9 +164,9 @@ async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: V
     return venue
 
 
-VenueDescription = Annotated[str, AfterValidator(filter_string_field), Field(max_length=4096)]
-VenueCategory = Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
-VenueLocationName = Annotated[str, AfterValidator(filter_string_field), Field(max_length=128)]
+VenueDescription = Annotated[str, AfterValidator(filter_multiline_field), Field(max_length=4096)]
+VenueCategory = Annotated[str, AfterValidator(filter_oneline_field), Field(max_length=128)]
+VenueLocationName = Annotated[str, AfterValidator(filter_oneline_field), Field(max_length=128)]
 
 
 class VenueCreate(BaseModel):

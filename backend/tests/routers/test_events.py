@@ -1,3 +1,4 @@
+import json
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
@@ -356,6 +357,19 @@ def _create_event_payload(
     }
 
 
+def _owned_venue(dataset: Dataset) -> tuple[Venue, User]:
+    """Return a seeded venue and the owner of the organization that holds it."""
+    event = dataset.events[0]
+    venue = next(item for item in dataset.venues if item.id == event.venue_id)
+    member = next(
+        item
+        for item in dataset.organization_members
+        if item.organization_id == venue.organization_id
+    )
+    user = next(item for item in dataset.users if item.id == member.user_id)
+    return venue, user
+
+
 async def test_create_event(
     client: AsyncClient,
     auth: AuthController,
@@ -411,6 +425,139 @@ async def test_create_event(
         persisted = await session.get(Event, UUID(data["id"]))
         assert persisted is not None
         assert persisted.id == UUID(data["id"])
+
+
+async def test_create_event_preserves_multiline_description(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    venue, owner = _owned_venue(dataset_loader.dataset)
+    auth.user = owner
+
+    response = await client.post(
+        "/api/events",
+        json=_create_event_payload(
+            venue_id=venue.id,
+            description="  ## About\n\nDoors at 7.\n\tBring ID.  ",
+        ),
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["description"] == "## About\n\nDoors at 7.\n\tBring ID."
+
+    fetched = await client.get(f"/api/events/{data['id']}")
+    assert fetched.status_code == 200
+    assert fetched.json() == data
+
+
+@pytest.mark.parametrize("line_break", ["\r\n", "\r", "\u2028", "\u2029"])
+async def test_create_event_normalizes_description_line_endings(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+    line_break: str,
+) -> None:
+    await dataset_loader.load()
+    venue, owner = _owned_venue(dataset_loader.dataset)
+    auth.user = owner
+
+    response = await client.post(
+        "/api/events",
+        json=_create_event_payload(
+            venue_id=venue.id,
+            description=f"Line one{line_break}Line two",
+        ),
+    )
+
+    assert response.status_code == 201
+    assert response.json()["description"] == "Line one\nLine two"
+
+
+async def test_create_event_strips_control_characters_from_description(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    venue, owner = _owned_venue(dataset_loader.dataset)
+    auth.user = owner
+
+    response = await client.post(
+        "/api/events",
+        json=_create_event_payload(
+            venue_id=venue.id,
+            description="Line\x00 one\x1b\n\nLine\ufeff two",
+        ),
+    )
+
+    assert response.status_code == 201
+    assert response.json()["description"] == "Line one\n\nLine two"
+
+
+@pytest.mark.parametrize("field", ["description", "category"])
+async def test_create_event_strips_surrogates(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+    field: str,
+) -> None:
+    await dataset_loader.load()
+    venue, owner = _owned_venue(dataset_loader.dataset)
+    auth.user = owner
+
+    payload = _create_event_payload(venue_id=venue.id)
+    payload[field] = "a\ud800b"
+    # httpx refuses to encode lone surrogates, so send the JSON escapes directly.
+    response = await client.post(
+        "/api/events",
+        content=json.dumps(payload).encode(),
+        headers={"content-type": "application/json"},
+    )
+
+    assert response.status_code == 201
+    assert response.json()[field] == "ab"
+
+
+async def test_create_event_collapses_category_whitespace(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    venue, owner = _owned_venue(dataset_loader.dataset)
+    auth.user = owner
+
+    response = await client.post(
+        "/api/events",
+        json=_create_event_payload(
+            venue_id=venue.id,
+            category="  Food \u00a0\t\n Truck  ",
+        ),
+    )
+
+    assert response.status_code == 201
+    assert response.json()["category"] == "Food Truck"
+
+
+async def test_create_event_accepts_whitespace_only_description(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    venue, owner = _owned_venue(dataset_loader.dataset)
+    auth.user = owner
+
+    response = await client.post(
+        "/api/events",
+        json=_create_event_payload(venue_id=venue.id, description="\n\n  \t\n"),
+    )
+
+    assert response.status_code == 201
+    assert response.json()["description"] == ""
 
 
 async def test_create_event_no_permissions(
@@ -927,6 +1074,30 @@ async def test_edit_event_accepts_duration_boundaries(
     data = response.json()
     assert data["starts_at"] == isoformat(starts_at)
     assert data["ends_at"] == isoformat(ends_at)
+
+
+async def test_edit_event_preserves_multiline_description(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    event = dataset.events[0]
+    auth.user = _owner_of_event(dataset, event)
+
+    response = await client.patch(
+        f"/api/events/{event.id}",
+        json={"description": "Line one\n\nLine two"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["description"] == "Line one\n\nLine two"
+
+    fetched = await client.get(f"/api/events/{event.id}")
+    assert fetched.status_code == 200
+    assert fetched.json() == data
 
 
 @pytest.mark.parametrize("max_attendees", [0, 10000])
