@@ -222,11 +222,8 @@ def store() -> Store:
     return MemoryStore()
 
 
-@pytest.fixture(scope="session")
-def _base_app() -> FastAPI:
-    # This caches the base ASGI app per test session which drastically improves performance.
-    # Tests use the app fixture which supplies per-function fixtures like the engine.
-    settings = Settings(
+def create_base_app(override: Settings | None = None) -> FastAPI:
+    base = Settings(
         _env_file=None,
         cache=CacheSettings(url="sqlite:///:memory:"),
         # The database URL is intentionally broken to raise the exception:
@@ -247,9 +244,23 @@ def _base_app() -> FastAPI:
         ),
         security=SecuritySettings(allowed_hosts=["*"]),
     )
+
+    if override is not None:
+        merged = {**base.model_dump(exclude_unset=True), **override.model_dump(exclude_unset=True)}
+        settings = Settings.model_validate(merged)
+    else:
+        settings = base
+
     app = create_app_from_settings(settings)
     app.dependency_overrides[get_settings] = lambda: settings
     return app
+
+
+@pytest.fixture(scope="session")
+def _base_app() -> FastAPI:
+    # This caches the base ASGI app per test session which drastically improves performance.
+    # Tests use the app fixture which supplies per-function fixtures like the engine.
+    return create_base_app()
 
 
 @pytest.fixture(autouse=True)

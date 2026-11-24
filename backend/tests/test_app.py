@@ -8,7 +8,6 @@ from fastapi import FastAPI, Response
 from fastapi.responses import RedirectResponse
 from httpx2 import ASGITransport, AsyncClient, Response as HTTPResponse
 
-from quickticket.app import create_app_from_settings
 from quickticket.dependencies.auth import get_user
 from quickticket.errors import ForcedResponse
 from quickticket.settings import (
@@ -18,9 +17,10 @@ from quickticket.settings import (
     SecuritySettings,
     Settings,
 )
+from tests.conftest import create_base_app
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def probe_app() -> FastAPI:
     """Create the real app with probe routes for exercising ``preserve_headers``."""
     settings = Settings(
@@ -29,8 +29,7 @@ def probe_app() -> FastAPI:
         log=LogSettings(debug=False, profiling=False),
         openapi=OpenAPISettings(url=None),
     )
-    app = create_app_from_settings(settings)
-    app.state.settings = settings
+    app = create_base_app(settings)
     # The app-wide rate limit dependency identifies anonymous clients by address,
     # but resolving a user would require OpenID settings these probes don't need.
     app.dependency_overrides[get_user] = lambda: None
@@ -77,7 +76,7 @@ async def middleware_client(probe_app: FastAPI) -> AsyncGenerator[AsyncClient]:
         yield client
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def csrf_app() -> FastAPI:
     """Create the real app with CSRF and cookie encryption enabled."""
     settings = Settings(
@@ -87,8 +86,7 @@ def csrf_app() -> FastAPI:
         openapi=OpenAPISettings(url=None),
         security=SecuritySettings(allowed_hosts=["*"], csrf_secret="test-csrf-secret"),  # noqa: S106
     )
-    app = create_app_from_settings(settings)
-    app.state.settings = settings
+    app = create_base_app(settings)
     app.dependency_overrides[get_user] = lambda: None
 
     @app.get("/probe/csrf")
