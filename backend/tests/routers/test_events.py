@@ -370,6 +370,29 @@ def _owned_venue(dataset: Dataset) -> tuple[Venue, User]:
     return venue, user
 
 
+async def _create_owned_venue(
+    make_session: async_sessionmaker[AsyncSession],
+    user: User,
+) -> Venue:
+    """Persist a venue owned by ``user`` and return it."""
+    async with make_session.begin() as session:
+        organization = Organization(display_name="Test Organization")
+        member = OrganizationMember(
+            organization_id=organization.id,
+            user_id=user.id,
+            permissions=OrganizationMemberPermissions.OWNER,
+        )
+        venue = Venue(
+            organization_id=organization.id,
+            display_name="Test Venue",
+            description="A venue for testing.",
+            category="Sports",
+            location_name="Test Stadium",
+        )
+        session.add_all([organization, member, venue])
+    return venue
+
+
 async def test_create_event(
     client: AsyncClient,
     auth: AuthController,
@@ -751,6 +774,89 @@ async def test_create_event_rejects_unknown_ticket_price_field(client: AsyncClie
         error_type="extra_forbidden",
         msg_contains="Extra inputs are not permitted",
     )
+
+
+async def test_create_event_accepts_zero_ticket_price(
+    client: AsyncClient,
+    auth: AuthController,
+    make_session: async_sessionmaker[AsyncSession],
+) -> None:
+    assert auth.user is not None
+    venue = await _create_owned_venue(make_session, auth.user)
+
+    response = await client.post(
+        "/api/events",
+        json=_create_event_payload(
+            venue_id=venue.id,
+            ticket_price={"amount": 0, "currency": "CAD"},
+        ),
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["ticket_price"] == {"amount": 0, "currency": "CAD"}
+
+    async with make_session.begin() as session:
+        persisted = await session.get(Event, UUID(data["id"]))
+        assert persisted is not None
+        assert persisted.ticket_price.model_dump() == {"amount": 0, "currency": "CAD"}
+
+
+async def test_create_event_rejects_negative_ticket_price(client: AsyncClient) -> None:
+    response = await client.post(
+        "/api/events",
+        json=_create_event_payload(ticket_price={"amount": -1, "currency": "CAD"}),
+    )
+
+    assert_validation_error(
+        response,
+        loc=("body", "ticket_price", "amount"),
+        error_type="greater_than_equal",
+        msg_contains="greater than or equal to 0",
+    )
+
+    events = await client.get("/api/events")
+    assert events.status_code == 200
+    assert events.json()["total"] == 0
+
+
+@pytest.mark.parametrize(("amount", "expected"), [("50", 50), (1.0, 1), (True, 1)])
+async def test_create_event_accepts_coerced_ticket_price_amounts(
+    client: AsyncClient,
+    auth: AuthController,
+    make_session: async_sessionmaker[AsyncSession],
+    amount: object,
+    expected: int,
+) -> None:
+    # Pydantic's lax mode coerces these to an int. Field(strict=True) would reject them.
+    assert auth.user is not None
+    venue = await _create_owned_venue(make_session, auth.user)
+
+    response = await client.post(
+        "/api/events",
+        json=_create_event_payload(
+            venue_id=venue.id,
+            ticket_price={"amount": amount, "currency": "CAD"},
+        ),
+    )
+
+    assert response.status_code == 201
+    assert response.json()["ticket_price"] == {"amount": expected, "currency": "CAD"}
+
+
+@pytest.mark.parametrize("amount", [1.5, -0.5, None])
+async def test_create_event_rejects_malformed_ticket_price_amount(
+    client: AsyncClient,
+    amount: object,
+) -> None:
+    response = await client.post(
+        "/api/events",
+        json=_create_event_payload(ticket_price={"amount": amount, "currency": "CAD"}),
+    )
+
+    assert response.status_code == 422
+    locations = {tuple(error["loc"]) for error in response.json()["detail"]}
+    assert ("body", "ticket_price", "amount") in locations
 
 
 async def test_edit_event(
@@ -1254,6 +1360,100 @@ async def test_edit_event_rejects_unknown_ticket_price_field(
         loc=("body", "ticket_price", "bogus"),
         error_type="extra_forbidden",
         msg_contains="Extra inputs are not permitted",
+    )
+
+    fetched = await client.get(f"/api/events/{event.id}")
+    assert fetched.status_code == 200
+    data = fetched.json()
+    assert data["display_name"] == event.display_name
+    assert data["ticket_price"] == event.ticket_price.model_dump()
+
+
+async def test_edit_event_accepts_zero_ticket_price(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    event = dataset.events[0]
+    auth.user = _owner_of_event(dataset, event)
+
+    priced = await client.patch(
+        f"/api/events/{event.id}",
+        json={"ticket_price": {"amount": 2500, "currency": "CAD"}},
+    )
+    assert priced.status_code == 200
+
+    response = await client.patch(
+        f"/api/events/{event.id}",
+        json={"ticket_price": {"amount": 0, "currency": "CAD"}},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["ticket_price"] == {"amount": 0, "currency": "CAD"}
+
+    fetched = await client.get(f"/api/events/{event.id}")
+    assert fetched.status_code == 200
+    assert fetched.json()["ticket_price"] == {"amount": 0, "currency": "CAD"}
+
+
+async def test_edit_event_rejects_negative_ticket_price(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    event = dataset.events[0]
+    auth.user = _owner_of_event(dataset, event)
+
+    priced = await client.patch(
+        f"/api/events/{event.id}",
+        json={"ticket_price": {"amount": 2500, "currency": "CAD"}},
+    )
+    assert priced.status_code == 200
+
+    response = await client.patch(
+        f"/api/events/{event.id}",
+        json={"ticket_price": {"amount": -1, "currency": "CAD"}},
+    )
+
+    assert_validation_error(
+        response,
+        loc=("body", "ticket_price", "amount"),
+        error_type="greater_than_equal",
+        msg_contains="greater than or equal to 0",
+    )
+
+    fetched = await client.get(f"/api/events/{event.id}")
+    assert fetched.status_code == 200
+    assert fetched.json()["ticket_price"] == {"amount": 2500, "currency": "CAD"}
+
+
+async def test_edit_event_rejects_negative_ticket_price_alongside_valid_changes(
+    client: AsyncClient,
+    auth: AuthController,
+    dataset_loader: DatasetLoader,
+) -> None:
+    await dataset_loader.load()
+    dataset = dataset_loader.dataset
+    event = dataset.events[0]
+    auth.user = _owner_of_event(dataset, event)
+
+    response = await client.patch(
+        f"/api/events/{event.id}",
+        json={
+            "display_name": "Changed",
+            "ticket_price": {"amount": -1, "currency": "CAD"},
+        },
+    )
+
+    assert_validation_error(
+        response,
+        loc=("body", "ticket_price", "amount"),
+        error_type="greater_than_equal",
+        msg_contains="greater than or equal to 0",
     )
 
     fetched = await client.get(f"/api/events/{event.id}")
