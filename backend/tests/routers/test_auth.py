@@ -284,8 +284,6 @@ async def test_profile_returns_registered_user(
     assert data["first_name"] == "Test"
     assert data["last_name"] == "User"
     assert data["email"] == "new.user@example.com"
-    assert data["addresses"] == []
-    assert data["organization_members"] == []
 
     client.cookies.clear()
     response = await client.get("/api/profile/@me")

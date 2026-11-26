@@ -6,8 +6,10 @@ from pydantic import AwareDatetime, BaseModel
 from quickticket.dependencies.auth import RequiredUserDep
 from quickticket.dependencies.db import AsyncSessionDep
 from quickticket.models import (
+    Address,
     AddressID,
     OrganizationID,
+    OrganizationMember,
     OrganizationMemberPermissions,
     User,
     UserID,
@@ -40,12 +42,26 @@ class Profile(BaseModel):
     first_name: str
     last_name: str
     email: str
-    addresses: list[ProfileAddress]
-    organization_members: list[ProfileOrganizationMember]
 
 
 @router.get("/@me", response_model=Profile)
-async def profile_me(session: AsyncSessionDep, user: RequiredUserDep) -> User:
+async def profile_me(user: RequiredUserDep) -> User:
     """Retrieve the current user."""
-    await session.refresh(user, ["addresses", "organization_members"])
     return user
+
+
+@router.get("/@me/addresses", response_model=list[ProfileAddress])
+async def profile_addresses(session: AsyncSessionDep, user: RequiredUserDep) -> list[Address]:
+    """Retrieve the user's addresses."""
+    await session.refresh(user, ["addresses"])
+    return user.addresses
+
+
+@router.get("/@me/organizations/members", response_model=list[ProfileOrganizationMember])
+async def profile_organization_members(
+    session: AsyncSessionDep,
+    user: RequiredUserDep,
+) -> list[OrganizationMember]:
+    """Retrieve the user's organization members."""
+    await session.refresh(user, ["organization_members"])
+    return user.organization_members
