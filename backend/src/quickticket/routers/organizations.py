@@ -262,7 +262,7 @@ async def delete_organization(
     raise HTTPException(501)
 
 
-@router.patch("/{organization_id}/{user_id}", deprecated=True)
+@router.patch("/{organization_id}/members/{user_id}", deprecated=True)
 async def edit_organization_member(
     user: RequiredUserDep,
     session: AsyncSessionDep,
@@ -277,7 +277,7 @@ async def edit_organization_member(
     raise HTTPException(501)
 
 
-@router.delete("/{organization_id}/{user_id}", deprecated=True)
+@router.delete("/{organization_id}/members/{user_id}", deprecated=True)
 async def delete_organization_member(
     user: RequiredUserDep,
     session: AsyncSessionDep,
@@ -290,7 +290,7 @@ async def delete_organization_member(
     raise HTTPException(501)
 
 
-@router.post("/{organization_id}/{user_id}", deprecated=True)
+@router.post("/invites", deprecated=True)
 async def invite_organization_member(
     user: RequiredUserDep,
     session: AsyncSessionDep,
