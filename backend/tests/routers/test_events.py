@@ -34,7 +34,6 @@ EVENT_KEYS = frozenset(
         "starts_at",
         "category",
         "ticket_price",
-        "tickets",
         "venue",
     },
 )
@@ -85,7 +84,6 @@ async def test_get_events(
                 "ends_at": isoformat(expected.ends_at),
                 "ticket_price": expected.ticket_price.model_dump(),
                 "max_attendees": expected.max_attendees,
-                "tickets": [],
                 "venue": {
                     "id": str(expected.venue.id),
                     "created_at": isoformat(expected.venue.created_at),
@@ -292,7 +290,6 @@ async def test_get_event(
     assert datetime.fromisoformat(data["ends_at"]) == event.ends_at
     assert data["ticket_price"] == event.ticket_price.model_dump()
     assert data["max_attendees"] == event.max_attendees
-    assert data["tickets"] == []
 
     assert set(data["venue"]) == {
         "id",
@@ -902,7 +899,6 @@ async def test_edit_event(
     # Fields absent from the payload keep their seeded values.
     assert datetime.fromisoformat(data["starts_at"]) == event.starts_at
     assert datetime.fromisoformat(data["ends_at"]) == event.ends_at
-    assert data["tickets"] == []
     assert data["venue"]["id"] == str(venue.id)
 
     fetched = await client.get(f"/api/events/{event.id}")

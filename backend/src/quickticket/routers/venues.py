@@ -3,7 +3,7 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import MISSING, AfterValidator, AwareDatetime, BaseModel, ConfigDict, Field
-from sqlalchemy import false, select
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm.interfaces import ORMOption
 from sqlalchemy.sql.functions import count
@@ -19,9 +19,6 @@ from quickticket.models import (
     OrganizationID,
     OrganizationMemberPermissions,
     Point,
-    Ticket,
-    TicketID,
-    User,
     Venue,
     VenueID,
 )
@@ -40,13 +37,8 @@ router = APIRouter(tags=["Venues"])
 log = logging.getLogger(__name__)
 
 
-class PartialTicket(BaseModel):
-    id: TicketID
-
-
 class PartialEvent(BaseModel):
     id: EventID
-    tickets: list[PartialTicket]
 
 
 class PartialOrganization(BaseModel):
@@ -92,14 +84,8 @@ async def get_venues(
         paged_query = paged_query.where(Venue.created_at < page.next)
 
     paged_query = paged_query.options(
-        # Venue => Events => Tickets
-        selectinload(Venue.events)
-        .load_only(Event.id)
-        .selectinload(
-            # TODO: return all tickets if user has permission from organization
-            Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
-        )
-        .load_only(Ticket.id),
+        # Venue => Events
+        selectinload(Venue.events).load_only(Event.id),
         # Venue => Organization
         selectinload(Venue.organization),
     )
@@ -124,7 +110,7 @@ class VenueReadEvent(BaseModel):
     ticket_price: Money
     max_attendees: int
 
-    tickets: list[PartialTicket]
+    # tickets_sold: int
 
 
 class VenueRead(BaseModel):
@@ -140,15 +126,10 @@ class VenueRead(BaseModel):
     organization: PartialOrganization
 
 
-def _create_options_for_get_venue(user: User | None) -> tuple[ORMOption, ...]:
+def _create_options_for_get_venue() -> tuple[ORMOption, ...]:
     return (
-        # Venue => Events => Tickets
-        selectinload(Venue.events)
-        .selectinload(
-            # TODO: return all tickets if user has permission from organization
-            Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
-        )
-        .load_only(Ticket.id),
+        # Venue => Events
+        selectinload(Venue.events),
         # Venue => Organization
         selectinload(Venue.organization),
     )
@@ -157,7 +138,7 @@ def _create_options_for_get_venue(user: User | None) -> tuple[ORMOption, ...]:
 @router.get("/{venue_id}", response_model=VenueRead)
 async def get_venue(user: OptionalUserDep, session: AsyncSessionDep, venue_id: VenueID) -> Venue:
     """Get a venue by ID."""
-    venue = await session.get(Venue, venue_id, options=_create_options_for_get_venue(user))
+    venue = await session.get(Venue, venue_id, options=_create_options_for_get_venue())
     if venue is None:
         raise HTTPException(404, "Not found")
 
@@ -241,7 +222,7 @@ async def edit_venue(
 ) -> Venue:
     """Edit a venue's details."""
     # TODO: allow venue drafts?
-    venue = await session.get(Venue, venue_id, options=_create_options_for_get_venue(user))
+    venue = await session.get(Venue, venue_id, options=_create_options_for_get_venue())
     if venue is None:
         raise HTTPException(404, "Not found")
 

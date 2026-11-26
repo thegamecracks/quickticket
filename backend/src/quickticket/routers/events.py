@@ -12,7 +12,7 @@ from pydantic import (
     Field,
     model_validator,
 )
-from sqlalchemy import false, select
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm.interfaces import ORMOption
 from sqlalchemy.sql.functions import count
@@ -30,9 +30,6 @@ from quickticket.models import (
     OrganizationID,
     OrganizationMemberPermissions,
     Point,
-    Ticket,
-    TicketID,
-    User,
     Venue,
     VenueID,
 )
@@ -55,10 +52,6 @@ MAX_EVENT_DURATION = timedelta(days=7)
 
 router = APIRouter(tags=["Events"])
 log = logging.getLogger(__name__)
-
-
-class PartialTicket(BaseModel):
-    id: TicketID
 
 
 class PartialOrganization(BaseModel):
@@ -90,7 +83,7 @@ class EventRead(BaseModel):
     ticket_price: Money
     max_attendees: int
 
-    tickets: list[PartialTicket]
+    # tickets_sold: int
     venue: PartialVenue
 
 
@@ -143,10 +136,6 @@ async def get_events(
             Venue.location_coords,
         ),
         selectinload(Event.venue, Venue.organization),
-        selectinload(
-            # TODO: return all tickets if user has permission from organization
-            Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
-        ).load_only(Ticket.id),
     )
 
     items = await session.scalars(paged_query)
@@ -158,20 +147,14 @@ async def get_events(
     return {"items": items, "next": next_key, "total": total}
 
 
-def _create_options_for_get_event(user: User | None) -> tuple[ORMOption, ...]:
-    return (
-        selectinload(Event.venue).selectinload(Venue.organization),
-        selectinload(
-            # TODO: return all tickets if user has permission from organization
-            Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
-        ).load_only(Ticket.id),
-    )
+def _create_options_for_get_event() -> tuple[ORMOption, ...]:
+    return (selectinload(Event.venue).selectinload(Venue.organization),)
 
 
 @router.get("/{event_id}", response_model=EventRead)
 async def get_event(user: OptionalUserDep, session: AsyncSessionDep, event_id: EventID) -> Event:
     """Get an event by ID."""
-    event = await session.get(Event, event_id, options=_create_options_for_get_event(user))
+    event = await session.get(Event, event_id, options=_create_options_for_get_event())
     if event is None:
         raise HTTPException(404, "Not found")
 
@@ -270,7 +253,7 @@ async def create_event(
     )
     session.add(event_orm)
     await session.flush()
-    await session.refresh(event_orm, ["tickets", "venue"])
+    await session.refresh(event_orm, ["venue"])
 
     response.headers["Location"] = str(request.url_for("get_event", event_id=event_orm.id))
     return event_orm
@@ -286,7 +269,7 @@ async def edit_event(
     """Edit an event's details."""
     # TODO: schedule notifications
     # TODO: allow event drafts?
-    event = await session.get(Event, event_id, options=_create_options_for_get_event(user))
+    event = await session.get(Event, event_id, options=_create_options_for_get_event())
     if event is None:
         raise HTTPException(404, "Not found")
 

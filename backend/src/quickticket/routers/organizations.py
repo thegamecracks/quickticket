@@ -4,7 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import MISSING, AwareDatetime, BaseModel, ConfigDict
-from sqlalchemy import exists, false, select
+from sqlalchemy import exists, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm.interfaces import ORMOption
 from sqlalchemy.sql.functions import count
@@ -20,7 +20,6 @@ from quickticket.models import (
     OrganizationID,
     OrganizationMember,
     OrganizationMemberPermissions,
-    Ticket,
     User,
     UserID,
     Venue,
@@ -112,7 +111,7 @@ class OrganizationRead(BaseModel):
 
 def _create_options_for_get_organization(user: User | None) -> tuple[ORMOption, ...]:
     return (
-        # Organization => Venues => Events => Tickets
+        # Organization => Venues => Events
         selectinload(Organization.venues)
         .load_only(
             Venue.id,
@@ -128,12 +127,7 @@ def _create_options_for_get_organization(user: User | None) -> tuple[ORMOption, 
             Event.display_name,
             Event.description,
             Event.category,
-        )
-        .selectinload(
-            # TODO: return all tickets if user has permission from organization
-            Event.tickets.and_(Ticket.user_id == user.id if user is not None else false()),
-        )
-        .load_only(Ticket.id),
+        ),
         # Organization => OrganizationMembers
         selectinload(Organization.members).load_only(
             OrganizationMember.user_id,
