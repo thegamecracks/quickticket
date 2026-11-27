@@ -6,15 +6,15 @@ x-backend-common: &backend-common
   env_file: .env  # copy from example.env
   environment:
     # Point the backend to our cache and database containers, taking precedence over .env.
-    BACKEND__CACHE__URL: 'redis://default:abc123@cache:6379'  # 'sqlite:///data/quickticket-cache.db'
-    BACKEND__DB__URL: 'postgresql+psycopg://quickticket:abc123@db:5432/quickticket?sslmode=prefer'  # 'sqlite+aiosqlite:///data/quickticket.db'
+    BACKEND__CACHE__URL: 'redis://default:CachePassword@cache:6379'  # 'sqlite:///data/quickticket-cache.db'
+    BACKEND__DB__URL: 'postgresql+psycopg://quickticket:DBPassword@db:5432/quickticket?sslmode=prefer'  # 'sqlite+aiosqlite:///data/quickticket.db'
     BACKEND__S3__URL: 's3+http://s3:3900/quickticket'
     BACKEND__S3__REGION: 'garage'
     BACKEND__S3__ACCESS_KEY: '${BACKEND__S3__ACCESS_KEY:-GK1f12370a0306fcb1d13c3be2304f2d5b}'
     BACKEND__S3__SECRET_KEY: '${BACKEND__S3__SECRET_KEY:-c6c4ca3c65ccb75e024f6106d1781fc3d38c10875c77ff12820617e1a9fc1f1a}'
     FORCE_COLOR: '1'
     ASYNCTASQ_DRIVER: 'redis'
-    ASYNCTASQ_REDIS_URL: 'redis://default:abc123@cache:6379'
+    ASYNCTASQ_REDIS_URL: 'redis://default:CachePassword@cache:6379'
   depends_on:
     cache:
       condition: service_healthy
@@ -53,7 +53,7 @@ services:
       - 'redis-server'
       - '/usr/local/etc/redis/redis.conf'
       - '--requirepass'
-      - '${REDIS_PASSWORD:-abc123}'
+      - '${REDIS_PASSWORD:-CachePassword}'
     ports:
       - 127.0.0.1:6379:6379
     healthcheck:
@@ -74,12 +74,12 @@ services:
     environment:
       POSTGRES_USER: 'quickticket'
       POSTGRES_DB: 'quickticket'
-      POSTGRES_PASSWORD: 'abc123'
+      POSTGRES_PASSWORD: 'DBPassword'
       POSTGRES_INITDB_ARGS: '--encoding=UTF8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8'
       # Healthcheck
       PGUSER: 'quickticket'
       PGDATABASE: 'quickticket'
-      PGPASSWORD: 'abc123'
+      PGPASSWORD: 'DBPassword'
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready']
       interval: 1s
