@@ -15,11 +15,10 @@ from quickticket.dependencies.cache import SettingsDep
 
 __all__ = (
     "AccessToken",
-    "IdToken",
-    "IdTokenClaims",
     "TokenHeader",
     "TokenValidator",
     "TokenValidatorDep",
+    "UserInfo",
     "get_access_claims_registry",
     "get_id_claims_registry",
 )
@@ -108,16 +107,10 @@ class Address(BaseModel):
     postal_code: str | None = None
 
 
-class IdTokenClaims(TokenClaims):
-    model_config = ConfigDict(extra="allow")
+class UserInfo(BaseModel):
+    """The attributes returned from a userinfo endpoint."""
 
-    # TODO: likely needs looser validation to support other providers
-    jti: str
-    sid: str
-    auth_time: int
-    aud: str
-    at_hash: str
-    acr: str
+    sub: str
     email_verified: bool
     name: str
     groups: list[str] = Field(default_factory=list)
@@ -125,25 +118,19 @@ class IdTokenClaims(TokenClaims):
     given_name: str
     family_name: str
     email: EmailStr
-    nonce: str | None = None
     # Optional user profile attributes
     zoneinfo: ZoneInfo | None = None
     website: str | None = None
-    resource_access: dict[str, Any] = Field(default_factory=dict)
     address: Address | None = None
     gender: str | None = None
     locale: str | None = None
     picture: str | None = None
     upn: str | None = None
-    realm_access: dict[str, Any] = Field(default_factory=dict)
-    organization: list[str] = Field(default_factory=list)
     birthdate: date | None = None
 
-
-class IdToken(BaseModel):
-    header: TokenHeader
-    claims: IdTokenClaims
-    raw: str
+    resource_access: dict[str, Any] = Field(default_factory=dict)
+    realm_access: dict[str, Any] = Field(default_factory=dict)
+    organization: list[str] = Field(default_factory=list)
 
 
 def _parse_token(raw: str, keys: KeySet, registry: JWTClaimsRegistry) -> _JoseToken:
@@ -169,15 +156,6 @@ class TokenValidator:
         return AccessToken(
             header=access_token.header,
             claims=access_token.claims,
-            raw=raw,
-        )
-
-    def parse_id_token(self, raw: str) -> IdToken:
-        id_token = jwt.decode(raw, self.keys)
-        self.id_registry.validate(id_token.claims)
-        return IdToken(
-            header=id_token.header,
-            claims=id_token.claims,
             raw=raw,
         )
 

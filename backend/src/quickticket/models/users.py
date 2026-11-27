@@ -46,6 +46,7 @@ class User(Base, kw_only=True, repr=False):
 
     # Optional
     created_at: Mapped[current_timestamp] = mapped_column(default=None, index=True)
+    userinfo_updated_at: Mapped[current_timestamp] = mapped_column(default=None)
 
     # Relationships
     addresses: Mapped[list[Address]] = relationship(
@@ -104,13 +105,6 @@ class OpenIDIdentity(Base, kw_only=True, repr=False):
     """The user that linked this provider's identity."""
 
     # Optional
-    id_token: Mapped[str | None] = mapped_column(default=None)
-    """The last known ID token received from this provider.
-
-    This is used to perform RP-initiated logouts.
-    https://openid.net/specs/openid-connect-rpinitiated-1_0.html
-
-    """
 
     # Relationships
     user: Mapped[User] = relationship(

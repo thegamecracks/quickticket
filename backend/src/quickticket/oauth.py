@@ -1,9 +1,5 @@
 import logging
 
-import authlib.oauth2
-from authlib.common.security import generate_token
-from authlib.integrations.httpx_client import AsyncOAuth2Client
-from fastapi.datastructures import URL
 from pydantic import AnyUrl, BaseModel, ConfigDict, Field, Secret
 
 log = logging.getLogger(__name__)
@@ -18,13 +14,13 @@ class OpenIDDiscovery(BaseModel):
     issuer: AnyUrl
     authorization_endpoint: AnyUrl
     token_endpoint: AnyUrl
+    userinfo_endpoint: AnyUrl
     jwks_uri: AnyUrl
     response_types_supported: list[str]
     subject_types_supported: list[str]
     id_token_signing_alg_values_supported: list[str]
 
     # Recommended
-    userinfo_endpoint: AnyUrl | None = None
     registration_endpoint: AnyUrl | None = None
     scopes_supported: list[str] = Field(default_factory=list)
     claims_supported: list[str] = Field(default_factory=list)
@@ -59,130 +55,3 @@ class OpenIDProvider(BaseModel):
     client_id: Secret[str]
     client_secret: Secret[str]
     discovery: OpenIDDiscovery
-
-
-# https://openid.net/specs/openid-connect-core-1_0.html#rfc.section.3.2.2.5
-# Derived from Keycloak response
-class TokenExchangeResponse(BaseModel):
-    model_config = ConfigDict(extra="allow")
-
-    access_token: str  # Secret[str]
-    expires_in: int
-    refresh_expires_in: int
-    refresh_token: str  # Secret[str]
-    token_type: str
-    id_token: str  # Secret[str]
-    scope: str
-    expires_at: int
-
-
-class RPLogoutUnsupported(Exception):
-    """Raised when the OpenID provider does not support RP-initiated logout.
-
-    https://openid.net/specs/openid-connect-rpinitiated-1_0.html
-
-    """
-
-
-class OAuth2Client:
-    def __init__(self, provider: OpenIDProvider) -> None:
-        self.provider = provider
-
-        if "S256" not in self.discovery.code_challenge_methods_supported:
-            log.warning(
-                "Provider discovery does not indicate support for 'S256' code challenge method",
-            )
-        if "authorization_code" not in self.discovery.grant_types_supported:
-            log.warning(
-                "Provider discovery does not indicate support for 'authorization_code' grant type",
-            )
-        if "code" not in self.discovery.response_types_supported:
-            log.warning("Provider discovery does not indicate support for 'code' response type")
-
-        # offline_access may be needed for refresh token, e.g. Authentik
-        # https://docs.goauthentik.io/add-secure-apps/providers/oauth2/#authorization-code
-        scope = {"openid", "email", "profile", "offline_access"}
-        scope = scope & set(self.discovery.scopes_supported)
-
-        self._client = AsyncOAuth2Client(
-            client_id=provider.client_id.get_secret_value(),
-            client_secret=provider.client_secret.get_secret_value(),
-            scope=" ".join(scope),
-            # Passed to underyling OAuth2Client
-            code_challenge_method="S256",
-            grant_type="authorization_code",
-            response_type="code",
-            token_endpoint=str(self.discovery.token_endpoint),
-        )
-
-    @property
-    def client(self) -> authlib.oauth2.OAuth2Client:
-        # HACK: workaround for poor typehinting support in authlib
-        return self._client
-
-    @property
-    def discovery(self) -> OpenIDDiscovery:
-        return self.provider.discovery
-
-    def create_authorization_url(
-        self,
-        *,
-        code_verifier: str,
-        nonce: str,
-        redirect_uri: str | URL,
-    ) -> tuple[str, str]:
-        """Create the authorization url and state."""
-        return self.client.create_authorization_url(
-            str(self.discovery.authorization_endpoint),
-            code_verifier=code_verifier,
-            nonce=nonce,
-            redirect_uri=str(redirect_uri),
-        )
-
-    async def fetch_token(
-        self,
-        *,
-        authorization_response: str,
-        code_verifier: str,
-        redirect_uri: str | URL,
-    ) -> TokenExchangeResponse:
-        log.debug("Fetching token from provider")
-        response = await self.client.fetch_token(
-            authorization_response=authorization_response,
-            code_verifier=code_verifier,
-            redirect_uri=str(redirect_uri),
-        )
-        return TokenExchangeResponse.model_validate(response)
-
-    def create_logout_url(
-        self,
-        *,
-        id_token_hint: str | None,
-        post_logout_redirect_uri: str | URL,
-    ) -> tuple[str, str]:
-        """
-
-        https://openid.net/specs/openid-connect-rpinitiated-1_0.html
-        https://docs.authlib.org/en/latest/oauth2/client/web/starlette.html#rp-initiated-logout
-
-        """
-        if self.discovery.end_session_endpoint is None:
-            raise RPLogoutUnsupported("RP-initiated logout not supported by provider")
-
-        state = generate_token()
-        url = URL(self.discovery.end_session_endpoint.encoded_string())
-        url = url.include_query_params(
-            client_id=self.provider.client_id.get_secret_value(),
-            post_logout_redirect_uri=post_logout_redirect_uri,
-            state=state,
-        )
-        if id_token_hint is not None:
-            url = url.include_query_params(id_token_hint=id_token_hint)
-
-        return str(url), state
-
-    async def refresh_token(self, refresh_token: str) -> TokenExchangeResponse:
-        response = await self.client.refresh_token(
-            refresh_token=refresh_token,
-        )
-        return TokenExchangeResponse.model_validate(response)

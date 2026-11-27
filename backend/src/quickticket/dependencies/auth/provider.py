@@ -9,13 +9,11 @@ from pydantic_core import from_json
 
 from quickticket.dependencies.cache import CacheDep, SettingsDep
 from quickticket.dependencies.state import HTTPClientDep
-from quickticket.oauth import OAuth2Client, OpenIDProvider
+from quickticket.oauth import OpenIDProvider
 
 __all__ = (
-    "OAuth2ClientDep",
     "OpenIDProviderDep",
     "OpenIDProviderJWKsDep",
-    "get_oauth_client",
     "get_openid_provider",
     "get_openid_provider_jwks",
 )
@@ -126,11 +124,6 @@ async def get_openid_provider_jwks(
     return keys
 
 
-async def get_oauth_client(provider: OpenIDProviderDep) -> OAuth2Client:
-    return OAuth2Client(provider)
-
-
 _OpenIDCacheKeyDep = Annotated[str, Depends(_get_discovery_cache_key)]
-OAuth2ClientDep = Annotated[OAuth2Client, Depends(get_oauth_client)]
 OpenIDProviderDep = Annotated[OpenIDProvider, Depends(get_openid_provider)]
 OpenIDProviderJWKsDep = Annotated[KeySet, Depends(get_openid_provider_jwks)]
