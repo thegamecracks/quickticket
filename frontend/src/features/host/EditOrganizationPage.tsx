@@ -1,8 +1,8 @@
-import { useParams } from 'react-router'
-import OrganizationEditorPage from './OrganizationForm'
+import { useParams } from 'react-router';
+import OrganizationEditorPage from './OrganizationForm';
 
 export default function EditOrganizationPage() {
-  const { id } = useParams<{ id: string }>()
+  const { id } = useParams<{ id: string }>();
 
-  return <OrganizationEditorPage organizationId={id ?? ''} />
+  return <OrganizationEditorPage organizationId={id ?? ''} />;
 }

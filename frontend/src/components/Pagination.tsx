@@ -1,4 +1,4 @@
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 
 interface PaginationProps {
   currentPage: number;
@@ -10,7 +10,7 @@ interface PaginationProps {
 // not totally necessary as there are already visual catches for this.
 // The original Math.min only was fine to use.
 export const safePage = (page: number, totalPages: number): number =>
-  Math.max(1, Math.min(page, Math.max(totalPages, 1)))
+  Math.max(1, Math.min(page, Math.max(totalPages, 1)));
 
 export function Pagination(props: PaginationProps) {
   const { currentPage, totalPages, onChangePage } = props;
@@ -18,35 +18,31 @@ export function Pagination(props: PaginationProps) {
   return (
     <>
       {/* Pagination */}
-      {
-        totalPages > 1 && (
-          <div className="mt-8 flex items-center justify-center gap-4">
+      {totalPages > 1 && (
+        <div className="mt-8 flex items-center justify-center gap-4">
+          <button
+            type="button"
+            className="btn btn-outline"
+            disabled={currentPage === 1}
+            onClick={() => onChangePage(currentPage - 1)}
+          >
+            <ChevronLeftIcon className="size-6" />
+          </button>
 
-            <button
-              type="button"
-              className="btn btn-outline"
-              disabled={currentPage === 1}
-              onClick={() => onChangePage(currentPage - 1)}
-            >
-              <ChevronLeftIcon className="size-6" />
-            </button>
+          <span className="text-sm">
+            Page {currentPage} of {totalPages}
+          </span>
 
-            <span className="text-sm">
-              Page {currentPage} of {totalPages}
-            </span>
-
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={currentPage === totalPages}
-              onClick={() => onChangePage(currentPage + 1)}
-            >
-              <ChevronRightIcon className="size-6" />
-            </button>
-
-          </div>
-        )
-      }
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={currentPage === totalPages}
+            onClick={() => onChangePage(currentPage + 1)}
+          >
+            <ChevronRightIcon className="size-6" />
+          </button>
+        </div>
+      )}
     </>
   );
 }

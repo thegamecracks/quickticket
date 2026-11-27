@@ -1,39 +1,29 @@
-import { useEffect, useRef, useState, type ChangeEvent, type SubmitEvent } from 'react'
-import { useNavigate } from 'react-router'
+import axios from 'axios';
+import { type ChangeEvent, type SubmitEvent, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router';
+import { SkeletonRows } from '../../components/Skeleton';
+import { api } from '../../lib/api';
+import { bannerUrl as eventBannerUrl, thumbnailUrl as eventThumbnailUrl } from '../../lib/images';
+import type { EventResponse } from '../events/types';
 
-import { SkeletonRows } from '../../components/Skeleton'
-import { api } from '../../lib/api'
-import { bannerUrl as eventBannerUrl, thumbnailUrl as eventThumbnailUrl } from '../../lib/images'
-import axios from 'axios'
-import type { EventResponse } from '../events/types'
-
-const categories = [
-  'Music',
-  'Comedy',
-  'Art',
-  'Food',
-  'Technology',
-  'Sports',
-  'Community',
-  'Other',
-]
+const categories = ['Music', 'Comedy', 'Art', 'Food', 'Technology', 'Sports', 'Community', 'Other'];
 
 /** The venue context an event form needs; satisfied by both the wizard's
  * organization venue and a loaded event's partial venue. */
 export interface EventFormVenue {
-  id: string
-  display_name: string
+  id: string;
+  display_name: string;
 }
 
 /** Formats an ISO datetime as a `datetime-local` input value (local time). */
 const toDatetimeLocal = (iso: string) => {
-  const d = new Date(iso)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
 
-const MIN_EVENT_DURATION = 60 * 60 * 1000 // 1h, mirrors backend check_event_duration
-const MAX_EVENT_DURATION = 7 * 24 * 60 * 60 * 1000 // 7d
+const MIN_EVENT_DURATION = 60 * 60 * 1000; // 1h, mirrors backend check_event_duration
+const MAX_EVENT_DURATION = 7 * 24 * 60 * 60 * 1000; // 7d
 
 /**
  * Shared event details form. Create mode (a wizard venue was already chosen)
@@ -41,140 +31,133 @@ const MAX_EVENT_DURATION = 7 * 24 * 60 * 60 * 1000 // 7d
  * every field, and PATCHes /events/{id}. Images are preview-only here —
  * banners/thumbnails upload through their own routes.
  */
-export default function EventForm({
-  venue,
-  eventId,
-}: {
-  venue?: EventFormVenue
-  eventId?: string
-}) {
-  const isEdit = Boolean(eventId)
-  const navigate = useNavigate()
+export default function EventForm({ venue, eventId }: { venue?: EventFormVenue; eventId?: string }) {
+  const isEdit = Boolean(eventId);
+  const navigate = useNavigate();
 
   // Edit-mode loading state; create mode starts with the wizard's venue.
-  const [loadedVenue, setLoadedVenue] = useState<EventFormVenue | null>(venue ?? null)
-  const [loading, setLoading] = useState(isEdit)
-  const [loadError, setLoadError] = useState(false)
+  const [loadedVenue, setLoadedVenue] = useState<EventFormVenue | null>(venue ?? null);
+  const [loading, setLoading] = useState(isEdit);
+  const [loadError, setLoadError] = useState(false);
 
   // TODO: consolidate useStates
-  const [displayName, setDisplayName] = useState('')
-  const [description, setDescription] = useState('')
-  const [category, setCategory] = useState('')
-  const [otherCategory, setOtherCategory] = useState('')
-  const [startsAt, setStartsAt] = useState('')
-  const [endsAt, setEndsAt] = useState('')
-  const [ticketPrice, setTicketPrice] = useState('')
-  const [isFree, setIsFree] = useState(false)
-  const [maxAttendees, setMaxAttendees] = useState('')
-  const [thumbnailUrl, setThumbnailUrl] = useState('')
-  const [bannerUrl, setBannerUrl] = useState('')
+  const [displayName, setDisplayName] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('');
+  const [otherCategory, setOtherCategory] = useState('');
+  const [startsAt, setStartsAt] = useState('');
+  const [endsAt, setEndsAt] = useState('');
+  const [ticketPrice, setTicketPrice] = useState('');
+  const [isFree, setIsFree] = useState(false);
+  const [maxAttendees, setMaxAttendees] = useState('');
+  const [thumbnailUrl, setThumbnailUrl] = useState('');
+  const [bannerUrl, setBannerUrl] = useState('');
   // Set only when the user picks a new image: in edit mode this doubles as
   // the dirty flag (loaded previews leave it null, so saves don't re-upload).
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
-  const [bannerFile, setBannerFile] = useState<File | null>(null)
-  const [message, setMessage] = useState('')
-  const [isError, setIsError] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [message, setMessage] = useState('');
+  const [isError, setIsError] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!eventId) return
+    if (!eventId) return;
 
-    let active = true
+    let active = true;
 
     api
       .get<EventResponse>(`/events/${eventId}`)
-      .then(response => {
-        if (!active) return
-        const event = response.data
+      .then((response) => {
+        if (!active) return;
+        const event = response.data;
 
-        setLoadedVenue({ id: event.venue.id, display_name: event.venue.display_name })
-        setDisplayName(event.display_name)
-        setDescription(event.description)
+        setLoadedVenue({ id: event.venue.id, display_name: event.venue.display_name });
+        setDisplayName(event.display_name);
+        setDescription(event.description);
         if (categories.includes(event.category)) {
-          setCategory(event.category)
+          setCategory(event.category);
         } else {
-          setCategory('Other')
-          setOtherCategory(event.category)
+          setCategory('Other');
+          setOtherCategory(event.category);
         }
-        setStartsAt(toDatetimeLocal(event.starts_at))
-        setEndsAt(toDatetimeLocal(event.ends_at))
-        setTicketPrice((event.ticket_price.amount / 100).toFixed(2))
-        setIsFree(event.ticket_price.amount === 0)
-        setMaxAttendees(String(event.max_attendees))
+        setStartsAt(toDatetimeLocal(event.starts_at));
+        setEndsAt(toDatetimeLocal(event.ends_at));
+        setTicketPrice((event.ticket_price.amount / 100).toFixed(2));
+        setIsFree(event.ticket_price.amount === 0);
+        setMaxAttendees(String(event.max_attendees));
         // Always point at the image routes: the entity responses no longer
         // carry image fields (8461564), and a 404 clears the preview.
-        setThumbnailUrl(eventThumbnailUrl('events', event.id))
-        setBannerUrl(eventBannerUrl('events', event.id))
+        setThumbnailUrl(eventThumbnailUrl('events', event.id));
+        setBannerUrl(eventBannerUrl('events', event.id));
       })
       .catch(() => {
-        if (active) setLoadError(true)
+        if (active) setLoadError(true);
       })
       .finally(() => {
-        if (active) setLoading(false)
-      })
+        if (active) setLoading(false);
+      });
 
     return () => {
-      active = false
-    }
-  }, [eventId])
+      active = false;
+    };
+  }, [eventId]);
 
-  const thumbnailInputRef = useRef<HTMLInputElement>(null)
-  const bannerInputRef = useRef<HTMLInputElement>(null)
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
 
   const readImage = (
     e: ChangeEvent<HTMLInputElement>,
     setUrl: (url: string) => void,
     setFile: (file: File | null) => void,
   ) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    setFile(file)
-    const reader = new FileReader()
-    reader.onload = () => setUrl(reader.result as string)
-    reader.readAsDataURL(file)
-  }
+    setFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setUrl(reader.result as string);
+    reader.readAsDataURL(file);
+  };
 
   /** Associates a picked image with an event via its banner/thumbnail routes.
    * Uploads happen after the event exists — EventCreate/EventUpdate don't
    * accept image fields. Client-side dimension/filesize checks are deferred
    * until the backend's image hardening lands; the API rejects bad files. */
   const uploadImage = (eventId: string, kind: 'thumbnail' | 'banner', file: File) => {
-    const form = new FormData()
-    form.append('file', file)
-    return api.putForm(`/events/${eventId}/${kind}`, form)
-  }
+    const form = new FormData();
+    form.append('file', file);
+    return api.putForm(`/events/${eventId}/${kind}`, form);
+  };
 
   const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault()
+    event.preventDefault();
 
     if (displayName.trim().length < 3) {
-      setIsError(true)
-      setMessage('Event name must be at least 3 characters.')
-      return
+      setIsError(true);
+      setMessage('Event name must be at least 3 characters.');
+      return;
     }
 
     if (category === 'Other' && !otherCategory.trim()) {
-      setIsError(true)
-      setMessage('Please enter the event category.')
-      return
+      setIsError(true);
+      setMessage('Please enter the event category.');
+      return;
     }
 
-    const duration = new Date(endsAt).getTime() - new Date(startsAt).getTime()
+    const duration = new Date(endsAt).getTime() - new Date(startsAt).getTime();
     if (duration < MIN_EVENT_DURATION || duration > MAX_EVENT_DURATION) {
-      setIsError(true)
-      setMessage('Events must last between 1 hour and 7 days.')
-      return
+      setIsError(true);
+      setMessage('Events must last between 1 hour and 7 days.');
+      return;
     }
 
     if (Number(maxAttendees) > 10000) {
-      setIsError(true)
-      setMessage('Maximum attendees cannot exceed 10,000.')
-      return
+      setIsError(true);
+      setMessage('Maximum attendees cannot exceed 10,000.');
+      return;
     }
 
-    const finalCategory =
-      category === 'Other' ? otherCategory.trim() : category
+    const finalCategory = category === 'Other' ? otherCategory.trim() : category;
 
     // Mirrors the backend DTOs (which forbid unknown fields): venue_id is
     // only part of EventCreate — EventUpdate has no such field.
@@ -189,55 +172,52 @@ export default function EventForm({
         currency: 'CAD',
       },
       max_attendees: Number(maxAttendees),
-    }
+    };
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
       const response = isEdit
         ? await api.patch<EventResponse>(`/events/${eventId}`, payload)
-        : await api.post<EventResponse>('/events', { ...payload, venue_id: venue?.id })
+        : await api.post<EventResponse>('/events', { ...payload, venue_id: venue?.id });
 
       // Images attach after the event exists. Failures never re-submit the
       // event itself (create succeeded — a retry would duplicate it); the
       // destination page tells the user what to do instead.
-      const uploadFailed: string[] = []
-      for (const [kind, file] of [
-        ['thumbnail', thumbnailFile] as const,
-        ['banner', bannerFile] as const,
-      ]) {
-        if (!file) continue
+      const uploadFailed: string[] = [];
+      for (const [kind, file] of [['thumbnail', thumbnailFile] as const, ['banner', bannerFile] as const]) {
+        if (!file) continue;
         try {
-          await uploadImage(response.data.id, kind, file)
+          await uploadImage(response.data.id, kind, file);
         } catch (err) {
-          console.warn(`${kind} upload failed (event was saved)`, err)
-          uploadFailed.push(kind)
+          console.warn(`${kind} upload failed (event was saved)`, err);
+          uploadFailed.push(kind);
         }
       }
 
       navigate(`/events/${response.data.id}`, {
         state: uploadFailed.length ? { uploadFailed } : null,
-      })
+      });
     } catch (err) {
-      setIsError(true)
+      setIsError(true);
       if (axios.isAxiosError(err)) {
-        const detail = err.response?.data?.detail
+        const detail = err.response?.data?.detail;
         setMessage(
           typeof detail === 'string'
             ? detail
             : Array.isArray(detail)
               ? detail.map((issue: { msg?: string }) => issue.msg).join('; ')
               : 'Failed to save the event. Please try again.',
-        )
+        );
       } else {
-        setMessage('Failed to save the event. Please try again.')
+        setMessage('Failed to save the event. Please try again.');
       }
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   if (loading) {
-    return <SkeletonRows rows={4} />
+    return <SkeletonRows rows={4} />;
   }
 
   if (loadError) {
@@ -245,37 +225,27 @@ export default function EventForm({
       <div role="alert" className="alert alert-error">
         Unable to load the event. Please try again later.
       </div>
-    )
+    );
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {loadedVenue && (
         <p className="-mt-2 mb-7 text-sm text-base-content/60">
-          Venue:{' '}
-          <span className="font-semibold text-base-content">
-            {loadedVenue.display_name}
-          </span>
+          Venue: <span className="font-semibold text-base-content">{loadedVenue.display_name}</span>
         </p>
       )}
 
       {/* Basic information */}
       <div className="rounded-xl border border-base-300 bg-base-100 p-5 shadow-sm">
         <div className="mb-5 border-b border-base-300 pb-3">
-          <h2 className="text-lg font-semibold">
-            Basic Information
-          </h2>
-          <p className="mt-1 text-xs text-base-content/55">
-            Add the main information about your event.
-          </p>
+          <h2 className="text-lg font-semibold">Basic Information</h2>
+          <p className="mt-1 text-xs text-base-content/55">Add the main information about your event.</p>
         </div>
 
         <div className="space-y-5">
           <div>
-            <label
-              htmlFor="eventName"
-              className="mb-2 block text-sm font-medium"
-            >
+            <label htmlFor="eventName" className="mb-2 block text-sm font-medium">
               Event Name
             </label>
 
@@ -293,16 +263,11 @@ export default function EventForm({
 
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <label
-                htmlFor="description"
-                className="text-sm font-medium"
-              >
+              <label htmlFor="description" className="text-sm font-medium">
                 Description
               </label>
 
-              <span className="text-xs text-base-content/45">
-                {description.length}/4096
-              </span>
+              <span className="text-xs text-base-content/45">{description.length}/4096</span>
             </div>
 
             <textarea
@@ -317,10 +282,7 @@ export default function EventForm({
           </div>
 
           <div>
-            <label
-              htmlFor="category"
-              className="mb-2 block text-sm font-medium"
-            >
+            <label htmlFor="category" className="mb-2 block text-sm font-medium">
               Category
             </label>
 
@@ -329,11 +291,11 @@ export default function EventForm({
               className="select select-bordered w-full"
               value={category}
               onChange={(e) => {
-                const selectedCategory = e.target.value
-                setCategory(selectedCategory)
+                const selectedCategory = e.target.value;
+                setCategory(selectedCategory);
 
                 if (selectedCategory !== 'Other') {
-                  setOtherCategory('')
+                  setOtherCategory('');
                 }
               }}
               required
@@ -352,10 +314,7 @@ export default function EventForm({
 
           {category === 'Other' && (
             <div>
-              <label
-                htmlFor="otherCategory"
-                className="mb-2 block text-sm font-medium"
-              >
+              <label htmlFor="otherCategory" className="mb-2 block text-sm font-medium">
                 Specify Category
               </label>
 
@@ -378,17 +337,12 @@ export default function EventForm({
       <div className="rounded-xl border border-base-300 bg-base-100 p-5 shadow-sm">
         <div className="mb-5 border-b border-base-300 pb-3">
           <h2 className="text-lg font-semibold">Schedule</h2>
-          <p className="mt-1 text-xs text-base-content/55">
-            Choose when the event begins and ends.
-          </p>
+          <p className="mt-1 text-xs text-base-content/55">Choose when the event begins and ends.</p>
         </div>
 
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <div>
-            <label
-              htmlFor="startsAt"
-              className="mb-2 block text-sm font-medium"
-            >
+            <label htmlFor="startsAt" className="mb-2 block text-sm font-medium">
               Start Date & Time
             </label>
 
@@ -403,10 +357,7 @@ export default function EventForm({
           </div>
 
           <div>
-            <label
-              htmlFor="endsAt"
-              className="mb-2 block text-sm font-medium"
-            >
+            <label htmlFor="endsAt" className="mb-2 block text-sm font-medium">
               End Date & Time
             </label>
 
@@ -425,20 +376,13 @@ export default function EventForm({
       {/* Ticket details */}
       <div className="rounded-xl border border-base-300 bg-base-100 p-5 shadow-sm">
         <div className="mb-5 border-b border-base-300 pb-3">
-          <h2 className="text-lg font-semibold">
-            Tickets & Capacity
-          </h2>
-          <p className="mt-1 text-xs text-base-content/55">
-            Set the price and maximum number of guests.
-          </p>
+          <h2 className="text-lg font-semibold">Tickets & Capacity</h2>
+          <p className="mt-1 text-xs text-base-content/55">Set the price and maximum number of guests.</p>
         </div>
 
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <div>
-            <label
-              htmlFor="ticketPrice"
-              className="mb-2 block text-sm font-medium"
-            >
+            <label htmlFor="ticketPrice" className="mb-2 block text-sm font-medium">
               Ticket Price
             </label>
 
@@ -472,16 +416,12 @@ export default function EventForm({
                 checked={isFree}
                 onChange={(e) => setIsFree(e.target.checked)}
               />
-
               This is a free event
             </label>
           </div>
 
           <div>
-            <label
-              htmlFor="maxAttendees"
-              className="mb-2 block text-sm font-medium"
-            >
+            <label htmlFor="maxAttendees" className="mb-2 block text-sm font-medium">
               Maximum Attendees
             </label>
 
@@ -504,17 +444,13 @@ export default function EventForm({
       <div className="rounded-xl border border-base-300 bg-base-100 p-5 shadow-sm">
         <div className="mb-5 border-b border-base-300 pb-3">
           <h2 className="text-lg font-semibold">Images</h2>
-          <p className="mt-1 text-xs text-base-content/55">
-            Add images for the event listing and event page.
-          </p>
+          <p className="mt-1 text-xs text-base-content/55">Add images for the event listing and event page.</p>
         </div>
 
         <div className="space-y-6">
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <span className="block text-sm font-medium">
-                Thumbnail Image
-              </span>
+              <span className="block text-sm font-medium">Thumbnail Image</span>
 
               <input
                 ref={thumbnailInputRef}
@@ -542,22 +478,16 @@ export default function EventForm({
                   onError={() => setThumbnailUrl('')}
                 />
               ) : (
-                <span className="text-sm text-base-content/50">
-                  image preview
-                </span>
+                <span className="text-sm text-base-content/50">image preview</span>
               )}
             </div>
 
-            <p className="mt-2 block text-xs text-base-content/50">
-              Used on event cards and search results.
-            </p>
+            <p className="mt-2 block text-xs text-base-content/50">Used on event cards and search results.</p>
           </div>
 
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <span className="block text-sm font-medium">
-                Banner Image
-              </span>
+              <span className="block text-sm font-medium">Banner Image</span>
 
               <input
                 ref={bannerInputRef}
@@ -567,11 +497,7 @@ export default function EventForm({
                 onChange={(e) => readImage(e, setBannerUrl, setBannerFile)}
               />
 
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
-                onClick={() => bannerInputRef.current?.click()}
-              >
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => bannerInputRef.current?.click()}>
                 Upload Image
               </button>
             </div>
@@ -585,49 +511,32 @@ export default function EventForm({
                   onError={() => setBannerUrl('')}
                 />
               ) : (
-                <span className="text-sm text-base-content/50">
-                  image preview
-                </span>
+                <span className="text-sm text-base-content/50">image preview</span>
               )}
             </div>
 
-            <p className="mt-2 block text-xs text-base-content/50">
-              Used as the large image on the event detail page.
-            </p>
+            <p className="mt-2 block text-xs text-base-content/50">Used as the large image on the event detail page.</p>
           </div>
         </div>
       </div>
 
       {/* Form message */}
       {message && (
-        <div
-          className={`alert ${isError ? 'alert-error' : 'alert-success'
-            }`}
-        >
+        <div className={`alert ${isError ? 'alert-error' : 'alert-success'}`}>
           <span>{message}</span>
         </div>
       )}
 
       {/* Buttons */}
       <div className="flex justify-end gap-3">
-        <button
-          type="button"
-          className="btn btn-ghost"
-          onClick={() => navigate(-1)}
-        >
+        <button type="button" className="btn btn-ghost" onClick={() => navigate(-1)}>
           Cancel
         </button>
 
-        <button
-          type="submit"
-          className="btn btn-primary min-w-36"
-          disabled={isSubmitting}
-        >
-          {isSubmitting
-            ? <span className="loading loading-spinner"></span>
-            : isEdit ? 'Save Changes' : 'Create Event'}
+        <button type="submit" className="btn btn-primary min-w-36" disabled={isSubmitting}>
+          {isSubmitting ? <span className="loading loading-spinner"></span> : isEdit ? 'Save Changes' : 'Create Event'}
         </button>
       </div>
     </form>
-  )
+  );
 }

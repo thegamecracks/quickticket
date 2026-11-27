@@ -1,20 +1,19 @@
-import { useNavigate } from "react-router";
-import type { VenueEventResponse } from "../features/events/types";
-import { calcTimeMediumRange, formatDateLong } from "../lib/general";
-import { EVENT_PLACEHOLDER, thumbnailUrl } from "../lib/images";
-import SkeletonImage from "./SkeletonImage";
-
+import { useNavigate } from 'react-router';
+import type { VenueEventResponse } from '../features/events/types';
+import { calcTimeMediumRange, formatDateLong } from '../lib/general';
+import { EVENT_PLACEHOLDER, thumbnailUrl } from '../lib/images';
+import SkeletonImage from './SkeletonImage';
 
 type EventListItemProps = {
-  event: VenueEventResponse
-}
+  event: VenueEventResponse;
+};
 
 export default function EventListItem({ event }: EventListItemProps) {
   const navigate = useNavigate();
 
   const handleViewEvent = () => {
-    navigate(`/events/${event.id}`)
-  }
+    navigate(`/events/${event.id}`);
+  };
 
   return (
     <li className="list-row items-center gap-4">
@@ -31,7 +30,9 @@ export default function EventListItem({ event }: EventListItemProps) {
         <div>{calcTimeMediumRange(event.starts_at, event.ends_at)}</div>
       </div>
       <div>
-        <button className="btn btn-primary" onClick={() => handleViewEvent()}>View</button>
+        <button className="btn btn-primary" onClick={() => handleViewEvent()}>
+          View
+        </button>
       </div>
     </li>
   );

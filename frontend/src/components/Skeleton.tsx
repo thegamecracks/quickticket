@@ -4,7 +4,7 @@
  * exact layouts (EventCardSkeleton is the one detailed exception).
  */
 
-const TEXT_WIDTHS = ['w-full', 'w-11/12', 'w-3/4'] as const
+const TEXT_WIDTHS = ['w-full', 'w-11/12', 'w-3/4'] as const;
 
 /** A stack of text-shaped bars — for detail/form pages. */
 export function SkeletonText({ lines = 3 }: { lines?: number }) {
@@ -14,7 +14,7 @@ export function SkeletonText({ lines = 3 }: { lines?: number }) {
         <div key={i} className={`skeleton h-4 ${TEXT_WIDTHS[i % TEXT_WIDTHS.length]}`} />
       ))}
     </div>
-  )
+  );
 }
 
 /** A stack of list-row placeholders — for list pages. */
@@ -31,5 +31,5 @@ export function SkeletonRows({ rows = 3 }: { rows?: number }) {
         </div>
       ))}
     </div>
-  )
+  );
 }

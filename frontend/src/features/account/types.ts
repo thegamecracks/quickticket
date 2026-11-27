@@ -47,10 +47,9 @@ export function isOrganizationAdministrator(
   user: Pick<User, 'organization_members'> | null | undefined,
   organizationId: string,
 ): boolean {
-  return Boolean(user?.organization_members.some(
-    member =>
-      member.organization_id === organizationId && isAdministrator(member),
-  ));
+  return Boolean(
+    user?.organization_members.some((member) => member.organization_id === organizationId && isAdministrator(member)),
+  );
 }
 
 /** Mirrors quickticket.models.accounts.Address — the ORM row, includes `user_id`. */

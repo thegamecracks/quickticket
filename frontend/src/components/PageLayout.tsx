@@ -1,8 +1,8 @@
-import type { ReactNode } from "react";
-import NavigateBackBtn from "./NavigateBack";
+import type { ReactNode } from 'react';
+import NavigateBackBtn from './NavigateBack';
 
 /** Every page shares one content width so nothing jumps between routes. */
-const CONTENT_WIDTH = "max-w-5xl";
+const CONTENT_WIDTH = 'max-w-5xl';
 
 export type PageLayoutProps = {
   /** Page heading. Pass `undefined` while data loads and set `fallbackTitle`. */
@@ -26,7 +26,7 @@ export default function PageLayout({
   back = false,
   actions,
   hero,
-  className = "",
+  className = '',
   children,
 }: PageLayoutProps) {
   const heading = title ?? fallbackTitle;
@@ -34,24 +34,12 @@ export default function PageLayout({
   return (
     <>
       {hero}
-      <section
-        className={`mx-auto w-full ${CONTENT_WIDTH} grow px-4 py-12 ${className}`}
-      >
+      <section className={`mx-auto w-full ${CONTENT_WIDTH} grow px-4 py-12 ${className}`}>
         {(back || heading || actions) && (
           <div className="mb-4 flex min-w-0 items-center gap-1">
-            {back && (
-              <NavigateBackBtn
-                to={typeof back === "object" ? back.to : undefined}
-              />
-            )}
-            {heading && (
-              <h1 className="truncate text-3xl font-bold">{heading}</h1>
-            )}
-            {actions && (
-              <div className="ml-auto flex shrink-0 items-center gap-2">
-                {actions}
-              </div>
-            )}
+            {back && <NavigateBackBtn to={typeof back === 'object' ? back.to : undefined} />}
+            {heading && <h1 className="truncate text-3xl font-bold">{heading}</h1>}
+            {actions && <div className="ml-auto flex shrink-0 items-center gap-2">{actions}</div>}
           </div>
         )}
         {children}

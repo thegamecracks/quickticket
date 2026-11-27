@@ -22,9 +22,15 @@ export default function EventCardSkeleton() {
 
         {/* Event information */}
         <ul className="space-y-2">
-          <li><div className="skeleton h-4 w-2/3" /></li>
-          <li><div className="skeleton h-4 w-1/2" /></li>
-          <li><div className="skeleton h-4 w-1/3" /></li>
+          <li>
+            <div className="skeleton h-4 w-2/3" />
+          </li>
+          <li>
+            <div className="skeleton h-4 w-1/2" />
+          </li>
+          <li>
+            <div className="skeleton h-4 w-1/3" />
+          </li>
         </ul>
 
         {/* Price and availability */}
@@ -34,5 +40,5 @@ export default function EventCardSkeleton() {
         </div>
       </div>
     </div>
-  )
+  );
 }

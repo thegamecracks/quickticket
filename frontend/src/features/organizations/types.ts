@@ -1,4 +1,4 @@
-import type { Organization, StorageObjectRef } from "../events/types";
+import type { Organization, StorageObjectRef } from '../events/types';
 
 /*
  * Wire types mirroring `quickticket.routers.organizations`.

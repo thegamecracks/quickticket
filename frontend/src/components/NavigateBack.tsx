@@ -1,5 +1,5 @@
-import { ArrowLeftIcon } from "@heroicons/react/24/solid";
-import { useNavigate } from "react-router";
+import { ArrowLeftIcon } from '@heroicons/react/24/solid';
+import { useNavigate } from 'react-router';
 
 type NavigateBackBtnProps = {
   label?: string;
@@ -7,20 +7,20 @@ type NavigateBackBtnProps = {
   to?: string;
 };
 
-export default function NavigateBackBtn({ label = "Back", to }: NavigateBackBtnProps) {
-  const navigate = useNavigate()
+export default function NavigateBackBtn({ label = 'Back', to }: NavigateBackBtnProps) {
+  const navigate = useNavigate();
 
   const handleClick = () => {
     // React Router stores the history index in history.state; idx 0 == nothing to go back to.
-    const idx = window.history.state?.idx
-    const hasInAppHistory = typeof idx === "number" && idx > 0
+    const idx = window.history.state?.idx;
+    const hasInAppHistory = typeof idx === 'number' && idx > 0;
 
     if (!hasInAppHistory && to) {
-      navigate(to, { replace: true })
-      return
+      navigate(to, { replace: true });
+      return;
     }
-    navigate(-1)
-  }
+    navigate(-1);
+  };
 
   return (
     <button
@@ -30,6 +30,6 @@ export default function NavigateBackBtn({ label = "Back", to }: NavigateBackBtnP
     >
       <ArrowLeftIcon className="size-3" />
       {label}
-    </button >
-  )
+    </button>
+  );
 }
