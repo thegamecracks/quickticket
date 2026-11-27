@@ -7,11 +7,6 @@ repos:
         entry: bun run check
         language: system
 
-      - id: format
-        name: format
-        entry: bun run format
-        language: system
-
       - id: lint
         name: lint
         entry: bun run lint
