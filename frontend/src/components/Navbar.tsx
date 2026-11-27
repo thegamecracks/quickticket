@@ -33,19 +33,16 @@ export default function Navbar() {
       </nav>
       <div className="navbar-end">
         {user === undefined ? (
-          <div className="skeleton h-8 rounded-field px-3" aria-label="Checking sign-in status…">
+          <div className="skeleton h-8 rounded-field px-3">
             <span className="invisible text-xs font-semibold">Sign in</span>
           </div>
         ) : user ? (
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="avatar">
+            <button type="button" tabIndex={0} className="avatar">
               <div className="w-10 rounded-full">
-                <img
-                  alt="avatar"
-                  src={'https://ui-avatars.com/api/?name=' + user?.first_name + '+' + user?.last_name}
-                />
+                <img alt="avatar" src={`https://ui-avatars.com/api/?name=${user?.first_name}+${user?.last_name}`} />
               </div>
-            </div>
+            </button>
             <ul tabIndex={-1} className="menu dropdown-content bg-base-200 rounded-box z-1 w-52 shadow-sm">
               <li>
                 <a href="/myEvents">My Events</a>
@@ -60,12 +57,14 @@ export default function Navbar() {
                 <a href="/settings">Settings</a>
               </li>
               <li>
-                <a onClick={() => handleLogout()}>Logout</a>
+                <button type="button" onClick={handleLogout}>
+                  Logout
+                </button>
               </li>
             </ul>
           </div>
         ) : (
-          <button className="btn btn-primary btn-sm" onClick={() => handleLogin()}>
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => handleLogin()}>
             Sign in
           </button>
         )}

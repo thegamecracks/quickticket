@@ -20,7 +20,7 @@ export default function OrganizationPage() {
     };
 
     getOrg();
-  }, []);
+  }, [id]);
 
   const handleViewVenue = (id: string) => {
     navigate(`/venue/${id}`);
@@ -42,6 +42,7 @@ export default function OrganizationPage() {
               </figure>
               <div className="max-sm:col-start-2">{venue.display_name}</div>
               <button
+                type="button"
                 className="btn btn-outline btn-primary max-sm:col-start-2! max-sm:row-start-2! self-start sm:self-center sm:justify-self-end"
                 onClick={() => handleViewVenue(venue.id)}
               >

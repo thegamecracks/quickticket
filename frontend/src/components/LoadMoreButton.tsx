@@ -20,7 +20,14 @@ export function LoadMoreButton(props: LoadMoreButtonProps) {
   return (
     <div className="flex justify-center">
       <button type="button" className="btn btn-outline" disabled={loading} onClick={onClick}>
-        {loading ? <span className="loading loading-spinner" aria-label="Loading" /> : 'Load more'}
+        {loading ? (
+          <>
+            <span className="loading loading-spinner" aria-hidden="true" />
+            <span className="sr-only">Loading</span>
+          </>
+        ) : (
+          'Load more'
+        )}
       </button>
     </div>
   );

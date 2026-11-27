@@ -87,6 +87,7 @@ export default function EventsPage() {
           <span className="sr-only">Loading events...</span>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: PAGE_SIZE }, (_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: loading placeholders are identical static rows that never reorder
               <EventCardSkeleton key={i} />
             ))}
           </div>

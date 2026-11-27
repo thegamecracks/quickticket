@@ -22,7 +22,7 @@ export default function VenuePage() {
     };
 
     getVenue();
-  }, []);
+  }, [id]);
 
   return (
     <PageLayout title={venue?.display_name} fallbackTitle="Venue" back={{ to: '/events' }}>

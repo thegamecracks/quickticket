@@ -498,8 +498,8 @@ export function VenueForm({
               </div>
 
               {/* Venue Type */}
-              <div>
-                <label className="mb-3 block text-sm font-medium">Venue Type</label>
+              <fieldset>
+                <legend className="mb-3 block text-sm font-medium">Venue Type</legend>
 
                 <div className="flex flex-wrap gap-6">
                   <label className="flex cursor-pointer items-center gap-2">
@@ -527,7 +527,7 @@ export function VenueForm({
                     Virtual Venue
                   </label>
                 </div>
-              </div>
+              </fieldset>
 
               {form.venueType === 'virtual' ? (
                 <p className="text-sm text-base-content/60">

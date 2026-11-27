@@ -33,7 +33,12 @@ export default function MyTicketsPage() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ['tickets', 'mine', user?.id],
     enabled: user != null,
-    queryFn: ({ pageParam }) => Promise.resolve(fetchMyTicketsPage(user!, pageParam)),
+    queryFn: ({ pageParam }) => {
+      if (user == null) {
+        return Promise.reject(new Error('Tickets can only be fetched while signed in'));
+      }
+      return Promise.resolve(fetchMyTicketsPage(user, pageParam));
+    },
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.next,
   });
@@ -52,24 +57,24 @@ export default function MyTicketsPage() {
 
           {tickets && tickets.length > 0 && (
             <ul className="list mx-auto space-y-2">
-              {tickets.map((t: Ticket) => (
-                <li
-                  className="list-row items-center rounded-2xl bg-primary/10 shadow-md hover:bg-primary/20 transition-colors duration-300  cursor-pointer"
-                  key={t.id}
-                  onClick={() => goToTicketDetail(t.id)}
-                >
-                  <div className="text-xl align-middle">
-                    <span className="text-secondary">Ticket</span>
-                  </div>
-                  <div>{getMockEvent(t.event_id)?.display_name}</div>
-                  <div>
-                    {calcDateLongTimeMediumRange(
-                      getMockEvent(t.event_id)!.starts_at,
-                      getMockEvent(t.event_id)!.ends_at,
-                    )}
-                  </div>
-                </li>
-              ))}
+              {tickets.map((t: Ticket) => {
+                const event = getMockEvent(t.event_id);
+                return (
+                  <li key={t.id}>
+                    <button
+                      type="button"
+                      className="list-row w-full cursor-pointer items-center rounded-2xl bg-primary/10 text-left shadow-md transition-colors duration-300 hover:bg-primary/20"
+                      onClick={() => goToTicketDetail(t.id)}
+                    >
+                      <div className="text-xl align-middle">
+                        <span className="text-secondary">Ticket</span>
+                      </div>
+                      <div>{event?.display_name}</div>
+                      <div>{event ? calcDateLongTimeMediumRange(event.starts_at, event.ends_at) : null}</div>
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           )}
 

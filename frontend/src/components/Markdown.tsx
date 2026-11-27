@@ -13,5 +13,6 @@ type MarkdownProps = {
 export default function Markdown({ content, className = '' }: MarkdownProps) {
   const html = useMemo(() => renderMarkdown(content), [content]);
 
+  // biome-ignore lint/security/noDangerouslySetInnerHtml: markdown-it is configured with html: false, so raw user HTML is escaped and only generated markup is emitted (see src/lib/markdown.ts)
   return <div className={`markdown ${className}`} dangerouslySetInnerHTML={{ __html: html }} />;
 }

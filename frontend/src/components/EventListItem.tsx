@@ -30,7 +30,7 @@ export default function EventListItem({ event }: EventListItemProps) {
         <div>{calcTimeMediumRange(event.starts_at, event.ends_at)}</div>
       </div>
       <div>
-        <button className="btn btn-primary" onClick={() => handleViewEvent()}>
+        <button type="button" className="btn btn-primary" onClick={() => handleViewEvent()}>
           View
         </button>
       </div>

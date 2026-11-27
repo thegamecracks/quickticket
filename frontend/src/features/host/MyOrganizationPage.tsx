@@ -116,7 +116,11 @@ export default function MyOrganizationPage() {
                     <div className="max-sm:col-start-2">{venue.display_name}</div>
 
                     <div className="max-sm:col-start-2! max-sm:row-start-2! flex flex-wrap items-center gap-2 self-start sm:self-center">
-                      <button className="btn btn-outline btn-primary" onClick={() => handleViewVenue(venue.id)}>
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-primary"
+                        onClick={() => handleViewVenue(venue.id)}
+                      >
                         View
                       </button>
                       <Link to={`/venue/${venue.id}/edit`} className="btn btn-primary">
@@ -154,7 +158,11 @@ export default function MyOrganizationPage() {
 
                     {/* Event editing mirrors the venue card's View + Edit pair. */}
                     <div className="max-sm:col-start-2! max-sm:row-start-2! flex flex-wrap items-center gap-2 self-start sm:self-center">
-                      <button className="btn btn-outline btn-primary" onClick={() => handleViewEvent(event.id)}>
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-primary"
+                        onClick={() => handleViewEvent(event.id)}
+                      >
                         View
                       </button>
                       <Link to={`/events/${event.id}/edit`} className="btn btn-primary">

@@ -28,7 +28,7 @@ export default function EventDetailPage() {
     };
 
     getEvent();
-  }, []);
+  }, [id]);
 
   const handleCheckoutClick = () => {
     navigate(`/events/${id}/checkout`);
@@ -100,7 +100,7 @@ export default function EventDetailPage() {
             ) : (
               <span className="badge badge-error">Sold Out</span>
             )}
-            <button className="btn btn-primary" onClick={() => handleCheckoutClick()}>
+            <button type="button" className="btn btn-primary" onClick={() => handleCheckoutClick()}>
               Checkout
             </button>
           </div>
