@@ -56,8 +56,6 @@ services:
       - '${REDIS_PASSWORD:-abc123}'
     ports:
       - 127.0.0.1:6379:6379
-    environment:
-      REDIS_ARGS: 'abc123'
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 1s
