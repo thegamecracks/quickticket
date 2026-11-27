@@ -9,6 +9,7 @@ on:
       - 'frontend/src/**'
       - 'frontend/public/**'
       - 'frontend/.oxlintrc.json'
+      - 'frontend/biome.json'
       - 'frontend/bun.lock'
       - 'frontend/index.html'
       - 'frontend/package.json'
@@ -20,6 +21,7 @@ on:
       - 'frontend/src/**'
       - 'frontend/public/**'
       - 'frontend/.oxlintrc.json'
+      - 'frontend/biome.json'
       - 'frontend/bun.lock'
       - 'frontend/index.html'
       - 'frontend/package.json'
@@ -33,6 +35,38 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  check:
+    name: check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1
+      - run: bun install --frozen-lockfile
+      - run: bun run check --reporter github
+
+  format:
+    name: format
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1
+      - run: bun install --frozen-lockfile
+      - run: bun run format --reporter github
+
   lint:
     name: oxlint
     runs-on: ubuntu-latest
@@ -47,7 +81,7 @@ jobs:
         with:
           bun-version: 1
       - run: bun install --frozen-lockfile
-      - run: bun run lint
+      - run: bun run lint --format github
 
   build:
     name: tsc + vite build

@@ -5,5 +5,5 @@ export default function Footer() {
         <p>QuickTicket · COMP231 Term Project</p>
       </aside>
     </footer>
-  )
+  );
 }

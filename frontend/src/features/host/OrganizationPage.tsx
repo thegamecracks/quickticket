@@ -1,30 +1,30 @@
-import { useNavigate, useParams } from 'react-router'
-import PageLayout from '../../components/PageLayout'
-import { api } from '../../lib/api'
-import { useEffect, useState } from 'react'
-import type { OrganizationResponse } from '../organizations/types'
-import SkeletonImage from '../../components/SkeletonImage'
-import { EVENT_PLACEHOLDER, thumbnailUrl } from '../../lib/images'
-import { SkeletonRows } from '../../components/Skeleton'
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router';
+import PageLayout from '../../components/PageLayout';
+import { SkeletonRows } from '../../components/Skeleton';
+import SkeletonImage from '../../components/SkeletonImage';
+import { api } from '../../lib/api';
+import { EVENT_PLACEHOLDER, thumbnailUrl } from '../../lib/images';
+import type { OrganizationResponse } from '../organizations/types';
 
 export default function OrganizationPage() {
-  const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
-  const [org, setOrg] = useState<OrganizationResponse | undefined>(undefined)
+  const [org, setOrg] = useState<OrganizationResponse | undefined>(undefined);
 
   useEffect(() => {
     const getOrg = async (): Promise<void> => {
       const res = await api.get<OrganizationResponse>(`/organizations/${id}`);
       setOrg(res.data);
-    }
+    };
 
     getOrg();
-  }, [])
+  }, [id]);
 
   const handleViewVenue = (id: string) => {
-    navigate(`/venue/${id}`)
-  }
+    navigate(`/venue/${id}`);
+  };
 
   return (
     <PageLayout title={org?.display_name} back>
@@ -32,27 +32,26 @@ export default function OrganizationPage() {
       {org && (
         <ul className="list">
           {org.venues.map((venue) => (
-            <li
-              className="list-row max-sm:grid-cols-[auto_1fr]! max-sm:grid-flow-row!"
-              key={venue.id}
-            >
+            <li className="list-row max-sm:grid-cols-[auto_1fr]! max-sm:grid-flow-row!" key={venue.id}>
               <figure className="h-20 w-32 shrink-0 max-sm:row-span-2 max-sm:self-center overflow-hidden rounded-lg bg-base-300">
-
                 <SkeletonImage
                   sources={[thumbnailUrl('venues', venue.id), EVENT_PLACEHOLDER]}
                   alt={venue.display_name}
                   className="h-full w-full object-cover"
                 />
               </figure>
-              <div className="max-sm:col-start-2">
-                {venue.display_name}
-              </div>
-              <button className="btn btn-outline btn-primary max-sm:col-start-2! max-sm:row-start-2! self-start sm:self-center sm:justify-self-end" onClick={() => handleViewVenue(venue.id)}>View</button>
+              <div className="max-sm:col-start-2">{venue.display_name}</div>
+              <button
+                type="button"
+                className="btn btn-outline btn-primary max-sm:col-start-2! max-sm:row-start-2! self-start sm:self-center sm:justify-self-end"
+                onClick={() => handleViewVenue(venue.id)}
+              >
+                View
+              </button>
             </li>
           ))}
         </ul>
-      )
-      }
-    </PageLayout >
-  )
+      )}
+    </PageLayout>
+  );
 }

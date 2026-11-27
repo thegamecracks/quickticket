@@ -1,35 +1,32 @@
-import { useEffect, useMemo, useRef, useState, type SubmitEvent } from 'react'
-import { useNavigate } from 'react-router'
-import { APIProvider, useMapsLibrary } from '@vis.gl/react-google-maps'
-import axios from 'axios'
-import PageLayout from '../../components/PageLayout'
-import { SkeletonText } from '../../components/Skeleton'
-import { api } from '../../lib/api'
-import { useAuth } from '../../lib/auth'
-import {
-  geocodeAddress,
-  reverseGeocodeCoords,
-  type GeocodedAddress,
-} from '../../lib/geocode'
-import type { Point } from '../../lib/types'
-import { isAdministrator, isOrganizationAdministrator } from '../account/types'
-import type { VenueResponse } from '../events/types'
-type AddressFields = GeocodedAddress
+import { APIProvider, useMapsLibrary } from '@vis.gl/react-google-maps';
+import axios from 'axios';
+import { type SubmitEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router';
+import PageLayout from '../../components/PageLayout';
+import { SkeletonText } from '../../components/Skeleton';
+import { api } from '../../lib/api';
+import { useAuth } from '../../lib/auth';
+import { type GeocodedAddress, geocodeAddress, reverseGeocodeCoords } from '../../lib/geocode';
+import type { Point } from '../../lib/types';
+import { isAdministrator, isOrganizationAdministrator } from '../account/types';
+import type { VenueResponse } from '../events/types';
 
-type VenueType = 'physical' | 'virtual'
+type AddressFields = GeocodedAddress;
+
+type VenueType = 'physical' | 'virtual';
 
 type VenueFormState = {
-  displayName: string
-  description: string
-  category: string
-  venueType: VenueType
-  streetAddress: string
-  unit: string
-  city: string
-  province: string
-  postalCode: string
-  country: string
-}
+  displayName: string;
+  description: string;
+  category: string;
+  venueType: VenueType;
+  streetAddress: string;
+  unit: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  country: string;
+};
 
 const emptyForm: VenueFormState = {
   displayName: '',
@@ -42,33 +39,22 @@ const emptyForm: VenueFormState = {
   province: '',
   postalCode: '',
   country: 'Canada',
-}
+};
 
-const ADDRESS_FIELDS = [
-  'streetAddress',
-  'unit',
-  'city',
-  'province',
-  'postalCode',
-  'country',
-] as const
+const ADDRESS_FIELDS = ['streetAddress', 'unit', 'city', 'province', 'postalCode', 'country'] as const;
 
 /** Combines the structured fields into the backend's location_name field. */
 const buildLocationName = (form: VenueFormState): string =>
   form.venueType === 'physical'
-    ? ADDRESS_FIELDS.map(field => form[field].trim())
-      .filter(Boolean)
-      .join(', ')
-    : ''
+    ? ADDRESS_FIELDS.map((field) => form[field].trim())
+        .filter(Boolean)
+        .join(', ')
+    : '';
 
 /** Returns an error message, or undefined when the form is valid. */
 const validateVenueForm = (form: VenueFormState): string | undefined => {
-  if (
-    !form.displayName.trim() ||
-    !form.description.trim() ||
-    !form.category.trim()
-  ) {
-    return 'Please complete all required venue details.'
+  if (!form.displayName.trim() || !form.description.trim() || !form.category.trim()) {
+    return 'Please complete all required venue details.';
   }
 
   if (form.venueType === 'physical') {
@@ -79,17 +65,17 @@ const validateVenueForm = (form: VenueFormState): string | undefined => {
       !form.postalCode.trim() ||
       !form.country.trim()
     ) {
-      return 'Please complete the venue address.'
+      return 'Please complete the venue address.';
     }
   }
 
   // The current API limits location_name to 128 characters.
   if (buildLocationName(form).length > 128) {
-    return 'The combined location details exceed 128 characters. Please shorten the address or platform name.'
+    return 'The combined location details exceed 128 characters. Please shorten the address or platform name.';
   }
 
-  return undefined
-}
+  return undefined;
+};
 
 /**
  * Diff a (trimmed) form state against the loaded venue to build the PATCH
@@ -105,45 +91,38 @@ const venueChanges = (
   venue: VenueResponse,
   seedAddress: AddressFields,
 ): { changes: VenuePatch; addressChanged: boolean } => {
-  const changes: VenuePatch = {}
+  const changes: VenuePatch = {};
 
   if (form.displayName !== venue.display_name) {
-    changes.display_name = form.displayName
+    changes.display_name = form.displayName;
   }
   if (form.description !== venue.description) {
-    changes.description = form.description
+    changes.description = form.description;
   }
   if (form.category !== venue.category) {
-    changes.category = form.category
+    changes.category = form.category;
   }
 
-  let addressChanged = false
+  let addressChanged = false;
 
   if (form.venueType === 'virtual') {
-    if (venue.location_name !== '') changes.location_name = ''
-    if (venue.location_coords !== null) changes.location_coords = null
+    if (venue.location_name !== '') changes.location_name = '';
+    if (venue.location_coords !== null) changes.location_coords = null;
   } else {
-    addressChanged = ADDRESS_FIELDS.some(field => form[field] !== seedAddress[field])
+    addressChanged = ADDRESS_FIELDS.some((field) => form[field] !== seedAddress[field]);
 
     if (addressChanged) {
-      changes.location_name = buildLocationName(form)
+      changes.location_name = buildLocationName(form);
     }
   }
 
-  return { changes, addressChanged }
-}
+  return { changes, addressChanged };
+};
 
 /** Fields the venue PATCH endpoint accepts. */
 type VenuePatch = Partial<
-  Pick<
-    VenueResponse,
-    | 'display_name'
-    | 'description'
-    | 'category'
-    | 'location_name'
-    | 'location_coords'
-  >
->
+  Pick<VenueResponse, 'display_name' | 'description' | 'category' | 'location_name' | 'location_coords'>
+>;
 
 export function VenueForm({
   venueId,
@@ -151,101 +130,91 @@ export function VenueForm({
   embedded,
   onCreated,
 }: {
-  venueId?: string
+  venueId?: string;
   /** Skip the organization picker and create in this organization (wizard). */
-  fixedOrganizationId?: string
+  fixedOrganizationId?: string;
   /** Render the bare form (no page shell) for the create-event wizard. */
-  embedded?: boolean
+  embedded?: boolean;
   /** Replaces the default post-create navigation (wizard advances a step). */
-  onCreated?: (venue: VenueResponse) => void
+  onCreated?: (venue: VenueResponse) => void;
 }) {
-  const isEdit = Boolean(venueId)
-  const navigate = useNavigate()
-  const { user } = useAuth()
-  const geocodingLib = useMapsLibrary('geocoding')
+  const isEdit = Boolean(venueId);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const geocodingLib = useMapsLibrary('geocoding');
 
-  const [venue, setVenue] = useState<VenueResponse | null>(null)
-  const [form, setForm] = useState<VenueFormState>(emptyForm)
-  const [loading, setLoading] = useState(isEdit)
-  const [loadError, setLoadError] = useState('')
-  const [saving, setSaving] = useState(false)
+  const [venue, setVenue] = useState<VenueResponse | null>(null);
+  const [form, setForm] = useState<VenueFormState>(emptyForm);
+  const [loading, setLoading] = useState(isEdit);
+  const [loadError, setLoadError] = useState('');
+  const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<{
-    error: boolean
-    text: string
-  } | null>(null)
+    error: boolean;
+    text: string;
+  } | null>(null);
 
   // Reverse-geocoded address the user started from; edits are detected
   // against this snapshot to decide whether to re-geocode on save.
-  const seedAddressRef = useRef<AddressFields>(emptyForm)
+  const seedAddressRef = useRef<AddressFields>(emptyForm);
 
   // True while stored coordinates are being reverse-geocoded into the
   // address fields; saving is blocked so edits are never compared against
   // an incomplete seed.
-  const [addressSeeding, setAddressSeeding] = useState(false)
+  const [addressSeeding, setAddressSeeding] = useState(false);
 
   // Only administrators of an organization can create venues in it.
-  const adminMemberships = useMemo(
-    () => user?.organization_members.filter(isAdministrator) ?? [],
-    [user],
-  )
+  const adminMemberships = useMemo(() => user?.organization_members.filter(isAdministrator) ?? [], [user]);
 
-  const [organizationId, setOrganizationId] = useState(fixedOrganizationId ?? '')
-  const [adminOrgNames, setAdminOrgNames] = useState<
-    Record<string, string>
-  >({})
+  const [organizationId, setOrganizationId] = useState(fixedOrganizationId ?? '');
+  const [adminOrgNames, setAdminOrgNames] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (isEdit || fixedOrganizationId || adminMemberships.length < 2) {
       if (!fixedOrganizationId && adminMemberships.length === 1) {
-        setOrganizationId(adminMemberships[0].organization_id)
+        setOrganizationId(adminMemberships[0].organization_id);
       }
-      return
+      return;
     }
 
-    let active = true
+    let active = true;
     Promise.all(
-      adminMemberships.map(member =>
+      adminMemberships.map((member) =>
         api
-          .get<{ id: string; display_name: string }>(
-            `/organizations/${member.organization_id}`,
-          )
-          .then(response => response.data),
+          .get<{ id: string; display_name: string }>(`/organizations/${member.organization_id}`)
+          .then((response) => response.data),
       ),
-    ).then(organizations => {
-      if (!active) return
-      setAdminOrgNames(
-        Object.fromEntries(
-          organizations.map(org => [org.id, org.display_name]),
-        ),
-      )
-      setOrganizationId(previous => previous || organizations[0].id)
-    })
+    ).then((organizations) => {
+      if (!active) return;
+      setAdminOrgNames(Object.fromEntries(organizations.map((org) => [org.id, org.display_name])));
+      setOrganizationId((previous) => previous || organizations[0].id);
+    });
 
     return () => {
-      active = false
-    }
-  }, [isEdit, fixedOrganizationId, adminMemberships])
+      active = false;
+    };
+  }, [isEdit, fixedOrganizationId, adminMemberships]);
 
   useEffect(() => {
-    if (!isEdit) return
+    if (!isEdit) return;
 
     if (!venueId) {
-      setLoadError('No venue was selected.')
-      setLoading(false)
-      return
+      setLoadError('No venue was selected.');
+      setLoading(false);
+      return;
     }
 
-    let active = true
-    setLoading(true)
-    setLoadError('')
-    seedAddressRef.current = emptyForm
+    let active = true;
+    setLoading(true);
+    setLoadError('');
+    seedAddressRef.current = emptyForm;
 
-    api.get<VenueResponse>(`/venues/${venueId}`)
-      .then(response => {
-        if (!active) return
+    api
+      .get<VenueResponse>(`/venues/${venueId}`)
+      .then((response) => {
+        if (!active) return;
 
-        const details = response.data
-        setVenue(details)
+        const details = response.data;
+        setVenue(details);
         setForm({
           displayName: details.display_name,
           description: details.description,
@@ -257,37 +226,37 @@ export function VenueForm({
           province: '',
           postalCode: '',
           country: '',
-        })
+        });
       })
       .catch(() => {
         if (active) {
-          setLoadError('Unable to load this venue. Please try again.')
+          setLoadError('Unable to load this venue. Please try again.');
         }
       })
       .finally(() => {
-        if (active) setLoading(false)
-      })
+        if (active) setLoading(false);
+      });
 
     return () => {
-      active = false
-    }
-  }, [isEdit, venueId])
+      active = false;
+    };
+  }, [isEdit, venueId]);
 
   // Seed the address fields from the stored coordinates once the
   // geocoding library is ready. The coordinates are the source of truth.
   useEffect(() => {
-    if (!isEdit || !venue?.location_coords || !geocodingLib) return
+    if (!isEdit || !venue?.location_coords || !geocodingLib) return;
 
-    let active = true
-    setAddressSeeding(true)
+    let active = true;
+    setAddressSeeding(true);
 
     reverseGeocodeCoords(geocodingLib, venue.location_coords)
-      .then(address => {
-        if (!active || !address) return
-        seedAddressRef.current = address
+      .then((address) => {
+        if (!active || !address) return;
+        seedAddressRef.current = address;
 
         // Only fill fields the user hasn't started editing.
-        setForm(previous => ({
+        setForm((previous) => ({
           ...previous,
           streetAddress: previous.streetAddress || address.streetAddress,
           unit: previous.unit || address.unit,
@@ -295,91 +264,86 @@ export function VenueForm({
           province: previous.province || address.province,
           postalCode: previous.postalCode || address.postalCode,
           country: previous.country || address.country,
-        }))
+        }));
       })
       .finally(() => {
-        if (active) setAddressSeeding(false)
-      })
+        if (active) setAddressSeeding(false);
+      });
 
     return () => {
-      active = false
-    }
-  }, [isEdit, venue, geocodingLib])
+      active = false;
+    };
+  }, [isEdit, venue, geocodingLib]);
 
-  const canEdit = isOrganizationAdministrator(user, venue?.organization.id ?? '')
+  const canEdit = isOrganizationAdministrator(user, venue?.organization.id ?? '');
 
   const updateField = (field: keyof VenueFormState, value: string) => {
-    setForm(previous => ({ ...previous, [field]: value }))
-    setFeedback(null)
-  }
+    setForm((previous) => ({ ...previous, [field]: value }));
+    setFeedback(null);
+  };
 
   const clearForm = () => {
-    setForm(emptyForm)
-    setFeedback(null)
-  }
+    setForm(emptyForm);
+    setFeedback(null);
+  };
 
   const geocodeCurrentAddress = async (): Promise<Point | null> => {
-    const locationName = buildLocationName(form)
-    if (!locationName) return null
+    const locationName = buildLocationName(form);
+    if (!locationName) return null;
 
-    const library = geocodingLib ??
-      await google.maps.importLibrary('geocoding')
+    const library = geocodingLib ?? (await google.maps.importLibrary('geocoding'));
 
-    return geocodeAddress(library, locationName)
-  }
+    return geocodeAddress(library, locationName);
+  };
 
   const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault()
+    event.preventDefault();
 
-    if (!user || saving || addressSeeding) return
-    if (isEdit && (!venueId || !venue || !canEdit)) return
+    if (!user || saving || addressSeeding) return;
+    if (isEdit && (!venueId || !venue || !canEdit)) return;
 
     const formState = {
       ...form,
       displayName: form.displayName.trim(),
       description: form.description.trim(),
       category: form.category.trim(),
-    }
+    };
 
-    const error = validateVenueForm(formState)
+    const error = validateVenueForm(formState);
     if (error) {
-      setFeedback({ error: true, text: error })
-      return
+      setFeedback({ error: true, text: error });
+      return;
     }
 
     if (!isEdit && !organizationId) {
       setFeedback({
         error: true,
         text: 'You must be an administrator of an organization to create a venue.',
-      })
-      return
+      });
+      return;
     }
 
-    setSaving(true)
-    setFeedback(null)
+    setSaving(true);
+    setFeedback(null);
 
     try {
       if (isEdit && venue) {
-        const { changes, addressChanged } = venueChanges(
-          formState,
-          venue,
-          seedAddressRef.current,
-        )
+        const { changes, addressChanged } = venueChanges(formState, venue, seedAddressRef.current);
 
         if (addressChanged) {
-          changes.location_coords = await geocodeCurrentAddress()
+          changes.location_coords = await geocodeCurrentAddress();
         }
 
         if (Object.keys(changes).length === 0) {
-          setFeedback({ error: false, text: 'No changes to save.' })
-          return
+          setFeedback({ error: false, text: 'No changes to save.' });
+          return;
         }
 
-        await api.patch(`/venues/${venueId}`, changes)
+        await api.patch(`/venues/${venueId}`, changes);
 
-        setVenue(previous => (previous ? { ...previous, ...changes } : previous))
+        setVenue((previous) => (previous ? { ...previous, ...changes } : previous));
 
-        setFeedback({ error: false, text: 'Venue updated successfully.' })
+        setFeedback({ error: false, text: 'Venue updated successfully.' });
       } else {
         const response = await api.post<VenueResponse>('/venues', {
           organization_id: organizationId,
@@ -387,35 +351,33 @@ export function VenueForm({
           description: formState.description,
           category: formState.category,
           location_name: buildLocationName(formState),
-          location_coords: formState.venueType === 'physical'
-            ? await geocodeCurrentAddress()
-            : null,
-        })
+          location_coords: formState.venueType === 'physical' ? await geocodeCurrentAddress() : null,
+        });
 
         if (onCreated) {
-          onCreated(response.data)
+          onCreated(response.data);
         } else {
-          navigate(`/venue/${response.data.id}`)
+          navigate(`/venue/${response.data.id}`);
         }
       }
     } catch (requestError) {
       let message = isEdit
         ? 'Could not save the venue. Please try again.'
-        : 'Failed to create the venue. Please try again.'
+        : 'Failed to create the venue. Please try again.';
 
       if (axios.isAxiosError(requestError)) {
         if (requestError.response?.status === 403) {
-          message = 'You do not have permission to manage this venue.'
+          message = 'You do not have permission to manage this venue.';
         }
       }
 
-      setFeedback({ error: true, text: message })
+      setFeedback({ error: true, text: message });
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
-  const addressFieldsDisabled = saving || form.venueType === 'virtual'
+  const addressFieldsDisabled = saving || form.venueType === 'virtual';
 
   const renderTextField = (
     id: string,
@@ -436,12 +398,12 @@ export function VenueForm({
         className="input input-bordered w-full"
         placeholder={placeholder}
         value={form[field] as string}
-        onChange={event => updateField(field, event.target.value)}
+        onChange={(event) => updateField(field, event.target.value)}
         required={required && !addressFieldsDisabled}
         disabled={addressFieldsDisabled}
       />
     </div>
-  )
+  );
 
   const content = (
     <>
@@ -483,16 +445,13 @@ export function VenueForm({
                   className="input input-bordered w-full"
                   placeholder="e.g. Aurora Event Hall"
                   value={form.displayName}
-                  onChange={event => updateField('displayName', event.target.value)}
+                  onChange={(event) => updateField('displayName', event.target.value)}
                   required
                 />
               </div>
 
               <div>
-                <label
-                  htmlFor="venueDescription"
-                  className="mb-2 block text-sm font-medium"
-                >
+                <label htmlFor="venueDescription" className="mb-2 block text-sm font-medium">
                   Description <span className="text-error">*</span>
                 </label>
 
@@ -501,21 +460,16 @@ export function VenueForm({
                   className="textarea textarea-bordered h-32 w-full"
                   placeholder="Describe your venue, its atmosphere, and the types of events it can host..."
                   value={form.description}
-                  onChange={event => updateField('description', event.target.value)}
+                  onChange={(event) => updateField('description', event.target.value)}
                   maxLength={4096}
                   required
                 />
 
-                <p className="mt-1 text-right text-xs text-base-content/60">
-                  {form.description.length}/4096
-                </p>
+                <p className="mt-1 text-right text-xs text-base-content/60">{form.description.length}/4096</p>
               </div>
 
               <div>
-                <label
-                  htmlFor="venueCategory"
-                  className="mb-2 block text-sm font-medium"
-                >
+                <label htmlFor="venueCategory" className="mb-2 block text-sm font-medium">
                   Category <span className="text-error">*</span>
                 </label>
 
@@ -525,7 +479,7 @@ export function VenueForm({
                   className="input input-bordered w-full"
                   placeholder="e.g. Music, Conference, Art"
                   value={form.category}
-                  onChange={event => updateField('category', event.target.value)}
+                  onChange={(event) => updateField('category', event.target.value)}
                   maxLength={128}
                   required
                 />
@@ -544,8 +498,8 @@ export function VenueForm({
               </div>
 
               {/* Venue Type */}
-              <div>
-                <label className="mb-3 block text-sm font-medium">Venue Type</label>
+              <fieldset>
+                <legend className="mb-3 block text-sm font-medium">Venue Type</legend>
 
                 <div className="flex flex-wrap gap-6">
                   <label className="flex cursor-pointer items-center gap-2">
@@ -555,8 +509,8 @@ export function VenueForm({
                       className="radio radio-primary radio-sm"
                       checked={form.venueType === 'physical'}
                       onChange={() => {
-                        updateField('venueType', 'physical')
-                        if (form.country === '') updateField('country', 'Canada')
+                        updateField('venueType', 'physical');
+                        if (form.country === '') updateField('country', 'Canada');
                       }}
                     />
                     Physical Venue
@@ -573,12 +527,11 @@ export function VenueForm({
                     Virtual Venue
                   </label>
                 </div>
-              </div>
+              </fieldset>
 
               {form.venueType === 'virtual' ? (
                 <p className="text-sm text-base-content/60">
-                  Virtual venues don't require a physical address. Please enter
-                  information into the description.
+                  Virtual venues don't require a physical address. Please enter information into the description.
                 </p>
               ) : (
                 <div className="space-y-5">
@@ -610,9 +563,9 @@ export function VenueForm({
                     id="venueOrganization"
                     className="select select-bordered w-full"
                     value={organizationId}
-                    onChange={event => setOrganizationId(event.target.value)}
+                    onChange={(event) => setOrganizationId(event.target.value)}
                   >
-                    {adminMemberships.map(member => (
+                    {adminMemberships.map((member) => (
                       <option key={member.organization_id} value={member.organization_id}>
                         {adminOrgNames[member.organization_id] ?? member.organization_id}
                       </option>
@@ -644,34 +597,30 @@ export function VenueForm({
                   Cancel
                 </button>
               ) : (
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  onClick={clearForm}
-                >
+                <button type="button" className="btn btn-ghost" onClick={clearForm}>
                   Clear
                 </button>
               )}
 
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={saving || addressSeeding}
-              >
+              <button type="submit" className="btn btn-primary" disabled={saving || addressSeeding}>
                 {addressSeeding
                   ? 'Preparing address...'
                   : saving
-                    ? isEdit ? 'Saving...' : 'Creating...'
-                    : isEdit ? 'Save Changes' : 'Create Venue'}
+                    ? isEdit
+                      ? 'Saving...'
+                      : 'Creating...'
+                    : isEdit
+                      ? 'Save Changes'
+                      : 'Create Venue'}
               </button>
             </div>
           </form>
         </div>
       )}
     </>
-  )
+  );
 
-  if (embedded) return content
+  if (embedded) return content;
 
   return (
     <PageLayout
@@ -680,7 +629,7 @@ export function VenueForm({
     >
       {content}
     </PageLayout>
-  )
+  );
 }
 
 /**
@@ -692,9 +641,9 @@ export default function VenueEditorPage({ venueId }: { venueId?: string }) {
     <APIProvider
       apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? ''}
       libraries={['geocoding']}
-      onError={error => console.error('Google Maps failed to load:', error)}
+      onError={(error) => console.error('Google Maps failed to load:', error)}
     >
       <VenueForm venueId={venueId} />
     </APIProvider>
-  )
+  );
 }

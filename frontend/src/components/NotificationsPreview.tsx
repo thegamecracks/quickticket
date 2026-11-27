@@ -5,5 +5,5 @@ export default function NotificationsPreview() {
       <h3 className="mb-2 font-semibold">Notifications</h3>
       <p className="text-base-content/70">No notifications yet.</p>
     </div>
-  )
+  );
 }

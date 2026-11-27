@@ -1,53 +1,44 @@
-import { useParams } from 'react-router'
-import { api } from '../../lib/api'
-import { useEffect, useState } from 'react'
-import type { VenueEventResponse, VenueResponse } from '../events/types'
-import PageLayout from '../../components/PageLayout'
-import GoogleMap from '../../components/GoogleMap'
-
-import EventListItem from '../../components/EventListItem'
-import Markdown from '../../components/Markdown'
-import { SkeletonText } from '../../components/Skeleton'
-import SkeletonImage from '../../components/SkeletonImage'
-import { VENUE_PLACEHOLDER, bannerUrl, thumbnailUrl } from '../../lib/images'
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router';
+import EventListItem from '../../components/EventListItem';
+import GoogleMap from '../../components/GoogleMap';
+import Markdown from '../../components/Markdown';
+import PageLayout from '../../components/PageLayout';
+import { SkeletonText } from '../../components/Skeleton';
+import SkeletonImage from '../../components/SkeletonImage';
+import { api } from '../../lib/api';
+import { bannerUrl, thumbnailUrl, VENUE_PLACEHOLDER } from '../../lib/images';
+import type { VenueEventResponse, VenueResponse } from '../events/types';
 
 export default function VenuePage() {
-  const { id } = useParams<{ id: string }>()
+  const { id } = useParams<{ id: string }>();
 
-  const [venue, setVenue] = useState<VenueResponse | undefined>(undefined)
+  const [venue, setVenue] = useState<VenueResponse | undefined>(undefined);
 
   useEffect(() => {
     const getVenue = async (): Promise<void> => {
       const res = await api.get<VenueResponse>(`/venues/${id}`);
       setVenue(res.data);
-    }
+    };
 
     getVenue();
-  }, [])
+  }, [id]);
 
   return (
-    <PageLayout
-      title={venue?.display_name}
-      fallbackTitle="Venue"
-      back={{ to: '/events' }}
-    >
+    <PageLayout title={venue?.display_name} fallbackTitle="Venue" back={{ to: '/events' }}>
       {!venue && <SkeletonText lines={6} />}
       {venue && (
         <div>
           <figure className="mb-4">
             <SkeletonImage
               key={venue.id}
-              sources={[
-                bannerUrl('venues', venue.id),
-                thumbnailUrl('venues', venue.id),
-                VENUE_PLACEHOLDER,
-              ]}
+              sources={[bannerUrl('venues', venue.id), thumbnailUrl('venues', venue.id), VENUE_PLACEHOLDER]}
               alt={venue.display_name}
               className="h-48 w-full rounded-xl object-cover"
             />
           </figure>
           <span className="text-2xl font-semibold block">
-            Venue owned by{" "}
+            Venue owned by{' '}
             <a className="link link-primary" href={`/organization/${venue?.organization.id}`}>
               {venue.organization.display_name}
             </a>
@@ -60,7 +51,9 @@ export default function VenuePage() {
                 <Markdown content={venue.description} />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-xl"><span className="text-secondary">Location:</span> {venue.location_name}</h3>
+                <h3 className="font-semibold text-xl">
+                  <span className="text-secondary">Location:</span> {venue.location_name}
+                </h3>
                 {venue.location_coords ? (
                   <GoogleMap latitude={venue.location_coords.lat} longitude={venue.location_coords.lng} />
                 ) : (
@@ -75,9 +68,9 @@ export default function VenuePage() {
                 <p className="text-base-content/70">{venue.events.length} event(s) at this venue.</p>
 
                 <ul className="list">
-                  {venue.events.map((event: VenueEventResponse) =>
+                  {venue.events.map((event: VenueEventResponse) => (
                     <EventListItem key={event.id} event={event} />
-                  )}
+                  ))}
                 </ul>
               </div>
             ) : (
@@ -85,8 +78,7 @@ export default function VenuePage() {
             )}
           </div>
         </div>
-      )
-      }
-    </PageLayout >
-  )
+      )}
+    </PageLayout>
+  );
 }

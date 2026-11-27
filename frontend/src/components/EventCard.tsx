@@ -1,26 +1,25 @@
-import type { EventResponse } from "../features/events/types"
-import { getMockTicketCount } from "../lib/mocks"
-import { EVENT_PLACEHOLDER, thumbnailUrl } from "../lib/images"
-import SkeletonImage from "./SkeletonImage"
-import { calcTimeMediumRange, formatDateLong } from "../lib/general"
-import { Link, useNavigate } from "react-router"
+import { Link, useNavigate } from 'react-router';
+import type { EventResponse } from '../features/events/types';
+import { calcTimeMediumRange, formatDateLong } from '../lib/general';
+import { EVENT_PLACEHOLDER, thumbnailUrl } from '../lib/images';
+import { getMockTicketCount } from '../lib/mocks';
+import SkeletonImage from './SkeletonImage';
 
- type EventCardProps = {
-  event: EventResponse
+type EventCardProps = {
+  event: EventResponse;
   /** When set (e.g. on the organizer's own listings), shows an Edit link. */
-  editHref?: string
-}
+  editHref?: string;
+};
 
 export default function EventCard({ event, editHref }: EventCardProps) {
   const navigate = useNavigate();
 
   const handleViewEvent = () => {
-    navigate(`/events/${event.id}`)
-  }
+    navigate(`/events/${event.id}`);
+  };
 
   return (
     <div className="card h-full flex flex-col overflow-hidden border border-base-300 bg-base-200 shadow-sm">
-
       {/* Event image */}
       <figure>
         <SkeletonImage
@@ -31,7 +30,6 @@ export default function EventCard({ event, editHref }: EventCardProps) {
       </figure>
 
       <div className="card-body flex flex-1 flex-col">
-
         {/* Event name, capped at two lines so every card's body line up */}
         <h2 className="card-title line-clamp-2 min-h-14">{event.display_name}</h2>
 
@@ -44,7 +42,6 @@ export default function EventCard({ event, editHref }: EventCardProps) {
 
         {/* Price and availability — pinned to the bottom of the card */}
         <div className="mt-auto flex items-center justify-between gap-2 pt-4">
-
           <div className="">
             {/* TODO: replace with actual ticket count to check against max attendees */}
             {event.max_attendees >= getMockTicketCount(event.id) !== false ? (
@@ -52,9 +49,7 @@ export default function EventCard({ event, editHref }: EventCardProps) {
                 ${event.ticket_price.amount} {event.ticket_price.currency}
               </span>
             ) : (
-              <span className="badge badge-error">
-                Sold Out
-              </span>
+              <span className="badge badge-error">Sold Out</span>
             )}
           </div>
           <div className="card-actions justify-end">
@@ -63,10 +58,12 @@ export default function EventCard({ event, editHref }: EventCardProps) {
                 Edit
               </Link>
             )}
-            <button className="btn btn-primary" onClick={() => handleViewEvent()}>View Event</button>
+            <button type="button" className="btn btn-primary" onClick={() => handleViewEvent()}>
+              View Event
+            </button>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,5 +1,4 @@
-import type { Money, Point } from "../../lib/types";
-
+import type { Money, Point } from '../../lib/types';
 
 export interface Organization {
   id: string;
@@ -33,7 +32,7 @@ export type Event = {
   ends_at: string; // ISO 8601 datetime of event end
   ticket_price: Money;
   max_attendees: number;
-}
+};
 
 export interface StorageObjectRef {
   id: string; // UUID -> storage object; TODO: URL scheme for serving images
@@ -81,8 +80,6 @@ export type VenueResponse = VenueBase & {
 
 // Marker interfaces for events the user has interacted with.
 // TODO: flesh out once backend supports RSVPs / ticket queries.
-export interface RSVPEvent extends Event {
-}
+export interface RSVPEvent extends Event {}
 
-export interface TicketedEvent extends Event {
-}
+export interface TicketedEvent extends Event {}

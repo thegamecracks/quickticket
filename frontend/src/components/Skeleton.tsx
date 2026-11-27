@@ -4,17 +4,18 @@
  * exact layouts (EventCardSkeleton is the one detailed exception).
  */
 
-const TEXT_WIDTHS = ['w-full', 'w-11/12', 'w-3/4'] as const
+const TEXT_WIDTHS = ['w-full', 'w-11/12', 'w-3/4'] as const;
 
 /** A stack of text-shaped bars — for detail/form pages. */
 export function SkeletonText({ lines = 3 }: { lines?: number }) {
   return (
     <div className="space-y-3" aria-hidden="true">
       {Array.from({ length: lines }, (_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: static decorative placeholder rows that never reorder
         <div key={i} className={`skeleton h-4 ${TEXT_WIDTHS[i % TEXT_WIDTHS.length]}`} />
       ))}
     </div>
-  )
+  );
 }
 
 /** A stack of list-row placeholders — for list pages. */
@@ -22,6 +23,7 @@ export function SkeletonRows({ rows = 3 }: { rows?: number }) {
   return (
     <div className="space-y-2" aria-hidden="true">
       {Array.from({ length: rows }, (_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: static decorative placeholder rows that never reorder
         <div key={i} className="flex items-center gap-4">
           <div className="skeleton h-16 w-24 shrink-0 rounded-lg" />
           <div className="space-y-2">
@@ -31,5 +33,5 @@ export function SkeletonRows({ rows = 3 }: { rows?: number }) {
         </div>
       ))}
     </div>
-  )
+  );
 }

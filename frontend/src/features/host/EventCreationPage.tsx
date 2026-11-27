@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router'
-import { APIProvider } from '@vis.gl/react-google-maps'
+import { APIProvider } from '@vis.gl/react-google-maps';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router';
 
-import PageLayout from "../../components/PageLayout"
-import { api } from '../../lib/api'
-import { useAuth } from '../../lib/auth'
-import { isAdministrator } from '../account/types'
-import type { VenueResponse } from '../events/types'
-import type { OrganizationResponse, OrganizationVenue } from '../organizations/types'
-import EventForm from './EventForm'
-import { OrganizationForm } from './OrganizationForm'
-import { VenueForm } from './VenueForm'
-import { SkeletonRows } from '../../components/Skeleton'
+import PageLayout from '../../components/PageLayout';
+import { SkeletonRows } from '../../components/Skeleton';
+import { api } from '../../lib/api';
+import { useAuth } from '../../lib/auth';
+import { isAdministrator } from '../account/types';
+import type { VenueResponse } from '../events/types';
+import type { OrganizationResponse, OrganizationVenue } from '../organizations/types';
+import EventForm from './EventForm';
+import { OrganizationForm } from './OrganizationForm';
+import { VenueForm } from './VenueForm';
 
 /** Maps a freshly created venue onto the organization response's venue shape. */
 const toOrganizationVenue = (venue: VenueResponse): OrganizationVenue => ({
@@ -23,7 +23,7 @@ const toOrganizationVenue = (venue: VenueResponse): OrganizationVenue => ({
   thumbnail: venue.thumbnail,
   banner: venue.banner,
   events: [],
-})
+});
 
 /**
  * Create-event wizard. The organization (when missing) and a venue are
@@ -34,70 +34,64 @@ const toOrganizationVenue = (venue: VenueResponse): OrganizationVenue => ({
  * since an organization cannot be un-created.
  */
 export default function EventCreationPage() {
-  const { user } = useAuth()
+  const { user } = useAuth();
 
   // A user owns at most one organization; any administrator membership is it.
-  const membershipOrgId = user?.organization_members.find(isAdministrator)?.organization_id
+  const membershipOrgId = user?.organization_members.find(isAdministrator)?.organization_id;
 
-  const [org, setOrg] = useState<OrganizationResponse | null>(null)
-  const [orgError, setOrgError] = useState(false)
+  const [org, setOrg] = useState<OrganizationResponse | null>(null);
+  const [orgError, setOrgError] = useState(false);
 
   // Venue step presentation: choose an existing venue or open the form.
   // Defaults to the choice UI whenever venues exist (including a venue just
   // created in the flow), otherwise straight to the form; the buttons below
   // override that default until the organization changes again.
-  const [venueModeOverride, setVenueModeOverride] = useState<'select' | 'create' | null>(null)
-  const [venueChoice, setVenueChoice] = useState('')
-  const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null)
+  const [venueModeOverride, setVenueModeOverride] = useState<'select' | 'create' | null>(null);
+  const [venueChoice, setVenueChoice] = useState('');
+  const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!membershipOrgId) return
+    if (!membershipOrgId) return;
 
-    let active = true
+    let active = true;
 
     api
       .get<OrganizationResponse>(`/organizations/${membershipOrgId}`)
-      .then(response => {
-        if (active) setOrg(response.data)
+      .then((response) => {
+        if (active) setOrg(response.data);
       })
       .catch(() => {
-        if (active) setOrgError(true)
-      })
+        if (active) setOrgError(true);
+      });
 
     return () => {
-      active = false
-    }
-  }, [membershipOrgId])
+      active = false;
+    };
+  }, [membershipOrgId]);
 
-  const needsOrg = org === null
-  const venueMode = venueModeOverride ?? (org && org.venues.length > 0 ? 'select' : 'create')
-  const phase =
-    needsOrg ? 'org'
-    : selectedVenueId === null ? 'venue'
-    : 'event'
+  const needsOrg = org === null;
+  const venueMode = venueModeOverride ?? (org && org.venues.length > 0 ? 'select' : 'create');
+  const phase = needsOrg ? 'org' : selectedVenueId === null ? 'venue' : 'event';
 
   // The organization step only exists for organizers without one; venue and
   // event details always do.
-  const totalSteps = (needsOrg ? 1 : 0) + 2
-  const venueStepNumber = needsOrg ? 2 : 1
-  const eventStepNumber = needsOrg ? 3 : 2
+  const totalSteps = (needsOrg ? 1 : 0) + 2;
+  const venueStepNumber = needsOrg ? 2 : 1;
+  const eventStepNumber = needsOrg ? 3 : 2;
 
   const stepHeading = (step: number, title: string) => (
     <p className="-mt-2 mb-7 text-sm text-base-content/60">
       Step {step} of {totalSteps}: {title}
     </p>
-  )
+  );
 
   const hostingAs = org && (
     <p className="-mt-2 mb-7 text-sm text-base-content/60">
-      Hosting as{' '}
-      <span className="font-semibold text-base-content">
-        {org.display_name}
-      </span>
+      Hosting as <span className="font-semibold text-base-content">{org.display_name}</span>
     </p>
-  )
+  );
 
-  const selectedVenue = org?.venues.find(venue => venue.id === selectedVenueId)
+  const selectedVenue = org?.venues.find((venue) => venue.id === selectedVenueId);
 
   return (
     <PageLayout
@@ -105,11 +99,7 @@ export default function EventCreationPage() {
       actions={
         <>
           {phase === 'event' && (
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => setSelectedVenueId(null)}
-            >
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setSelectedVenueId(null)}>
               Back
             </button>
           )}
@@ -120,17 +110,13 @@ export default function EventCreationPage() {
       }
     >
       {/* Authentication loading state */}
-      {user === undefined && (
-        <SkeletonRows rows={3} />
-      )}
+      {user === undefined && <SkeletonRows rows={3} />}
 
       {/* No sign-in gate: a signed-out visitor uses the navbar's Sign in
           button. */}
 
       {/* Organization still loading */}
-      {user && membershipOrgId && !org && !orgError && (
-        <SkeletonRows rows={4} />
-      )}
+      {user && membershipOrgId && !org && !orgError && <SkeletonRows rows={4} />}
 
       {/* Organization failed to load */}
       {user && membershipOrgId && orgError && (
@@ -156,9 +142,7 @@ export default function EventCreationPage() {
 
           <div className="mb-5 rounded-xl border border-base-300 bg-base-100 p-5 shadow-sm">
             <div className="mb-5 border-b border-base-300 pb-3">
-              <h2 className="text-lg font-semibold">
-                Venue
-              </h2>
+              <h2 className="text-lg font-semibold">Venue</h2>
               <p className="mt-1 text-xs text-base-content/55">
                 Pick one of your venues, or create a new one for this event.
               </p>
@@ -168,9 +152,9 @@ export default function EventCreationPage() {
               className="select select-bordered w-full"
               aria-label="Venue"
               value={venueChoice || org.venues[0]?.id || ''}
-              onChange={event => setVenueChoice(event.target.value)}
+              onChange={(event) => setVenueChoice(event.target.value)}
             >
-              {org.venues.map(venue => (
+              {org.venues.map((venue) => (
                 <option key={venue.id} value={venue.id}>
                   {venue.display_name}
                 </option>
@@ -178,11 +162,7 @@ export default function EventCreationPage() {
             </select>
 
             <div className="mt-4 flex flex-wrap justify-end gap-3">
-              <button
-                type="button"
-                className="btn btn-outline"
-                onClick={() => setVenueModeOverride('create')}
-              >
+              <button type="button" className="btn btn-outline" onClick={() => setVenueModeOverride('create')}>
                 Create New Venue
               </button>
 
@@ -190,9 +170,7 @@ export default function EventCreationPage() {
                 type="button"
                 className="btn btn-primary"
                 disabled={!venueChoice && !org.venues[0]}
-                onClick={() =>
-                  setSelectedVenueId(venueChoice || org.venues[0]?.id || null)
-                }
+                onClick={() => setSelectedVenueId(venueChoice || org.venues[0]?.id || null)}
               >
                 Continue
               </button>
@@ -205,18 +183,11 @@ export default function EventCreationPage() {
       {org && phase === 'venue' && venueMode === 'create' && (
         <>
           {hostingAs}
-          {stepHeading(
-            venueStepNumber,
-            org.venues.length > 0 ? 'create a new venue' : 'add your first venue',
-          )}
+          {stepHeading(venueStepNumber, org.venues.length > 0 ? 'create a new venue' : 'add your first venue')}
 
           {org.venues.length > 0 && (
             <div className="mb-5">
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => setVenueModeOverride('select')}
-              >
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setVenueModeOverride('select')}>
                 ← Back to venue selection
               </button>
             </div>
@@ -225,18 +196,16 @@ export default function EventCreationPage() {
           <APIProvider
             apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? ''}
             libraries={['geocoding']}
-            onError={error => console.error('Google Maps failed to load:', error)}
+            onError={(error) => console.error('Google Maps failed to load:', error)}
           >
             <VenueForm
               embedded
               fixedOrganizationId={org.id}
-              onCreated={venue => {
-                setOrg(previous =>
-                  previous
-                    ? { ...previous, venues: [toOrganizationVenue(venue), ...previous.venues] }
-                    : previous,
-                )
-                setSelectedVenueId(venue.id)
+              onCreated={(venue) => {
+                setOrg((previous) =>
+                  previous ? { ...previous, venues: [toOrganizationVenue(venue), ...previous.venues] } : previous,
+                );
+                setSelectedVenueId(venue.id);
               }}
             />
           </APIProvider>
@@ -253,5 +222,5 @@ export default function EventCreationPage() {
         </>
       )}
     </PageLayout>
-  )
+  );
 }

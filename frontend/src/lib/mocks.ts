@@ -5,13 +5,13 @@
 // Datetimes are ISO 8601 strings, as the API will return them.
 // Money amounts are integers in the currency's smallest unit (cents).
 
-import type { User, Address, Notification, ProfileOrganizationMember } from "../features/account/types"
-import { OrganizationMemberPermissions } from "../features/account/types"
-import type { Ticket } from "../features/tickets/types"
-import type { Event, Venue } from "../features/events/types"
-import type { Money } from "./types"
+import type { Address, Notification, ProfileOrganizationMember, User } from '../features/account/types';
+import { OrganizationMemberPermissions } from '../features/account/types';
+import type { Event, Venue } from '../features/events/types';
+import type { Ticket } from '../features/tickets/types';
+import type { Money } from './types';
 
-const CAD = (amount: number): Money => ({ amount, currency: "CAD" })
+const CAD = (amount: number): Money => ({ amount, currency: 'CAD' });
 
 // ---------------------------------------------------------------------------
 // Addresses (from mockdata.sql `address`)
@@ -45,7 +45,7 @@ export const MockAddresses: Address[] = [
     province: 'British Columbia',
     postal_code: 'X4N 1M6',
   },
-]
+];
 
 // ---------------------------------------------------------------------------
 // Users (from mockdata.sql `account`)
@@ -61,7 +61,7 @@ const mockMembership = (
   user_id: accountId,
   permissions,
   joined_at: '2026-08-01T12:00:00.000Z',
-})
+});
 
 /** Primary mock user: James Smith, the first account in mockdata.sql. */
 export const MockUser: User = {
@@ -75,7 +75,7 @@ export const MockUser: User = {
   organization_members: [
     mockMembership('2cbd7222-4fd3-4cef-9500-79746e76da89', 'eec50538-0edc-469b-b441-01b95b2f86c1'),
   ],
-}
+};
 
 /** Additional users for lists / ticket holders. */
 export const MockUsers: User[] = [
@@ -102,18 +102,18 @@ export const MockUsers: User[] = [
     addresses: [MockAddresses[2]],
     organization_members: [],
   },
-]
+];
 
 // ---------------------------------------------------------------------------
 // Organizations (from mockdata.sql `organization`)
 // ---------------------------------------------------------------------------
 
 export interface MockOrganization {
-  id: string // UUID (organization_id)
-  created_at: string // ISO 8601 datetime
-  display_name: string
+  id: string; // UUID (organization_id)
+  created_at: string; // ISO 8601 datetime
+  display_name: string;
   /** user_ids of members (mockdata.sql `organization_member`). */
-  member_ids: string[]
+  member_ids: string[];
 }
 
 export const MockOrganizations: MockOrganization[] = [
@@ -147,7 +147,7 @@ export const MockOrganizations: MockOrganization[] = [
     display_name: 'Evergreen Celebrations Ltd.',
     member_ids: ['54839cd2-c8fb-47ca-a9f0-fbfd73046582'],
   },
-]
+];
 
 // ---------------------------------------------------------------------------
 // Venues (from mockdata.sql `venue`)
@@ -258,7 +258,7 @@ export const MockVenues: Venue[] = [
     location_name: '888 Robson St.',
     location_coords: null,
   },
-]
+];
 
 // ---------------------------------------------------------------------------
 // Events (from mockdata.sql `event`)
@@ -318,7 +318,7 @@ export const MockEvents: Event[] = [
     created_at: '2026-09-13T12:00:00.000Z',
     display_name: "Event 4 at Suzy's Event Planning and Decor",
     description:
-      '## Charity Dinner\nAn evening dedicated to supporting **local causes** through fine dining and auctions.\n\n- **Date:** Friday, September 20th\n- **Time:** 7:00 PM - 10:00 PM\n- **Ticket Price:** $120\n\n## Proceeds benefit\n- Children\'s Hospital\n- Local Food Bank\n- Environmental Fund',
+      "## Charity Dinner\nAn evening dedicated to supporting **local causes** through fine dining and auctions.\n\n- **Date:** Friday, September 20th\n- **Time:** 7:00 PM - 10:00 PM\n- **Ticket Price:** $120\n\n## Proceeds benefit\n- Children's Hospital\n- Local Food Bank\n- Environmental Fund",
     category: 'Charity',
     thumbnail_url: '/images/food.jpg',
     banner_url: '/images/food.jpg',
@@ -393,7 +393,7 @@ export const MockEvents: Event[] = [
     created_at: '2026-09-18T12:00:00.000Z',
     display_name: 'Event 9 at The Grand Occasion Co.',
     description:
-      '## Charity Dinner\nAn evening dedicated to supporting **local causes** through fine dining and auctions.\n\n- **Date:** Friday, September 20th\n- **Time:** 7:00 PM - 10:00 PM\n- **Ticket Price:** $120\n\n## Proceeds benefit\n- Children\'s Hospital\n- Local Food Bank\n- Environmental Fund',
+      "## Charity Dinner\nAn evening dedicated to supporting **local causes** through fine dining and auctions.\n\n- **Date:** Friday, September 20th\n- **Time:** 7:00 PM - 10:00 PM\n- **Ticket Price:** $120\n\n## Proceeds benefit\n- Children's Hospital\n- Local Food Bank\n- Environmental Fund",
     category: 'Charity',
     thumbnail_url: '/images/food.jpg',
     banner_url: '/images/food.jpg',
@@ -447,7 +447,7 @@ export const MockEvents: Event[] = [
     ticket_price: CAD(9900),
     max_attendees: 500,
   },
-]
+];
 
 // ---------------------------------------------------------------------------
 // Tickets (from mockdata.sql `ticket`; ticket_ids generated since the SQL
@@ -511,7 +511,7 @@ export const MockTickets: Ticket[] = [
     created_at: '2026-10-05T10:25:00.000Z',
     paid_cost: CAD(7500),
   },
-]
+];
 
 // ---------------------------------------------------------------------------
 // Notifications (not in mockdata.sql; representative samples)
@@ -539,17 +539,17 @@ export const MockNotifications: Notification[] = [
     content_short: 'Reminder: Annual Gala in 5 months',
     content_full: 'This is a reminder that the Annual Gala you starred begins on March 15, 2027.',
   },
-]
+];
 
 // ---------------------------------------------------------------------------
 // Created-event store (runtime; events created through the host flow)
 // ---------------------------------------------------------------------------
 
 /** Events created at runtime via createMockEvent (newest first at consumers). */
-export const MockCreatedEvents: Event[] = []
+export const MockCreatedEvents: Event[] = [];
 
 /** All events a browser page should list: created-at-runtime ones plus seeded. */
-export const getMockAllEvents = (): Event[] => [...MockCreatedEvents, ...MockEvents]
+export const getMockAllEvents = (): Event[] => [...MockCreatedEvents, ...MockEvents];
 
 /** Persist a created event. Caller passes everything except id/created_at. */
 export const createMockEvent = (input: Omit<Event, 'id' | 'created_at'>): Event => {
@@ -557,27 +557,26 @@ export const createMockEvent = (input: Omit<Event, 'id' | 'created_at'>): Event 
     ...input,
     id: crypto.randomUUID(),
     created_at: new Date().toISOString(),
-  }
-  MockCreatedEvents.push(event)
-  return event
-}
+  };
+  MockCreatedEvents.push(event);
+  return event;
+};
 
 // ---------------------------------------------------------------------------
 // Lookup helpers
 // ---------------------------------------------------------------------------
 
-export const getMockEvent = (id: string) => MockEvents.find((e) => e.id === id)
+export const getMockEvent = (id: string) => MockEvents.find((e) => e.id === id);
 
-export const getMockVenue = (id: string) => MockVenues.find((v) => v.id === id)
+export const getMockVenue = (id: string) => MockVenues.find((v) => v.id === id);
 
 /** Organizations an account is a member of. */
 export const getMockOrganizationsForAccount = (accountId: string) =>
-  MockOrganizations.filter((o) => o.member_ids.includes(accountId))
+  MockOrganizations.filter((o) => o.member_ids.includes(accountId));
 
 /** Venues owned by an organization. */
 export const getMockVenuesForOrganization = (organizationId: string) =>
-  MockVenues.filter((v) => v.organization_id === organizationId)
+  MockVenues.filter((v) => v.organization_id === organizationId);
 
 /** Tickets sold for an event (for availability = sold out vs max_attendees). */
-export const getMockTicketCount = (eventId: string) =>
-  MockTickets.filter((t) => t.event_id === eventId).length
+export const getMockTicketCount = (eventId: string) => MockTickets.filter((t) => t.event_id === eventId).length;

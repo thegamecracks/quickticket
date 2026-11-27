@@ -1,6 +1,8 @@
-   @import "tailwindcss";
-   @plugin "daisyui" {
-     themes: light --default, dark --prefersdark;
-   }
-
+@import "tailwindcss";
 @import "./styles/markdown.css";
+
+@plugin "daisyui" {
+  themes:
+    light --default,
+    dark --prefersdark;
+}

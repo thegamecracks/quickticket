@@ -1,4 +1,4 @@
-import MarkdownIt from "markdown-it";
+import MarkdownIt from 'markdown-it';
 
 /**
  * Single parser instance for the whole app.
@@ -16,13 +16,11 @@ const md = new MarkdownIt({
 
 // External links open in a new tab, with the tab-nabbing protections.
 const defaultLinkOpen =
-  md.renderer.rules.link_open ??
-  ((tokens, idx, options, _env, self) =>
-    self.renderToken(tokens, idx, options));
+  md.renderer.rules.link_open ?? ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options));
 
 md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
-  tokens[idx].attrSet("target", "_blank");
-  tokens[idx].attrSet("rel", "noopener noreferrer");
+  tokens[idx].attrSet('target', '_blank');
+  tokens[idx].attrSet('rel', 'noopener noreferrer');
   return defaultLinkOpen(tokens, idx, options, env, self);
 };
 

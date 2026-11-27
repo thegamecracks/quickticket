@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState } from 'react';
 
 type SkeletonImageProps = {
   /**
@@ -6,29 +6,26 @@ type SkeletonImageProps = {
    * last entry is the final fallback (typically a placeholder URL). Add a
    * `key` when the same component instance can switch entities.
    */
-  sources: string[]
-  alt: string
-  className?: string
-}
+  sources: string[];
+  alt: string;
+  className?: string;
+};
 
 export default function SkeletonImage({ sources, alt, className }: SkeletonImageProps) {
-  const [index, setIndex] = useState(0)
-  const [loaded, setLoaded] = useState(false)
-  const src = sources[Math.min(index, sources.length - 1)]
+  const [index, setIndex] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  const src = sources[Math.min(index, sources.length - 1)];
 
   return (
     <div className={`relative ${className}`}>
-      {!loaded && (
-        <div className="skeleton absolute inset-0 h-full w-full" />
-      )}
+      {!loaded && <div className="skeleton absolute inset-0 h-full w-full" />}
       <img
         src={src}
         alt={alt}
         onLoad={() => setLoaded(true)}
-        onError={() => setIndex(i => Math.min(i + 1, sources.length - 1))}
-        className={`${className} ${loaded ? 'opacity-100' :
-          'opacity-0'} transition-opacity`}
+        onError={() => setIndex((i) => Math.min(i + 1, sources.length - 1))}
+        className={`${className} ${loaded ? 'opacity-100' : 'opacity-0'} transition-opacity`}
       />
     </div>
-  )
+  );
 }
